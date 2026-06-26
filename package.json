@@ -1,0 +1,40 @@
+{
+  "name": "niuma-harness",
+  "version": "0.0.1",
+  "description": "Initialize an AI engineering harness for a project workspace.",
+  "type": "commonjs",
+  "bin": {
+    "niuma-harness": "bin/niuma-harness.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "templates",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node test/cli.test.js",
+    "check": "npm test",
+    "pack:dry": "npm pack --dry-run"
+  },
+  "keywords": [
+    "ai",
+    "harness",
+    "claude-code",
+    "codex",
+    "openCode",
+    "agent"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/739188210/niuma-harness.git"
+  },
+  "bugs": {
+    "url": "https://github.com/739188210/niuma-harness/issues"
+  },
+  "homepage": "https://github.com/739188210/niuma-harness#readme",
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

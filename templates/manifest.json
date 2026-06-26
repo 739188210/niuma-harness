@@ -1,0 +1,58 @@
+{
+  "directories": [
+    "docs",
+    "docs/automation",
+    "docs/process",
+    "docs/rules",
+    "docs/rules/common",
+    "docs/tasks"
+  ],
+  "templateFiles": [
+    {
+      "target": "HARNESS_GUIDE.md",
+      "template": "core/HARNESS_GUIDE.md"
+    },
+    {
+      "target": "docs/index.md",
+      "template": "core/docs/index.md"
+    },
+    {
+      "target": "docs/project-context.md",
+      "template": "core/docs/project-context.md"
+    },
+    {
+      "target": "docs/process/task-triage.md",
+      "template": "core/docs/process/task-triage.md"
+    },
+    {
+      "target": "docs/process/bugfix.md",
+      "template": "core/docs/process/bugfix.md"
+    },
+    {
+      "target": "docs/process/feature-development.md",
+      "template": "core/docs/process/feature-development.md"
+    },
+    {
+      "target": "docs/automation/hooks.md",
+      "template": "core/docs/automation/hooks.md"
+    },
+    {
+      "target": "docs/tasks/README.md",
+      "template": "core/docs/tasks/README.md"
+    }
+  ],
+  "ruleFiles": [
+    {
+      "target": "docs/rules/common/coding-style.md",
+      "template": "core/docs/rules/common/coding-style.md"
+    },
+    {
+      "target": "docs/rules/common/testing.md",
+      "template": "core/docs/rules/common/testing.md"
+    },
+    {
+      "target": "docs/rules/common/security.md",
+      "template": "core/docs/rules/common/security.md"
+    }
+  ]
+}
