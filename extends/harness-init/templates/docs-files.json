@@ -1,0 +1,57 @@
+{
+  "directories": [
+    "docs",
+    "docs/contracts",
+    "docs/decisions",
+    "docs/experience",
+    "docs/plans",
+    "docs/prd",
+    "docs/prompt-template",
+    "docs/prototype",
+    "docs/qa",
+    "docs/rules",
+    "docs/rules/common",
+    "docs/rules/java",
+    "docs/rules/web",
+    "docs/runbooks",
+    "docs/tasks",
+    "docs/_temp"
+  ],
+  "templateFiles": [
+    {
+      "target": "docs/index.md",
+      "template": "docs-index.md"
+    },
+    {
+      "target": "docs/decisions/001-init.md",
+      "template": "decision-init.md"
+    },
+    {
+      "target": "docs/qa/README.md",
+      "template": "qa-readme.md"
+    }
+  ],
+  "emptyFiles": [
+    "docs/architecture.md",
+    "docs/conventions.md",
+    "docs/stack.md",
+    "docs/qa/default-work-mode.md",
+    "docs/qa/quality-gates.md",
+    "docs/qa/test-case-design.md",
+    "docs/rules/common/code-review.md",
+    "docs/rules/common/security.md",
+    "docs/rules/common/testing.md",
+    "docs/rules/java/coding-style.md",
+    "docs/rules/java/hooks.md",
+    "docs/rules/java/patterns.md",
+    "docs/rules/java/security.md",
+    "docs/rules/java/testing.md",
+    "docs/rules/web/coding-style.md",
+    "docs/rules/web/design-quality.md",
+    "docs/rules/web/hooks.md",
+    "docs/rules/web/patterns.md",
+    "docs/rules/web/performance.md",
+    "docs/rules/web/security.md",
+    "docs/rules/web/testing.md"
+  ]
+}
