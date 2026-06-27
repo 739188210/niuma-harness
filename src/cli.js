@@ -1,5 +1,6 @@
 const { parseArgs, getHelpText } = require('./args');
-const { chooseTool } = require('./prompts');
+const { chooseAgent } = require('./prompts');
+const { runDoctor } = require('./doctor');
 const { runInit } = require('./scaffold');
 
 async function main(argv) {
@@ -10,12 +11,18 @@ async function main(argv) {
     return;
   }
 
-  if (options.command !== 'init') {
-    throw new Error(`Unknown command: ${options.command}. Only "init" is supported.`);
+  if (options.command === 'init') {
+    options.agent = await chooseAgent(options.agent);
+    runInit(options);
+    return;
   }
 
-  options.tool = await chooseTool(options.tool);
-  runInit(options);
+  if (options.command === 'doctor' || options.command === 'check') {
+    runDoctor(options);
+    return;
+  }
+
+  throw new Error(`Unknown command: ${options.command}. Use "init", "doctor", or "check".`);
 }
 
 module.exports = {

@@ -4,6 +4,7 @@ const path = require('path');
 const ROOT_DIR = path.resolve(__dirname, '..');
 const TEMPLATE_DIR = path.join(ROOT_DIR, 'templates');
 const MANIFEST_PATH = path.join(TEMPLATE_DIR, 'manifest.json');
+const STATUS_FILE = 'manifest.json';
 
 function runInit(options) {
   const workspaceDir = path.resolve(options.targetDir || '.');
@@ -12,14 +13,14 @@ function runInit(options) {
   validateManifest(manifest);
 
   const variables = {
-    ENTRY_FILES: getEntryFilesForTool(options.tool).join(', '),
+    ENTRY_FILES: getEntryFilesForAgent(options.agent).join(', '),
     HARNESS_DIR: options.flat ? '.' : options.harnessDir,
   };
 
   console.log(options.dryRun ? 'DRY RUN: preview scaffold changes' : 'Initializing niuma harness');
   console.log(`Workspace: ${workspaceDir}`);
   console.log(`Target: ${targetDir}`);
-  console.log(`Tool: ${options.tool}`);
+  console.log(`Agent: ${options.agent}`);
   console.log(`Rules: ${options.rules}`);
 
   printAction(ensureDir(targetDir, options.dryRun), targetDir);
@@ -29,7 +30,7 @@ function runInit(options) {
     printAction(ensureDir(targetPath, options.dryRun), targetPath);
   }
 
-  for (const entryFile of getEntryFilesForTool(options.tool)) {
+  for (const entryFile of getEntryFilesForAgent(options.agent)) {
     const templatePath = entryFile === 'CLAUDE.md' ? 'entry/CLAUDE.md' : 'entry/AGENTS.md';
     const targetPath = safeResolveInside(targetDir, entryFile, 'entry target');
     const content = renderTemplate(templatePath, { ...variables, ENTRY_FILE: entryFile });
@@ -48,7 +49,11 @@ function runInit(options) {
     printAction(writeFile(targetPath, content, options), targetPath);
   }
 
-  console.log('Done. Read HARNESS_GUIDE.md and fill docs/index.md for your project.');
+  const statusPath = safeResolveInside(targetDir, STATUS_FILE, 'status target');
+  const statusContent = `${JSON.stringify(createStatus(options), null, 2)}\n`;
+  printAction(writeFile(statusPath, statusContent, options), statusPath);
+
+  console.log('Done. Start task work from docs/index.md. Read HARNESS_GUIDE.md for harness maintenance.');
 }
 
 function loadManifest() {
@@ -67,20 +72,33 @@ function validateManifest(manifest) {
   }
 }
 
-function getEntryFilesForTool(tool) {
-  if (tool === 'claude') {
+function getEntryFilesForAgent(agent) {
+  if (agent === 'claude') {
     return ['CLAUDE.md'];
   }
 
-  if (tool === 'codex' || tool === 'opencode') {
+  if (agent === 'codex' || agent === 'opencode') {
     return ['AGENTS.md'];
   }
 
-  if (tool === 'multi') {
+  if (agent === 'multi') {
     return ['CLAUDE.md', 'AGENTS.md'];
   }
 
-  throw new Error(`Unsupported tool: ${tool}`);
+  throw new Error(`Unsupported agent: ${agent}`);
+}
+
+function createStatus(options) {
+  return {
+    schemaVersion: 1,
+    agent: options.agent,
+    rules: options.rules,
+    harnessDir: options.harnessDir,
+    flat: Boolean(options.flat),
+    entryFiles: getEntryFilesForAgent(options.agent),
+    createdBy: 'niuma-harness',
+    createdAt: new Date().toISOString(),
+  };
 }
 
 function readTemplate(relativePath) {
@@ -173,11 +191,16 @@ function assertNoSymlinkInPath(targetPath) {
 
   for (const part of parts) {
     current = path.join(current, part);
-    if (!fs.existsSync(current)) {
-      continue;
+    let stat;
+    try {
+      stat = fs.lstatSync(current);
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        continue;
+      }
+      throw error;
     }
 
-    const stat = fs.lstatSync(current);
     if (stat.isSymbolicLink()) {
       throw new Error(`Refusing to write through symlink: ${current}`);
     }
@@ -198,7 +221,8 @@ module.exports = {
   runInit,
   loadManifest,
   validateManifest,
-  getEntryFilesForTool,
+  getEntryFilesForAgent,
+  createStatus,
   renderTemplate,
   ensureDir,
   writeFile,

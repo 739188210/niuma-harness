@@ -1,5 +1,5 @@
 const readline = require('readline');
-const { normalizeTool } = require('./args');
+const { normalizeAgent } = require('./args');
 
 function ask(question) {
   const rl = readline.createInterface({
@@ -15,19 +15,19 @@ function ask(question) {
   });
 }
 
-async function chooseTool(tool) {
-  const normalized = normalizeTool(tool);
+async function chooseAgent(agent) {
+  const normalized = normalizeAgent(agent);
   if (normalized) {
     return normalized;
   }
 
   if (!process.stdin.isTTY) {
-    throw new Error('Missing --tool. Use --tool claude, --tool codex, --tool opencode, or --tool multi.');
+    throw new Error('Missing --agent. Use --agent claude, --agent codex, --agent opencode, or --agent multi.');
   }
 
   while (true) {
     const answer = await ask([
-      'Choose AI coding tool:',
+      'Choose AI coding agent:',
       '  1. claude   -> generate CLAUDE.md',
       '  2. codex    -> generate AGENTS.md',
       '  3. opencode -> generate AGENTS.md',
@@ -36,14 +36,14 @@ async function chooseTool(tool) {
     ].join('\n'));
 
     try {
-      return normalizeToolAlias(answer);
+      return normalizeAgentAlias(answer);
     } catch {
       console.log('Please enter claude, codex, opencode, multi, 1, 2, 3, or 4.');
     }
   }
 }
 
-function normalizeToolAlias(value) {
+function normalizeAgentAlias(value) {
   const normalized = String(value || '').trim().toLowerCase();
   const aliases = {
     1: 'claude',
@@ -52,10 +52,10 @@ function normalizeToolAlias(value) {
     4: 'multi',
   };
 
-  return normalizeTool(aliases[normalized] || normalized);
+  return normalizeAgent(aliases[normalized] || normalized);
 }
 
 module.exports = {
   ask,
-  chooseTool,
+  chooseAgent,
 };

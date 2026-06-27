@@ -1,11 +1,11 @@
-const SUPPORTED_TOOLS = new Set(['claude', 'codex', 'opencode', 'multi']);
+const SUPPORTED_AGENTS = new Set(['claude', 'codex', 'opencode', 'multi']);
 const SUPPORTED_RULES = new Set(['copy', 'empty']);
 
 function parseArgs(argv) {
   const options = {
     command: null,
     targetDir: null,
-    tool: null,
+    agent: null,
     rules: 'copy',
     harnessDir: 'harness',
     flat: false,
@@ -37,7 +37,7 @@ function parseArgs(argv) {
       continue;
     }
 
-    if (arg === '--tool' || arg === '--rules' || arg === '--harness-dir') {
+    if (arg === '--agent' || arg === '--tool' || arg === '--rules' || arg === '--harness-dir') {
       const value = argv[index + 1];
       if (!value || value.startsWith('-')) {
         throw new Error(`${arg} requires a value.`);
@@ -47,7 +47,7 @@ function parseArgs(argv) {
       continue;
     }
 
-    if (arg.startsWith('--tool=') || arg.startsWith('--rules=') || arg.startsWith('--harness-dir=')) {
+    if (arg.startsWith('--agent=') || arg.startsWith('--tool=') || arg.startsWith('--rules=') || arg.startsWith('--harness-dir=')) {
       const [name, value] = splitLongOption(arg);
       assignOption(options, name, value);
       continue;
@@ -70,7 +70,7 @@ function parseArgs(argv) {
     throw new Error(`Unexpected argument: ${arg}`);
   }
 
-  options.tool = normalizeTool(options.tool);
+  options.agent = normalizeAgent(options.agent);
   options.rules = normalizeRules(options.rules);
   options.harnessDir = normalizeHarnessDir(options.harnessDir);
 
@@ -78,8 +78,8 @@ function parseArgs(argv) {
 }
 
 function assignOption(options, name, value) {
-  if (name === 'tool') {
-    options.tool = value;
+  if (name === 'agent' || name === 'tool') {
+    options.agent = value;
     return;
   }
 
@@ -108,17 +108,17 @@ function splitLongOption(arg) {
   return [name, value];
 }
 
-function normalizeTool(tool) {
-  if (!tool) {
+function normalizeAgent(agent) {
+  if (!agent) {
     return null;
   }
 
-  const value = String(tool).trim().toLowerCase();
-  if (SUPPORTED_TOOLS.has(value)) {
+  const value = String(agent).trim().toLowerCase();
+  if (SUPPORTED_AGENTS.has(value)) {
     return value;
   }
 
-  throw new Error(`--tool must be one of: claude, codex, opencode, multi. Received: ${tool}`);
+  throw new Error(`--agent must be one of: claude, codex, opencode, multi. Received: ${agent}`);
 }
 
 function normalizeRules(rules) {
@@ -150,26 +150,36 @@ function normalizeHarnessDir(harnessDir) {
 function getHelpText() {
   return `Usage:
   niuma-harness init [target] [options]
+  niuma-harness doctor [target] [options]
+  niuma-harness check [target] [options]
 
-Options:
-  --tool <name>          claude | codex | opencode | multi
-  --harness-dir <name>   Directory to create inside target, default: harness
+Init options:
+  --agent <name>         claude | codex | opencode | multi
+  --tool <name>          Alias for --agent
+  --harness-dir <name>   Directory to create, default: harness
   --rules <mode>         copy | empty, default: copy
   --flat                 Write directly into target instead of target/harness
   --force                Overwrite existing scaffold files
   --dry-run              Print planned actions without writing files
+
+Doctor/check options:
+  --harness-dir <name>   Directory to inspect, default: harness
+
+Global options:
   -h, --help             Show help
 
 Examples:
-  niuma-harness init . --tool claude
-  niuma-harness init D:\\work\\app --tool codex --rules empty
-  niuma-harness init . --tool multi --harness-dir ai-harness
-  niuma-harness init . --tool opencode --flat --dry-run`;
+  niuma-harness init . --agent claude
+  niuma-harness init D:\\work\\app --agent codex --rules empty
+  niuma-harness init . --agent multi --harness-dir ai-harness
+  niuma-harness init . --agent opencode --flat --dry-run
+  niuma-harness doctor .
+  niuma-harness check . --harness-dir ai-harness`;
 }
 
 module.exports = {
   parseArgs,
-  normalizeTool,
+  normalizeAgent,
   normalizeRules,
   normalizeHarnessDir,
   getHelpText,

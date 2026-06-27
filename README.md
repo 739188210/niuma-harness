@@ -1,16 +1,17 @@
 # Niuma Harness
 
-Initialize an AI engineering harness for a project workspace.
+Initialize and check a 7-layer AI engineering harness for a project workspace.
 
-Niuma Harness creates a lightweight documentation scaffold that helps AI coding tools understand project context, rules, workflows, and task notes.
+Niuma Harness creates a lightweight documentation scaffold that helps AI coding tools understand project context, policies, workflows, observation checks, recovery paths, memory rules, loop behavior, and task notes. It also writes a small `manifest.json` so the scaffold can be checked later.
 
 ## Quick start
 
 ```bash
-npx niuma-harness init . --tool claude
+npx niuma-harness init . --agent claude
+npx niuma-harness doctor .
 ```
 
-Interactive mode is available when `--tool` is omitted in a TTY:
+Interactive mode is available when `--agent` is omitted in a TTY:
 
 ```bash
 npx niuma-harness init
@@ -20,33 +21,49 @@ npx niuma-harness init
 
 ```bash
 niuma-harness init [target] [options]
+niuma-harness doctor [target] [options]
+niuma-harness check [target] [options]
 ```
 
-### Options
+### Init options
 
 | Option | Description |
 |---|---|
-| `--tool <name>` | `claude`, `codex`, `opencode`, or `multi` |
-| `--harness-dir <name>` | Directory to create inside target, default: `harness` |
+| `--agent <name>` | `claude`, `codex`, `opencode`, or `multi` |
+| `--tool <name>` | Alias for `--agent` |
+| `--harness-dir <name>` | Directory to create, default: `harness` |
 | `--rules <mode>` | `copy` or `empty`, default: `copy` |
 | `--flat` | Write directly into target instead of `target/harness` |
 | `--force` | Overwrite existing scaffold files |
 | `--dry-run` | Print planned actions without writing files |
+
+### Doctor/check options
+
+| Option | Description |
+|---|---|
+| `--harness-dir <name>` | Directory to inspect, default: `harness` |
+
+### Global options
+
+| Option | Description |
+|---|---|
 | `-h`, `--help` | Show help |
 
 ## Examples
 
 ```bash
-npx niuma-harness init . --tool claude
-npx niuma-harness init ./workspace --tool codex --rules empty
-npx niuma-harness init ./workspace --tool opencode --dry-run
-npx niuma-harness init ./workspace --tool multi --harness-dir ai-harness
-npx niuma-harness init ./workspace --tool claude --flat
+npx niuma-harness init . --agent claude
+npx niuma-harness init ./workspace --agent codex --rules empty
+npx niuma-harness init ./workspace --agent opencode --dry-run
+npx niuma-harness init ./workspace --agent multi --harness-dir ai-harness
+npx niuma-harness init ./workspace --agent claude --flat
+npx niuma-harness doctor ./workspace
+npx niuma-harness check ./workspace --harness-dir ai-harness
 ```
 
-## Tool modes
+## Agent modes
 
-| Tool | Generated entry file |
+| Agent | Generated entry file |
 |---|---|
 | `claude` | `CLAUDE.md` |
 | `codex` | `AGENTS.md` |
@@ -60,11 +77,27 @@ Default output:
 ```text
 workspace/
   harness/
+    manifest.json
     CLAUDE.md or AGENTS.md
     HARNESS_GUIDE.md
     docs/
       index.md
       project-context.md
+      layers/
+        01-context/
+          memo.md
+        02-policy/
+          memo.md
+        03-process/
+          memo.md
+        04-observation/
+          memo.md
+        05-recovery/
+          memo.md
+        06-memory/
+          memo.md
+        07-loop/
+          memo.md
       automation/
         hooks.md
       process/
@@ -82,18 +115,69 @@ workspace/
 
 Use `--flat` to write the same scaffold directly into the target directory instead of creating `harness/`.
 
+## 7-layer architecture
+
+The generated `docs/layers/` directory is the AI agent operating model:
+
+| Layer | Memo | Purpose |
+|---|---|---|
+| Context | `docs/layers/01-context/memo.md` | What the agent should understand before acting |
+| Policy | `docs/layers/02-policy/memo.md` | What the agent may do, must not do, or must ask about |
+| Process | `docs/layers/03-process/memo.md` | How different task types move from request to delivery |
+| Observation | `docs/layers/04-observation/memo.md` | How the agent verifies whether the current state is good |
+| Recovery | `docs/layers/05-recovery/memo.md` | How the agent responds when work fails or becomes unclear |
+| Memory | `docs/layers/06-memory/memo.md` | What should be preserved and what should stay task-local |
+| Loop | `docs/layers/07-loop/memo.md` | How the agent continues, pauses, recovers, or stops |
+
+The layer memos describe what each layer must do. The existing `docs/process/`, `docs/rules/`, `docs/automation/`, and `docs/tasks/` directories remain the starter execution materials referenced by those layers.
+
+## Manifest
+
+`manifest.json` records the expected harness shape for later checks:
+
+```json
+{
+  "schemaVersion": 1,
+  "agent": "claude",
+  "rules": "copy",
+  "harnessDir": "harness",
+  "flat": false,
+  "entryFiles": ["CLAUDE.md"],
+  "createdBy": "niuma-harness",
+  "createdAt": "2026-06-27T00:00:00.000Z"
+}
+```
+
+This project-level `manifest.json` is generated inside the harness root. It is separate from the package-internal `templates/manifest.json` used by the CLI to know which template files to copy.
+
+Existing files are skipped by default. Use `--force` only when you want to overwrite scaffold files, including `manifest.json`.
+
+## Doctor
+
+`doctor` checks the generated harness without modifying files:
+
+```bash
+npx niuma-harness doctor .
+npx niuma-harness check .
+npx niuma-harness doctor . --harness-dir ai-harness
+```
+
+The command looks for `manifest.json` in the target directory, then in `target/harness` or the directory named by `--harness-dir`. It exits with code `0` when checks pass and `1` when required files, 7-layer memos, or manifest fields are invalid.
+
+Harnesses generated before the 7-layer structure may fail `doctor` until they are updated with the new scaffold files.
+
 ## Rules mode
 
 `--rules copy` is the default and creates starter rule content.
 
 ```bash
-npx niuma-harness init . --tool claude --rules copy
+npx niuma-harness init . --agent claude --rules copy
 ```
 
-`--rules empty` creates the same rule files with empty content, useful when a team wants to fill its own rules from scratch.
+`--rules empty` creates the same rule files with empty content, useful when a team wants to fill its own rules from scratch. Layer memos are not rule files and are still generated with starter content.
 
 ```bash
-npx niuma-harness init . --tool claude --rules empty
+npx niuma-harness init . --agent claude --rules empty
 ```
 
 ## Development
@@ -101,5 +185,6 @@ npx niuma-harness init . --tool claude --rules empty
 ```bash
 npm test
 npm run pack:dry
-node bin/niuma-harness.js init . --tool claude --dry-run
+node bin/niuma-harness.js init . --agent claude --dry-run
+node bin/niuma-harness.js doctor .
 ```

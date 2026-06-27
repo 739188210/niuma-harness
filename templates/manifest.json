@@ -2,6 +2,14 @@
   "directories": [
     "docs",
     "docs/automation",
+    "docs/layers",
+    "docs/layers/01-context",
+    "docs/layers/02-policy",
+    "docs/layers/03-process",
+    "docs/layers/04-observation",
+    "docs/layers/05-recovery",
+    "docs/layers/06-memory",
+    "docs/layers/07-loop",
     "docs/process",
     "docs/rules",
     "docs/rules/common",
@@ -19,6 +27,34 @@
     {
       "target": "docs/project-context.md",
       "template": "core/docs/project-context.md"
+    },
+    {
+      "target": "docs/layers/01-context/memo.md",
+      "template": "core/docs/layers/01-context/memo.md"
+    },
+    {
+      "target": "docs/layers/02-policy/memo.md",
+      "template": "core/docs/layers/02-policy/memo.md"
+    },
+    {
+      "target": "docs/layers/03-process/memo.md",
+      "template": "core/docs/layers/03-process/memo.md"
+    },
+    {
+      "target": "docs/layers/04-observation/memo.md",
+      "template": "core/docs/layers/04-observation/memo.md"
+    },
+    {
+      "target": "docs/layers/05-recovery/memo.md",
+      "template": "core/docs/layers/05-recovery/memo.md"
+    },
+    {
+      "target": "docs/layers/06-memory/memo.md",
+      "template": "core/docs/layers/06-memory/memo.md"
+    },
+    {
+      "target": "docs/layers/07-loop/memo.md",
+      "template": "core/docs/layers/07-loop/memo.md"
     },
     {
       "target": "docs/process/task-triage.md",
