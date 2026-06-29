@@ -43,4 +43,4 @@ Use this layer before declaring work complete, after any code or documentation c
 - Policy: `docs/layers/02-policy/memo.md`
 - Process: `docs/layers/03-process/memo.md`
 - Recovery: `docs/layers/05-recovery/memo.md`
-- Task notes: `docs/tasks/README.md`
+- Task work area: `agent-work/`

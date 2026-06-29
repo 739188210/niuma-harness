@@ -1,0 +1,58 @@
+// 读取并校验包内 templates/manifest.json，确保模板声明不能越界。
+const fs = require('fs');
+const path = require('path');
+const { safeResolveInside, validateRelativePath } = require('../fs-safe');
+
+const ROOT_DIR = path.resolve(__dirname, '..', '..');
+const TEMPLATE_DIR = path.join(ROOT_DIR, 'templates');
+const MANIFEST_PATH = path.join(TEMPLATE_DIR, 'manifest.json');
+
+function loadManifest() {
+  return JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
+}
+
+// 先验证模板清单自身，避免坏 manifest 驱动后续写入。
+function validateManifest(manifest) {
+  validateDirectories(manifest);
+  validateRulesRoot(manifest.rulesRoot);
+  validateTemplateFiles(manifest);
+}
+
+function validateDirectories(manifest) {
+  for (const directory of manifest.directories || []) {
+    validateRelativePath(directory, 'manifest directory');
+  }
+
+  for (const directory of manifest.workDirectories || []) {
+    validateRelativePath(directory, 'manifest work directory');
+  }
+
+  if (manifest.workDirectory) {
+    validateRelativePath(manifest.workDirectory, 'manifest work directory');
+  }
+}
+
+function validateRulesRoot(rulesRoot) {
+  if (!rulesRoot) {
+    return;
+  }
+
+  validateRelativePath(rulesRoot, 'manifest rules root');
+  safeResolveInside(TEMPLATE_DIR, rulesRoot, 'manifest rules root');
+}
+
+function validateTemplateFiles(manifest) {
+  for (const file of [...(manifest.templateFiles || []), ...(manifest.workTemplateFiles || [])]) {
+    validateRelativePath(file.target, 'manifest target');
+    validateRelativePath(file.template, 'manifest template');
+    safeResolveInside(TEMPLATE_DIR, file.template, 'manifest template');
+  }
+}
+
+module.exports = {
+  ROOT_DIR,
+  TEMPLATE_DIR,
+  MANIFEST_PATH,
+  loadManifest,
+  validateManifest,
+};

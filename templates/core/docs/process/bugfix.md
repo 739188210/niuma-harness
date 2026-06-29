@@ -1,19 +1,39 @@
 # Bugfix Process
 
+Use this playbook to fix a defect with evidence that the behavior is corrected and existing behavior is not unexpectedly broken.
+
+This is a concrete playbook selected by the Process layer. Use `docs/layers/03-process/memo.md` for routing rules and this file for bugfix execution.
+
 ## Goal
 
-Fix a defect with evidence that the behavior is corrected and existing behavior is not unexpectedly broken.
+Repair the smallest relevant cause of a defect and verify the corrected behavior.
 
 ## Steps
 
-1. Understand the symptom and expected behavior.
-2. Locate the relevant code path.
-3. Reproduce the issue with a test, command, or manual steps when practical.
-4. Implement the smallest safe fix.
-5. Run focused verification.
-6. Run broader regression checks when the touched area is shared.
-7. Report root cause, changed files, verification result, and residual risk.
+1. Load Context: read `docs/index.md`, `docs/project-context.md`, and the affected source or test files.
+2. Check Policy: pause before changing public contracts, data behavior, security-sensitive code, dependencies, or user-owned work.
+3. Understand the symptom, expected behavior, and current behavior.
+4. Reproduce the issue with a test, command, log, or manual steps when practical.
+5. Identify the first root cause instead of chasing downstream symptoms.
+6. Implement the smallest safe fix.
+7. Observe: run the focused verification that proves the bug is fixed.
+8. Run broader checks when the touched area is shared or high risk.
+9. Record what changed, what passed, what failed, what was skipped, and remaining risk.
 
-## Notes
+## Recovery
 
-If reproduction is not possible in the current environment, document the missing condition and the exact verification steps to run later.
+Use `docs/layers/05-recovery/memo.md` when reproduction fails, tests fail, commands fail, context is missing, or a fix attempt does not work.
+
+Do not delete failing tests, weaken assertions, disable checks, or keep retrying the same approach without new evidence.
+
+## Memory
+
+Use `docs/layers/06-memory/memo.md` before preserving any new project fact. Keep temporary debugging notes in the workspace-level `agent-work/` directory; write only verified durable facts to `docs/project-context.md`.
+
+## Outputs
+
+- Root cause or best verified explanation.
+- Files changed.
+- Verification evidence.
+- Skipped checks and why.
+- Remaining risk or follow-up.

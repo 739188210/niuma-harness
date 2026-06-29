@@ -22,7 +22,7 @@ Layer memos define how agents use each capability. They do not replace the conte
 
 ## Runtime entry
 
-For task execution, agents should start at `docs/index.md`. That runtime map points to the stable project facts, layer protocols, task playbooks, engineering rules, and task notes.
+For task execution, agents should start at `docs/index.md`. That runtime map points to the stable project facts, layer protocols, task playbooks, engineering rules, automation intent, and the workspace-level `agent-work/` task area.
 
 If project-specific facts are incomplete, agents should inspect the current workspace and update durable facts only when verified. The harness should be useful immediately after init; it should not depend on a human filling every placeholder before agents can begin.
 
@@ -32,10 +32,49 @@ If project-specific facts are incomplete, agents should inspect the current work
 - `docs/project-context.md`: verified stable project facts, not task-local notes.
 - `docs/layers/`: 7-layer harness protocols and agent operating model.
 - `docs/process/`: concrete task playbooks selected by the Process layer.
-- `docs/rules/`: engineering standards for coding, testing, and security.
+- `docs/rules/`: optional engineering standards selected during init.
 - `docs/automation/`: automation and hook intent notes.
-- `docs/tasks/`: task records and handoff notes.
+- `agent-work/`: workspace-level task-local records and verification evidence.
+
+## What changes after init
+
+### Usually stable scaffold files
+
+These files define how the harness works. They should not change during normal task execution:
+
+- `HARNESS_GUIDE.md`
+- `docs/index.md`
+- `docs/layers/`
+- `docs/process/`
+- `manifest.json`
+
+`manifest.json` is tool-managed state for `doctor/check`; do not edit it by hand unless you know why.
+
+### Project-maintained files
+
+These files may evolve as the project, team, and tool environment become clearer:
+
+- `docs/project-context.md`: verified stable project facts.
+- `docs/rules/`: selected or team-maintained engineering standards.
+- `docs/automation/hooks.md`: verified automation intent.
+- `CLAUDE.md` / `AGENTS.md`: thin tool entry adapters.
+
+Do not use these files for temporary task notes or one-off debugging logs.
+
+### Runtime-generated task files
+
+Agents may create task-local records under `agent-work/tasks/` during multi-step work:
+
+```text
+agent-work/tasks/<task-name>/
+  context.md
+  plan.md
+  verification.md
+  notes.md
+```
+
+These files hold task-local memory, verification evidence, and handoff state. Durable project facts should move through the Memory layer before being recorded in `docs/project-context.md`.
 
 ## Maintenance rule
 
-Keep long-lived verified facts in `docs/project-context.md`. Keep temporary investigation notes in `docs/tasks/` or another task-local location.
+Keep long-lived verified facts in `docs/project-context.md`. Keep temporary investigation notes in `agent-work/`.

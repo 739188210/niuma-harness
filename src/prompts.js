@@ -1,5 +1,5 @@
 const readline = require('readline');
-const { normalizeAgent } = require('./args');
+const { normalizeAgent } = require('./agents');
 
 function ask(question) {
   const rl = readline.createInterface({

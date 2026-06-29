@@ -1,0 +1,14 @@
+// 最后写入生成态 manifest.json，doctor 后续依赖它判断 harness 形状。
+const { STATUS_FILE, createStatus } = require('../harness-status');
+const { safeResolveInside, writeFile } = require('../fs-safe');
+
+function writeStatusFile(context) {
+  const { options, targetDir, workDirectory, printAction } = context;
+  const statusPath = safeResolveInside(targetDir, STATUS_FILE, 'status target');
+  const statusContent = `${JSON.stringify(createStatus(options, { workDirectory }), null, 2)}\n`;
+  printAction(writeFile(statusPath, statusContent, options), statusPath);
+}
+
+module.exports = {
+  writeStatusFile,
+};

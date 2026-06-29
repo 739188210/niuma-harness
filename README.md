@@ -32,7 +32,8 @@ niuma-harness check [target] [options]
 | `--agent <name>` | `claude`, `codex`, `opencode`, or `multi` |
 | `--tool <name>` | Alias for `--agent` |
 | `--harness-dir <name>` | Directory to create, default: `harness` |
-| `--rules <mode>` | `copy` or `empty`, default: `copy` |
+| `--rules <selection>` | `common`, `all`, `none`, or `<rule-dir>[,<rule-dir>...]`, default: `common` |
+| `--rules-out <selection>` | Exclude selected rule directories from `all` |
 | `--flat` | Write directly into target instead of `target/harness` |
 | `--force` | Overwrite existing scaffold files |
 | `--dry-run` | Print planned actions without writing files |
@@ -53,7 +54,10 @@ niuma-harness check [target] [options]
 
 ```bash
 npx niuma-harness init . --agent claude
-npx niuma-harness init ./workspace --agent codex --rules empty
+npx niuma-harness init ./workspace --agent codex --rules java,web
+npx niuma-harness init ./workspace --agent claude --rules none
+npx niuma-harness init ./workspace --agent claude --rules all
+npx niuma-harness init ./workspace --agent claude --rules-out web
 npx niuma-harness init ./workspace --agent opencode --dry-run
 npx niuma-harness init ./workspace --agent multi --harness-dir ai-harness
 npx niuma-harness init ./workspace --agent claude --flat
@@ -105,15 +109,17 @@ workspace/
         bugfix.md
         feature-development.md
       rules/
+        # Optional rule directories selected by --rules or --rules-out
         common/
           coding-style.md
           testing.md
           security.md
-      tasks/
-        README.md
+  agent-work/
+    README.md
+    tasks/
 ```
 
-Use `--flat` to write the same scaffold directly into the target directory instead of creating `harness/`.
+Use `--flat` to write the harness scaffold directly into the target directory. Runtime task records still live under `agent-work/`.
 
 ## 7-layer architecture
 
@@ -129,7 +135,7 @@ The generated `docs/layers/` directory is the AI agent operating model:
 | Memory | `docs/layers/06-memory/memo.md` | What should be preserved and what should stay task-local |
 | Loop | `docs/layers/07-loop/memo.md` | How the agent continues, pauses, recovers, or stops |
 
-The layer memos describe what each layer must do. The existing `docs/process/`, `docs/rules/`, `docs/automation/`, and `docs/tasks/` directories remain the starter execution materials referenced by those layers.
+The layer memos describe what each layer must do. The existing `docs/process/`, optional `docs/rules/`, and `docs/automation/` directories remain the starter execution materials referenced by those layers. Runtime task records live in the workspace-level `agent-work/` directory.
 
 ## Manifest
 
@@ -139,9 +145,10 @@ The layer memos describe what each layer must do. The existing `docs/process/`, 
 {
   "schemaVersion": 1,
   "agent": "claude",
-  "rules": "copy",
+  "rules": ["common"],
   "harnessDir": "harness",
   "flat": false,
+  "workDir": "agent-work",
   "entryFiles": ["CLAUDE.md"],
   "createdBy": "niuma-harness",
   "createdAt": "2026-06-27T00:00:00.000Z"
@@ -166,18 +173,32 @@ The command looks for `manifest.json` in the target directory, then in `target/h
 
 Harnesses generated before the 7-layer structure may fail `doctor` until they are updated with the new scaffold files.
 
-## Rules mode
+## Rules selection
 
-`--rules copy` is the default and creates starter rule content.
+`--rules common` is the default and installs only the `common` rule directory.
 
 ```bash
-npx niuma-harness init . --agent claude --rules copy
+npx niuma-harness init . --agent claude --rules common
 ```
 
-`--rules empty` creates the same rule files with empty content, useful when a team wants to fill its own rules from scratch. Layer memos are not rule files and are still generated with starter content.
+Install exactly the rule directories you want with a comma-separated list. Selecting `java,web` does not include `common`; include `common` explicitly when needed.
 
 ```bash
-npx niuma-harness init . --agent claude --rules empty
+npx niuma-harness init . --agent claude --rules java,web
+npx niuma-harness init . --agent claude --rules common,java,web
+```
+
+Use `all` to install every available rule directory, or `none` to install no rule files.
+
+```bash
+npx niuma-harness init . --agent claude --rules all
+npx niuma-harness init . --agent claude --rules none
+```
+
+Use `--rules-out` to install all available rule directories except the listed ones.
+
+```bash
+npx niuma-harness init . --agent claude --rules-out web
 ```
 
 ## Development

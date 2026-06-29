@@ -1,4 +1,6 @@
-const { parseArgs, getHelpText } = require('./args');
+// CLI 入口只做命令分发，具体行为委托给 init/doctor 模块。
+const { parseArgs } = require('./args');
+const { getHelpText } = require('./help');
 const { chooseAgent } = require('./prompts');
 const { runDoctor } = require('./doctor');
 const { runInit } = require('./scaffold');

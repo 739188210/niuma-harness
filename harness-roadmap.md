@@ -37,8 +37,8 @@ CLAUDE.md / AGENTS.md
       -> docs/layers/
       -> docs/process/
       -> docs/rules/
-      -> docs/tasks/
       -> docs/automation/
+  -> agent-work/
 ```
 
 ### Responsibility map
@@ -51,10 +51,42 @@ CLAUDE.md / AGENTS.md
 | `docs/layers/` | 7-layer agent operating protocols. |
 | `docs/process/` | Concrete task playbooks selected by the Process layer. |
 | `docs/rules/` | Engineering standards for coding, testing, and security. |
-| `docs/tasks/` | Task-local memory, plans, verification evidence, and handoff notes. |
+| `agent-work/` | Workspace-level task-local memory, plans, verification evidence, and handoff notes. |
 | `docs/automation/` | Verified automation intent, hooks, and CI notes. |
 | `HARNESS_GUIDE.md` | Human-facing structure and maintenance guide. |
 | `manifest.json` | Generated harness status file used by `doctor/check`. |
+
+### Post-init file roles
+
+Generated files fall into three maintenance categories.
+
+Usually stable scaffold files define how the harness works and should not change during normal task execution:
+
+- `HARNESS_GUIDE.md`
+- `docs/index.md`
+- `docs/layers/`
+- `docs/process/`
+- `agent-work/README.md`
+- `manifest.json`
+
+Project-maintained files may evolve as the project, team, and tool environment become clearer:
+
+- `docs/project-context.md`: verified stable project facts.
+- `docs/rules/`: team engineering standards.
+- `docs/automation/hooks.md`: verified automation intent.
+- `CLAUDE.md` / `AGENTS.md`: thin tool entry adapters.
+
+Runtime-generated task files are created under `agent-work/tasks/` during multi-step work:
+
+```text
+agent-work/tasks/<task-name>/
+  context.md
+  plan.md
+  verification.md
+  notes.md
+```
+
+Task files hold task-local memory, verification evidence, and handoff state. Durable project facts should move through the Memory layer before being recorded in `docs/project-context.md`.
 
 ## 7-layer architecture
 
@@ -93,7 +125,8 @@ Capabilities:
 - `--agent claude|codex|opencode|multi`
 - `--tool` as an alias for `--agent`
 - `--harness-dir <name>`
-- `--rules copy|empty`
+- `--rules all|none|common|<rule-dir>[,<rule-dir>...]`
+- `--rules-out <rule-dir>[,<rule-dir>...]`
 - `--flat`
 - `--force`
 - `--dry-run`
@@ -106,7 +139,8 @@ Generated structure:
 - `docs/project-context.md`
 - `docs/process/`
 - `docs/rules/`
-- `docs/tasks/`
+- `agent-work/README.md`
+- `agent-work/tasks/`
 
 Verification:
 
@@ -236,7 +270,7 @@ Known remaining work:
 
 - `docs/automation/hooks.md` still needs to become verified automation intent rather than a fill-in command table.
 - `docs/process/*` should align more clearly with the 7 layers.
-- `docs/tasks/README.md` should align with task-local memory and verification evidence.
+- `agent-work/README.md` should align with task-local memory and verification evidence.
 
 ### Phase 5: Playbook alignment
 
@@ -247,14 +281,14 @@ Target files:
 - `docs/process/task-triage.md`
 - `docs/process/bugfix.md`
 - `docs/process/feature-development.md`
-- `docs/tasks/README.md`
+- `agent-work/README.md`
 - `docs/automation/hooks.md`
 - optionally `docs/rules/common/*.md`
 
 Expected direction:
 
 - `docs/process/*` should reference Context, Policy, Observation, Recovery, Memory, and Loop where relevant.
-- `docs/tasks/README.md` should define task-local memory and verification evidence.
+- `agent-work/README.md` should define task-local memory and verification evidence.
 - `docs/automation/hooks.md` should record verified automation intent and avoid invented commands.
 - Rules should remain engineering standards, not layer protocols.
 
@@ -326,7 +360,7 @@ Expected agent behavior:
 - Route through Process: feature development.
 - Check Policy for API, dependency, data, and security risks.
 - Use Observation for verification.
-- Use Tasks for multi-step notes when needed.
+- Use `agent-work/tasks/` for multi-step notes when needed.
 
 Scenario 4: Failure recovery
 
@@ -380,7 +414,8 @@ Completed or mostly complete:
 
 - Base CLI scaffold.
 - `--agent` and `--tool` alias support.
-- `--rules copy|empty`.
+- `--rules all|none|common|<rule-dir>[,<rule-dir>...]`
+- `--rules-out <rule-dir>[,<rule-dir>...]`.
 - `--flat`, `--force`, `--dry-run`.
 - Runtime `manifest.json` generation.
 - `doctor/check` read-only health checks.

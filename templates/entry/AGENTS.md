@@ -10,8 +10,8 @@ For task work, start from the runtime map:
 2. Use `docs/project-context.md` for stable project facts.
 3. Follow the operating protocols in `docs/layers/`.
 4. Use `docs/process/` for concrete task playbooks.
-5. Use `docs/rules/` for engineering standards.
-6. Record multi-step task state in `docs/tasks/`.
+5. Use `docs/rules/` for engineering standards when rule files are installed.
+6. Record multi-step task state in the workspace-level `agent-work/` directory.
 
 If project context is incomplete, inspect the current workspace before acting. Do not guess missing facts.
 

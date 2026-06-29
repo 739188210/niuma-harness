@@ -12,7 +12,7 @@ Use this layer after discovering verified stable facts, after finishing multi-st
 
 1. Separate stable project facts from temporary task observations.
 2. Verify facts against current files or user confirmation before preserving them.
-3. Keep task-local investigation details in `docs/tasks/` or the current task record.
+3. Keep task-local investigation details in the workspace-level `agent-work/` directory or the current task record.
 4. Propose updates to `docs/project-context.md` only for durable, reusable facts.
 5. Do not store secrets, private data, or unverified guesses.
 
@@ -44,4 +44,4 @@ Use this layer after discovering verified stable facts, after finishing multi-st
 - Recovery: `docs/layers/05-recovery/memo.md`
 - Loop: `docs/layers/07-loop/memo.md`
 - Stable facts: `docs/project-context.md`
-- Task notes: `docs/tasks/README.md`
+- Task work area: `agent-work/`
