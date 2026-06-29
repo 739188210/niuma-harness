@@ -152,7 +152,14 @@ node bin/niuma-harness.js init <tmp> --agent claude --dry-run
 npm run pack:dry
 ```
 
-Status: mostly complete.
+Status: complete.
+
+Recent completion notes:
+
+- Rule selection now supports `all`, `none`, exact rule directories, and `--rules-out`.
+- `--force` re-init converges selected known rule packs by removing unselected generated rule files.
+- CLI implementation and tests were split into smaller focused modules.
+- Full CLI tests, check alias, package dry-run, help output, and init/doctor smoke tests pass.
 
 ### Phase 2: Checkable harness
 
@@ -264,11 +271,11 @@ Manual review:
 - `docs/project-context.md` is a verified facts file.
 - `HARNESS_GUIDE.md` is not a fill-in checklist.
 
-Status: in progress, mostly complete.
+Status: complete for base runtime docs; remaining alignment moves to Phase 5.
 
-Known remaining work:
+Carried into Phase 5:
 
-- `docs/automation/hooks.md` still needs to become verified automation intent rather than a fill-in command table.
+- `docs/automation/hooks.md` should become verified automation intent rather than a fill-in command table.
 - `docs/process/*` should align more clearly with the 7 layers.
 - `agent-work/README.md` should align with task-local memory and verification evidence.
 
@@ -307,7 +314,17 @@ Manual review:
 - Automation docs do not suggest unverified commands.
 - Task docs clearly separate task-local notes from durable project facts.
 
-Status: next recommended implementation phase.
+Status: current implementation phase.
+
+Recommended task order:
+
+1. Review generated process playbooks for 7-layer alignment gaps.
+2. Align `docs/process/task-triage.md` as the routing playbook.
+3. Align `docs/process/bugfix.md` around reproduction, root cause, minimal fix, and evidence.
+4. Align `docs/process/feature-development.md` around acceptance criteria, smallest safe slice, and pause points.
+5. Align `agent-work/README.md` with task-local memory and verification evidence.
+6. Align `docs/automation/hooks.md` with verified automation intent.
+7. Re-run generated harness smoke tests and manual review for placeholder-style language.
 
 ### Phase 6: Scenario validation
 
@@ -410,19 +427,24 @@ npm run pack:dry
 
 ## Current status
 
-Completed or mostly complete:
+Completed:
 
 - Base CLI scaffold.
 - `--agent` and `--tool` alias support.
-- `--rules all|none|common|<rule-dir>[,<rule-dir>...]`
+- `--rules all|none|common|<rule-dir>[,<rule-dir>...]`.
 - `--rules-out <rule-dir>[,<rule-dir>...]`.
 - `--flat`, `--force`, `--dry-run`.
+- `--force` rule re-init convergence for known generated rule packs.
 - Runtime `manifest.json` generation.
 - `doctor/check` read-only health checks.
 - 7-layer `docs/layers/` skeleton.
 - Strengthened 7 layer memos.
 - Clear boundary between layer protocols and content files.
 - Runtime docs direction for entry files, index, project context, and guide.
+- JS implementation split into focused modules under `src/scaffold/`, `src/doctor/`, and shared helpers.
+- CLI tests split into focused files with `test/cli.test.js` as the aggregator.
+- Source comments added in Chinese for key modules and intent.
+- Full verification passed: `npm test`, `npm run check`, `npm run pack:dry`, help output, and init/doctor smoke tests.
 
 In progress / next:
 

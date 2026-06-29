@@ -102,6 +102,7 @@ function printAction(action, targetPath) {
   const label = {
     create: 'CREATE',
     overwrite: 'OVERWRITE',
+    remove: 'REMOVE',
     skip: 'SKIP',
   }[action] || action.toUpperCase();
 

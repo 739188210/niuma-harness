@@ -3,7 +3,7 @@ const { normalizeAgent } = require('./agents');
 const { getHelpText } = require('./help');
 const { DEFAULT_RULES_SELECTION, normalizeRules, normalizeRulesOut } = require('./rules');
 
-// 解析阶段不访问文件系统，只做参数形态和互斥关系校验。
+// 解析阶段会规范化 agent/rules，并读取本地规则目录来校验选择值。
 function parseArgs(argv) {
   const options = {
     command: null,

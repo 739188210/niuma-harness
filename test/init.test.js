@@ -103,6 +103,44 @@ for (const agent of ['codex', 'opencode']) {
   assert.strictEqual(doctor.status, 0, doctor.stderr);
 }
 
+{
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const harnessRoot = path.join(workspace, 'harness');
+  assertRuleDirs(harnessRoot, ['common']);
+
+  result = run(['init', workspace, '--agent', 'claude', '--rules', 'none', '--force']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertRuleDirs(harnessRoot, []);
+  assertManifest(path.join(harnessRoot, 'manifest.json'), {
+    agent: 'claude',
+    rules: [],
+    entryFiles: ['CLAUDE.md'],
+  });
+  const doctor = run(['doctor', workspace]);
+  assert.strictEqual(doctor.status, 0, doctor.stderr);
+}
+
+{
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'claude', '--rules', 'all']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const harnessRoot = path.join(workspace, 'harness');
+  assertRuleDirs(harnessRoot, allRuleDirs);
+
+  result = run(['init', workspace, '--agent', 'claude', '--rules', 'java', '--force']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertRuleDirs(harnessRoot, ['java']);
+  assertManifest(path.join(harnessRoot, 'manifest.json'), {
+    agent: 'claude',
+    rules: ['java'],
+    entryFiles: ['CLAUDE.md'],
+  });
+  const doctor = run(['doctor', workspace]);
+  assert.strictEqual(doctor.status, 0, doctor.stderr);
+}
+
 for (const scenario of [
   { rules: 'java', expected: ['java'] },
   { rules: 'java,web', expected: ['java', 'web'] },

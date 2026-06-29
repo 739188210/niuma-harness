@@ -117,6 +117,51 @@ function writeFile(filePath, content, options) {
   return 'create';
 }
 
+// 只删除 scaffold 已知的普通文件，避免跟随 symlink 或误删目录。
+function removeFile(filePath, options) {
+  assertNoSymlinkInPath(filePath);
+
+  if (!fs.existsSync(filePath)) {
+    return 'skip';
+  }
+
+  const stat = fs.lstatSync(filePath);
+  if (!stat.isFile()) {
+    throw new Error(`Path exists but is not a regular file: ${filePath}`);
+  }
+
+  if (!options.dryRun) {
+    fs.unlinkSync(filePath);
+  }
+
+  return 'remove';
+}
+
+// 清理删除文件后留下的空目录，但不会越过传入的 stopDir。
+function removeEmptyDirsUntil(dirPath, stopDir, dryRun) {
+  const resolvedDir = path.resolve(dirPath);
+  const resolvedStop = path.resolve(stopDir);
+  if (resolvedDir === resolvedStop || !resolvedDir.startsWith(`${resolvedStop}${path.sep}`)) {
+    return;
+  }
+
+  assertNoSymlinkInPath(resolvedDir);
+  if (!fs.existsSync(resolvedDir)) {
+    return;
+  }
+
+  const stat = fs.lstatSync(resolvedDir);
+  if (!stat.isDirectory() || fs.readdirSync(resolvedDir).length > 0) {
+    return;
+  }
+
+  if (!dryRun) {
+    fs.rmdirSync(resolvedDir);
+  }
+
+  removeEmptyDirsUntil(path.dirname(resolvedDir), resolvedStop, dryRun);
+}
+
 module.exports = {
   validateRelativePath,
   safeResolveInside,
@@ -124,4 +169,6 @@ module.exports = {
   listFilesRecursive,
   ensureDir,
   writeFile,
+  removeFile,
+  removeEmptyDirsUntil,
 };
