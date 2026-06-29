@@ -1,4 +1,9 @@
 {
+  "workDirectory": "agent-work",
+  "workDirectories": [
+    "agent-work",
+    "agent-work/tasks"
+  ],
   "directories": [
     "docs",
     "docs/automation",
@@ -11,9 +16,7 @@
     "docs/layers/06-memory",
     "docs/layers/07-loop",
     "docs/process",
-    "docs/rules",
-    "docs/rules/common",
-    "docs/tasks"
+    "docs/rules"
   ],
   "templateFiles": [
     {
@@ -71,24 +74,13 @@
     {
       "target": "docs/automation/hooks.md",
       "template": "core/docs/automation/hooks.md"
-    },
-    {
-      "target": "docs/tasks/README.md",
-      "template": "core/docs/tasks/README.md"
     }
   ],
-  "ruleFiles": [
+  "workTemplateFiles": [
     {
-      "target": "docs/rules/common/coding-style.md",
-      "template": "core/docs/rules/common/coding-style.md"
-    },
-    {
-      "target": "docs/rules/common/testing.md",
-      "template": "core/docs/rules/common/testing.md"
-    },
-    {
-      "target": "docs/rules/common/security.md",
-      "template": "core/docs/rules/common/security.md"
+      "target": "agent-work/README.md",
+      "template": "core/agent-work/README.md"
     }
-  ]
+  ],
+  "rulesRoot": "core/docs/rules"
 }

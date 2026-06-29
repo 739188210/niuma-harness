@@ -2,7 +2,7 @@
 
 This file stores verified stable facts about the project. It is maintained by agents and humans as durable project knowledge is discovered.
 
-Do not use this file for temporary investigation notes, unverified guesses, or task-local details. Put those in `docs/tasks/` or the current task record.
+Do not use this file for temporary investigation notes, unverified guesses, or task-local details. Put those in the workspace-level `agent-work/` directory or the current task record.
 
 ## How to maintain this file
 

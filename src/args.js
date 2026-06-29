@@ -1,12 +1,17 @@
-const SUPPORTED_AGENTS = new Set(['claude', 'codex', 'opencode', 'multi']);
-const SUPPORTED_RULES = new Set(['copy', 'empty']);
+// CLI 参数解析层：只负责把 argv 变成规范化 options。
+const { normalizeAgent } = require('./agents');
+const { getHelpText } = require('./help');
+const { DEFAULT_RULES_SELECTION, normalizeRules, normalizeRulesOut } = require('./rules');
 
+// 解析阶段不访问文件系统，只做参数形态和互斥关系校验。
 function parseArgs(argv) {
   const options = {
     command: null,
     targetDir: null,
     agent: null,
-    rules: 'copy',
+    rules: DEFAULT_RULES_SELECTION,
+    rulesOut: null,
+    rulesProvided: false,
     harnessDir: 'harness',
     flat: false,
     force: false,
@@ -37,7 +42,7 @@ function parseArgs(argv) {
       continue;
     }
 
-    if (arg === '--agent' || arg === '--tool' || arg === '--rules' || arg === '--harness-dir') {
+    if (arg === '--agent' || arg === '--tool' || arg === '--rules' || arg === '--rules-out' || arg === '--harness-dir') {
       const value = argv[index + 1];
       if (!value || value.startsWith('-')) {
         throw new Error(`${arg} requires a value.`);
@@ -47,7 +52,7 @@ function parseArgs(argv) {
       continue;
     }
 
-    if (arg.startsWith('--agent=') || arg.startsWith('--tool=') || arg.startsWith('--rules=') || arg.startsWith('--harness-dir=')) {
+    if (arg.startsWith('--agent=') || arg.startsWith('--tool=') || arg.startsWith('--rules=') || arg.startsWith('--rules-out=') || arg.startsWith('--harness-dir=')) {
       const [name, value] = splitLongOption(arg);
       assignOption(options, name, value);
       continue;
@@ -71,7 +76,14 @@ function parseArgs(argv) {
   }
 
   options.agent = normalizeAgent(options.agent);
-  options.rules = normalizeRules(options.rules);
+  if (options.rulesOut) {
+    if (options.rulesProvided) {
+      throw new Error('--rules and --rules-out cannot be used together.');
+    }
+    options.rules = normalizeRulesOut(options.rulesOut);
+  } else {
+    options.rules = normalizeRules(options.rules);
+  }
   options.harnessDir = normalizeHarnessDir(options.harnessDir);
 
   return options;
@@ -85,6 +97,12 @@ function assignOption(options, name, value) {
 
   if (name === 'rules') {
     options.rules = value;
+    options.rulesProvided = true;
+    return;
+  }
+
+  if (name === 'rules-out') {
+    options.rulesOut = value;
     return;
   }
 
@@ -108,28 +126,6 @@ function splitLongOption(arg) {
   return [name, value];
 }
 
-function normalizeAgent(agent) {
-  if (!agent) {
-    return null;
-  }
-
-  const value = String(agent).trim().toLowerCase();
-  if (SUPPORTED_AGENTS.has(value)) {
-    return value;
-  }
-
-  throw new Error(`--agent must be one of: claude, codex, opencode, multi. Received: ${agent}`);
-}
-
-function normalizeRules(rules) {
-  const value = String(rules || 'copy').trim().toLowerCase();
-  if (SUPPORTED_RULES.has(value)) {
-    return value;
-  }
-
-  throw new Error(`--rules must be one of: copy, empty. Received: ${rules}`);
-}
-
 function normalizeHarnessDir(harnessDir) {
   const value = String(harnessDir || 'harness').trim();
   if (!value) {
@@ -145,36 +141,6 @@ function normalizeHarnessDir(harnessDir) {
   }
 
   return value;
-}
-
-function getHelpText() {
-  return `Usage:
-  niuma-harness init [target] [options]
-  niuma-harness doctor [target] [options]
-  niuma-harness check [target] [options]
-
-Init options:
-  --agent <name>         claude | codex | opencode | multi
-  --tool <name>          Alias for --agent
-  --harness-dir <name>   Directory to create, default: harness
-  --rules <mode>         copy | empty, default: copy
-  --flat                 Write directly into target instead of target/harness
-  --force                Overwrite existing scaffold files
-  --dry-run              Print planned actions without writing files
-
-Doctor/check options:
-  --harness-dir <name>   Directory to inspect, default: harness
-
-Global options:
-  -h, --help             Show help
-
-Examples:
-  niuma-harness init . --agent claude
-  niuma-harness init D:\\work\\app --agent codex --rules empty
-  niuma-harness init . --agent multi --harness-dir ai-harness
-  niuma-harness init . --agent opencode --flat --dry-run
-  niuma-harness doctor .
-  niuma-harness check . --harness-dir ai-harness`;
 }
 
 module.exports = {
