@@ -127,7 +127,6 @@ Capabilities:
 - `--harness-dir <name>`
 - `--rules all|none|common|<rule-dir>[,<rule-dir>...]`
 - `--rules-out <rule-dir>[,<rule-dir>...]`
-- `--flat`
 - `--force`
 - `--dry-run`
 
@@ -314,17 +313,14 @@ Manual review:
 - Automation docs do not suggest unverified commands.
 - Task docs clearly separate task-local notes from durable project facts.
 
-Status: current implementation phase.
+Status: complete.
 
-Recommended task order:
+Completion notes:
 
-1. Review generated process playbooks for 7-layer alignment gaps.
-2. Align `docs/process/task-triage.md` as the routing playbook.
-3. Align `docs/process/bugfix.md` around reproduction, root cause, minimal fix, and evidence.
-4. Align `docs/process/feature-development.md` around acceptance criteria, smallest safe slice, and pause points.
-5. Align `agent-work/README.md` with task-local memory and verification evidence.
-6. Align `docs/automation/hooks.md` with verified automation intent.
-7. Re-run generated harness smoke tests and manual review for placeholder-style language.
+- `docs/process/task-triage.md`, `bugfix.md`, and `feature-development.md` reference Context, Policy, Observation, Recovery, Memory, and Loop where relevant.
+- `agent-work/README.md` defines task-local memory and verification evidence; stale flat-mode wording removed.
+- `docs/automation/hooks.md` records verified automation intent instead of fill-in command tables.
+- Process playbooks stay concrete while remaining connected to the 7-layer operating model.
 
 ### Phase 6: Scenario validation
 
@@ -401,7 +397,13 @@ Verification methods:
 - Fixture projects with known failures.
 - E2E smoke tests that assert expected generated docs and doctor behavior.
 
-Status: future phase.
+Status: complete.
+
+Completion notes:
+
+- All four scenarios were walked through against a fixture project (`calc-utils`): project understanding, bug fix, feature development, and failure recovery.
+- Walkthrough surfaced one blocking issue (🔴): the default `harness/` install mode left no root entry file, so agents could not auto-discover the harness. Resolved by unifying to a single install mode — entry files (`CLAUDE.md`/`AGENTS.md`) in the workspace root, protocol content under `harness/`, `--flat` removed.
+- After the fix, the root entry guides agents to `harness/docs/index.md` and the 7-layer model. Recovery and Loop protocols cover bounded retry and stop conditions. Remaining findings were wording-only and have been cleaned.
 
 ## Verification strategy
 
@@ -433,7 +435,7 @@ Completed:
 - `--agent` and `--tool` alias support.
 - `--rules all|none|common|<rule-dir>[,<rule-dir>...]`.
 - `--rules-out <rule-dir>[,<rule-dir>...]`.
-- `--flat`, `--force`, `--dry-run`.
+- `--force`, `--dry-run` (`--flat` removed; single install mode only).
 - `--force` rule re-init convergence for known generated rule packs.
 - Runtime `manifest.json` generation.
 - `doctor/check` read-only health checks.
@@ -441,17 +443,21 @@ Completed:
 - Strengthened 7 layer memos.
 - Clear boundary between layer protocols and content files.
 - Runtime docs direction for entry files, index, project context, and guide.
+- Single install mode: entry files (`CLAUDE.md`/`AGENTS.md`) in the workspace root, protocol content under `harness/`, runtime records under workspace-level `agent-work/`.
+- Process, task, and automation docs aligned with the 7-layer model (Phase 5).
+- Scenario validation across all four task types (Phase 6).
 - JS implementation split into focused modules under `src/scaffold/`, `src/doctor/`, and shared helpers.
 - CLI tests split into focused files with `test/cli.test.js` as the aggregator.
 - Source comments added in Chinese for key modules and intent.
 - Full verification passed: `npm test`, `npm run check`, `npm run pack:dry`, help output, and init/doctor smoke tests.
 
+Known limitations:
+
+- Re-initializing a project that used an older install mode (entry under `harness/`) does not auto-remove the stale `harness/CLAUDE.md`/`AGENTS.md`. It is harmless (agents read the root entry, doctor checks the root entry) and is left for a future `upgrade` command.
+
 In progress / next:
 
-- Align process playbooks with the 7-layer model.
-- Convert automation notes from fill-in commands to verified automation intent.
-- Clarify task notes as task-local memory and verification evidence.
-- Re-run generated harness review after playbook alignment.
+- None blocking. A future `upgrade` command may migrate older harness layouts.
 
 ## Non-goals
 

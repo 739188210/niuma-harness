@@ -31,6 +31,6 @@ agent-work/tasks/<task-name>/
 
 ## Durable facts
 
-Durable project facts should move through the Memory layer before being recorded in `harness/docs/project-context.md` or the active harness root's `docs/project-context.md`.
+Durable project facts should move through the Memory layer before being recorded in `harness/docs/project-context.md`.
 
 Do not put task-local records under `harness/docs/`.

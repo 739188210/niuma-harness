@@ -34,7 +34,7 @@ Before leaving triage, identify what evidence will show that the next step succe
 
 ## Recovery
 
-If classification is unclear after reading available context, do not guess. Report the ambiguity and ask for the missing decision.
+Use `docs/layers/05-recovery/memo.md` when classification is unclear after reading available context. Do not guess; report the ambiguity and ask for the missing decision.
 
 ## Outputs
 

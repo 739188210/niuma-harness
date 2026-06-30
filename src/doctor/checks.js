@@ -1,4 +1,5 @@
 // doctor 的高层检查编排：字段校验后委托 core/rules 子检查。
+const path = require('path');
 const { normalizeAgent } = require('../agents');
 const { formatRules, normalizeConcreteRules } = require('../rules');
 const { loadManifest } = require('../scaffold/manifest');
@@ -34,6 +35,7 @@ function createCheckContext(harnessRoot, status, result) {
     rules: null,
     status,
     templateManifest,
+    workspaceRoot: path.dirname(harnessRoot),
   };
 }
 

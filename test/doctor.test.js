@@ -70,7 +70,7 @@ const {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(init.status, 0, init.stderr);
-  fs.unlinkSync(path.join(workspace, 'harness', 'CLAUDE.md'));
+  fs.unlinkSync(path.join(workspace, 'CLAUDE.md'));
   const result = run(['doctor', workspace]);
   assert.notStrictEqual(result.status, 0, 'doctor should fail when entry file is missing');
   assert.match(result.stdout, /missing entry file CLAUDE\.md/);

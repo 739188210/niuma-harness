@@ -3,13 +3,21 @@ const { getEntryFilesForAgent } = require('../agents');
 const { safeResolveInside, writeFile } = require('../fs-safe');
 const { renderTemplate } = require('./templates');
 
+// 入口文件写到 workspace 根目录，让 Claude Code 等工具默认就能发现 harness。
 function writeEntryFiles(context) {
-  const { options, targetDir, variables, printAction } = context;
+  const { options, workspaceDir, variables, printAction } = context;
   for (const entryFile of getEntryFilesForAgent(options.agent)) {
     const templatePath = entryFile === 'CLAUDE.md' ? 'entry/CLAUDE.md' : 'entry/AGENTS.md';
-    const targetPath = safeResolveInside(targetDir, entryFile, 'entry target');
+    const targetPath = safeResolveInside(workspaceDir, entryFile, 'entry target');
     const content = renderTemplate(templatePath, { ...variables, ENTRY_FILE: entryFile });
-    printAction(writeFile(targetPath, content, options), targetPath);
+    const action = writeFile(targetPath, content, options);
+    printAction(action, targetPath);
+    // 根目录已有同名入口时不静默跳过：提示用户如何把 agent 引向 harness。
+    if (action === 'skip') {
+      console.log(
+        `Note: kept your existing ${entryFile}. To point agents at the harness, add a line like "see ${variables.HARNESS_DIR}/docs/index.md", or re-run with --force to overwrite.`
+      );
+    }
   }
 }
 

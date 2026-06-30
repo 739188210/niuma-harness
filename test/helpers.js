@@ -26,7 +26,10 @@ function run(args) {
 }
 
 function tempDir() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'niuma-harness-'));
+  // macOS: os.tmpdir() returns /var/... where /var is a symlink to /private/var;
+  // resolve it so the scaffold's symlink guard does not refuse the path.
+  const base = fs.realpathSync(os.tmpdir());
+  return fs.mkdtempSync(path.join(base, 'niuma-harness-'));
 }
 
 function assertFile(filePath) {
@@ -63,7 +66,6 @@ function assertManifest(filePath, expected) {
   assert.strictEqual(manifest.agent, expected.agent);
   assert.deepStrictEqual(manifest.rules, expected.rules || ['common']);
   assert.strictEqual(manifest.harnessDir, expected.harnessDir || 'harness');
-  assert.strictEqual(manifest.flat, Boolean(expected.flat));
   assert.strictEqual(manifest.workDir, expected.workDir || 'agent-work');
   assert.deepStrictEqual(manifest.entryFiles, expected.entryFiles);
   assert.strictEqual(manifest.createdBy, 'niuma-harness');

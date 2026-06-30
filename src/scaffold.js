@@ -44,7 +44,7 @@ function runInit(options) {
 // 集中解析路径和模板变量，让后续 writer 模块只关注自己的写入职责。
 function createInitContext(options) {
   const workspaceDir = path.resolve(options.targetDir || '.');
-  const targetDir = options.flat ? workspaceDir : path.join(workspaceDir, options.harnessDir);
+  const targetDir = path.join(workspaceDir, options.harnessDir);
   const manifest = loadManifest();
   validateManifest(manifest);
 
@@ -64,7 +64,7 @@ function createInitContext(options) {
 
 // 防止 harness 目录和 workspace 级运行期任务目录重名。
 function assertHarnessDirAvailable(options, workDirectory) {
-  if (!options.flat && sameDirectoryName(options.harnessDir, workDirectory)) {
+  if (sameDirectoryName(options.harnessDir, workDirectory)) {
     throw new Error(`--harness-dir cannot be ${workDirectory} because it is reserved for runtime task records.`);
   }
 }
@@ -72,7 +72,7 @@ function assertHarnessDirAvailable(options, workDirectory) {
 function createTemplateVariables(options, workDirectory) {
   return {
     ENTRY_FILES: getEntryFilesForAgent(options.agent).join(', '),
-    HARNESS_DIR: options.flat ? '.' : options.harnessDir,
+    HARNESS_DIR: options.harnessDir,
     WORK_DIR: workDirectory,
   };
 }

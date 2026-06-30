@@ -14,11 +14,13 @@ const {
   tempDir,
 } = require('./helpers');
 
+// 入口文件落在 workspace 根，协议内容落在 harness/。
 {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
-  assertFile(path.join(workspace, 'harness', 'CLAUDE.md'));
+  assertFile(path.join(workspace, 'CLAUDE.md'));
+  assertNoPath(path.join(workspace, 'harness', 'CLAUDE.md'));
   assertFile(path.join(workspace, 'harness', 'HARNESS_GUIDE.md'));
   assertFile(path.join(workspace, 'harness', 'docs', 'index.md'));
   assertLayerMemos(path.join(workspace, 'harness'));
@@ -31,14 +33,17 @@ const {
     agent: 'claude',
     entryFiles: ['CLAUDE.md'],
   });
+  assertNoPath(path.join(workspace, 'AGENTS.md'));
   assertNoPath(path.join(workspace, 'harness', 'AGENTS.md'));
 }
 
+// --tool 是 --agent 的别名。
 {
   const workspace = tempDir();
   const result = run(['init', workspace, '--tool', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
-  assertFile(path.join(workspace, 'harness', 'CLAUDE.md'));
+  assertFile(path.join(workspace, 'CLAUDE.md'));
+  assertNoPath(path.join(workspace, 'harness', 'CLAUDE.md'));
   assertManifest(path.join(workspace, 'harness', 'manifest.json'), {
     agent: 'claude',
     entryFiles: ['CLAUDE.md'],
@@ -49,20 +54,23 @@ for (const agent of ['codex', 'opencode']) {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', agent]);
   assert.strictEqual(result.status, 0, result.stderr);
-  assertFile(path.join(workspace, 'harness', 'AGENTS.md'));
+  assertFile(path.join(workspace, 'AGENTS.md'));
+  assertNoPath(path.join(workspace, 'harness', 'AGENTS.md'));
   assertManifest(path.join(workspace, 'harness', 'manifest.json'), {
     agent,
     entryFiles: ['AGENTS.md'],
   });
-  assertNoPath(path.join(workspace, 'harness', 'CLAUDE.md'));
+  assertNoPath(path.join(workspace, 'CLAUDE.md'));
 }
 
 {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'multi']);
   assert.strictEqual(result.status, 0, result.stderr);
-  assertFile(path.join(workspace, 'harness', 'CLAUDE.md'));
-  assertFile(path.join(workspace, 'harness', 'AGENTS.md'));
+  assertFile(path.join(workspace, 'CLAUDE.md'));
+  assertFile(path.join(workspace, 'AGENTS.md'));
+  assertNoPath(path.join(workspace, 'harness', 'CLAUDE.md'));
+  assertNoPath(path.join(workspace, 'harness', 'AGENTS.md'));
   assertManifest(path.join(workspace, 'harness', 'manifest.json'), {
     agent: 'multi',
     entryFiles: ['CLAUDE.md', 'AGENTS.md'],
@@ -198,6 +206,7 @@ for (const invalidRulesOut of ['none', 'all', 'unknown']) {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude', '--dry-run']);
   assert.strictEqual(result.status, 0, result.stderr);
+  assertNoPath(path.join(workspace, 'CLAUDE.md'));
   assertNoPath(path.join(workspace, 'harness', 'CLAUDE.md'));
   assertNoPath(path.join(workspace, 'harness', 'manifest.json'));
   assertNoPath(path.join(workspace, 'agent-work'));
@@ -207,29 +216,11 @@ for (const invalidRulesOut of ['none', 'all', 'unknown']) {
 
 {
   const workspace = tempDir();
-  const result = run(['init', workspace, '--agent', 'claude', '--flat']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assertFile(path.join(workspace, 'CLAUDE.md'));
-  assertLayerMemos(workspace);
-  assertDir(path.join(workspace, 'agent-work'));
-  assertFile(path.join(workspace, 'agent-work', 'README.md'));
-  assertDir(path.join(workspace, 'agent-work', 'tasks'));
-  assertNoPath(path.join(workspace, 'docs', 'tasks'));
-  assertManifest(path.join(workspace, 'manifest.json'), {
-    agent: 'claude',
-    flat: true,
-    entryFiles: ['CLAUDE.md'],
-  });
-  assertNoPath(path.join(workspace, 'harness', 'CLAUDE.md'));
-  const doctor = run(['doctor', workspace]);
-  assert.strictEqual(doctor.status, 0, doctor.stderr);
-}
-
-{
-  const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude', '--harness-dir', 'ai-harness']);
   assert.strictEqual(result.status, 0, result.stderr);
-  assertFile(path.join(workspace, 'ai-harness', 'CLAUDE.md'));
+  assertFile(path.join(workspace, 'CLAUDE.md'));
+  assertNoPath(path.join(workspace, 'ai-harness', 'CLAUDE.md'));
+  assertFile(path.join(workspace, 'ai-harness', 'HARNESS_GUIDE.md'));
   assertDir(path.join(workspace, 'agent-work'));
   assertFile(path.join(workspace, 'agent-work', 'README.md'));
   assertDir(path.join(workspace, 'agent-work', 'tasks'));
@@ -248,24 +239,24 @@ for (const harnessDir of ['.', '../outside', 'bad/name', 'agent-work', 'AGENT-WO
   assert.notStrictEqual(result.status, 0, `--harness-dir ${harnessDir} should fail`);
 }
 
+// 根入口已存在：默认 skip + 提示，不破坏用户文件。
 {
   const workspace = tempDir();
-  const targetFile = path.join(workspace, 'harness', 'CLAUDE.md');
-  fs.mkdirSync(path.dirname(targetFile), { recursive: true });
+  const targetFile = path.join(workspace, 'CLAUDE.md');
   fs.writeFileSync(targetFile, 'custom', 'utf8');
   const result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.strictEqual(read(targetFile), 'custom', 'existing files should be skipped without force');
+  assert.strictEqual(read(targetFile), 'custom', 'existing root entry should be skipped without force');
+  assert.match(result.stdout, /kept your existing CLAUDE\.md/);
 }
 
 {
   const workspace = tempDir();
-  const targetFile = path.join(workspace, 'harness', 'CLAUDE.md');
-  fs.mkdirSync(path.dirname(targetFile), { recursive: true });
+  const targetFile = path.join(workspace, 'CLAUDE.md');
   fs.writeFileSync(targetFile, 'custom', 'utf8');
   const result = run(['init', workspace, '--agent', 'claude', '--force']);
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.notStrictEqual(read(targetFile), 'custom', 'force should overwrite existing files');
+  assert.notStrictEqual(read(targetFile), 'custom', 'force should overwrite existing root entry');
 }
 
 {
@@ -309,13 +300,12 @@ for (const harnessDir of ['.', '../outside', 'bad/name', 'agent-work', 'AGENT-WO
   }
 }
 
+// 根入口是 symlink 时拒绝写入，不跟随链接覆盖目标。
 {
   const workspace = tempDir();
   const target = path.join(workspace, 'outside.md');
   fs.writeFileSync(target, 'outside', 'utf8');
-  const harness = path.join(workspace, 'harness');
-  fs.mkdirSync(harness, { recursive: true });
-  const link = path.join(harness, 'CLAUDE.md');
+  const link = path.join(workspace, 'CLAUDE.md');
   let created = true;
   try {
     fs.symlinkSync(target, link, 'file');
@@ -325,7 +315,7 @@ for (const harnessDir of ['.', '../outside', 'bad/name', 'agent-work', 'AGENT-WO
 
   if (created) {
     const result = run(['init', workspace, '--agent', 'claude', '--force']);
-    assert.notStrictEqual(result.status, 0, 'file symlink with force should fail');
+    assert.notStrictEqual(result.status, 0, 'root entry symlink with force should fail');
     assert.strictEqual(read(target), 'outside', 'symlink target should not be overwritten');
   }
 }
@@ -334,9 +324,7 @@ for (const harnessDir of ['.', '../outside', 'bad/name', 'agent-work', 'AGENT-WO
   const workspace = tempDir();
   const outside = tempDir();
   const danglingTarget = path.join(outside, 'created-through-link.md');
-  const harness = path.join(workspace, 'harness');
-  fs.mkdirSync(harness, { recursive: true });
-  const link = path.join(harness, 'CLAUDE.md');
+  const link = path.join(workspace, 'CLAUDE.md');
   let created = true;
   try {
     fs.symlinkSync(danglingTarget, link, 'file');
@@ -346,7 +334,7 @@ for (const harnessDir of ['.', '../outside', 'bad/name', 'agent-work', 'AGENT-WO
 
   if (created) {
     const result = run(['init', workspace, '--agent', 'claude']);
-    assert.notStrictEqual(result.status, 0, 'dangling file symlink should fail');
+    assert.notStrictEqual(result.status, 0, 'dangling root entry symlink should fail');
     assertNoPath(danglingTarget);
   }
 }

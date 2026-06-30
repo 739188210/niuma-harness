@@ -9,7 +9,6 @@ function createStatus(options, manifest = {}) {
     agent: options.agent,
     rules: options.rules,
     harnessDir: options.harnessDir,
-    flat: Boolean(options.flat),
     workDir: manifest.workDirectory || 'agent-work',
     entryFiles: getEntryFilesForAgent(options.agent),
     createdBy: 'niuma-harness',

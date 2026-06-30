@@ -52,7 +52,7 @@ When adding or moving scaffold templates, update `templates/manifest.json` and a
 
 ## Generated harness shape
 
-The generated harness is usually written to `target/harness/`; `--flat` writes the same harness files directly into the target. Runtime task records are generated at the workspace-level `agent-work/` directory. The generated `manifest.json` records `schemaVersion`, selected agent, selected rule directories, harness directory, flat mode, runtime work directory, entry files, creator, and timestamp. `doctor` relies on this generated manifest rather than the package-internal template manifest.
+The entry file (`CLAUDE.md` / `AGENTS.md`) is written to the workspace root so coding tools discover it automatically; the rest of the harness is written to `target/harness/`. Runtime task records are generated at the workspace-level `agent-work/` directory. The generated `manifest.json` records `schemaVersion`, selected agent, selected rule directories, harness directory, runtime work directory, entry files, creator, and timestamp. `doctor` relies on this generated manifest rather than the package-internal template manifest.
 
 The generated docs follow a seven-layer operating model under `docs/layers/`:
 

@@ -34,7 +34,6 @@ niuma-harness check [target] [options]
 | `--harness-dir <name>` | Directory to create, default: `harness` |
 | `--rules <selection>` | `common`, `all`, `none`, or `<rule-dir>[,<rule-dir>...]`, default: `common` |
 | `--rules-out <selection>` | Exclude selected rule directories from `all` |
-| `--flat` | Write directly into target instead of `target/harness` |
 | `--force` | Overwrite existing scaffold files |
 | `--dry-run` | Print planned actions without writing files |
 
@@ -60,7 +59,6 @@ npx niuma-harness init ./workspace --agent claude --rules all
 npx niuma-harness init ./workspace --agent claude --rules-out web
 npx niuma-harness init ./workspace --agent opencode --dry-run
 npx niuma-harness init ./workspace --agent multi --harness-dir ai-harness
-npx niuma-harness init ./workspace --agent claude --flat
 npx niuma-harness doctor ./workspace
 npx niuma-harness check ./workspace --harness-dir ai-harness
 ```
@@ -119,7 +117,7 @@ workspace/
     tasks/
 ```
 
-Use `--flat` to write the harness scaffold directly into the target directory. Runtime task records still live under `agent-work/`.
+Runtime task records live under the workspace-level `agent-work/` directory.
 
 ## 7-layer architecture
 
@@ -147,7 +145,6 @@ The layer memos describe what each layer must do. The existing `docs/process/`, 
   "agent": "claude",
   "rules": ["common"],
   "harnessDir": "harness",
-  "flat": false,
   "workDir": "agent-work",
   "entryFiles": ["CLAUDE.md"],
   "createdBy": "niuma-harness",

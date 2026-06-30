@@ -10,7 +10,6 @@ Init options:
   --harness-dir <name>   Directory to create, default: harness
   --rules <selection>    common | all | none | <rule-dir>[,<rule-dir>...], default: common
   --rules-out <dirs>     Exclude rule dirs from all installed rules
-  --flat                 Write directly into target instead of target/harness
   --force                Overwrite existing scaffold files
   --dry-run              Print planned actions without writing files
 
@@ -27,7 +26,7 @@ Examples:
   niuma-harness init . --agent claude --rules all
   niuma-harness init . --agent claude --rules-out web
   niuma-harness init . --agent multi --harness-dir ai-harness
-  niuma-harness init . --agent opencode --flat --dry-run
+  niuma-harness init . --agent opencode --dry-run
   niuma-harness doctor .
   niuma-harness check . --harness-dir ai-harness`;
 }

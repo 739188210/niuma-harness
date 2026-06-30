@@ -15,8 +15,9 @@ const LAYER_MEMOS = [
   'docs/layers/07-loop/memo.md',
 ];
 
+// 入口文件在 workspace 根（harness 目录的父级），不在 harness root。
 function checkEntryFiles(context) {
-  const { agent, harnessRoot, result, status } = context;
+  const { agent, result, status, workspaceRoot } = context;
   if (!Array.isArray(status.entryFiles)) {
     addError(result, 'entryFiles must be an array');
     return;
@@ -29,7 +30,7 @@ function checkEntryFiles(context) {
   const expected = getEntryFilesForAgent(agent);
   checkEntryListMatches(result, status.entryFiles, expected, agent);
   for (const entryFile of status.entryFiles) {
-    checkRelativeFile(harnessRoot, entryFile, `entry file ${entryFile}`, result);
+    checkRelativeFile(workspaceRoot, entryFile, `entry file ${entryFile}`, result);
   }
 }
 
@@ -59,15 +60,14 @@ function checkLayerMemos(context) {
   }
 }
 
-// workDir 在 nested harness 时位于 workspace root，在 flat 模式时位于 harness root。
+// workDir 位于 workspace 根（harness 目录的父级）。
 function checkWorkDir(context) {
-  const { harnessRoot, result, status } = context;
+  const { result, status, workspaceRoot } = context;
   if (!status.workDir) {
     addError(result, 'missing workDir');
     return;
   }
 
-  const workspaceRoot = status.flat ? harnessRoot : path.dirname(harnessRoot);
   const workDir = resolveWorkDir(workspaceRoot, status.workDir, result);
   if (!workDir) {
     return;
