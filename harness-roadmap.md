@@ -521,6 +521,39 @@ In progress / next:
 - None blocking. A future `upgrade` command may migrate older harness layouts.
 - Optional: add the subagent dispatch + two-stage review pattern as a recommended workflow (P5a). Low priority for single-agent usage.
 
+## Candidate enhancements (from Superpowers / ECC comparison)
+
+Remaining ideas worth borrowing, after the P0–P7 work already landed (entry-contract injection, rigid gates / no hedging, Loop-as-spine with on-demand depth, worktree isolation, doctor contract-integrity, idempotent install). Filtered against niuma's philosophy: passive protocol, dependency-free, no hooks, no telemetry.
+
+### High value, fits the philosophy, tractable
+
+| Idea | Source | Lands in | Why |
+|---|---|---|---|
+| brainstorming-before-code gate | Superpowers | a lightweight design-clarify playbook under `docs/process/`, routed by the Process layer | feature-development jumps to implementation with only a one-line "clarify goal"; a structured refine-the-idea-with-user gate before planning blocks rework |
+| doctor content-quality checks | ECC | `doctor` semantic checks | today doctor only verifies existence; add checks that `project-context.md` is not empty/placeholder and that memos carry real content |
+| writing-skills meta-skill + skill metadata model | Superpowers | a standard for authoring skills (`extends/` skills already use frontmatter) | formalize name/description/when_to_use plus a test method so contributed skills stay consistent |
+| install-state store + upgrade/repair | ECC | a state file + `upgrade`/`repair` commands | tracks what is installed; enables incremental updates and migrates older layouts — resolves the known limitation about stale `harness/CLAUDE.md` |
+| cross-runtime behavior parity tests | ECC | `test/` | assert claude/codex/opencode/multi produce equivalent output for the same input; protects the multi story from silent drift |
+
+### Worth considering (medium)
+
+- Rationalization red-flags table (Superpowers `using-superpowers`) — a self-discipline device listing "thoughts that mean you are rationalizing"; could sit in the entry or a memo.
+- Richer two-way code-review skills (Superpowers requesting/receiving-code-review) — current `review.md` is thin and one-directional.
+- Security rules beyond `secret-leak.md` (ECC security guide) — prompt-injection defenses and sensitive-field scanning as protocol-level rules, not runtime scanning.
+- Install profiles (ECC minimal/core/full) on top of `--rules` — preset bundles to reduce selection cost.
+
+### Out of scope (conflict or over-engineering)
+
+- Telemetry — conflicts with the zero-tracking stance.
+- Continuous-learning auto-extraction — needs runtime/hooks; the Memory layer stays manual write-back.
+- AgentShield-style security scanning — a runtime tool, not a protocol concern.
+- Hook runtime controls — niuma installs no hooks.
+- Subagent strong constraint — P5a is recommendation-only by decision.
+
+### Suggested priority by ROI
+
+doctor content-quality checks > brainstorming gate > cross-runtime parity tests > install-state/upgrade.
+
 ## Non-goals
 
 `niuma-harness` should not become:
