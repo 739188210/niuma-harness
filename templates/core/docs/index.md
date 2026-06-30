@@ -1,11 +1,13 @@
 # Harness Runtime Index
 
-Use this file as the runtime map for AI tools working in this workspace.
+This is the navigation map for the harness. The entry file (`CLAUDE.md` / `AGENTS.md`) holds the operating loop; open this map when the loop's Context phase needs to locate project structure, docs, or commands.
 
 ## Structure guide
 
 - `docs/project-context.md` stores verified stable project facts.
 - `docs/layers/` defines the agent operating model: how to use context, policy, process, observation, recovery, memory, and loop capabilities.
+- `docs/policy/action-boundary.md` defines concrete action permission boundaries.
+- `docs/policy/secret-leak.md` defines the secret-leak emergency response.
 - `docs/process/` contains concrete task playbooks selected by the Process layer.
 - `docs/rules/` contains optional project engineering standards selected during init.
 - `agent-work/` stores task-local notes, plans, verification evidence, and handoff state.
@@ -13,14 +15,15 @@ Use this file as the runtime map for AI tools working in this workspace.
 
 ## Runtime reading order
 
-For task work:
+The entry file's operating loop drives task work. This map is consulted when a phase needs navigation:
 
-1. Use this file as the navigation map.
-2. Read `docs/project-context.md` for stable project facts.
-3. Read the relevant protocol in `docs/layers/`.
-4. Select the relevant playbook from `docs/process/` when the task needs one.
-5. Apply relevant standards from `docs/rules/` when rule files are installed.
-6. Use `agent-work/` for multi-step task notes and verification evidence.
+1. Start from the operating loop in the entry file (`CLAUDE.md` / `AGENTS.md`).
+2. Use this file to locate structure, docs, workflows, and verification commands.
+3. Read `docs/project-context.md` for stable project facts.
+4. Read the relevant protocol in `docs/layers/` when a phase needs depth.
+5. Select the relevant playbook from `docs/process/` when the task needs one.
+6. Apply relevant standards from `docs/rules/` when rule files are installed.
+7. Use `agent-work/` for multi-step task notes and verification evidence.
 
 If project-specific facts are missing, inspect the current workspace before acting. Do not guess missing paths, commands, stack details, or ownership.
 
@@ -43,6 +46,9 @@ Project-specific code locations, commands, and stable conventions are maintained
 - Task triage: `docs/process/task-triage.md`
 - Bug fixes: `docs/process/bugfix.md`
 - Feature development: `docs/process/feature-development.md`
+- Refactoring: `docs/process/refactor.md`
+- Reviews: `docs/process/review.md`
+- Release readiness: `docs/process/release.md`
 
 ## Verification commands
 

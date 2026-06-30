@@ -11,11 +11,23 @@ Use this layer when tests fail, builds fail, commands fail, context is missing, 
 ## Agent protocol
 
 1. Classify the failure type: test, build, command, context, bad edit, unclear requirement, policy block, or unknown.
+   - Exception: a leaked secret is not a normal failure. Route to `docs/policy/secret-leak.md` instead of the steps below.
 2. Preserve the exact failure signal needed to debug.
 3. Identify the first root cause, not every downstream symptom.
 4. Make the smallest safe repair attempt.
 5. Re-run the smallest relevant check.
 6. Stop and report if the same failure persists after focused retries or if repair requires user approval.
+
+## Rollback strategy
+
+Prefer version control to undo the agent's own changes over manual edits.
+
+- Revert only the changes the agent introduced in the current task, not pre-existing user work.
+- When ownership is unclear (cannot tell agent vs. user change), stop and ask before reverting anything.
+- Rollback is itself a repair attempt: re-run the relevant Observation check afterward.
+- Without version control, restore the smallest affected area from the last known-good state and record what was restored; never delete files to force a fix.
+
+Rollback boundaries (what may be reverted) are owned by Policy: `docs/policy/action-boundary.md`. This section covers the mechanism only, to avoid duplicating Policy.
 
 ## Allowed actions
 

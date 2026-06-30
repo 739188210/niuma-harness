@@ -3,17 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const { getEntryFilesForAgent } = require('../agents');
 const { safeResolveInside } = require('../fs-safe');
+const { renderTemplate } = require('../scaffold/templates');
 const { addError, addOk } = require('./result');
-
-const LAYER_MEMOS = [
-  'docs/layers/01-context/memo.md',
-  'docs/layers/02-policy/memo.md',
-  'docs/layers/03-process/memo.md',
-  'docs/layers/04-observation/memo.md',
-  'docs/layers/05-recovery/memo.md',
-  'docs/layers/06-memory/memo.md',
-  'docs/layers/07-loop/memo.md',
-];
 
 // 入口文件在 workspace 根（harness 目录的父级），不在 harness root。
 function checkEntryFiles(context) {
@@ -43,20 +34,86 @@ function checkEntryListMatches(result, actual, expected, agent) {
   addOk(result, 'entryFiles match agent');
 }
 
-function checkCoreDocs(context) {
-  const { harnessRoot, result } = context;
-  checkRegularFile(path.join(harnessRoot, 'HARNESS_GUIDE.md'), 'HARNESS_GUIDE.md', result);
-  checkRegularFile(path.join(harnessRoot, 'docs', 'index.md'), 'docs/index.md', result);
-  checkRegularFile(path.join(harnessRoot, 'docs', 'project-context.md'), 'docs/project-context.md', result);
-  checkDirectory(path.join(harnessRoot, 'docs'), 'docs/', result);
-  checkDirectory(path.join(harnessRoot, 'docs', 'layers'), 'docs/layers/', result);
-  checkDirectory(path.join(harnessRoot, 'docs', 'rules'), 'docs/rules/', result);
+// 契约区完整性：入口文件里的 contract 块必须和模板渲染结果一致，防止被 agent 或人改坏。
+// 没有 begin 标记的入口（用户自管文件）直接跳过，不误报。
+const CONTRACT_BEGIN = '<!-- niuma-harness:contract begin';
+const CONTRACT_END = '<!-- niuma-harness:contract end -->';
+
+function checkEntryContractIntegrity(context) {
+  const { result, status, workspaceRoot } = context;
+  const harnessDir = status.harnessDir || 'harness';
+  const canonicalBlock = sliceContractBlock(
+    renderTemplate('entry/entry.md', { HARNESS_DIR: harnessDir })
+  );
+  if (!canonicalBlock) {
+    addError(result, 'entry template source has no contract block');
+    return;
+  }
+
+  for (const entryFile of status.entryFiles) {
+    const content = readOptionalEntry(workspaceRoot, entryFile);
+    if (content === null) {
+      continue; // 缺失已由 checkEntryFiles 报告
+    }
+    if (!content.includes(CONTRACT_BEGIN)) {
+      continue; // 用户自管入口，无契约块，不强制
+    }
+    const block = sliceContractBlock(content);
+    if (!block) {
+      addError(result, `contract zone end marker missing in ${entryFile}`);
+      continue;
+    }
+    if (block !== canonicalBlock) {
+      addError(result, `contract zone drifted in ${entryFile}`);
+      continue;
+    }
+    addOk(result, `contract intact in ${entryFile}`);
+  }
 }
 
-function checkLayerMemos(context) {
-  const { harnessRoot, result } = context;
-  for (const layerMemo of LAYER_MEMOS) {
-    checkRegularFile(path.join(harnessRoot, ...layerMemo.split('/')), layerMemo, result);
+function sliceContractBlock(content) {
+  const beginIdx = content.indexOf(CONTRACT_BEGIN);
+  if (beginIdx === -1) {
+    return null;
+  }
+  const endIdx = content.indexOf(CONTRACT_END, beginIdx);
+  if (endIdx === -1) {
+    return null;
+  }
+  return content.slice(beginIdx, endIdx + CONTRACT_END.length);
+}
+
+function readOptionalEntry(workspaceRoot, entryFile) {
+  let filePath;
+  try {
+    filePath = safeResolveInside(workspaceRoot, entryFile, `entry file ${entryFile}`);
+  } catch (error) {
+    return null;
+  }
+  if (!fs.existsSync(filePath)) {
+    return null;
+  }
+  return fs.readFileSync(filePath, 'utf8');
+}
+
+function checkCoreDocs(context) {
+  checkTemplateDirectories(context);
+  checkTemplateFiles(context);
+}
+
+// 核心目录以 templates/manifest.json 为准，避免 doctor 和 scaffold 各维护一份清单。
+function checkTemplateDirectories(context) {
+  const { harnessRoot, result, templateManifest } = context;
+  for (const directory of templateManifest.directories || []) {
+    checkDirectory(path.join(harnessRoot, ...directory.split('/')), `${directory}/`, result);
+  }
+}
+
+// templateFiles 都生成在 harness root 下；workTemplateFiles 由 workDir 校验负责。
+function checkTemplateFiles(context) {
+  const { harnessRoot, result, templateManifest } = context;
+  for (const file of templateManifest.templateFiles || []) {
+    checkRegularFile(path.join(harnessRoot, ...file.target.split('/')), file.target, result);
   }
 }
 
@@ -134,10 +191,11 @@ function sameStringArray(left, right) {
 }
 
 module.exports = {
-  LAYER_MEMOS,
   checkEntryFiles,
+  checkEntryContractIntegrity,
   checkCoreDocs,
-  checkLayerMemos,
+  checkTemplateDirectories,
+  checkTemplateFiles,
   checkWorkDir,
   checkRegularFile,
   checkDirectory,

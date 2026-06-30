@@ -13,7 +13,7 @@ Use this layer after discovering verified stable facts, after finishing multi-st
 1. Separate stable project facts from temporary task observations.
 2. Verify facts against current files or user confirmation before preserving them.
 3. Keep task-local investigation details in the workspace-level `agent-work/` directory or the current task record.
-4. Propose updates to `docs/project-context.md` only for durable, reusable facts.
+4. Propose updates to `docs/project-context.md` only for durable, reusable facts. A fact is durable when it is reused across multiple tasks and does not change with a single task's outcome (for example build/test commands, architecture, module ownership, or external constraints); task-specific findings stay in `agent-work/`.
 5. Do not store secrets, private data, or unverified guesses.
 
 ## Allowed actions

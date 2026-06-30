@@ -64,7 +64,7 @@ The generated docs follow a seven-layer operating model under `docs/layers/`:
 6. memory
 7. loop
 
-`templates/entry/CLAUDE.md` and `templates/entry/AGENTS.md` are intentionally small entry points that direct future agents to `docs/index.md`, `docs/project-context.md`, `docs/layers/`, `docs/process/`, optional `docs/rules/` content inside the generated harness, plus the workspace-level `agent-work/` task area.
+`templates/entry/entry.md` is the single source for the generated entry file (`CLAUDE.md` for claude, `AGENTS.md` for codex/opencode, both for multi). It carries the always-loaded operating contract — the distilled 7-step loop, red lines, and on-demand depth pointers — and is written to the workspace root so coding tools discover it automatically. The contract zone is wrapped in `<!-- niuma-harness:contract begin/end -->` markers so it can be verified and restored; `doctor` checks entry existence, a future check will verify contract integrity.
 
 ## Tests
 

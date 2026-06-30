@@ -78,9 +78,9 @@ Default output:
 
 ```text
 workspace/
+  CLAUDE.md or AGENTS.md
   harness/
     manifest.json
-    CLAUDE.md or AGENTS.md
     HARNESS_GUIDE.md
     docs/
       index.md
@@ -102,16 +102,23 @@ workspace/
           memo.md
       automation/
         hooks.md
+      policy/
+        action-boundary.md
+        secret-leak.md
       process/
         task-triage.md
         bugfix.md
         feature-development.md
+        refactor.md
+        review.md
+        release.md
       rules/
         # Optional rule directories selected by --rules or --rules-out
         common/
           coding-style.md
-          testing.md
+          hooks.md
           security.md
+          testing.md
   agent-work/
     README.md
     tasks/

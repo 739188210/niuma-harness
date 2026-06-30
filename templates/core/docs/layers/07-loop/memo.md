@@ -14,7 +14,7 @@ Use this layer for any multi-step task, long-running investigation, repeated ver
 2. Act: make the smallest task-aligned change or investigation step.
 3. Observe: run or record the relevant checks.
 4. Reflect: compare evidence with success criteria.
-5. Repair: enter Recovery if the result is failing, unclear, or unsafe.
+5. Repair: enter Recovery if the result is failing, unclear, or unsafe. Retries for the same failure are bounded (a small fixed number of focused attempts); once the limit is reached, stop, preserve the failure signal, and report instead of continuing the loop.
 6. Remember: capture verified durable facts through the Memory layer.
 7. Continue or stop: proceed only when the next step is safe and useful; otherwise report and ask.
 

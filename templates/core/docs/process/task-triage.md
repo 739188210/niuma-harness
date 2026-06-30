@@ -11,19 +11,24 @@ Classify the request, load the minimum required context, identify policy risks, 
 ## Steps
 
 1. Load Context: read `docs/index.md` and `docs/project-context.md` for stable facts.
-2. Check Policy: read `docs/layers/02-policy/memo.md` when the request may modify files, run commands, add dependencies, touch security, or change public behavior.
+2. Check Policy: use `docs/layers/02-policy/memo.md` for protocol and `docs/policy/action-boundary.md` for concrete action boundaries.
 3. Classify the task:
    - question or explanation only
    - small edit
    - bug fix
    - feature development
    - refactor
+   - review
+   - release readiness
    - security-sensitive change
    - documentation update
    - verification or investigation
 4. Choose the closest playbook:
    - Bug fix: `docs/process/bugfix.md`
    - Feature development: `docs/process/feature-development.md`
+   - Refactor: `docs/process/refactor.md`
+   - Review: `docs/process/review.md`
+   - Release readiness: `docs/process/release.md`
    - Other tasks: use the closest playbook and keep task notes when needed.
 5. Define success criteria and the smallest useful next step.
 6. Stop and ask when the request lacks enough information, expands scope, or crosses a Policy boundary.
@@ -42,3 +47,4 @@ Use `docs/layers/05-recovery/memo.md` when classification is unclear after readi
 - Selected playbook or reason no playbook is needed.
 - Required context and rules.
 - Success criteria or blocker.
+- Verification evidence plan.

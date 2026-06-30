@@ -11,25 +11,23 @@ Implement the smallest safe feature slice that satisfies verified acceptance cri
 ## Steps
 
 1. Load Context: read `docs/index.md`, `docs/project-context.md`, and relevant existing implementation patterns.
-2. Check Policy: pause before changing public APIs, data contracts, authentication, authorization, security-sensitive behavior, dependencies, or irreversible data.
+2. Check Policy: use `docs/policy/action-boundary.md` and pause when the next action is ask-first or forbidden. If this is multi-step or risky, isolate first (`docs/process/isolation.md`).
 3. Clarify the goal and acceptance criteria.
 4. Choose the smallest implementation path that fits the current architecture.
 5. Plan verification before implementation. Use `docs/layers/04-observation/memo.md` for evidence expectations.
-6. Add or update focused tests when practical for behavior changes.
+6. Add or update focused tests for behavior changes. If automated testing is not available for the change, record the manual verification that replaces it and why.
 7. Implement the feature with task-scoped changes.
 8. Run relevant verification commands.
 9. Record changes, verification results, skipped checks, and remaining risk.
 
 ## When to pause
 
-Pause and ask before:
+Pause and ask when `docs/policy/action-boundary.md` classifies the next action as ask-first, forbidden, or stop-and-escalate.
 
-- changing public APIs or data contracts
-- adding dependencies
-- changing authentication, authorization, or security-sensitive behavior
-- making irreversible data changes
-- proceeding when acceptance criteria are unclear
-- expanding the implementation into unrelated refactoring
+Feature-specific pause points:
+
+- acceptance criteria are unclear
+- implementation would expand beyond the requested feature slice
 
 ## Recovery
 

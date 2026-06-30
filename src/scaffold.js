@@ -3,16 +3,7 @@ const path = require('path');
 
 const { getEntryFilesForAgent } = require('./agents');
 const { formatRules } = require('./rules');
-const {
-  assertNoSymlinkInPath,
-  ensureDir,
-  listFilesRecursive,
-  safeResolveInside,
-  writeFile,
-} = require('./fs-safe');
-const { createStatus } = require('./harness-status');
 const { loadManifest, validateManifest } = require('./scaffold/manifest');
-const { renderTemplate } = require('./scaffold/templates');
 const {
   createHarnessDirectories,
   createTargetDirectory,
@@ -87,7 +78,7 @@ function printInitSummary(context) {
 }
 
 function printDone() {
-  console.log('Done. Start task work from docs/index.md. Read HARNESS_GUIDE.md for harness maintenance.');
+  console.log('Done. Agents follow the operating loop in the generated entry file (CLAUDE.md / AGENTS.md). Run `niuma-harness doctor .` to verify; read HARNESS_GUIDE.md for maintenance.');
 }
 
 function sameDirectoryName(left, right) {
@@ -111,14 +102,4 @@ function printAction(action, targetPath) {
 
 module.exports = {
   runInit,
-  loadManifest,
-  validateManifest,
-  getEntryFilesForAgent,
-  createStatus,
-  renderTemplate,
-  listFilesRecursive,
-  ensureDir,
-  writeFile,
-  safeResolveInside,
-  assertNoSymlinkInPath,
 };

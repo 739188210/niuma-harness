@@ -6,8 +6,8 @@ const { loadManifest } = require('../scaffold/manifest');
 const { addError, addOk } = require('./result');
 const {
   checkCoreDocs,
+  checkEntryContractIntegrity,
   checkEntryFiles,
-  checkLayerMemos,
   checkWorkDir,
 } = require('./core-checks');
 const { checkRuleFiles, getAvailableRules } = require('./rules-checks');
@@ -19,10 +19,10 @@ function checkHarness(harnessRoot, status, result) {
   checkAgent(context);
   checkRules(context);
   checkEntryFiles(context);
+  checkEntryContractIntegrity(context);
   checkCoreDocs(context);
   checkRuleFiles(context);
   checkWorkDir(context);
-  checkLayerMemos(context);
 }
 
 function createCheckContext(harnessRoot, status, result) {

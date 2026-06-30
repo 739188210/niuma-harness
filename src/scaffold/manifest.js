@@ -8,7 +8,11 @@ const TEMPLATE_DIR = path.join(ROOT_DIR, 'templates');
 const MANIFEST_PATH = path.join(TEMPLATE_DIR, 'manifest.json');
 
 function loadManifest() {
-  return JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
+  try {
+    return JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
+  } catch (error) {
+    throw new Error(`invalid package manifest at ${MANIFEST_PATH}: ${error.message}`);
+  }
 }
 
 // 先验证模板清单自身，避免坏 manifest 驱动后续写入。

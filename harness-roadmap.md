@@ -26,6 +26,31 @@ It should help agents answer:
 - Which facts should be preserved for future work?
 - Should I continue, recover, stop, or ask the user?
 
+## Goals and principles
+
+These are the foundation the harness model and layer memos are built on. Every layer, process playbook, and rule should be traceable back to a goal, and every design choice should not violate a principle.
+
+### Goals
+
+The harness turns a normal workspace into an AI-agent-ready workspace with four properties:
+
+| Property | Meaning |
+|---|---|
+| Controllable | Agent autonomy is bounded; risky or wide-scope actions escalate to the user. |
+| Observable | State and results are proven with evidence, not asserted. |
+| Recoverable | Work can be interrupted and resumed; failures have bounded, safe recovery. |
+| Context-efficient | Agents load only what they need; no duplicated, stale, or low-value context. |
+
+### Principles
+
+1. **Single source of truth.** Never write the same rule in three places. (Layers and memos defer to content files; e.g. `02-policy` memo points to `docs/policy/action-boundary.md` rather than restating it.) — supports Context-efficient.
+2. **Thin entry, depth sinks down.** Entry files (`CLAUDE.md` / `AGENTS.md`) only route; details live under `docs/`. — supports Controllable, Context-efficient.
+3. **Separate stable and ephemeral information.** Verified durable facts → `docs/project-context.md`; task-local notes → `agent-work/tasks/`. — supports Context-efficient.
+4. **Workflows must be interruptible and resumable — but only when it pays.** Create process docs (`agent-work/tasks/<task>/`) only for multi-step or interruptible work; single-step tasks stay in conversation. Process docs that duplicate project facts violate Principle 1. — supports Recoverable, Context-efficient.
+5. **Verification before summary.** Never just claim "done". State what ran, the result, what failed, and what was not verified. — supports Observable.
+6. **Smallest change first.** Make the minimal necessary change. Widening scope, changing architecture, or touching dependencies escalates to Policy. — supports Controllable.
+7. **Explicit state over implicit.** Current stage, next action, and verified/unverified items must be explicit; never rely on the reader inferring them. — supports Observable, Recoverable.
+
 ## Generated harness model
 
 The generated harness should have clear runtime responsibilities:
@@ -45,7 +70,7 @@ CLAUDE.md / AGENTS.md
 
 | Path | Role |
 |---|---|
-| `CLAUDE.md` / `AGENTS.md` | Thin tool-specific entry files. Point agents to the runtime map. |
+| `CLAUDE.md` / `AGENTS.md` | Entry files carrying the always-loaded operating loop. Agents follow it automatically; `docs/index.md` is the navigation map the loop consults. |
 | `docs/index.md` | Agent runtime map and reading order. |
 | `docs/project-context.md` | Verified stable project facts. |
 | `docs/layers/` | 7-layer agent operating protocols. |
@@ -427,6 +452,36 @@ node bin/niuma-harness.js init <tmp> --agent claude --dry-run
 npm run pack:dry
 ```
 
+## P5: Subagent & workspace isolation model
+
+The core harness was originally single-agent with no workspace isolation step. Two related gaps were identified.
+
+### P5a: Subagent dispatch + review model
+
+Superpowers enforces per-task subagent dispatch (fresh context per task, no cross-task contamination) with two-stage review (spec compliance, then code quality), via active session-start injection plus the platform `Task` tool.
+
+The niuma harness is a passive protocol scaffold. By the stated non-goal (no silent hook installation), it cannot structurally force subagent dispatch the way Superpowers does.
+
+Decision: describe the subagent dispatch + two-stage review pattern as a **recommended** workflow in the protocol, not a hard constraint. Strong constraint is out of scope — it requires runtime-level injection, which conflicts with the non-goals.
+
+Status: not yet implemented. Optional enhancement; skip if daily work is mostly single-agent.
+
+### P5b: Workspace isolation (worktree)
+
+`git worktree` is a universal git operation any runtime can perform, so worktree isolation is tractable at the protocol level (unlike subagent dispatch).
+
+Decision: make isolation a first-class, on-demand step rather than an afterthought.
+
+Implemented:
+
+- New playbook `docs/process/isolation.md` — single source for the isolation procedure (when to isolate, `git worktree add` steps, boundaries, cleanup).
+- Registered in `templates/manifest.json` so it is generated and doctor-checked.
+- `docs/layers/03-process/memo.md` routes to it (Agent protocol step + Allowed actions entry).
+- `docs/process/feature-development.md` and `refactor.md` carry a one-line pointer after Check Policy.
+- The entry Loop is unchanged; isolation triggers from Process routing for multi-step / risky / parallel work and is not loaded for every task.
+
+Status: complete. Consistent with `docs/policy/action-boundary.md` (no push / MR / delete without explicit ask) and the Recovery layer (isolation is preventive; Recovery rollback is reactive).
+
 ## Current status
 
 Completed:
@@ -450,6 +505,12 @@ Completed:
 - CLI tests split into focused files with `test/cli.test.js` as the aggregator.
 - Source comments added in Chinese for key modules and intent.
 - Full verification passed: `npm test`, `npm run check`, `npm run pack:dry`, help output, and init/doctor smoke tests.
+- Entry-file operating contract (P0/P3): the entry file (`CLAUDE.md`/`AGENTS.md`) carries the distilled 7-step Loop as an always-loaded contract; the 6 layer memos become on-demand depth loaded per phase. Two-zone design with tool-managed contract markers.
+- Single-source entry template: `templates/entry/entry.md` is the one source for both `CLAUDE.md` and `AGENTS.md`; multi mode produces byte-identical files.
+- `doctor` contract-integrity check: detects contract-zone drift in entry files; skips user-managed entries without markers.
+- Removed hedging in core playbooks/rules (P2): "when practical" replaced with a hard requirement plus an explicit escape-with-reason.
+- Workspace isolation playbook (P5b): see the P5 section above.
+- Repo hygiene (P7): untracked the leaked generated `agent-work/README.md`; removed local dogfood artifacts; `.gitignore` covers regeneration.
 
 Known limitations:
 
@@ -458,6 +519,7 @@ Known limitations:
 In progress / next:
 
 - None blocking. A future `upgrade` command may migrate older harness layouts.
+- Optional: add the subagent dispatch + two-stage review pattern as a recommended workflow (P5a). Low priority for single-agent usage.
 
 ## Non-goals
 

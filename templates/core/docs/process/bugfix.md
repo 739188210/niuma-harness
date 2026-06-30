@@ -11,9 +11,9 @@ Repair the smallest relevant cause of a defect and verify the corrected behavior
 ## Steps
 
 1. Load Context: read `docs/index.md`, `docs/project-context.md`, and the affected source or test files.
-2. Check Policy: pause before changing public contracts, data behavior, security-sensitive code, dependencies, or user-owned work.
+2. Check Policy: use `docs/policy/action-boundary.md` and pause when the next action is ask-first or forbidden.
 3. Understand the symptom, expected behavior, and current behavior.
-4. Reproduce the issue with a test, command, log, or manual steps when practical.
+4. Reproduce the issue with a test, command, log, or manual steps. If reproduction is not achievable, record what was attempted; the fix stays unverified until the symptom can be shown to disappear.
 5. Identify the first root cause instead of chasing downstream symptoms.
 6. Implement the smallest safe fix.
 7. Observe: run the focused verification that proves the bug is fixed.

@@ -12,17 +12,22 @@ Use this layer after loading context and policy, before implementation, and when
 
 ## Agent protocol
 
-1. Classify the task: triage, bugfix, feature, refactor, documentation, cleanup, investigation, or verification.
+1. Classify the task: triage, bugfix, feature, refactor, review, release, documentation, cleanup, investigation, or verification.
 2. Select the closest workflow from `docs/process/`.
-3. Define the smallest useful goal and success criteria.
-4. Break work into observable steps.
-5. Escalate to the user if the task scope expands beyond the selected workflow.
+3. If the work is multi-step, risky, or parallel, isolate the workspace first (`docs/process/isolation.md`) before acting.
+4. Define the smallest useful goal and success criteria.
+5. Break work into observable steps.
+6. Escalate to the user if the task scope expands beyond the selected workflow.
 
 ## Allowed actions
 
 - Use `docs/process/task-triage.md` when the task type or scope is unclear.
 - Use `docs/process/bugfix.md` for defect reproduction and repair.
 - Use `docs/process/feature-development.md` for new or changed behavior.
+- Use `docs/process/refactor.md` for behavior-preserving structural changes.
+- Use `docs/process/review.md` for reviewing changed work.
+- Use `docs/process/release.md` for release readiness or approved release work.
+- Use `docs/process/isolation.md` to isolate multi-step, risky, or parallel work before acting.
 - Create task-local notes for multi-step work.
 - Adjust the workflow when new evidence shows the original classification was wrong.
 

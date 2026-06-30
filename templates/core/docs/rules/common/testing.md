@@ -9,7 +9,7 @@ Changes should be verified before being called complete.
 For behavior changes:
 
 1. Reproduce the current behavior or failure.
-2. Add or update a focused test when practical.
+2. Add or update a focused test. If the change cannot be covered by an automated test, state why and record the manual verification used instead.
 3. Implement the smallest fix.
 4. Run the relevant verification commands.
 

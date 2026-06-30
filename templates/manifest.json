@@ -15,6 +15,7 @@
     "docs/layers/05-recovery",
     "docs/layers/06-memory",
     "docs/layers/07-loop",
+    "docs/policy",
     "docs/process",
     "docs/rules"
   ],
@@ -60,6 +61,14 @@
       "template": "core/docs/layers/07-loop/memo.md"
     },
     {
+      "target": "docs/policy/action-boundary.md",
+      "template": "core/docs/policy/action-boundary.md"
+    },
+    {
+      "target": "docs/policy/secret-leak.md",
+      "template": "core/docs/policy/secret-leak.md"
+    },
+    {
       "target": "docs/process/task-triage.md",
       "template": "core/docs/process/task-triage.md"
     },
@@ -70,6 +79,22 @@
     {
       "target": "docs/process/feature-development.md",
       "template": "core/docs/process/feature-development.md"
+    },
+    {
+      "target": "docs/process/refactor.md",
+      "template": "core/docs/process/refactor.md"
+    },
+    {
+      "target": "docs/process/review.md",
+      "template": "core/docs/process/review.md"
+    },
+    {
+      "target": "docs/process/release.md",
+      "template": "core/docs/process/release.md"
+    },
+    {
+      "target": "docs/process/isolation.md",
+      "template": "core/docs/process/isolation.md"
     },
     {
       "target": "docs/automation/hooks.md",

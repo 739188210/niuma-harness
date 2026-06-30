@@ -7,7 +7,13 @@ const { spawnSync } = require('child_process');
 const root = path.resolve(__dirname, '..');
 const node = process.execPath;
 const bin = path.join(root, 'bin', 'niuma-harness.js');
-const allRuleDirs = ['common', 'java', 'typescript', 'web'];
+const rulesRoot = path.join(root, 'templates', 'core', 'docs', 'rules');
+const allRuleDirs = fs.existsSync(rulesRoot)
+  ? fs.readdirSync(rulesRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort()
+  : [];
 const layerMemos = [
   'docs/layers/01-context/memo.md',
   'docs/layers/02-policy/memo.md',
