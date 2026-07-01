@@ -99,6 +99,10 @@
     {
       "target": "docs/automation/hooks.md",
       "template": "core/docs/automation/hooks.md"
+    },
+    {
+      "target": "docs/process/subagent-development.md",
+      "template": "core/docs/process/subagent-development.md"
     }
   ],
   "workTemplateFiles": [

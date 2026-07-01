@@ -14,7 +14,7 @@ Use this layer after loading context and policy, before implementation, and when
 
 1. Classify the task: triage, bugfix, feature, refactor, review, release, documentation, cleanup, investigation, or verification.
 2. Select the closest workflow from `docs/process/`.
-3. If the work is multi-step, risky, or parallel, isolate the workspace first (`docs/process/isolation.md`) before acting.
+3. If the work is multi-step, risky, or parallel, isolate the workspace first (`docs/process/isolation.md`) before acting. For large or risky work, consider staged subagent dispatch (`docs/process/subagent-development.md`).
 4. Define the smallest useful goal and success criteria.
 5. Break work into observable steps.
 6. Escalate to the user if the task scope expands beyond the selected workflow.
@@ -28,6 +28,7 @@ Use this layer after loading context and policy, before implementation, and when
 - Use `docs/process/review.md` for reviewing changed work.
 - Use `docs/process/release.md` for release readiness or approved release work.
 - Use `docs/process/isolation.md` to isolate multi-step, risky, or parallel work before acting.
+- Use `docs/process/subagent-development.md` to coordinate large or risky work across isolated subagents with staged review.
 - Create task-local notes for multi-step work.
 - Adjust the workflow when new evidence shows the original classification was wrong.
 

@@ -1,6 +1,6 @@
 # Refactor Process
 
-Use this playbook to improve code structure while preserving external behavior.
+Use this playbook when restructuring code while preserving its intended behavior.
 
 This is a concrete playbook selected by the Process layer. Use `docs/layers/03-process/memo.md` for routing rules and this file for refactor execution.
 
@@ -11,7 +11,7 @@ Make the smallest useful structural improvement without changing intended behavi
 ## Steps
 
 1. Load Context: read `docs/index.md`, `docs/project-context.md`, and the affected implementation and tests.
-2. Check Policy: use `docs/policy/action-boundary.md` before broad, risky, or force-style changes. If this is multi-step or risky, isolate first (`docs/process/isolation.md`).
+2. Check Policy: use `docs/policy/action-boundary.md` before broad, risky, or force-style changes. If this is multi-step or risky, isolate first (`docs/process/isolation.md`). For large refactors, consider staged subagent dispatch (`docs/process/subagent-development.md`).
 3. State the refactor goal and the behavior that must remain unchanged.
 4. Identify the verification baseline before editing.
 5. Split the refactor into small reversible steps.

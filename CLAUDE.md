@@ -1,73 +1,54 @@
-# CLAUDE.md
+# Niuma Harness Entry
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-> 回答用户问题时，记得提炼精简，不要明明可以精炼却还是输出大段大段的文本。
+This file has two zones:
 
-## Commands
+- The **contract** below is managed by `niuma-harness`. Do not edit it; `doctor` checks it.
+- **Project notes** at the bottom are free — agents and humans may append there.
 
-- `npm test` — run the full CLI test script (`node test/cli.test.js`).
-- `npm run check` — alias for `npm test`.
-- `npm run pack:dry` — preview the npm package contents.
-- `node bin/niuma-harness.js --help` — inspect CLI help from the local checkout.
-- `node bin/niuma-harness.js init . --agent claude --dry-run` — preview scaffold generation without writing files.
-- `node bin/niuma-harness.js doctor .` — validate an existing harness in the current workspace.
-- Focused test files can be run directly, e.g. `node test/init.test.js`, `node test/doctor.test.js`, or `node test/help.test.js`; `test/cli.test.js` remains the full aggregator.
+<!-- niuma-harness:contract begin — do not modify -->
+# Niuma Harness — Operating Loop
 
-## Architecture
+This workspace runs a Niuma Harness. The loop below is your operating contract for every task. Depth lives in `harness/docs/` — open a file only when its phase needs it; do not pre-read everything.
 
-This is a dependency-free CommonJS Node CLI package. The npm binary `niuma-harness` points to `bin/niuma-harness.js`, which calls `main()` from `src/cli.js` and reports thrown errors to stderr with exit code `1`.
+## The loop
 
-The CLI has three user-facing commands:
+**1. Plan — before any change**
+- Context: read `harness/docs/project-context.md` for stable facts; inspect current files for anything task-relevant. Never guess what files can show you. (depth: `docs/layers/01-context/memo.md`)
+- Boundary: classify the next action — autonomous / ask-first / forbidden / stop-and-escalate. Proceed only if autonomous, reversible, and task-scoped. Ask before ask-first; stop at forbidden or unclear risk. (depth: `docs/policy/action-boundary.md`)
+- Route: pick a process — bugfix / feature / refactor / review / release. Skip only for trivial single-step tasks. (depth: `docs/process/`)
 
-- `init` — creates a Niuma Harness scaffold.
-- `doctor` — validates a generated harness.
-- `check` — alias path that runs the same validation as `doctor`.
+**2. Act — smallest change**
+Make the minimal task-aligned change. No scope creep, no drive-by refactor, no new dependencies without asking.
 
-Core modules:
+**3. Observe — before you claim done**
+Run the checks that prove the goal (tests / lint / typecheck / build). Record exact commands and results. Unrun checks are "unknown", never "passing". (depth: `docs/layers/04-observation/memo.md`)
 
-- `src/args.js` owns argument parsing and delegates agent/rules/help concerns to `src/agents.js`, `src/rules.js`, and `src/help.js`.
-- `src/prompts.js` only fills in a missing `--agent` interactively when stdin is a TTY. In non-TTY contexts, `init` without `--agent` fails.
-- `src/scaffold.js` implements `init` as a short orchestration layer. Detailed manifest, template, directory, entry, rule, status, and safe filesystem helpers live under `src/scaffold/`, `src/fs-safe.js`, and `src/harness-status.js`.
-- `src/doctor.js` implements `doctor`/`check` as a short orchestration layer. Status discovery, result formatting, core checks, and rule checks live under `src/doctor/`.
-- `src/rules.js` discovers selectable rule directories and normalizes `--rules` / `--rules-out` selections.
+**4. Reflect**
+Compare evidence to success criteria. Failing or unclear → step 5. Passing → step 6.
 
-## Template model
+**5. Repair — bounded**
+Find the first root cause, not downstream symptoms. Smallest safe fix, then re-run the focused check. Bounded retries only — after a few focused attempts fail, stop and report. Never delete or weaken tests, assertions, or checks to force green. (depth: `docs/layers/05-recovery/memo.md`)
 
-`templates/manifest.json` is the source of truth for what `init` creates beyond agent entry files:
+**6. Remember**
+Task-local notes → `agent-work/`. Verified durable facts → candidate for `harness/docs/project-context.md`, written back only after verification. No secrets, no guesses. (depth: `docs/layers/06-memory/memo.md`)
 
-- `workDirectory` names the workspace-level runtime task work area.
-- `workDirectories` are created under the workspace root.
-- `directories` are created inside the harness root.
-- `templateFiles` are always rendered with starter content inside the harness root.
-- `workTemplateFiles` are always rendered with starter content under the workspace root.
-- Rule directories are discovered from `templates/core/docs/rules/<name>/`; `--rules` installs selected directories and `--rules-out` installs all except excluded directories.
+**7. Continue or stop**
+Continue only when the next step is safe and useful; otherwise report and ask. For multi-step work, keep state explicit in `agent-work/tasks/<task>/`.
 
-Entry files are not listed in `templates/manifest.json`; they are selected in `getEntryFilesForAgent()`:
+## Red lines (always enforced)
 
-- `claude` → `CLAUDE.md`
-- `codex` / `opencode` → `AGENTS.md`
-- `multi` → both files
+- No "done" without evidence — state what ran, the result, what failed, what was skipped.
+- Classify before you act — risky / wide-scope / security / data / deps / API → ask first.
+- Smallest change first — widening scope escalates to Policy.
+- Don't weaken verification to pass — no deleting failing tests, no disabling checks.
+- Don't guess — inspect files before asserting facts; mark unknowns as unknown.
+- Do not edit the contract zone above — it is tool-managed. Durable facts → `harness/docs/project-context.md`; task notes → `agent-work/`.
 
-When adding or moving scaffold templates, update `templates/manifest.json` and add/adjust tests in `test/cli.test.js`; otherwise the files may exist in the repository but not be generated by `init` or validated by `doctor`.
+## Depth is on-demand
 
-## Generated harness shape
+The loop above is all that stays in context. Each phase names the one file to open when it needs detail. Full loop spec: `harness/docs/layers/07-loop/memo.md`.
+<!-- niuma-harness:contract end -->
 
-The entry file (`CLAUDE.md` / `AGENTS.md`) is written to the workspace root so coding tools discover it automatically; the rest of the harness is written to `target/harness/`. Runtime task records are generated at the workspace-level `agent-work/` directory. The generated `manifest.json` records `schemaVersion`, selected agent, selected rule directories, harness directory, runtime work directory, entry files, creator, and timestamp. `doctor` relies on this generated manifest rather than the package-internal template manifest.
+# Project notes
 
-The generated docs follow a seven-layer operating model under `docs/layers/`:
-
-1. context
-2. policy
-3. process
-4. observation
-5. recovery
-6. memory
-7. loop
-
-`templates/entry/entry.md` is the single source for the generated entry file (`CLAUDE.md` for claude, `AGENTS.md` for codex/opencode, both for multi). It carries the always-loaded operating contract — the distilled 7-step loop, red lines, and on-demand depth pointers — and is written to the workspace root so coding tools discover it automatically. The contract zone is wrapped in `<!-- niuma-harness:contract begin/end -->` markers so it can be verified and restored; `doctor` checks entry existence, a future check will verify contract integrity.
-
-## Tests
-
-Tests are plain Node scripts using built-in `assert` and temporary directories. `test/cli.test.js` is the aggregator used by `npm test`; focused coverage lives in `test/init.test.js`, `test/doctor.test.js`, and `test/help.test.js`, with shared helpers in `test/helpers.js`.
-
-Because tests execute the real CLI binary, changes to argument parsing, scaffold generation, template manifests, and doctor output should generally be covered by extending the focused test file rather than mocking internals.
+<!-- Append project-specific notes, preferences, and memory below this line. -->

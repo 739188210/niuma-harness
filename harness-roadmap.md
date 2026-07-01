@@ -464,7 +464,13 @@ The niuma harness is a passive protocol scaffold. By the stated non-goal (no sil
 
 Decision: describe the subagent dispatch + two-stage review pattern as a **recommended** workflow in the protocol, not a hard constraint. Strong constraint is out of scope — it requires runtime-level injection, which conflicts with the non-goals.
 
-Status: not yet implemented. Optional enhancement; skip if daily work is mostly single-agent.
+Implemented:
+
+- New cross-cutting playbook `docs/process/subagent-development.md` (peer to `isolation.md`): when to dispatch, dispatch principles (fresh context per subagent, artifacts over diffs, task-scoped mandate), two-stage review (spec compliance → code quality) reusing `review.md` severity, and an agent-agnostic degradation path (two sequential self-review passes when no subagent capability).
+- Registered in `templates/manifest.json`; routed from `docs/layers/03-process/memo.md`; `feature-development.md` and `refactor.md` carry a pointer after Check Policy; `review.md` carries a back-pointer.
+- Recommended workflow, not a hard constraint. `src/` unchanged.
+
+Status: complete. Single-agent work simply skips it.
 
 ### P5b: Workspace isolation (worktree)
 
@@ -511,6 +517,8 @@ Completed:
 - Removed hedging in core playbooks/rules (P2): "when practical" replaced with a hard requirement plus an explicit escape-with-reason.
 - Workspace isolation playbook (P5b): see the P5 section above.
 - Repo hygiene (P7): untracked the leaked generated `agent-work/README.md`; removed local dogfood artifacts; `.gitignore` covers regeneration.
+- Subagent dispatch + two-stage review playbook (P5a): see the P5 section above.
+- Process playbook lead lines follow the trigger-condition discipline (Superpowers): `bugfix`/`feature-development`/`refactor`/`review` now lead with "when" (trigger), not goal/flow summaries; aligned with the `03-process` Allowed-actions descriptions.
 
 Known limitations:
 
@@ -519,21 +527,26 @@ Known limitations:
 In progress / next:
 
 - None blocking. A future `upgrade` command may migrate older harness layouts.
-- Optional: add the subagent dispatch + two-stage review pattern as a recommended workflow (P5a). Low priority for single-agent usage.
+- `rules/common/hooks.md` still carries Claude-Code-specific content (PreToolUse / `~/.claude.json` / TodoWrite); to be cleaned when rules are revisited.
 
 ## Candidate enhancements (from Superpowers / ECC comparison)
 
 Remaining ideas worth borrowing, after the P0–P7 work already landed (entry-contract injection, rigid gates / no hedging, Loop-as-spine with on-demand depth, worktree isolation, doctor contract-integrity, idempotent install). Filtered against niuma's philosophy: passive protocol, dependency-free, no hooks, no telemetry.
+
+> Detailed external comparison, source quotes, and evidence file paths live in `skills-comparison.md`.
 
 ### High value, fits the philosophy, tractable
 
 | Idea | Source | Lands in | Why |
 |---|---|---|---|
 | brainstorming-before-code gate | Superpowers | a lightweight design-clarify playbook under `docs/process/`, routed by the Process layer | feature-development jumps to implementation with only a one-line "clarify goal"; a structured refine-the-idea-with-user gate before planning blocks rework |
-| doctor content-quality checks | ECC | `doctor` semantic checks | today doctor only verifies existence; add checks that `project-context.md` is not empty/placeholder and that memos carry real content |
+| doctor content-quality checks | ECC | `doctor` semantic checks | today doctor only verifies existence; add non-corruption checks (non-empty, structure-complete) for `project-context.md` and memos. Placeholders are a valid initial state (Phase 4) — check for corruption, not for "filled in". **Deferred to the verification stage: do after the framework and content are complete.** |
 | writing-skills meta-skill + skill metadata model | Superpowers | a standard for authoring skills (`extends/` skills already use frontmatter) | formalize name/description/when_to_use plus a test method so contributed skills stay consistent |
 | install-state store + upgrade/repair | ECC | a state file + `upgrade`/`repair` commands | tracks what is installed; enables incremental updates and migrates older layouts — resolves the known limitation about stale `harness/CLAUDE.md` |
 | cross-runtime behavior parity tests | ECC | `test/` | assert claude/codex/opencode/multi produce equivalent output for the same input; protects the multi story from silent drift |
+| explicit state / progress ledger | Superpowers | `agent-work/README.md` + `07-loop` memo | lands Principle 7 (explicit state); counters compaction re-doing completed steps — SP calls this the most expensive failure observed |
+| task-triage size→depth routing | ECC | `task-triage.md` | upgrade the classification list to a decision table: trivial→direct / small→playbook / risky→isolation+policy |
+| Recovery form-matches-failure meta-rule | Superpowers | `05-recovery` memo | classify failure type → forbiddance / REQUIRED field / positive recipe; "no nuance clauses" (avoid "unless it matters" reopening the negotiation) |
 
 ### Worth considering (medium)
 
@@ -552,7 +565,7 @@ Remaining ideas worth borrowing, after the P0–P7 work already landed (entry-co
 
 ### Suggested priority by ROI
 
-doctor content-quality checks > brainstorming gate > cross-runtime parity tests > install-state/upgrade.
+brainstorming gate > explicit-state/progress ledger > task-triage routing > cross-runtime parity tests > install-state/upgrade. (doctor content-quality checks deferred to the verification stage — see note above.)
 
 ## Non-goals
 

@@ -1,6 +1,6 @@
 # Review Process
 
-Use this playbook to review changes for correctness, safety, maintainability, and verification quality.
+Use this playbook when reviewing changed work.
 
 This is a concrete playbook selected by the Process layer. Use `docs/layers/03-process/memo.md` for routing rules and this file for review execution.
 
@@ -34,6 +34,8 @@ Use `docs/layers/05-recovery/memo.md` when the diff does not match the stated go
 ## Memory and task notes
 
 For multi-step reviews, keep findings, fix decisions, and verification evidence under `agent-work/tasks/<task-name>/`. Move only verified durable lessons through the Memory layer before updating `docs/project-context.md`.
+
+For two-stage review across isolated subagents on large or risky work, see `docs/process/subagent-development.md`.
 
 ## Outputs
 

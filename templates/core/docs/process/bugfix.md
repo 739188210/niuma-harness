@@ -1,6 +1,6 @@
 # Bugfix Process
 
-Use this playbook to fix a defect with evidence that the behavior is corrected and existing behavior is not unexpectedly broken.
+Use this playbook when fixing a bug or defect in current behavior.
 
 This is a concrete playbook selected by the Process layer. Use `docs/layers/03-process/memo.md` for routing rules and this file for bugfix execution.
 
