@@ -19,6 +19,7 @@ test('doctor passes on a valid harness', () => {
   assert.match(result.stdout, /OK manifest\.json/);
   assert.match(result.stdout, /OK docs\/layers\/01-context\/memo\.md/);
   assert.match(result.stdout, /OK docs\/policy\/action-boundary\.md/);
+  assert.match(result.stdout, /OK docs\/policy\/untrusted-content\.md/);
   assert.match(result.stdout, /OK docs\/process\/refactor\.md/);
   assert.match(result.stdout, /OK docs\/process\/review\.md/);
   assert.match(result.stdout, /OK docs\/process\/release\.md/);
@@ -90,6 +91,18 @@ test('doctor reports the entry contract zone intact on a fresh init', () => {
   assert.match(result.stdout, /contract intact in CLAUDE\.md/);
 });
 
+test('doctor tolerates CRLF line endings in the entry contract', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  const entry = path.join(workspace, 'CLAUDE.md');
+  const body = read(entry).replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
+  fs.writeFileSync(entry, body, 'utf8');
+  const result = run(['doctor', workspace]);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(result.stdout, /contract intact in CLAUDE\.md/);
+});
+
 test('doctor fails when the entry contract zone is tampered', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);
@@ -140,6 +153,16 @@ test('doctor fails when secret-leak is missing', () => {
   const result = run(['doctor', workspace]);
   assert.notStrictEqual(result.status, 0, 'doctor should fail when secret leak policy is missing');
   assert.match(result.stdout, /missing docs\/policy\/secret-leak\.md/);
+});
+
+test('doctor fails when untrusted-content is missing', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  fs.unlinkSync(path.join(workspace, 'harness', 'docs', 'policy', 'untrusted-content.md'));
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should fail when untrusted content policy is missing');
+  assert.match(result.stdout, /missing docs\/policy\/untrusted-content\.md/);
 });
 
 test('doctor fails when a process playbook is missing', () => {

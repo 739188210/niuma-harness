@@ -4,6 +4,7 @@ const path = require('path');
 const { getEntryFilesForAgent } = require('../agents');
 const { safeResolveInside } = require('../fs-safe');
 const { renderTemplate } = require('../scaffold/templates');
+const { CONTRACT_BEGIN, sliceContractBlock } = require('../contract');
 const { addError, addOk } = require('./result');
 
 // 入口文件在 workspace 根（harness 目录的父级），不在 harness root。
@@ -36,9 +37,7 @@ function checkEntryListMatches(result, actual, expected, agent) {
 
 // 契约区完整性：入口文件里的 contract 块必须和模板渲染结果一致，防止被 agent 或人改坏。
 // 没有 begin 标记的入口（用户自管文件）直接跳过，不误报。
-const CONTRACT_BEGIN = '<!-- niuma-harness:contract begin';
-const CONTRACT_END = '<!-- niuma-harness:contract end -->';
-
+// CONTRACT_BEGIN / sliceContractBlock 复用自 ../contract，与 scaffold 的入口 merge 共用同一份定义。
 function checkEntryContractIntegrity(context) {
   const { result, status, workspaceRoot } = context;
   const harnessDir = status.harnessDir || 'harness';
@@ -63,24 +62,14 @@ function checkEntryContractIntegrity(context) {
       addError(result, `contract zone end marker missing in ${entryFile}`);
       continue;
     }
-    if (block !== canonicalBlock) {
+    // 比对前归一化换行符：用户文件可能被 git autocrlf 或编辑器转成 CRLF，避免误报 drift。
+    const normalize = (value) => value.replace(/\r\n/g, '\n');
+    if (normalize(block) !== normalize(canonicalBlock)) {
       addError(result, `contract zone drifted in ${entryFile}`);
       continue;
     }
     addOk(result, `contract intact in ${entryFile}`);
   }
-}
-
-function sliceContractBlock(content) {
-  const beginIdx = content.indexOf(CONTRACT_BEGIN);
-  if (beginIdx === -1) {
-    return null;
-  }
-  const endIdx = content.indexOf(CONTRACT_END, beginIdx);
-  if (endIdx === -1) {
-    return null;
-  }
-  return content.slice(beginIdx, endIdx + CONTRACT_END.length);
 }
 
 function readOptionalEntry(workspaceRoot, entryFile) {

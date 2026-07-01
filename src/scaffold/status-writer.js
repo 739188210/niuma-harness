@@ -6,7 +6,7 @@ function writeStatusFile(context) {
   const { options, targetDir, workDirectory, printAction } = context;
   const statusPath = safeResolveInside(targetDir, STATUS_FILE, 'status target');
   const statusContent = `${JSON.stringify(createStatus(options, { workDirectory }), null, 2)}\n`;
-  printAction(writeFile(statusPath, statusContent, options), statusPath);
+  printAction(writeFile(statusPath, statusContent, { dryRun: options.dryRun, overwrite: true }), statusPath);
 }
 
 module.exports = {

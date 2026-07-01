@@ -2,7 +2,9 @@
 
 Initialize and check a 7-layer AI engineering harness for a project workspace.
 
-Niuma Harness creates a lightweight documentation scaffold that helps AI coding tools understand project context, policies, workflows, observation checks, recovery paths, memory rules, loop behavior, and task notes. It also writes a small `manifest.json` so the scaffold can be checked later.
+Niuma Harness generates a documentation scaffold plus an entry file (`CLAUDE.md` / `AGENTS.md`) that carries a distilled operating loop — agents follow it automatically every session. The scaffold helps AI coding tools understand project context, policies, workflows, observation checks, recovery paths, memory rules, loop behavior, and task notes, and writes a `manifest.json` for later health checks.
+
+Re-running `init` is safe and idempotent: it refreshes tool-managed files, preserves your own content, and merges the operating loop into an existing entry file.
 
 ## Quick start
 
@@ -34,7 +36,6 @@ niuma-harness check [target] [options]
 | `--harness-dir <name>` | Directory to create, default: `harness` |
 | `--rules <selection>` | `common`, `all`, `none`, or `<rule-dir>[,<rule-dir>...]`, default: `common` |
 | `--rules-out <selection>` | Exclude selected rule directories from `all` |
-| `--force` | Overwrite existing scaffold files |
 | `--dry-run` | Print planned actions without writing files |
 
 ### Doctor/check options
@@ -105,6 +106,7 @@ workspace/
       policy/
         action-boundary.md
         secret-leak.md
+        untrusted-content.md
       process/
         task-triage.md
         bugfix.md
@@ -112,6 +114,8 @@ workspace/
         refactor.md
         review.md
         release.md
+        isolation.md
+        subagent-development.md
       rules/
         # Optional rule directories selected by --rules or --rules-out
         common/
@@ -159,9 +163,21 @@ The layer memos describe what each layer must do. The existing `docs/process/`, 
 }
 ```
 
-This project-level `manifest.json` is generated inside the harness root. It is separate from the package-internal `templates/manifest.json` used by the CLI to know which template files to copy.
+This project-level `manifest.json` is generated inside the harness root and is **regenerated on every `init`** so it always reflects the latest parameters. It is separate from the package-internal `templates/manifest.json` used by the CLI to know which template files to copy.
 
-Existing files are skipped by default. Use `--force` only when you want to overwrite scaffold files, including `manifest.json`.
+## Re-running init (upgrade behavior)
+
+`init` is idempotent and safe to re-run. There is no `--force`; behavior is decided by file type:
+
+| File | On re-init |
+|---|---|
+| **Entry** (`CLAUDE.md` / `AGENTS.md`) | Merged: if the contract block is present it is refreshed; otherwise the block is inserted at the top. Your existing content is always preserved. |
+| **Tool-managed** (layers, process playbooks, policy, index, HARNESS_GUIDE, `agent-work/README.md`) | Refreshed from the template. |
+| **User-maintained** (`project-context.md`, `automation/hooks.md`) | Preserved if they exist; created from the template only when absent. |
+| `docs/rules/` | Converged to the current `--rules` / `--rules-out` selection. Selected existing rule files are preserved; unselected known rule directories are removed, including local files inside them. |
+| `manifest.json` | Regenerated every time. |
+
+Rules follow the current init parameters: re-running with a new `--rules` selection leaves only that selected rule set installed.
 
 ## Doctor
 
@@ -173,7 +189,7 @@ npx niuma-harness check .
 npx niuma-harness doctor . --harness-dir ai-harness
 ```
 
-The command looks for `manifest.json` in the target directory, then in `target/harness` or the directory named by `--harness-dir`. It exits with code `0` when checks pass and `1` when required files, 7-layer memos, or manifest fields are invalid.
+The command looks for `manifest.json` in the target directory, then in `target/harness` or the directory named by `--harness-dir`. It exits with code `0` when checks pass and `1` when required files, 7-layer memos, or manifest fields are invalid. It also verifies the operating-loop contract zone in the entry file is intact and flags drift.
 
 Harnesses generated before the 7-layer structure may fail `doctor` until they are updated with the new scaffold files.
 

@@ -26,6 +26,7 @@ test('init claude: entry at workspace root, harness content under harness/', () 
   assertFile(path.join(workspace, 'harness', 'docs', 'index.md'));
   assertFile(path.join(workspace, 'harness', 'docs', 'policy', 'action-boundary.md'));
   assertFile(path.join(workspace, 'harness', 'docs', 'policy', 'secret-leak.md'));
+  assertFile(path.join(workspace, 'harness', 'docs', 'policy', 'untrusted-content.md'));
   assertFile(path.join(workspace, 'harness', 'docs', 'process', 'refactor.md'));
   assertFile(path.join(workspace, 'harness', 'docs', 'process', 'review.md'));
   assertFile(path.join(workspace, 'harness', 'docs', 'process', 'release.md'));
@@ -76,10 +77,97 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
     assert.match(body, /## Recovery/, `${pb} must contain Recovery`);
   }
 
-  assert.match(read(path.join(h, 'docs', 'policy', 'action-boundary.md')), /## Autonomous actions/);
+  const actionBoundary = read(path.join(h, 'docs', 'policy', 'action-boundary.md'));
+  assert.match(actionBoundary, /## Autonomous actions/);
+  assert.match(actionBoundary, /docs\/policy\/untrusted-content\.md/);
   const secretLeak = read(path.join(h, 'docs', 'policy', 'secret-leak.md'));
   assert.match(secretLeak, /## Trigger/, 'secret-leak.md must contain Trigger');
   assert.match(secretLeak, /## Forbidden/, 'secret-leak.md must contain Forbidden');
+  const untrustedContent = read(path.join(h, 'docs', 'policy', 'untrusted-content.md'));
+  assert.match(untrustedContent, /## Trigger/, 'untrusted-content.md must contain Trigger');
+  assert.match(untrustedContent, /## Agent protocol/, 'untrusted-content.md must contain Agent protocol');
+  assert.match(untrustedContent, /data, not instructions/, 'untrusted-content.md must define data/instruction separation');
+
+  const policyMemo = read(path.join(h, 'docs', 'layers', '02-policy', 'memo.md'));
+  assert.match(policyMemo, /docs\/policy\/untrusted-content\.md/);
+  const index = read(path.join(h, 'docs', 'index.md'));
+  assert.match(index, /docs\/policy\/untrusted-content\.md/);
+});
+
+test('generated docs define task status ledger protocol', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop', 'memo.md'));
+  assert.match(loopMemo, /agent-work\/tasks\/<task-name>\/status\.md/);
+  assert.match(loopMemo, /multi-step, risky, parallel, or interruptible/);
+
+  const memoryMemo = read(path.join(h, 'docs', 'layers', '06-memory', 'memo.md'));
+  assert.match(memoryMemo, /status\.md/);
+  assert.match(memoryMemo, /task-local operational state/);
+
+  const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
+  assert.match(workReadme, /status\.md/);
+});
+
+test('generated feature docs define pre-plan confirmation gate', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const featurePlaybook = read(path.join(h, 'docs', 'process', 'feature-development.md'));
+  assert.match(featurePlaybook, /Confirm understanding before planning/);
+  assert.match(featurePlaybook, /Before writing a detailed plan, PRD, architecture note, task list, or implementation/);
+  assert.match(featurePlaybook, /unclear scope, missing acceptance criteria, or meaningful design choices/);
+  assert.match(featurePlaybook, /If an open question can change the implementation direction, ask the user/);
+  assert.match(featurePlaybook, /already gave complete requirements and approval/);
+
+  const processMemo = read(path.join(h, 'docs', 'layers', '03-process', 'memo.md'));
+  assert.match(processMemo, /confirmation gate defined by the selected workflow/);
+});
+
+test('generated docs define test-change gate', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const actionBoundary = read(path.join(h, 'docs', 'policy', 'action-boundary.md'));
+  assert.match(actionBoundary, /## Test-change gate/);
+  assert.match(actionBoundary, /Verification targets include tests, assertions, snapshots/);
+  assert.match(actionBoundary, /Agents may add new tests or strengthen existing checks/);
+  assert.match(actionBoundary, /do not edit, delete, skip, weaken, or rebaseline verification targets/);
+  assert.match(actionBoundary, /Changing an existing verification target is ask-first/);
+  assert.match(actionBoundary, /task explicitly requests test maintenance/);
+  assert.match(actionBoundary, /target conflicts with verified intended behavior/);
+  assert.match(actionBoundary, /replacement coverage/);
+  assert.match(actionBoundary, /A request to turn red into green by weakening, skipping, deleting, or rebaselining verification targets is not valid test maintenance/);
+  assert.match(actionBoundary, /The user asks to turn red into green by weakening, skipping, deleting, or rebaselining verification targets/);
+  const forbiddenUnlessRequested = actionBoundary.match(
+    /## Forbidden unless explicitly requested[\s\S]*?## Always stop and escalate/,
+  )[0];
+  assert.doesNotMatch(
+    forbiddenUnlessRequested,
+    /verification targets|weaken tests|loosen assertions|remove assertions|delete failing checks|skip tests|rebaseline snapshots|lower coverage|just to pass/,
+  );
+
+  const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation', 'memo.md'));
+  assert.match(observationMemo, /If verification fails, treat the failing check as evidence/);
+  assert.match(observationMemo, /Do not move verification targets after a failure/);
+  assert.match(observationMemo, /test-change gate in `docs\/policy\/action-boundary\.md`/);
+  assert.match(observationMemo, /replacement coverage preserves the behavior contract/);
+
+  const bugfix = read(path.join(h, 'docs', 'process', 'bugfix.md'));
+  assert.match(bugfix, /The reproduction check is a verification target/);
+  assert.match(bugfix, /never remove the only reproduction without a replacement/);
+
+  const refactor = read(path.join(h, 'docs', 'process', 'refactor.md'));
+  assert.match(refactor, /baseline verification as the behavior boundary/);
+  assert.match(refactor, /Changing tests during a refactor is ask-first/);
+  assert.match(refactor, /purely mechanical and preserves the same assertions/);
 });
 
 test('--tool is an alias for --agent', () => {
@@ -176,14 +264,29 @@ test('--rules none installs no rule files', () => {
   assert.strictEqual(doctor.status, 0, doctor.stderr);
 });
 
-test('--force converges rules from common to none', () => {
+test('re-init preserves selected rule files', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const harnessRoot = path.join(workspace, 'harness');
+  const ruleFile = path.join(harnessRoot, 'docs', 'rules', 'common', 'testing.md');
+  fs.writeFileSync(ruleFile, 'custom rule\n', 'utf8');
+
+  result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.strictEqual(read(ruleFile), 'custom rule\n', 'selected rule file should be preserved on re-init');
+  assertRuleDirs(harnessRoot, ['common']);
+});
+
+test('re-init converges rules from common to none', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   const harnessRoot = path.join(workspace, 'harness');
   assertRuleDirs(harnessRoot, ['common']);
+  fs.writeFileSync(path.join(harnessRoot, 'docs', 'rules', 'common', 'local.md'), 'local rule\n', 'utf8');
 
-  result = run(['init', workspace, '--agent', 'claude', '--rules', 'none', '--force']);
+  result = run(['init', workspace, '--agent', 'claude', '--rules', 'none']);
   assert.strictEqual(result.status, 0, result.stderr);
   assertRuleDirs(harnessRoot, []);
   assertManifest(path.join(harnessRoot, 'manifest.json'), {
@@ -204,7 +307,7 @@ if (allRuleDirs.length > 1) {
     const harnessRoot = path.join(workspace, 'harness');
     assertRuleDirs(harnessRoot, allRuleDirs);
 
-    result = run(['init', workspace, '--agent', 'claude', '--rules', selectedRule, '--force']);
+    result = run(['init', workspace, '--agent', 'claude', '--rules', selectedRule]);
     assert.strictEqual(result.status, 0, result.stderr);
     assertRuleDirs(harnessRoot, [selectedRule]);
     assertManifest(path.join(harnessRoot, 'manifest.json'), {
@@ -318,46 +421,67 @@ for (const harnessDir of ['.', '../outside', 'bad/name', 'agent-work', 'AGENT-WO
   });
 }
 
-test('existing root entry is skipped without --force', () => {
+test('existing root entry gets the contract merged in (user content preserved)', () => {
   const workspace = tempDir();
   const targetFile = path.join(workspace, 'CLAUDE.md');
-  fs.writeFileSync(targetFile, 'custom', 'utf8');
+  fs.writeFileSync(targetFile, 'my project notes\n', 'utf8');
   const result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.strictEqual(read(targetFile), 'custom', 'existing root entry should be skipped without force');
-  assert.match(result.stdout, /kept your existing CLAUDE\.md/);
+  const body = read(targetFile);
+  assert.match(body, /<!-- niuma-harness:contract begin/, 'contract block should be inserted at top');
+  assert.match(body, /<!-- niuma-harness:contract end/, 'contract block should be closed');
+  assert.ok(body.endsWith('my project notes\n'), 'user content should be preserved after the contract block');
 });
 
-test('--force overwrites an existing root entry', () => {
+test('re-init refreshes the entry contract block (idempotent)', () => {
   const workspace = tempDir();
-  const targetFile = path.join(workspace, 'CLAUDE.md');
-  fs.writeFileSync(targetFile, 'custom', 'utf8');
-  const result = run(['init', workspace, '--agent', 'claude', '--force']);
+  let result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.notStrictEqual(read(targetFile), 'custom', 'force should overwrite existing root entry');
+  const entry = path.join(workspace, 'CLAUDE.md');
+  const before = read(entry);
+
+  result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.strictEqual(read(entry), before, 're-init with markers should leave the entry byte-identical');
+  assert.match(result.stdout, /REFRESH/, 're-init should report REFRESH for the entry');
 });
 
-test('existing manifest is skipped without --force', () => {
+test('manifest is always regenerated on re-init', () => {
   const workspace = tempDir();
   const manifestPath = path.join(workspace, 'harness', 'manifest.json');
   fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
   fs.writeFileSync(manifestPath, '{"custom":true}\n', 'utf8');
   const result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assert.strictEqual(read(manifestPath), '{"custom":true}\n', 'existing manifest should be skipped without force');
-});
-
-test('--force overwrites an existing manifest', () => {
-  const workspace = tempDir();
-  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
-  fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
-  fs.writeFileSync(manifestPath, '{"custom":true}\n', 'utf8');
-  const result = run(['init', workspace, '--agent', 'claude', '--force']);
   assert.strictEqual(result.status, 0, result.stderr);
   assertManifest(manifestPath, {
     agent: 'claude',
     entryFiles: ['CLAUDE.md'],
   });
+});
+
+test('re-init refreshes tool-managed files', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const memo = path.join(workspace, 'harness', 'docs', 'layers', '01-context', 'memo.md');
+  fs.writeFileSync(memo, 'tampered\n', 'utf8');
+
+  result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.notStrictEqual(read(memo), 'tampered\n', 'tool-managed file should be refreshed on re-init');
+  assert.match(read(memo), /## Agent protocol/, 'tool-managed file should be restored from template');
+});
+
+test('re-init preserves user-maintained project-context.md', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const ctx = path.join(workspace, 'harness', 'docs', 'project-context.md');
+  fs.writeFileSync(ctx, 'my project facts\n', 'utf8');
+
+  result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.strictEqual(read(ctx), 'my project facts\n', 'user-maintained project-context should be preserved');
 });
 
 test('directory symlink attack is rejected', () => {
@@ -391,8 +515,8 @@ test('root entry symlink is rejected without overwriting the target', () => {
   }
 
   if (created) {
-    const result = run(['init', workspace, '--agent', 'claude', '--force']);
-    assert.notStrictEqual(result.status, 0, 'root entry symlink with force should fail');
+    const result = run(['init', workspace, '--agent', 'claude']);
+    assert.notStrictEqual(result.status, 0, 'root entry symlink should fail');
     assert.strictEqual(read(target), 'outside', 'symlink target should not be overwritten');
   }
 });

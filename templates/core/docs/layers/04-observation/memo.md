@@ -15,6 +15,7 @@ Use this layer before declaring work complete, after any code or documentation c
 3. Run focused checks first, then broader checks when justified.
 4. Record exact commands, results, skipped checks, and reasons.
 5. Treat unrun checks as unknown, not as passing.
+6. If verification fails, treat the failing check as evidence. Do not change the verification target unless the selected process permits it and the reason is recorded.
 
 ## Allowed actions
 
@@ -29,12 +30,15 @@ Use this layer before declaring work complete, after any code or documentation c
 - Do not hide, truncate away, or ignore relevant failure output.
 - Do not mark skipped checks as passing.
 - Do not broaden verification commands endlessly when a focused failure already identifies the issue.
+- Do not move verification targets after a failure to turn red into green.
+- Do not rebaseline snapshots, loosen assertions, skip tests, lower coverage, or change check configuration unless permitted by the test-change gate in `docs/policy/action-boundary.md`; then record why the previous target was invalid and what replacement coverage preserves the behavior contract.
 
 ## Outputs
 
 - Verification commands run and their results.
 - Manual checks performed, if any.
 - Skipped checks and why they were skipped.
+- Verification target changes, if any, with the reason and replacement coverage.
 - Remaining risk or unknown status.
 
 ## Links to other layers

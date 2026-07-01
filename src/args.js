@@ -13,7 +13,6 @@ function parseArgs(argv) {
     rulesOut: null,
     rulesProvided: false,
     harnessDir: 'harness',
-    force: false,
     dryRun: false,
     help: false,
   };
@@ -23,11 +22,6 @@ function parseArgs(argv) {
 
     if (arg === '-h' || arg === '--help') {
       options.help = true;
-      continue;
-    }
-
-    if (arg === '--force') {
-      options.force = true;
       continue;
     }
 

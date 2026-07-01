@@ -30,7 +30,8 @@
     },
     {
       "target": "docs/project-context.md",
-      "template": "core/docs/project-context.md"
+      "template": "core/docs/project-context.md",
+      "managed": "user"
     },
     {
       "target": "docs/layers/01-context/memo.md",
@@ -69,6 +70,10 @@
       "template": "core/docs/policy/secret-leak.md"
     },
     {
+      "target": "docs/policy/untrusted-content.md",
+      "template": "core/docs/policy/untrusted-content.md"
+    },
+    {
       "target": "docs/process/task-triage.md",
       "template": "core/docs/process/task-triage.md"
     },
@@ -97,12 +102,13 @@
       "template": "core/docs/process/isolation.md"
     },
     {
-      "target": "docs/automation/hooks.md",
-      "template": "core/docs/automation/hooks.md"
-    },
-    {
       "target": "docs/process/subagent-development.md",
       "template": "core/docs/process/subagent-development.md"
+    },
+    {
+      "target": "docs/automation/hooks.md",
+      "template": "core/docs/automation/hooks.md",
+      "managed": "user"
     }
   ],
   "workTemplateFiles": [

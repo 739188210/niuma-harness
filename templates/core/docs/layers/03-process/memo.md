@@ -14,10 +14,11 @@ Use this layer after loading context and policy, before implementation, and when
 
 1. Classify the task: triage, bugfix, feature, refactor, review, release, documentation, cleanup, investigation, or verification.
 2. Select the closest workflow from `docs/process/`.
-3. If the work is multi-step, risky, or parallel, isolate the workspace first (`docs/process/isolation.md`) before acting. For large or risky work, consider staged subagent dispatch (`docs/process/subagent-development.md`).
-4. Define the smallest useful goal and success criteria.
-5. Break work into observable steps.
-6. Escalate to the user if the task scope expands beyond the selected workflow.
+3. Follow any confirmation gate defined by the selected workflow before writing detailed plans or implementation docs.
+4. If the work is multi-step, risky, or parallel, isolate the workspace first (`docs/process/isolation.md`) before acting. For large or risky work, consider staged subagent dispatch (`docs/process/subagent-development.md`).
+5. Define the smallest useful goal and success criteria.
+6. Break work into observable steps.
+7. Escalate to the user if the task scope expands beyond the selected workflow.
 
 ## Allowed actions
 

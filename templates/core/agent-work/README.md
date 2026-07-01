@@ -6,6 +6,7 @@ Create runtime task records under:
 
 ```text
 agent-work/tasks/<task-name>/
+  status.md
   context.md
   plan.md
   verification.md
@@ -15,6 +16,7 @@ agent-work/tasks/<task-name>/
 ## What belongs here
 
 - Task goals and acceptance criteria.
+- Task-local status ledgers for multi-step, risky, parallel, or interruptible work.
 - Task-local context gathered during execution.
 - Plans for multi-step work.
 - Verification commands, outputs, skipped checks, and residual risks.
@@ -28,6 +30,10 @@ agent-work/tasks/<task-name>/
 - Secrets, credentials, tokens, or private data.
 - Unverified guesses presented as truth.
 - One-off logs that do not help future task work.
+
+## Runtime protocol
+
+The Loop layer defines how agents keep task status current: `docs/layers/07-loop/memo.md`.
 
 ## Durable facts
 

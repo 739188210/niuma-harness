@@ -13,7 +13,7 @@ Repair the smallest relevant cause of a defect and verify the corrected behavior
 1. Load Context: read `docs/index.md`, `docs/project-context.md`, and the affected source or test files.
 2. Check Policy: use `docs/policy/action-boundary.md` and pause when the next action is ask-first or forbidden.
 3. Understand the symptom, expected behavior, and current behavior.
-4. Reproduce the issue with a test, command, log, or manual steps. If reproduction is not achievable, record what was attempted; the fix stays unverified until the symptom can be shown to disappear.
+4. Reproduce the issue with a test, command, log, or manual steps. If reproduction is not achievable, record what was attempted; the fix stays unverified until the symptom can be shown to disappear. The reproduction check is a verification target: keep it failing before the fix and passing after the fix.
 5. Identify the first root cause instead of chasing downstream symptoms.
 6. Implement the smallest safe fix.
 7. Observe: run the focused verification that proves the bug is fixed.
@@ -25,6 +25,8 @@ Repair the smallest relevant cause of a defect and verify the corrected behavior
 Use `docs/layers/05-recovery/memo.md` when reproduction fails, tests fail, commands fail, context is missing, or a fix attempt does not work.
 
 Do not delete failing tests, weaken assertions, disable checks, or keep retrying the same approach without new evidence.
+
+If a test appears wrong, follow the test-change gate in `docs/policy/action-boundary.md` before changing it. Document the expected behavior evidence and replace invalid tests with equivalent or stronger coverage; never remove the only reproduction without a replacement.
 
 ## Memory
 

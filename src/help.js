@@ -10,7 +10,6 @@ Init options:
   --harness-dir <name>   Directory to create, default: harness
   --rules <selection>    common | all | none | <rule-dir>[,<rule-dir>...], default: common
   --rules-out <dirs>     Exclude rule dirs from all installed rules
-  --force                Overwrite existing scaffold files
   --dry-run              Print planned actions without writing files
 
 Doctor/check options:

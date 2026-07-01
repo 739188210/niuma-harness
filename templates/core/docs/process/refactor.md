@@ -13,7 +13,7 @@ Make the smallest useful structural improvement without changing intended behavi
 1. Load Context: read `docs/index.md`, `docs/project-context.md`, and the affected implementation and tests.
 2. Check Policy: use `docs/policy/action-boundary.md` before broad, risky, or force-style changes. If this is multi-step or risky, isolate first (`docs/process/isolation.md`). For large refactors, consider staged subagent dispatch (`docs/process/subagent-development.md`).
 3. State the refactor goal and the behavior that must remain unchanged.
-4. Identify the verification baseline before editing.
+4. Identify the verification baseline before editing. Treat the baseline verification as the behavior boundary for the refactor.
 5. Split the refactor into small reversible steps.
 6. Change only files needed for the refactor goal.
 7. Run focused verification after meaningful steps.
@@ -23,6 +23,8 @@ Make the smallest useful structural improvement without changing intended behavi
 ## Scope guard
 
 Do not mix refactor with new behavior unless the user explicitly asks. Do not clean up unrelated code just because it is nearby.
+
+Changing tests during a refactor is ask-first unless the change is purely mechanical and preserves the same assertions. Do not update snapshots, loosen assertions, skip tests, or change verification config to accommodate the refactor.
 
 ## Recovery
 

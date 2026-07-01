@@ -91,11 +91,13 @@ function ensureDir(dirPath, dryRun) {
 }
 
 // 所有 scaffold 文件写入都走这里，统一处理 skip/overwrite/dry-run。
-function writeFile(filePath, content, options) {
+// 调用方决定是否覆盖：tool-managed 传 overwrite=true，user-maintained 传 false（已存在则保留）。
+function writeFile(filePath, content, writeOptions = {}) {
   assertNoSymlinkInPath(filePath);
 
+  const { dryRun = false, overwrite = false } = writeOptions;
   const exists = fs.existsSync(filePath);
-  if (exists && !options.force) {
+  if (exists && !overwrite) {
     return 'skip';
   }
 
@@ -106,12 +108,12 @@ function writeFile(filePath, content, options) {
     }
   }
 
-  if (!options.dryRun) {
+  if (!dryRun) {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, content, 'utf8');
   }
 
-  if (exists && options.force) {
+  if (exists && overwrite) {
     return 'overwrite';
   }
   return 'create';
@@ -132,6 +134,26 @@ function removeFile(filePath, options) {
 
   if (!options.dryRun) {
     fs.unlinkSync(filePath);
+  }
+
+  return 'remove';
+}
+
+// 删除已知 scaffold 目录，用于让可再生目录按 manifest/参数收敛。
+function removeDirectory(dirPath, options) {
+  assertNoSymlinkInPath(dirPath);
+
+  if (!fs.existsSync(dirPath)) {
+    return 'skip';
+  }
+
+  const stat = fs.lstatSync(dirPath);
+  if (!stat.isDirectory()) {
+    throw new Error(`Path exists but is not a directory: ${dirPath}`);
+  }
+
+  if (!options.dryRun) {
+    fs.rmSync(dirPath, { recursive: true, force: true });
   }
 
   return 'remove';
@@ -170,5 +192,6 @@ module.exports = {
   ensureDir,
   writeFile,
   removeFile,
+  removeDirectory,
   removeEmptyDirsUntil,
 };
