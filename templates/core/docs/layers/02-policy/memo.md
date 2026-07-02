@@ -8,7 +8,7 @@ This memo is the Policy protocol. It does not duplicate the concrete permission 
 
 ## When to use
 
-Use this layer before making changes, before running commands with side effects, before adding dependencies, before changing tests, and whenever a task touches security, data, public APIs, deployment, or git history.
+Use this layer before making changes, before running commands with side effects, before network or external-service actions, before adding dependencies, before changing tests, and whenever a task touches security, data, public APIs, deployment, or git history.
 
 ## Agent protocol
 
@@ -19,6 +19,12 @@ Use this layer before making changes, before running commands with side effects,
 5. Ask the user before ask-first actions.
 6. Stop instead of acting when the next step is forbidden or unsafe.
 7. Record approval blockers in `agent-work/` for multi-step tasks.
+
+## Blocker ownership
+
+Approval blockers and policy risks are task-local state until resolved. If a `status.md` ledger exists, record unresolved ask-first and stop-and-escalate blockers there so work can resume safely.
+
+Do not act through unresolved ask-first or stop-and-escalate blockers. Only record approvals and decisions that are explicit, task-relevant, and still applicable to the current action.
 
 ## Allowed actions
 

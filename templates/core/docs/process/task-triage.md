@@ -8,6 +8,16 @@ This is a concrete playbook selected by the Process layer. Use `docs/layers/03-p
 
 Classify the request, load the minimum required context, identify policy risks, and choose the next playbook.
 
+## Required artifact/checklist
+
+Before reporting completion, make sure the task record or final response includes:
+
+- Task classification.
+- Selected playbook or reason no playbook is needed.
+- Policy boundary or blocker.
+- Success criteria or smallest useful next step.
+- Evidence plan.
+
 ## Steps
 
 1. Load Context: read `docs/index.md` and `docs/project-context.md` for stable facts.

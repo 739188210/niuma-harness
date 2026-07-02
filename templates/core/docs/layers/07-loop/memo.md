@@ -32,6 +32,16 @@ Minimum fields:
 
 Do not create or maintain a ledger for trivial one-step work unless it helps handoff.
 
+## Ownership boundaries
+
+`status.md` owns the operational resume state for one active task. It records the current stage, next action, completed steps, summary verification state, blockers or risks, and resume instructions.
+
+`status.md` does not own detailed verification evidence, task notes, or durable project facts. Put detailed evidence in the Observation record or task notes, and route durable facts through the Memory layer.
+
+The active task owner is responsible for keeping `status.md` current before pausing, handing off, or resuming. Parallel or delegated work may keep its own notes and evidence, but the active task owner summarizes the recovery state in the parent ledger.
+
+Before pausing or stopping delegated work, the active task owner records the integrated delegated state, conflicts, and next action in the parent ledger.
+
 ## Agent protocol
 
 1. Plan: load Context, check Policy, select a Process, and decide whether the task needs a `status.md` ledger.
@@ -41,6 +51,18 @@ Do not create or maintain a ledger for trivial one-step work unless it helps han
 5. Repair: enter Recovery if the result is failing, unclear, or unsafe. Retries for the same failure are bounded (a small fixed number of focused attempts); once the limit is reached, stop, preserve the failure signal, and report instead of continuing the loop.
 6. Remember: capture verified durable facts through the Memory layer.
 7. Continue or stop: proceed only when the next step is safe and useful; otherwise report and ask. Before pausing or stopping interruptible work, make sure `status.md` is enough to resume from.
+
+## Rationalization red flags
+
+During Reflect or Continue, treat these thoughts as stop-and-classify signals. A red flag does not prove the action is forbidden; it means the agent must route through Observation, Recovery, Process, or Policy before proceeding.
+
+| Agent thought | Risk | Required response |
+|---|---|---|
+| "I can skip tests/checks" | Completion without Observation evidence or moving the verification target. | Run the smallest relevant check, or record skipped checks and remaining unknowns. If this follows a failure, use Recovery and the test-change gate. |
+| "It is probably fine" | Treating confidence as evidence. | Observe first; if evidence is unavailable, report the unknown instead of claiming success. |
+| "That failure is unrelated" | Ignoring failed Observation evidence. | Preserve the failure signal and classify it through Recovery before narrowing scope. |
+| "I will do a quick refactor while I am here" | Silent scope expansion. | Re-check Process and Policy; keep the next step task-scoped or ask first. |
+| "The user probably wants this extra scope" | Inventing requirements. | Ask or confirm before expanding the goal, public behavior, or touched area. |
 
 ## Allowed actions
 

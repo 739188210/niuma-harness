@@ -8,6 +8,16 @@ This is a concrete playbook selected by the Process layer. Use `docs/layers/03-p
 
 Make the smallest useful structural improvement without changing intended behavior.
 
+## Required artifact/checklist
+
+Before reporting completion, make sure the task record or final response includes:
+
+- Refactor goal.
+- Behavior baseline that must remain unchanged.
+- Scope boundary: what is intentionally not changed.
+- Before/after verification evidence where practical.
+- Skipped checks or behavior risks.
+
 ## Steps
 
 1. Load Context: read `docs/index.md`, `docs/project-context.md`, and the affected implementation and tests.

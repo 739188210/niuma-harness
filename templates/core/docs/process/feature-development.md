@@ -23,6 +23,16 @@ Keep the confirmation short:
 
 If an open question can change the implementation direction, ask the user before planning or coding. If the user already gave complete requirements and approval to proceed, record that and continue.
 
+## Required artifact/checklist
+
+Before reporting completion, make sure the task record or final response includes:
+
+- Acceptance criteria used.
+- Non-goals and assumptions when they affect scope.
+- Smallest feature slice chosen.
+- Verification evidence using the Observation schema.
+- Skipped checks and remaining risks.
+
 ## Steps
 
 1. Load Context: read `docs/index.md`, `docs/project-context.md`, and relevant existing implementation patterns.

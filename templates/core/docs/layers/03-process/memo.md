@@ -20,6 +20,30 @@ Use this layer after loading context and policy, before implementation, and when
 6. Break work into observable steps.
 7. Escalate to the user if the task scope expands beyond the selected workflow.
 
+## Task state ownership
+
+The selected workflow owns the success criteria and required task state for the task type. It decides which task notes, plans, checklists, and evidence records are needed beyond the shared `status.md` ledger.
+
+For multi-step, risky, parallel, or delegated work, decide who updates `status.md`, who records task notes, and who summarizes verification evidence before work begins. Parallel or delegated work must keep ownership explicit so task ledgers and evidence are not mixed or overwritten.
+
+For delegated work, the parent flow or active task owner is responsible for integrating delegated outputs before completion; use `docs/process/subagent-development.md` for the integration gate.
+
+## Trigger and artifact routing
+
+Use this as a routing aid only. The selected workflow owns the full checklist, success criteria, and evidence details.
+
+| Trigger/category | Route to | Required artifact/checklist |
+|---|---|---|
+| "bug", "broken", "regression", "failing test", "does not work" | `docs/process/bugfix.md` | Reproduction signal and fix verification. |
+| "add", "implement", "change behavior", "support", "user can" | `docs/process/feature-development.md` | Acceptance criteria and verification evidence. |
+| "refactor", "cleanup", "simplify", "rename", "restructure" without behavior change | `docs/process/refactor.md` | Behavior baseline and preservation evidence. |
+| "review", "audit", "check this PR/diff" | `docs/process/review.md` | Findings with severity and reviewed evidence. |
+| "release", "publish", "ship", "tag", "package" | `docs/process/release.md` | Release target, approval boundary, and package or artifact scope. |
+| "security", "data", "API", "dependency", or other risky/wide-scope work | `docs/process/task-triage.md` plus Policy | Classification, policy boundary, selected workflow, and evidence plan. |
+| "done", "verify", "prove", "is this complete?" | Current selected workflow plus Observation | Completion evidence using the Observation schema. |
+
+Trigger words are routing hints, not permission to bypass Policy. If multiple rows match, start with `docs/process/task-triage.md`. Do not duplicate the selected workflow's steps in this memo.
+
 ## Allowed actions
 
 - Use `docs/process/task-triage.md` when the task type or scope is unclear.

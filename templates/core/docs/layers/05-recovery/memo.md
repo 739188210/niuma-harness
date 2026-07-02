@@ -8,6 +8,8 @@ Define safe behavior when execution fails, evidence is unclear, or the agent dis
 
 Use this layer when tests fail, builds fail, commands fail, context is missing, edits are wrong, requirements are unclear, checks conflict, or the same fix attempt fails repeatedly.
 
+If the Loop layer flags a rationalization about missing evidence or dismissing failures as unrelated, use this layer to classify the failure or uncertainty before continuing. Scope-expansion rationalizations route through Process and Policy.
+
 ## Agent protocol
 
 1. Classify the failure type: test, build, command, context, bad edit, unclear requirement, policy block, or unknown.
@@ -17,6 +19,23 @@ Use this layer when tests fail, builds fail, commands fail, context is missing, 
 4. Make the smallest safe repair attempt.
 5. Re-run the smallest relevant check.
 6. Stop and report if the same failure persists after focused retries or if repair requires user approval.
+
+## Failure response map
+
+Use the failure type to choose the required response form. Do not treat all failures as retryable implementation bugs.
+
+| Failure type | Required response |
+|---|---|
+| `test` | Preserve the failing test name or assertion and expected-vs-actual signal; repair the first code cause or valid test-target cause; rerun the smallest relevant test. |
+| `build` | Preserve the build or typecheck command and first diagnostic; repair the first compile or configuration cause; rerun the focused build/typecheck command. |
+| `command` | Preserve the command, exit status, and relevant stderr/stdout; decide whether invocation, environment, permission, or dependency is at fault; retry only after changing the cause. |
+| `context` | Name the missing file, fact, decision, or prior state; inspect available context or ask the user; do not invent missing facts. |
+| `bad edit` | Identify the agent-owned edit that caused the regression; revert or correct the smallest owned change; rerun the affected check. |
+| `unclear requirement` | State the ambiguity and the implementation choices it blocks; ask for clarification before continuing. |
+| `policy block` | Name the policy or approval boundary; stop or request approval; do not work around the boundary. |
+| `unknown` | Preserve the observed signal and remaining unknowns; gather the smallest additional evidence needed to reclassify; stop if it cannot be classified safely. |
+
+Record the recovery result with Observation evidence fields: Check, Expected signal, Actual result, Skipped checks, and Remaining unknowns.
 
 ## Rollback strategy
 

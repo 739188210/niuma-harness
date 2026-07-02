@@ -8,6 +8,16 @@ This is a concrete playbook selected by the Process layer. Use `docs/layers/03-p
 
 Repair the smallest relevant cause of a defect and verify the corrected behavior.
 
+## Required artifact/checklist
+
+Before reporting completion, make sure the task record or final response includes:
+
+- Symptom, expected behavior, and current behavior.
+- Reproduction signal before the fix, or explicit reason reproduction was not achieved.
+- First root cause or best verified explanation.
+- Passing fix verification against the same reproduction target.
+- Skipped checks and remaining risk.
+
 ## Steps
 
 1. Load Context: read `docs/index.md`, `docs/project-context.md`, and the affected source or test files.

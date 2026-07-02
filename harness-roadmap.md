@@ -124,29 +124,18 @@ No blocking roadmap item remains. The 7-layer model is still the right shape; th
 
 ### P0: 7-layer hardening
 
-| Item | Lands in | Why |
-|---|---|---|
-| Task state ownership table | Loop / Memory / Process / Observation | Clarify ownership: Loop owns whether `status.md` is needed and its fields; Memory owns durable-vs-task-local boundary; Process owns task-specific notes; Observation owns evidence shape. |
+No P0 hardening items remain.
 
 ### P1: Evidence and recovery quality
 
-| Item | Lands in | Why |
-|---|---|---|
-| Observation evidence schema | `<harness-dir>/docs/layers/04-observation/memo.md` | Standardize evidence as check, expected signal, actual result, skipped checks, and remaining unknowns. |
-| Recovery form-matches-failure meta-rule | `<harness-dir>/docs/layers/05-recovery/memo.md` | Classify failure type → required behavior; reduce vague retries and make repair actions match the failure. |
-| External side-effect / network gate | Policy | Clarify when external docs lookup is autonomous and when network calls, credential use, uploads, dependency installs, or quota-consuming actions require approval. |
-| Parallel/subagent integration gate | `<harness-dir>/docs/process/subagent-development.md` | Make the parent flow responsible for merging subagent outputs, checking conflicts, and running final Observation. |
+No P1 evidence and recovery quality items remain.
 
 ### P2: ECC / Superpowers-inspired refinements
 
 | Item | Lands in | Why |
 |---|---|---|
-| Trigger phrase → checklist mapping | Process docs / optional capability docs | Borrow SP-style triggers without runtime hooks: feature, bug, review, security/data/API, and done each map to a lightweight checklist. |
 | Capability / skill metadata model | `extends/` or future capability docs | Define name, when-to-use, inputs, outputs, pause conditions, verification method, and fallback checklist for optional skills. |
-| Rationalization red-flags table | Loop or Recovery memo | List agent thoughts that indicate unsafe shortcuts: "skip tests", "probably fine", "unrelated error", "quick refactor", or "user probably wants extra scope". |
-| Artifact contracts | Process playbooks | Define expected artifacts per task type: feature acceptance criteria, bug repro signal, refactor behavior baseline, review findings, recovery signal. |
 | doctor content-quality checks | `doctor` semantic checks | Add non-corruption checks for memo/playbook structure without treating placeholders or user-maintained content as failures. |
-| cross-runtime behavior parity tests | `test/` | Assert claude/codex/opencode/multi preserve equivalent harness behavior and prevent silent drift. |
 
 ### Niuma self-development notes
 
@@ -173,7 +162,7 @@ No blocking roadmap item remains. The 7-layer model is still the right shape; th
 
 ### Suggested priority
 
-task state ownership table > Observation evidence schema > Recovery form-matches-failure meta-rule.
+doctor content-quality checks.
 
 ## Non-goals
 

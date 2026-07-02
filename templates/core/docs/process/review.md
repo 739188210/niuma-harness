@@ -8,6 +8,16 @@ This is a concrete playbook selected by the Process layer. Use `docs/layers/03-p
 
 Identify blocking issues before work is considered ready, without turning review into unrelated redesign.
 
+## Required artifact/checklist
+
+Before reporting completion, make sure the task record or final response includes:
+
+- Review scope.
+- Intended task goal compared with actual changes.
+- Findings grouped by severity.
+- Blocking vs non-blocking status.
+- Verification evidence reviewed or requested.
+
 ## Steps
 
 1. Load Context: read `docs/index.md`, `docs/project-context.md`, and the changed files or diff.

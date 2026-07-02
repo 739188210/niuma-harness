@@ -17,6 +17,14 @@ Use this layer after discovering verified stable facts, after finishing multi-st
 5. Propose updates to `docs/project-context.md` only for durable, reusable facts. A fact is durable when it is reused across multiple tasks and does not change with a single task's outcome (for example build/test commands, architecture, module ownership, or external constraints); task-specific findings stay in `agent-work/`.
 6. Do not store secrets, private data, or unverified guesses.
 
+## Ownership boundaries
+
+Task-local state stays in `agent-work/tasks/<task-name>/`. This includes progress ledgers, task notes, temporary investigation details, unresolved approval blockers, risks, and verification summaries.
+
+Durable facts belong in `docs/project-context.md` only after verification against current files or user confirmation. A durable fact should be reusable across tasks and should not depend on one task's temporary outcome.
+
+Approval blockers and risks are task-local until resolved. Move them into durable project context only when they become verified recurring constraints.
+
 ## Allowed actions
 
 - Record task progress, verification evidence, and handoff notes.

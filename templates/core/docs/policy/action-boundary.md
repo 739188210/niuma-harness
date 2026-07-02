@@ -43,6 +43,26 @@ Forbidden target-moving includes deleting failing tests, loosening assertions, b
 
 A request to turn red into green by weakening, skipping, deleting, or rebaselining verification targets is not valid test maintenance. Stop and report instead of following that request.
 
+## External side-effect / network gate
+
+Public documentation and web lookup is autonomous only when it is task-scoped, read-only, unauthenticated, does not upload workspace/user data, does not write to an external system, and does not consume limited quota beyond normal page/API retrieval.
+
+Ask first before:
+
+- Calling external APIs or services beyond public read-only documentation lookup.
+- Using authenticated access, credentials, cookies, tokens, private endpoints, or account-scoped resources.
+- Uploading files, logs, code, artifacts, prompts, private data, or workspace content to an external system.
+- Installing dependencies, running remote install scripts, or using one-off remote package execution.
+- Starting CI jobs, remote jobs, deploy previews, hosted builds, cloud tasks, or quota-consuming actions.
+- Writing comments, issues, pull requests, tickets, messages, records, or other data to external systems.
+
+Forbidden unless explicitly requested:
+
+- Publish, deploy, tag, release, push, or bump package versions.
+- Delete, overwrite, revoke, rotate, mutate, or otherwise destructively change remote resources.
+- Transmit secrets, credentials, tokens, private data, or sensitive operational details.
+- Run large-scale crawling, load testing, scraping, fuzzing, or repeated automated external requests.
+
 ## Ask-first actions
 
 Agents must ask before:

@@ -16,32 +16,89 @@ const {
 } = require('./helpers');
 const { normalizeRules, normalizeRulesOut } = require('../src/rules');
 
-test('init claude: entry at workspace root, harness content under harness/', () => {
-  const workspace = tempDir();
-  const result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assertFile(path.join(workspace, 'CLAUDE.md'));
-  assertNoPath(path.join(workspace, 'harness', 'CLAUDE.md'));
-  assertFile(path.join(workspace, 'harness', 'HARNESS_GUIDE.md'));
-  assertFile(path.join(workspace, 'harness', 'docs', 'index.md'));
-  assertFile(path.join(workspace, 'harness', 'docs', 'policy', 'action-boundary.md'));
-  assertFile(path.join(workspace, 'harness', 'docs', 'policy', 'secret-leak.md'));
-  assertFile(path.join(workspace, 'harness', 'docs', 'policy', 'untrusted-content.md'));
-  assertFile(path.join(workspace, 'harness', 'docs', 'process', 'refactor.md'));
-  assertFile(path.join(workspace, 'harness', 'docs', 'process', 'review.md'));
-  assertFile(path.join(workspace, 'harness', 'docs', 'process', 'release.md'));
-  assertLayerMemos(path.join(workspace, 'harness'));
+const agentCases = [
+  { agent: 'claude', entryFiles: ['CLAUDE.md'], absentEntryFiles: ['AGENTS.md'] },
+  { agent: 'codex', entryFiles: ['AGENTS.md'], absentEntryFiles: ['CLAUDE.md'] },
+  { agent: 'opencode', entryFiles: ['AGENTS.md'], absentEntryFiles: ['CLAUDE.md'] },
+  { agent: 'multi', entryFiles: ['CLAUDE.md', 'AGENTS.md'], absentEntryFiles: [] },
+];
+
+function assertCommonHarnessShape(workspace, options = {}) {
+  const harnessDir = options.harnessDir || 'harness';
+  const harnessRoot = path.join(workspace, harnessDir);
+
+  assertFile(path.join(harnessRoot, 'HARNESS_GUIDE.md'));
+  assertFile(path.join(harnessRoot, 'docs', 'index.md'));
+  assertFile(path.join(harnessRoot, 'docs', 'policy', 'action-boundary.md'));
+  assertFile(path.join(harnessRoot, 'docs', 'policy', 'secret-leak.md'));
+  assertFile(path.join(harnessRoot, 'docs', 'policy', 'untrusted-content.md'));
+  assertFile(path.join(harnessRoot, 'docs', 'process', 'refactor.md'));
+  assertFile(path.join(harnessRoot, 'docs', 'process', 'review.md'));
+  assertFile(path.join(harnessRoot, 'docs', 'process', 'release.md'));
+  assertLayerMemos(harnessRoot);
   assertDir(path.join(workspace, 'agent-work'));
   assertFile(path.join(workspace, 'agent-work', 'README.md'));
   assertDir(path.join(workspace, 'agent-work', 'tasks'));
-  assertNoPath(path.join(workspace, 'harness', 'docs', 'tasks'));
-  assertNoPath(path.join(workspace, 'harness', 'agent-work'));
-  assertManifest(path.join(workspace, 'harness', 'manifest.json'), {
-    agent: 'claude',
-    entryFiles: ['CLAUDE.md'],
+  assertNoPath(path.join(harnessRoot, 'docs', 'tasks'));
+  assertNoPath(path.join(harnessRoot, 'agent-work'));
+}
+
+function assertAgentEntryShape(workspace, scenario, options = {}) {
+  const harnessDir = options.harnessDir || 'harness';
+  const harnessRoot = path.join(workspace, harnessDir);
+
+  for (const entryFile of scenario.entryFiles) {
+    assertFile(path.join(workspace, entryFile));
+  }
+
+  for (const entryFile of scenario.absentEntryFiles) {
+    assertNoPath(path.join(workspace, entryFile));
+  }
+
+  for (const entryFile of ['CLAUDE.md', 'AGENTS.md']) {
+    assertNoPath(path.join(harnessRoot, entryFile));
+  }
+
+  assertManifest(path.join(harnessRoot, 'manifest.json'), {
+    agent: scenario.agent,
+    entryFiles: scenario.entryFiles,
+    harnessDir,
   });
-  assertNoPath(path.join(workspace, 'AGENTS.md'));
-  assertNoPath(path.join(workspace, 'harness', 'AGENTS.md'));
+}
+
+function initWorkspace(agent) {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', agent]);
+  assert.strictEqual(result.status, 0, result.stderr);
+  return workspace;
+}
+
+function readTextTree(root) {
+  const tree = {};
+
+  function walk(currentDir, prefix) {
+    const entries = fs.readdirSync(currentDir, { withFileTypes: true })
+      .sort((left, right) => left.name.localeCompare(right.name));
+
+    for (const entry of entries) {
+      const entryPath = path.join(currentDir, entry.name);
+      const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) {
+        walk(entryPath, relativePath);
+      } else if (entry.isFile()) {
+        tree[relativePath] = read(entryPath);
+      }
+    }
+  }
+
+  walk(root, '');
+  return tree;
+}
+
+test('init claude: entry at workspace root, harness content under harness/', () => {
+  const workspace = initWorkspace('claude');
+  assertCommonHarnessShape(workspace);
+  assertAgentEntryShape(workspace, agentCases[0]);
 });
 
 test('generated memos/playbooks/policy contain required structure anchors', () => {
@@ -112,6 +169,101 @@ test('generated docs define task status ledger protocol', () => {
   assert.match(workReadme, /status\.md/);
 });
 
+test('generated loop memo defines rationalization red flags', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop', 'memo.md'));
+  assert.match(loopMemo, /## Rationalization red flags/);
+  const redFlagsSection = loopMemo.match(/## Rationalization red flags[\s\S]*?\n## Allowed actions/)[0];
+  assert.match(redFlagsSection, /skip tests\/checks/);
+  assert.match(redFlagsSection, /probably fine/);
+  assert.match(redFlagsSection, /unrelated/);
+  assert.match(redFlagsSection, /quick refactor/);
+  assert.match(redFlagsSection, /extra scope/);
+  assert.match(redFlagsSection, /stop-and-classify signals/);
+  assert.match(redFlagsSection, /route through Observation, Recovery, Process, or Policy/);
+
+  const recoveryMemo = read(path.join(h, 'docs', 'layers', '05-recovery', 'memo.md'));
+  assert.match(recoveryMemo, /rationalization about missing evidence or dismissing failures as unrelated/);
+  assert.match(recoveryMemo, /Scope-expansion rationalizations route through Process and Policy/);
+});
+
+test('generated observation memo defines evidence schema', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation', 'memo.md'));
+  assert.match(observationMemo, /## Evidence schema/);
+  assert.match(observationMemo, /Check/);
+  assert.match(observationMemo, /Expected signal/);
+  assert.match(observationMemo, /Actual result/);
+  assert.match(observationMemo, /Skipped checks/);
+  assert.match(observationMemo, /Remaining unknowns/);
+  assert.match(observationMemo, /`status\.md` may summarize verification state, but it does not replace evidence/);
+  assert.match(observationMemo, /final Observation verifies the integrated result/);
+});
+
+test('generated recovery memo maps failure types to required responses', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const recoveryMemo = read(path.join(h, 'docs', 'layers', '05-recovery', 'memo.md'));
+  assert.match(recoveryMemo, /## Failure response map/);
+  assert.match(recoveryMemo, /`test`/);
+  assert.match(recoveryMemo, /`build`/);
+  assert.match(recoveryMemo, /`command`/);
+  assert.match(recoveryMemo, /`context`/);
+  assert.match(recoveryMemo, /`bad edit`/);
+  assert.match(recoveryMemo, /`unclear requirement`/);
+  assert.match(recoveryMemo, /`policy block`/);
+  assert.match(recoveryMemo, /`unknown`/);
+  assert.match(recoveryMemo, /expected-vs-actual signal/);
+  assert.match(recoveryMemo, /first diagnostic/);
+  assert.match(recoveryMemo, /do not invent missing facts/);
+  assert.match(recoveryMemo, /stop or request approval/);
+  assert.match(recoveryMemo, /reclassify/);
+  assert.match(recoveryMemo, /Expected signal/);
+  assert.match(recoveryMemo, /Actual result/);
+  assert.match(recoveryMemo, /Skipped checks/);
+  assert.match(recoveryMemo, /Remaining unknowns/);
+});
+
+test('generated docs define task state ownership boundaries', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop', 'memo.md'));
+  assert.match(loopMemo, /`status\.md` owns the operational resume state/);
+  assert.match(loopMemo, /does not own detailed verification evidence, task notes, or durable project facts/);
+  assert.match(loopMemo, /active task owner/);
+
+  const memoryMemo = read(path.join(h, 'docs', 'layers', '06-memory', 'memo.md'));
+  assert.match(memoryMemo, /Task-local state stays in `agent-work\/tasks\/<task-name>\/`/);
+  assert.match(memoryMemo, /Durable facts belong in `docs\/project-context\.md` only after verification/);
+  assert.match(memoryMemo, /Approval blockers and risks are task-local until resolved/);
+
+  const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation', 'memo.md'));
+  assert.match(observationMemo, /Verification evidence owns exact commands, expected signals, actual results, skipped checks with reasons, and remaining unknowns/);
+  assert.match(observationMemo, /`status\.md` may summarize verification state, but it does not replace evidence/);
+
+  const processMemo = read(path.join(h, 'docs', 'layers', '03-process', 'memo.md'));
+  assert.match(processMemo, /The selected workflow owns the success criteria and required task state/);
+  assert.match(processMemo, /Parallel or delegated work must keep ownership explicit/);
+
+  const policyMemo = read(path.join(h, 'docs', 'layers', '02-policy', 'memo.md'));
+  assert.match(policyMemo, /Approval blockers and policy risks are task-local state/);
+  assert.match(policyMemo, /Do not act through unresolved ask-first or stop-and-escalate blockers/);
+});
+
 test('generated feature docs define pre-plan confirmation gate', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);
@@ -127,6 +279,119 @@ test('generated feature docs define pre-plan confirmation gate', () => {
 
   const processMemo = read(path.join(h, 'docs', 'layers', '03-process', 'memo.md'));
   assert.match(processMemo, /confirmation gate defined by the selected workflow/);
+});
+
+test('generated process memo maps triggers to workflows and artifacts', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const processMemo = read(path.join(h, 'docs', 'layers', '03-process', 'memo.md'));
+  assert.match(processMemo, /## Trigger and artifact routing/);
+  assert.match(processMemo, /docs\/process\/bugfix\.md/);
+  assert.match(processMemo, /Reproduction signal/);
+  assert.match(processMemo, /docs\/process\/feature-development\.md/);
+  assert.match(processMemo, /Acceptance criteria/);
+  assert.match(processMemo, /docs\/process\/refactor\.md/);
+  assert.match(processMemo, /Behavior baseline/);
+  assert.match(processMemo, /docs\/process\/review\.md/);
+  assert.match(processMemo, /Findings with severity/);
+  assert.match(processMemo, /docs\/process\/release\.md/);
+  assert.match(processMemo, /package or artifact scope/);
+  assert.match(processMemo, /Observation schema/);
+  assert.match(processMemo, /Trigger words are routing hints, not permission to bypass Policy/);
+  assert.match(processMemo, /If multiple rows match, start with `docs\/process\/task-triage\.md`/);
+  assert.match(processMemo, /Do not duplicate/);
+});
+
+test('generated process playbooks define required artifact contracts', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const triage = read(path.join(h, 'docs', 'process', 'task-triage.md'));
+  assert.match(triage, /## Required artifact\/checklist/);
+  assert.match(triage, /Task classification/);
+
+  const feature = read(path.join(h, 'docs', 'process', 'feature-development.md'));
+  assert.match(feature, /## Required artifact\/checklist/);
+  assert.match(feature, /Acceptance criteria/);
+
+  const bugfix = read(path.join(h, 'docs', 'process', 'bugfix.md'));
+  assert.match(bugfix, /## Required artifact\/checklist/);
+  assert.match(bugfix, /Reproduction signal/);
+
+  const refactor = read(path.join(h, 'docs', 'process', 'refactor.md'));
+  assert.match(refactor, /## Required artifact\/checklist/);
+  assert.match(refactor, /Behavior baseline/);
+
+  const review = read(path.join(h, 'docs', 'process', 'review.md'));
+  assert.match(review, /## Required artifact\/checklist/);
+  assert.match(review, /Findings grouped by severity/);
+
+  const release = read(path.join(h, 'docs', 'process', 'release.md'));
+  assert.match(release, /## Required artifact\/checklist/);
+  assert.match(release, /Release target/);
+  assert.match(release, /Package or artifact scope/);
+});
+
+test('generated subagent playbook defines parent integration gate', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const subagent = read(path.join(h, 'docs', 'process', 'subagent-development.md'));
+  assert.match(subagent, /## Parent integration gate/);
+  assert.match(subagent, /active task owner owns the final integrated result/);
+  assert.match(subagent, /changed or reviewed files/);
+  assert.match(subagent, /verification evidence/);
+  assert.match(subagent, /Overlapping edits/);
+  assert.match(subagent, /conflicting verification claims/);
+  assert.match(subagent, /CRITICAL or HIGH review findings/);
+  assert.match(subagent, /enter Recovery instead of silently choosing one/);
+  assert.match(subagent, /final Observation over the integrated workspace/);
+  assert.match(subagent, /supporting evidence, not a replacement/);
+
+  const processMemo = read(path.join(h, 'docs', 'layers', '03-process', 'memo.md'));
+  assert.match(processMemo, /parent flow or active task owner is responsible for integrating delegated outputs/);
+
+  const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop', 'memo.md'));
+  assert.match(loopMemo, /integrated delegated state, conflicts, and next action/);
+
+  const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation', 'memo.md'));
+  assert.match(observationMemo, /final Observation verifies the integrated result/);
+});
+
+test('generated docs define external side-effect network gate', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const actionBoundary = read(path.join(h, 'docs', 'policy', 'action-boundary.md'));
+  assert.match(actionBoundary, /## External side-effect \/ network gate/);
+  assert.match(actionBoundary, /Public documentation and web lookup is autonomous/);
+  assert.match(actionBoundary, /read-only, unauthenticated/);
+  assert.match(actionBoundary, /does not upload/);
+  assert.match(actionBoundary, /does not write to an external system/);
+  assert.match(actionBoundary, /does not consume limited quota/);
+  assert.match(actionBoundary, /Calling external APIs or services/);
+  assert.match(actionBoundary, /authenticated access, credentials, cookies, tokens/);
+  assert.match(actionBoundary, /Uploading files, logs, code, artifacts/);
+  assert.match(actionBoundary, /Installing dependencies, running remote install scripts/);
+  assert.match(actionBoundary, /CI jobs, remote jobs, deploy previews/);
+  assert.match(actionBoundary, /Writing comments, issues, pull requests/);
+  assert.match(actionBoundary, /Publish, deploy, tag, release, push, or bump package versions/);
+  assert.match(actionBoundary, /Delete, overwrite, revoke, rotate, mutate/);
+  assert.match(actionBoundary, /Transmit secrets, credentials, tokens, private data/);
+  assert.match(actionBoundary, /large-scale crawling, load testing, scraping/);
+
+  const policyMemo = read(path.join(h, 'docs', 'layers', '02-policy', 'memo.md'));
+  assert.match(policyMemo, /before network or external-service actions/);
+  assert.doesNotMatch(policyMemo, /## External side-effect \/ network gate/);
 });
 
 test('generated docs define test-change gate', () => {
@@ -182,33 +447,16 @@ test('--tool is an alias for --agent', () => {
   });
 });
 
-for (const agent of ['codex', 'opencode']) {
-  test(`init ${agent}: AGENTS.md at root`, () => {
-    const workspace = tempDir();
-    const result = run(['init', workspace, '--agent', agent]);
-    assert.strictEqual(result.status, 0, result.stderr);
-    assertFile(path.join(workspace, 'AGENTS.md'));
-    assertNoPath(path.join(workspace, 'harness', 'AGENTS.md'));
-    assertManifest(path.join(workspace, 'harness', 'manifest.json'), {
-      agent,
-      entryFiles: ['AGENTS.md'],
-    });
-    assertNoPath(path.join(workspace, 'CLAUDE.md'));
+for (const scenario of agentCases.filter((entry) => entry.agent === 'codex' || entry.agent === 'opencode')) {
+  test(`init ${scenario.agent}: AGENTS.md at root`, () => {
+    const workspace = initWorkspace(scenario.agent);
+    assertAgentEntryShape(workspace, scenario);
   });
 }
 
 test('init multi: both CLAUDE.md and AGENTS.md', () => {
-  const workspace = tempDir();
-  const result = run(['init', workspace, '--agent', 'multi']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assertFile(path.join(workspace, 'CLAUDE.md'));
-  assertFile(path.join(workspace, 'AGENTS.md'));
-  assertNoPath(path.join(workspace, 'harness', 'CLAUDE.md'));
-  assertNoPath(path.join(workspace, 'harness', 'AGENTS.md'));
-  assertManifest(path.join(workspace, 'harness', 'manifest.json'), {
-    agent: 'multi',
-    entryFiles: ['CLAUDE.md', 'AGENTS.md'],
-  });
+  const workspace = initWorkspace('multi');
+  assertAgentEntryShape(workspace, agentCases.find((scenario) => scenario.agent === 'multi'));
 });
 
 test('entry file carries the operating contract zone', () => {
@@ -222,12 +470,58 @@ test('entry file carries the operating contract zone', () => {
 });
 
 test('multi mode shares one entry source so both files are identical', () => {
-  const workspace = tempDir();
-  const result = run(['init', workspace, '--agent', 'multi']);
-  assert.strictEqual(result.status, 0, result.stderr);
+  const workspace = initWorkspace('multi');
   const claude = read(path.join(workspace, 'CLAUDE.md'));
   const agents = read(path.join(workspace, 'AGENTS.md'));
   assert.strictEqual(claude, agents, 'CLAUDE.md and AGENTS.md must share one source');
+});
+
+test('init produces parity scaffold across supported agents', () => {
+  for (const scenario of agentCases) {
+    const workspace = initWorkspace(scenario.agent);
+    assertCommonHarnessShape(workspace);
+    assertAgentEntryShape(workspace, scenario);
+
+    const doctor = run(['doctor', workspace]);
+    assert.strictEqual(doctor.status, 0, `${scenario.agent} doctor failed: ${doctor.stderr}`);
+  }
+});
+
+test('all agent entry files share the same generated contract source', () => {
+  const baselineWorkspace = initWorkspace('claude');
+  const baseline = read(path.join(baselineWorkspace, 'CLAUDE.md'));
+
+  for (const scenario of agentCases) {
+    const workspace = scenario.agent === 'claude' ? baselineWorkspace : initWorkspace(scenario.agent);
+
+    for (const entryFile of scenario.entryFiles) {
+      assert.strictEqual(
+        read(path.join(workspace, entryFile)),
+        baseline,
+        `${scenario.agent} ${entryFile} should match the claude entry contract`,
+      );
+    }
+  }
+});
+
+test('all agents generate the same runtime-neutral docs', () => {
+  const baselineWorkspace = initWorkspace('claude');
+  const baselineDocs = readTextTree(path.join(baselineWorkspace, 'harness', 'docs'));
+  const baselineWorkReadme = read(path.join(baselineWorkspace, 'agent-work', 'README.md'));
+
+  for (const scenario of agentCases.filter((entry) => entry.agent !== 'claude')) {
+    const workspace = initWorkspace(scenario.agent);
+    assert.deepStrictEqual(
+      readTextTree(path.join(workspace, 'harness', 'docs')),
+      baselineDocs,
+      `${scenario.agent} docs should match claude docs`,
+    );
+    assert.strictEqual(
+      read(path.join(workspace, 'agent-work', 'README.md')),
+      baselineWorkReadme,
+      `${scenario.agent} agent-work README should match claude agent-work README`,
+    );
+  }
 });
 
 test('default common rules are installed with starter content', () => {

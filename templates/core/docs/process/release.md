@@ -8,6 +8,16 @@ This is a concrete playbook selected by the Process layer. Use `docs/layers/03-p
 
 Confirm release readiness with evidence and avoid irreversible or outward-facing actions without approval.
 
+## Required artifact/checklist
+
+Before reporting completion, make sure the task record or final response includes:
+
+- Release target and version intent.
+- Approval boundary for publish/tag/deploy/version-bump actions.
+- Package or artifact scope.
+- Contents checked.
+- Verification evidence and remaining release risk.
+
 ## Steps
 
 1. Load Context: read `docs/index.md`, `docs/project-context.md`, package metadata, and release-related docs.

@@ -39,6 +39,24 @@ Reviewer rules:
 - Fix only on explicit user approval (`review.md` step 8); route fixes through the relevant bugfix/refactor/feature playbook.
 - Do not pre-judge severity to game the review gate.
 
+## Parent integration gate
+
+The parent flow or active task owner owns the final integrated result. Subagents may produce parts, findings, notes, or evidence, but they do not independently declare the overall task complete.
+
+Before accepting delegated work, the parent must collect each part's scope, changed or reviewed files, verification evidence, unresolved risks or blockers, and recovery state if any.
+
+Before finalizing, check for:
+
+- Overlapping edits to the same files.
+- Incompatible assumptions between delegated outputs.
+- Stale task state or conflicting verification claims.
+- Unresolved CRITICAL or HIGH review findings.
+- Skipped checks that affect integrated behavior.
+
+Merge delegated outputs intentionally. If outputs conflict, enter Recovery instead of silently choosing one. Keep the parent `status.md` ledger current with the integrated state.
+
+After accepting delegated parts, run or record a final Observation over the integrated workspace. Per-part verification is supporting evidence, not a replacement for integrated verification.
+
 ## Agent-agnostic notes
 
 This playbook uses action semantics: "dispatch a subagent with isolated context", "hand the subagent file paths and a bounded goal". It does not name a specific tool. Map it to whatever subagent or task mechanism the current runtime provides (or none).
