@@ -1,0 +1,4 @@
+interface:
+  display_name: "Database Readonly"
+  short_description: "Connect to databases and run safe read-only queries."
+  default_prompt: "Use $database-readonly to inspect a database table safely with read-only SQL."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "ZenTao Bug Workflow"
+  short_description: "Read and process self-hosted ZenTao bugs"
+  default_prompt: "Use ZenTao Bug Workflow to read a bug, inspect the repository, fix the issue, and report the result."

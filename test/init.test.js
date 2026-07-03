@@ -160,6 +160,10 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
   assert.match(policyMemo, /docs\/policy\/untrusted-content\.md/);
   const index = read(path.join(h, 'docs', 'index.md'));
   assert.match(index, /docs\/policy\/untrusted-content\.md/);
+  assert.match(index, /tool-managed navigation map/);
+  assert.match(index, /stable project facts in `docs\/project-context\.md`/);
+  assert.match(index, /task-local pointers in `agent-work\/`/);
+  assert.doesNotMatch(index, /Agents may add short runtime pointers/);
 
   assertNoPath(path.join(h, 'docs', 'automation', 'hooks.md'));
   const automationIntent = read(path.join(h, 'docs', 'automation', 'automation-intent.md'));
@@ -229,6 +233,9 @@ test('generated observation memo defines evidence schema', () => {
   assert.match(observationMemo, /Skipped checks/);
   assert.match(observationMemo, /Remaining unknowns/);
   assert.match(observationMemo, /`status\.md` may summarize verification state, but it does not replace evidence/);
+  assert.match(observationMemo, /project-local commands documented in `docs\/project-context\.md`/);
+  assert.match(observationMemo, /use `docs\/index\.md` only as navigation/);
+  assert.doesNotMatch(observationMemo, /project-local commands documented in `docs\/index\.md`/);
   assert.match(observationMemo, /final Observation verifies the integrated result/);
 });
 
@@ -365,6 +372,11 @@ test('generated process playbooks define required artifact contracts', () => {
   assert.match(release, /Release target/);
   assert.match(release, /Package or artifact scope/);
   assert.match(release, /touch external systems, credentials, quotas, or release infrastructure/);
+
+  const processMemo = read(path.join(h, 'docs', 'layers', '03-process.md'));
+  assert.match(processMemo, /shared tree would create avoidable risk or coordination cost/);
+  assert.match(processMemo, /Do not isolate merely because a task has more than one step/);
+  assert.doesNotMatch(processMemo, /If the work is multi-step, risky, or parallel, isolate/);
 });
 
 test('generated subagent playbook defines parent integration gate', () => {
@@ -374,7 +386,19 @@ test('generated subagent playbook defines parent integration gate', () => {
   const h = path.join(workspace, 'harness');
 
   const isolation = read(path.join(h, 'docs', 'process', 'isolation.md'));
+  assert.match(isolation, /shared workspace would create avoidable risk or coordination cost/);
+  assert.match(isolation, /Do not isolate merely because a task has more than one step/);
+  assert.match(isolation, /materially reduces risk or coordination cost/);
+  assert.match(isolation, /Overlap with another active task in the shared tree/);
+  assert.match(isolation, /local worktree isolation rules/);
+  assert.match(isolation, /newly created local task branch/);
+  assert.match(isolation, /shared working tree does not need to be clean/);
+  assert.match(isolation, /must not stage, revert, overwrite, clean, or otherwise modify shared-tree files/);
+  assert.match(isolation, /Copying local-only config or using credentials is not part of worktree creation/);
+  assert.match(isolation, /invalid isolation path/);
   assert.match(isolation, /fall back to task-scoped work in the shared tree/);
+  assert.doesNotMatch(isolation, /Use this playbook to isolate multi-step, risky, or parallel work/);
+  assert.doesNotMatch(isolation, /dirty tree/);
   assert.doesNotMatch(isolation, /task-scoped commits in the shared tree/);
 
   const subagent = read(path.join(h, 'docs', 'process', 'subagent-development.md'));
@@ -407,6 +431,19 @@ test('generated docs define external side-effect network gate', () => {
   const h = path.join(workspace, 'harness');
 
   const actionBoundary = read(path.join(h, 'docs', 'policy', 'action-boundary.md'));
+  assert.match(actionBoundary, /## Local worktree isolation/);
+  assert.match(actionBoundary, /avoid[a-z ]*risk or coordination cost/);
+  assert.match(actionBoundary, /outside the target repository's shared working tree/);
+  assert.match(actionBoundary, /dedicated agent-owned isolation directory/);
+  assert.match(actionBoundary, /do not create worktrees inside normal source, docs, config, output, or other repository-owned paths/);
+  assert.doesNotMatch(actionBoundary, /such as `\.claude\/worktrees\/`/);
+  assert.match(actionBoundary, /newly created task branch remains local-only/);
+  assert.match(actionBoundary, /no upstream tracking, PR, or remote branch creation/);
+  assert.match(actionBoundary, /does not push to or otherwise touch remotes/);
+  assert.match(actionBoundary, /does not merge, delete, force-clean, rewrite history, or modify existing files in the shared working tree/);
+  assert.match(actionBoundary, /shared working tree does not need to be clean/);
+  assert.match(actionBoundary, /Existing uncommitted files do not block autonomous worktree creation/);
+  assert.match(actionBoundary, /copy local-only config, or use credentials/);
   assert.match(actionBoundary, /## External side-effect \/ network gate/);
   assert.match(actionBoundary, /Public documentation and web lookup is autonomous/);
   assert.match(actionBoundary, /read-only, unauthenticated/);
@@ -502,6 +539,9 @@ test('entry file carries the operating contract zone', () => {
   assert.match(body, /<!-- niuma-harness:contract begin/, 'entry must open the contract zone');
   assert.match(body, /<!-- niuma-harness:contract end/, 'entry must close the contract zone');
   assert.match(body, /Operating Loop/, 'entry must contain the operating loop');
+  assert.match(body, /harness\/docs\/index\.md/, 'entry must point agents to the harness index');
+  assert.match(body, /harness\/docs\/layers\/01-context\.md/, 'entry depth links must include the harness directory');
+  assert.doesNotMatch(body, /\(depth: `docs\//, 'entry depth links must not use workspace-root docs paths');
 });
 
 test('multi mode shares one entry source so both files are identical', () => {
@@ -740,6 +780,12 @@ test('--harness-dir uses a custom directory name', () => {
     harnessDir: 'ai-harness',
     entryFiles: ['CLAUDE.md'],
   });
+  const entry = read(path.join(workspace, 'CLAUDE.md'));
+  assert.match(entry, /ai-harness\/docs\/index\.md/);
+  assert.match(entry, /ai-harness\/docs\/layers\/01-context\.md/);
+  assert.doesNotMatch(entry, /\(depth: `docs\//);
+  const doctor = run(['doctor', workspace, '--harness-dir', 'ai-harness']);
+  assert.strictEqual(doctor.status, 0, doctor.stderr);
 });
 
 for (const harnessDir of ['.', '../outside', 'bad/name', 'agent-work', 'AGENT-WORK', 'agent-work.']) {

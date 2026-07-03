@@ -55,6 +55,8 @@ The loop above is all that stays in context. Each phase names the one file to op
 
 Guidance for working on niuma-harness itself. The operating-loop contract above is the product surface; this section is for developing the generator.
 
+Important for this source repository: it intentionally does not contain a generated `harness/` instance. When developing or reviewing niuma-harness itself, inspect `templates/core/` as the source of generated harness docs instead of trying to load `harness/docs/` from this repo root.
+
 > 回答用户问题时，记得提炼精简，不要明明可以精炼却还是输出大段大段的文本。
 
 ## Commands

@@ -11,7 +11,7 @@ Use this layer before declaring work complete, after any code or documentation c
 ## Agent protocol
 
 1. Identify the smallest checks that prove the task goal.
-2. Prefer project-local commands documented in `docs/index.md`.
+2. Prefer project-local commands documented in `docs/project-context.md`; use `docs/index.md` only as navigation.
 3. Run focused checks first, then broader checks when justified.
 4. Record evidence using the schema below: check, expected signal, actual result, skipped checks, and remaining unknowns.
 5. Treat unrun checks as unknown, not as passing.

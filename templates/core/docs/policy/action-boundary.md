@@ -29,6 +29,20 @@ Agents may do these without asking when they are task-scoped and reversible:
 - Create task-local notes under `agent-work/tasks/`.
 - Report suspected issues without changing unrelated files.
 
+## Local worktree isolation
+
+Creating a local task-scoped git worktree with a newly created task branch is autonomous only when all of these are true:
+
+- Running the task in the shared working tree would create avoidable risk or coordination cost, such as intermediate broken states, parallel edits, experimental work likely to be discarded, high-risk changes, or overlap with another active task.
+- The worktree path is outside the target repository's shared working tree, inside a dedicated agent-owned isolation directory or another user-approved parent directory; do not create worktrees inside normal source, docs, config, output, or other repository-owned paths.
+- The newly created task branch remains local-only: no upstream tracking, PR, or remote branch creation.
+- The action does not push to or otherwise touch remotes.
+- The action does not merge, delete, force-clean, rewrite history, or modify existing files in the shared working tree.
+
+The shared working tree does not need to be clean. Existing uncommitted files do not block autonomous worktree creation.
+
+If any condition is not met, ask first. Creating a worktree does not grant approval to push, merge, delete, clean up, publish, copy local-only config, or use credentials; classify those actions separately.
+
 ## Test-change gate
 
 Verification targets include tests, assertions, snapshots, fixtures, mocks, coverage thresholds, lint/typecheck/build configuration, and documented manual check steps.

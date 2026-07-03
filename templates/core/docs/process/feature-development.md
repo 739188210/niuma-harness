@@ -36,7 +36,7 @@ Before reporting completion, make sure the task record or final response include
 ## Steps
 
 1. Load Context: read `docs/index.md`, `docs/project-context.md`, and relevant existing implementation patterns.
-2. Check Policy: use `docs/policy/action-boundary.md` and pause when the next action is ask-first or forbidden. If this is multi-step or risky, isolate first (`docs/process/isolation.md`). For large features, consider staged subagent dispatch (`docs/process/subagent-development.md`).
+2. Check Policy: use `docs/policy/action-boundary.md` and pause when the next action is ask-first or forbidden. Isolate first (`docs/process/isolation.md`) only when shared-tree work would create avoidable risk or coordination cost, such as intermediate broken states, parallel edits, experimental work, high-risk behavior changes, or overlap with another active task. For large features, consider staged subagent dispatch (`docs/process/subagent-development.md`).
 3. Confirm understanding before planning when the feature has unclear scope, missing acceptance criteria, or meaningful design choices whose answer can change the implementation direction.
 4. Choose the smallest implementation path that fits the current architecture.
 5. Plan verification before implementation. Use `docs/layers/04-observation.md` for evidence expectations.

@@ -21,7 +21,7 @@ Before reporting completion, make sure the task record or final response include
 ## Steps
 
 1. Load Context: read `docs/index.md`, `docs/project-context.md`, and the affected implementation and tests.
-2. Check Policy: use `docs/policy/action-boundary.md` before broad, risky, or force-style changes. If this is multi-step or risky, isolate first (`docs/process/isolation.md`). For large refactors, consider staged subagent dispatch (`docs/process/subagent-development.md`).
+2. Check Policy: use `docs/policy/action-boundary.md` before broad, risky, or force-style changes. Isolate first (`docs/process/isolation.md`) only when shared-tree work would create avoidable risk or coordination cost, such as intermediate broken states, parallel edits, experimental work, risky structural changes, or overlap with another active task. For large refactors, consider staged subagent dispatch (`docs/process/subagent-development.md`).
 3. State the refactor goal and the behavior that must remain unchanged.
 4. Identify the verification baseline before editing. Treat the baseline verification as the behavior boundary for the refactor.
 5. Split the refactor into small reversible steps.

@@ -1,6 +1,6 @@
 # Workspace Isolation Process
 
-Use this playbook to isolate multi-step, risky, or parallel work before it touches the shared workspace. Isolation keeps one task's in-progress changes from polluting another's and makes rollback safe.
+Use this playbook when working in the shared workspace would create avoidable risk or coordination cost. Isolation keeps one task's in-progress changes from polluting another's and makes rollback safe.
 
 This is a concrete playbook selected by the Process layer. Use `docs/layers/03-process.md` for routing and this file for isolation execution.
 
@@ -10,32 +10,36 @@ Create a separate, reversible workspace for work that should not run directly ag
 
 ## When to isolate
 
-Isolate when any hold:
+Isolate when shared-tree work would create avoidable risk or coordination cost, such as:
 
 - Multi-step feature or refactor with intermediate broken states.
-- Risky change (security, data, public API, migration) where rollback must be clean.
+- Risky change (security, data, public API, migration, release, generated output) where rollback must be clean.
 - Parallel tasks, multiple agents, or multiple CLI sessions editing the same repo.
 - Experimental work that may be discarded.
+- Overlap with another active task in the shared tree.
+- A change footprint large enough that rollback or review would be materially harder in the shared tree.
 
-Do not isolate for trivial single-step tasks. Isolation has setup and cleanup cost; use it when the work warrants it.
+Do not isolate merely because a task has more than one step. Isolation has setup and cleanup cost; use it when it materially reduces risk or coordination cost.
 
 ## Steps
 
 1. Confirm the target is a git repository. If not, ask the user before proceeding.
-2. Surface any uncommitted changes in the shared tree before isolating; do not hide them.
-3. Create a worktree on a new branch: `git worktree add <path> -b <branch>`.
+2. Confirm the intended worktree action satisfies `docs/policy/action-boundary.md` local worktree isolation rules.
+3. Create a worktree on a newly created local task branch: `git worktree add <path> -b <branch>`.
 4. Work entirely inside the worktree for this task. Do not edit the shared tree while isolated.
 5. Run verification (tests, build) inside the worktree before considering the task done.
 
 ## Boundaries
 
 - Isolation protects the working directory, not the final merge. Shared files (schema, migrations, lockfiles, public modules) can still conflict at merge time — surface that risk.
-- Do not push, create merge requests, delete the worktree, or delete branches unless the user explicitly asks.
+- Do not push, set upstream tracking, create merge requests, touch remotes, delete the worktree, or delete branches unless the user explicitly asks.
+- The shared working tree does not need to be clean before isolation, but isolation must not stage, revert, overwrite, clean, or otherwise modify shared-tree files.
+- Copying local-only config or using credentials is not part of worktree creation; classify those actions separately through Policy.
 - Reverting inside a worktree is still a repair attempt — re-run Observation afterward.
 
 ## Recovery
 
-If worktree setup fails (path conflict, branch exists, dirty tree), do not force it. Resolve the specific blocker or fall back to task-scoped work in the shared tree. Use `docs/layers/05-recovery.md` for general failure handling.
+If worktree setup fails (path conflict, branch exists, git metadata failure, or invalid isolation path), do not force it. Resolve the specific blocker or fall back to task-scoped work in the shared tree. Use `docs/layers/05-recovery.md` for general failure handling.
 
 ## Cleanup
 

@@ -30,7 +30,7 @@ If project-specific facts are missing, inspect the current workspace before acti
 
 ## Project pointers
 
-Project-specific code locations, commands, and stable conventions are maintained in `docs/project-context.md`. Keep only short navigation notes here when they help agents find the right source quickly.
+Project-specific code locations, commands, and stable conventions are maintained in `docs/project-context.md`. This tool-managed index only points to generated harness structure; add project-specific navigation notes to `docs/project-context.md` or task-local notes in `agent-work/`.
 
 ## 7-layer harness model
 
@@ -53,8 +53,8 @@ Project-specific code locations, commands, and stable conventions are maintained
 
 ## Verification commands
 
-The authoritative command list belongs in `docs/project-context.md`. Agents may add short runtime pointers here only when they reduce navigation friction.
+The authoritative command list belongs in `docs/project-context.md`. Use this index only to locate where verification guidance lives.
 
 ## Maintenance
 
-Update this index when important docs or standard workflows change. Keep stable project facts in `docs/project-context.md`; keep this file focused on navigation.
+This index is a tool-managed navigation map. In generated harnesses, keep stable project facts in `docs/project-context.md` and task-local pointers in `agent-work/`; change this file by updating the generator template.
