@@ -34,13 +34,13 @@ Project-specific code locations, commands, and stable conventions are maintained
 
 ## 7-layer harness model
 
-- Context protocol: `docs/layers/01-context/memo.md`
-- Policy boundary: `docs/layers/02-policy/memo.md`
-- Process routing: `docs/layers/03-process/memo.md`
-- Observation protocol: `docs/layers/04-observation/memo.md`
-- Recovery protocol: `docs/layers/05-recovery/memo.md`
-- Memory policy: `docs/layers/06-memory/memo.md`
-- Loop runtime: `docs/layers/07-loop/memo.md`
+- Context protocol: `docs/layers/01-context.md`
+- Policy boundary: `docs/layers/02-policy.md`
+- Process routing: `docs/layers/03-process.md`
+- Observation protocol: `docs/layers/04-observation.md`
+- Recovery protocol: `docs/layers/05-recovery.md`
+- Memory policy: `docs/layers/06-memory.md`
+- Loop runtime: `docs/layers/07-loop.md`
 
 ## Task workflows
 

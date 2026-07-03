@@ -64,8 +64,8 @@ For parallel or delegated work, final Observation verifies the integrated result
 
 ## Links to other layers
 
-- Context: `docs/layers/01-context/memo.md`
-- Policy: `docs/layers/02-policy/memo.md`
-- Process: `docs/layers/03-process/memo.md`
-- Recovery: `docs/layers/05-recovery/memo.md`
+- Context: `docs/layers/01-context.md`
+- Policy: `docs/layers/02-policy.md`
+- Process: `docs/layers/03-process.md`
+- Recovery: `docs/layers/05-recovery.md`
 - Task work area: `agent-work/`

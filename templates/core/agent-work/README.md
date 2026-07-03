@@ -33,7 +33,7 @@ agent-work/tasks/<task-name>/
 
 ## Runtime protocol
 
-The Loop layer defines how agents keep task status current: `docs/layers/07-loop/memo.md`.
+The Loop layer defines how agents keep task status current: `docs/layers/07-loop.md`.
 
 ## Durable facts
 

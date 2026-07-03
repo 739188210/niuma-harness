@@ -49,9 +49,9 @@ Approval blockers and risks are task-local until resolved. Move them into durabl
 
 ## Links to other layers
 
-- Context: `docs/layers/01-context/memo.md`
-- Observation: `docs/layers/04-observation/memo.md`
-- Recovery: `docs/layers/05-recovery/memo.md`
-- Loop: `docs/layers/07-loop/memo.md`
+- Context: `docs/layers/01-context.md`
+- Observation: `docs/layers/04-observation.md`
+- Recovery: `docs/layers/05-recovery.md`
+- Loop: `docs/layers/07-loop.md`
 - Stable facts: `docs/project-context.md`
 - Task work area: `agent-work/`

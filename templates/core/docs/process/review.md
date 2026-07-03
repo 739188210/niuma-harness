@@ -2,7 +2,7 @@
 
 Use this playbook when reviewing changed work.
 
-This is a concrete playbook selected by the Process layer. Use `docs/layers/03-process/memo.md` for routing rules and this file for review execution.
+This is a concrete playbook selected by the Process layer. Use `docs/layers/03-process.md` for routing rules and this file for review execution.
 
 ## Goal
 
@@ -30,6 +30,10 @@ Before reporting completion, make sure the task record or final response include
 8. Only implement fixes when the user explicitly approved implementation changes; otherwise route fixes through the relevant bugfix, refactor, or feature playbook.
 9. Re-run or request focused verification after material fixes.
 
+## Fix boundary
+
+A review reports findings. Fixing findings is a separate action unless the user explicitly asked for review-and-fix.
+
 ## Severity levels
 
 - CRITICAL: security vulnerability, data loss risk, destructive behavior, or clearly broken user-facing behavior.
@@ -39,11 +43,11 @@ Before reporting completion, make sure the task record or final response include
 
 ## Recovery
 
-Use `docs/layers/05-recovery/memo.md` when the diff does not match the stated goal, review evidence is missing, or a fix creates new failures.
+Use `docs/layers/05-recovery.md` when the diff does not match the stated goal, review evidence is missing, or a fix creates new failures.
 
 ## Memory and task notes
 
-For multi-step reviews, keep findings, fix decisions, and verification evidence under `agent-work/tasks/<task-name>/`. Move only verified durable lessons through the Memory layer before updating `docs/project-context.md`.
+For multi-step reviews, keep status, findings, fix decisions, and verification evidence under `agent-work/tasks/<task-name>/`. Move only verified durable lessons through the Memory layer before updating `docs/project-context.md`.
 
 For two-stage review across isolated subagents on large or risky work, see `docs/process/subagent-development.md`.
 

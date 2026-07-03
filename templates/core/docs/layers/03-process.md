@@ -74,8 +74,8 @@ Trigger words are routing hints, not permission to bypass Policy. If multiple ro
 
 ## Links to other layers
 
-- Context: `docs/layers/01-context/memo.md`
-- Policy: `docs/layers/02-policy/memo.md`
-- Observation: `docs/layers/04-observation/memo.md`
-- Recovery: `docs/layers/05-recovery/memo.md`
+- Context: `docs/layers/01-context.md`
+- Policy: `docs/layers/02-policy.md`
+- Observation: `docs/layers/04-observation.md`
+- Recovery: `docs/layers/05-recovery.md`
 - Workflows: `docs/process/`

@@ -42,8 +42,8 @@ Use this layer at the start of every task, after a context reset, when entering 
 
 ## Links to other layers
 
-- Policy: `docs/layers/02-policy/memo.md`
-- Process: `docs/layers/03-process/memo.md`
-- Memory: `docs/layers/06-memory/memo.md`
+- Policy: `docs/layers/02-policy.md`
+- Process: `docs/layers/03-process.md`
+- Memory: `docs/layers/06-memory.md`
 - Project map: `docs/index.md`
 - Stable facts: `docs/project-context.md`

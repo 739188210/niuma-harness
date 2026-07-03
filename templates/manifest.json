@@ -8,13 +8,6 @@
     "docs",
     "docs/automation",
     "docs/layers",
-    "docs/layers/01-context",
-    "docs/layers/02-policy",
-    "docs/layers/03-process",
-    "docs/layers/04-observation",
-    "docs/layers/05-recovery",
-    "docs/layers/06-memory",
-    "docs/layers/07-loop",
     "docs/policy",
     "docs/process",
     "docs/rules"
@@ -34,32 +27,32 @@
       "managed": "user"
     },
     {
-      "target": "docs/layers/01-context/memo.md",
-      "template": "core/docs/layers/01-context/memo.md"
+      "target": "docs/layers/01-context.md",
+      "template": "core/docs/layers/01-context.md"
     },
     {
-      "target": "docs/layers/02-policy/memo.md",
-      "template": "core/docs/layers/02-policy/memo.md"
+      "target": "docs/layers/02-policy.md",
+      "template": "core/docs/layers/02-policy.md"
     },
     {
-      "target": "docs/layers/03-process/memo.md",
-      "template": "core/docs/layers/03-process/memo.md"
+      "target": "docs/layers/03-process.md",
+      "template": "core/docs/layers/03-process.md"
     },
     {
-      "target": "docs/layers/04-observation/memo.md",
-      "template": "core/docs/layers/04-observation/memo.md"
+      "target": "docs/layers/04-observation.md",
+      "template": "core/docs/layers/04-observation.md"
     },
     {
-      "target": "docs/layers/05-recovery/memo.md",
-      "template": "core/docs/layers/05-recovery/memo.md"
+      "target": "docs/layers/05-recovery.md",
+      "template": "core/docs/layers/05-recovery.md"
     },
     {
-      "target": "docs/layers/06-memory/memo.md",
-      "template": "core/docs/layers/06-memory/memo.md"
+      "target": "docs/layers/06-memory.md",
+      "template": "core/docs/layers/06-memory.md"
     },
     {
-      "target": "docs/layers/07-loop/memo.md",
-      "template": "core/docs/layers/07-loop/memo.md"
+      "target": "docs/layers/07-loop.md",
+      "template": "core/docs/layers/07-loop.md"
     },
     {
       "target": "docs/policy/action-boundary.md",
@@ -106,8 +99,8 @@
       "template": "core/docs/process/subagent-development.md"
     },
     {
-      "target": "docs/automation/hooks.md",
-      "template": "core/docs/automation/hooks.md",
+      "target": "docs/automation/automation-intent.md",
+      "template": "core/docs/automation/automation-intent.md",
       "managed": "user"
     }
   ],

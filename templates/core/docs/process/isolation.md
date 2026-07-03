@@ -2,7 +2,7 @@
 
 Use this playbook to isolate multi-step, risky, or parallel work before it touches the shared workspace. Isolation keeps one task's in-progress changes from polluting another's and makes rollback safe.
 
-This is a concrete playbook selected by the Process layer. Use `docs/layers/03-process/memo.md` for routing and this file for isolation execution.
+This is a concrete playbook selected by the Process layer. Use `docs/layers/03-process.md` for routing and this file for isolation execution.
 
 ## Goal
 
@@ -35,7 +35,7 @@ Do not isolate for trivial single-step tasks. Isolation has setup and cleanup co
 
 ## Recovery
 
-If worktree setup fails (path conflict, branch exists, dirty tree), do not force it. Resolve the specific blocker or fall back to task-scoped commits in the shared tree. Use `docs/layers/05-recovery/memo.md` for general failure handling.
+If worktree setup fails (path conflict, branch exists, dirty tree), do not force it. Resolve the specific blocker or fall back to task-scoped work in the shared tree. Use `docs/layers/05-recovery.md` for general failure handling.
 
 ## Cleanup
 

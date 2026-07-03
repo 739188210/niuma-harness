@@ -1,4 +1,4 @@
-# Automation and Hook Intent
+# Automation Intent
 
 This file records automation intent that has been verified or intentionally adopted for this project.
 
@@ -12,6 +12,10 @@ This MVP does not install tool-specific hooks automatically. Actual hook configu
 - Treat automation as supporting evidence for the Observation layer, not as a replacement for judgment.
 - If an automation idea is not verified yet, mark it as `Unknown until verified`.
 
+## Ownership
+
+Agents maintain this file during normal work when they verify automation commands, discover renamed or removed commands, or confirm that an automation intent is not adopted. Human maintainers retain final policy control, but human participation is not required for routine evidence-based updates.
+
 ## Automation intents
 
 | Intent | When to consider | Verified command | Status |
@@ -23,10 +27,10 @@ This MVP does not install tool-specific hooks automatically. Actual hook configu
 
 ## Links to layers
 
-- Policy: `docs/layers/02-policy/memo.md`
-- Observation: `docs/layers/04-observation/memo.md`
-- Recovery: `docs/layers/05-recovery/memo.md`
+- Policy: `docs/layers/02-policy.md`
+- Observation: `docs/layers/04-observation.md`
+- Recovery: `docs/layers/05-recovery.md`
 
 ## Maintenance
 
-Update this file when a command is verified, renamed, removed, or replaced. Keep task-specific automation results in the workspace-level `agent-work/` directory; keep durable automation intent here.
+Update this file when an agent verifies a command, sees it renamed or removed, or confirms that an intent is not adopted. Keep task-specific automation results in the workspace-level `agent-work/` directory; keep durable automation intent here.

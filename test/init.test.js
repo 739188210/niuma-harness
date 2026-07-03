@@ -36,6 +36,7 @@ function assertCommonHarnessShape(workspace, options = {}) {
   assertFile(path.join(harnessRoot, 'docs', 'process', 'review.md'));
   assertFile(path.join(harnessRoot, 'docs', 'process', 'release.md'));
   assertLayerMemos(harnessRoot);
+  assertNoPath(path.join(harnessRoot, 'docs', 'layers', '01-context'));
   assertDir(path.join(workspace, 'agent-work'));
   assertFile(path.join(workspace, 'agent-work', 'README.md'));
   assertDir(path.join(workspace, 'agent-work', 'tasks'));
@@ -108,13 +109,13 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
   const h = path.join(workspace, 'harness');
 
   for (const memo of [
-    'docs/layers/01-context/memo.md',
-    'docs/layers/02-policy/memo.md',
-    'docs/layers/03-process/memo.md',
-    'docs/layers/04-observation/memo.md',
-    'docs/layers/05-recovery/memo.md',
-    'docs/layers/06-memory/memo.md',
-    'docs/layers/07-loop/memo.md',
+    'docs/layers/01-context.md',
+    'docs/layers/02-policy.md',
+    'docs/layers/03-process.md',
+    'docs/layers/04-observation.md',
+    'docs/layers/05-recovery.md',
+    'docs/layers/06-memory.md',
+    'docs/layers/07-loop.md',
   ]) {
     const body = read(path.join(h, ...memo.split('/')));
     assert.match(body, /## Agent protocol/, `${memo} must contain Agent protocol`);
@@ -134,10 +135,20 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
     assert.match(body, /## Recovery/, `${pb} must contain Recovery`);
   }
 
+  const guide = read(path.join(h, 'HARNESS_GUIDE.md'));
+  assert.match(guide, /### Tool-managed scaffold files/);
+  assert.match(guide, /`docs\/policy\/action-boundary\.md`: core action permission boundary/);
+  assert.doesNotMatch(guide, /team-maintained action permission boundaries/);
+
   const actionBoundary = read(path.join(h, 'docs', 'policy', 'action-boundary.md'));
   assert.match(actionBoundary, /## Autonomous actions/);
+  assert.match(actionBoundary, /project-local verification commands that do not create external side effects/);
   assert.match(actionBoundary, /docs\/policy\/untrusted-content\.md/);
   const secretLeak = read(path.join(h, 'docs', 'policy', 'secret-leak.md'));
+  assert.match(secretLeak, /secret or sensitive data/);
+  assert.match(secretLeak, /private key, or private data/);
+  assert.match(secretLeak, /Remove the secret from the working tree when safe/);
+  assert.match(secretLeak, /version-control-aware cleanup for committed or pushed exposure/);
   assert.match(secretLeak, /## Trigger/, 'secret-leak.md must contain Trigger');
   assert.match(secretLeak, /## Forbidden/, 'secret-leak.md must contain Forbidden');
   const untrustedContent = read(path.join(h, 'docs', 'policy', 'untrusted-content.md'));
@@ -145,28 +156,41 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
   assert.match(untrustedContent, /## Agent protocol/, 'untrusted-content.md must contain Agent protocol');
   assert.match(untrustedContent, /data, not instructions/, 'untrusted-content.md must define data/instruction separation');
 
-  const policyMemo = read(path.join(h, 'docs', 'layers', '02-policy', 'memo.md'));
+  const policyMemo = read(path.join(h, 'docs', 'layers', '02-policy.md'));
   assert.match(policyMemo, /docs\/policy\/untrusted-content\.md/);
   const index = read(path.join(h, 'docs', 'index.md'));
   assert.match(index, /docs\/policy\/untrusted-content\.md/);
+
+  assertNoPath(path.join(h, 'docs', 'automation', 'hooks.md'));
+  const automationIntent = read(path.join(h, 'docs', 'automation', 'automation-intent.md'));
+  assert.match(automationIntent, /# Automation Intent/);
+  assert.match(automationIntent, /## Ownership/);
+  assert.match(automationIntent, /Agents maintain this file during normal work/);
+  assert.match(automationIntent, /Human maintainers retain final policy control/);
+  assert.match(automationIntent, /human participation is not required for routine evidence-based updates/);
 });
 
-test('generated docs define task status ledger protocol', () => {
+test('generated docs define task status ledger protocol and guide task record shape', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
 
-  const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop', 'memo.md'));
+  const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop.md'));
   assert.match(loopMemo, /agent-work\/tasks\/<task-name>\/status\.md/);
   assert.match(loopMemo, /multi-step, risky, parallel, or interruptible/);
 
-  const memoryMemo = read(path.join(h, 'docs', 'layers', '06-memory', 'memo.md'));
+  const memoryMemo = read(path.join(h, 'docs', 'layers', '06-memory.md'));
   assert.match(memoryMemo, /status\.md/);
   assert.match(memoryMemo, /task-local operational state/);
 
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
   assert.match(workReadme, /status\.md/);
+
+  const guide = read(path.join(h, 'HARNESS_GUIDE.md'));
+  assert.match(guide, /agent-work\/tasks\/<task-name>\//);
+  assert.match(guide, /status\.md/);
+  assert.match(guide, /explicit status/);
 });
 
 test('generated loop memo defines rationalization red flags', () => {
@@ -175,7 +199,7 @@ test('generated loop memo defines rationalization red flags', () => {
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
 
-  const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop', 'memo.md'));
+  const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop.md'));
   assert.match(loopMemo, /## Rationalization red flags/);
   const redFlagsSection = loopMemo.match(/## Rationalization red flags[\s\S]*?\n## Allowed actions/)[0];
   assert.match(redFlagsSection, /skip tests\/checks/);
@@ -186,7 +210,7 @@ test('generated loop memo defines rationalization red flags', () => {
   assert.match(redFlagsSection, /stop-and-classify signals/);
   assert.match(redFlagsSection, /route through Observation, Recovery, Process, or Policy/);
 
-  const recoveryMemo = read(path.join(h, 'docs', 'layers', '05-recovery', 'memo.md'));
+  const recoveryMemo = read(path.join(h, 'docs', 'layers', '05-recovery.md'));
   assert.match(recoveryMemo, /rationalization about missing evidence or dismissing failures as unrelated/);
   assert.match(recoveryMemo, /Scope-expansion rationalizations route through Process and Policy/);
 });
@@ -197,7 +221,7 @@ test('generated observation memo defines evidence schema', () => {
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
 
-  const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation', 'memo.md'));
+  const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation.md'));
   assert.match(observationMemo, /## Evidence schema/);
   assert.match(observationMemo, /Check/);
   assert.match(observationMemo, /Expected signal/);
@@ -214,7 +238,7 @@ test('generated recovery memo maps failure types to required responses', () => {
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
 
-  const recoveryMemo = read(path.join(h, 'docs', 'layers', '05-recovery', 'memo.md'));
+  const recoveryMemo = read(path.join(h, 'docs', 'layers', '05-recovery.md'));
   assert.match(recoveryMemo, /## Failure response map/);
   assert.match(recoveryMemo, /`test`/);
   assert.match(recoveryMemo, /`build`/);
@@ -241,25 +265,25 @@ test('generated docs define task state ownership boundaries', () => {
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
 
-  const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop', 'memo.md'));
+  const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop.md'));
   assert.match(loopMemo, /`status\.md` owns the operational resume state/);
   assert.match(loopMemo, /does not own detailed verification evidence, task notes, or durable project facts/);
   assert.match(loopMemo, /active task owner/);
 
-  const memoryMemo = read(path.join(h, 'docs', 'layers', '06-memory', 'memo.md'));
+  const memoryMemo = read(path.join(h, 'docs', 'layers', '06-memory.md'));
   assert.match(memoryMemo, /Task-local state stays in `agent-work\/tasks\/<task-name>\/`/);
   assert.match(memoryMemo, /Durable facts belong in `docs\/project-context\.md` only after verification/);
   assert.match(memoryMemo, /Approval blockers and risks are task-local until resolved/);
 
-  const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation', 'memo.md'));
+  const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation.md'));
   assert.match(observationMemo, /Verification evidence owns exact commands, expected signals, actual results, skipped checks with reasons, and remaining unknowns/);
   assert.match(observationMemo, /`status\.md` may summarize verification state, but it does not replace evidence/);
 
-  const processMemo = read(path.join(h, 'docs', 'layers', '03-process', 'memo.md'));
+  const processMemo = read(path.join(h, 'docs', 'layers', '03-process.md'));
   assert.match(processMemo, /The selected workflow owns the success criteria and required task state/);
   assert.match(processMemo, /Parallel or delegated work must keep ownership explicit/);
 
-  const policyMemo = read(path.join(h, 'docs', 'layers', '02-policy', 'memo.md'));
+  const policyMemo = read(path.join(h, 'docs', 'layers', '02-policy.md'));
   assert.match(policyMemo, /Approval blockers and policy risks are task-local state/);
   assert.match(policyMemo, /Do not act through unresolved ask-first or stop-and-escalate blockers/);
 });
@@ -277,7 +301,7 @@ test('generated feature docs define pre-plan confirmation gate', () => {
   assert.match(featurePlaybook, /If an open question can change the implementation direction, ask the user/);
   assert.match(featurePlaybook, /already gave complete requirements and approval/);
 
-  const processMemo = read(path.join(h, 'docs', 'layers', '03-process', 'memo.md'));
+  const processMemo = read(path.join(h, 'docs', 'layers', '03-process.md'));
   assert.match(processMemo, /confirmation gate defined by the selected workflow/);
 });
 
@@ -287,7 +311,7 @@ test('generated process memo maps triggers to workflows and artifacts', () => {
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
 
-  const processMemo = read(path.join(h, 'docs', 'layers', '03-process', 'memo.md'));
+  const processMemo = read(path.join(h, 'docs', 'layers', '03-process.md'));
   assert.match(processMemo, /## Trigger and artifact routing/);
   assert.match(processMemo, /docs\/process\/bugfix\.md/);
   assert.match(processMemo, /Reproduction signal/);
@@ -314,10 +338,12 @@ test('generated process playbooks define required artifact contracts', () => {
   const triage = read(path.join(h, 'docs', 'process', 'task-triage.md'));
   assert.match(triage, /## Required artifact\/checklist/);
   assert.match(triage, /Task classification/);
+  assert.match(triage, /Whether a `status\.md` ledger is needed/);
 
   const feature = read(path.join(h, 'docs', 'process', 'feature-development.md'));
   assert.match(feature, /## Required artifact\/checklist/);
   assert.match(feature, /Acceptance criteria/);
+  assert.match(feature, /keep status, context, plan, verification, and handoff notes/);
 
   const bugfix = read(path.join(h, 'docs', 'process', 'bugfix.md'));
   assert.match(bugfix, /## Required artifact\/checklist/);
@@ -326,15 +352,19 @@ test('generated process playbooks define required artifact contracts', () => {
   const refactor = read(path.join(h, 'docs', 'process', 'refactor.md'));
   assert.match(refactor, /## Required artifact\/checklist/);
   assert.match(refactor, /Behavior baseline/);
+  assert.match(refactor, /keep status, context, plan, verification, and handoff notes/);
 
   const review = read(path.join(h, 'docs', 'process', 'review.md'));
   assert.match(review, /## Required artifact\/checklist/);
   assert.match(review, /Findings grouped by severity/);
+  assert.match(review, /## Fix boundary/);
+  assert.match(review, /Fixing findings is a separate action/);
 
   const release = read(path.join(h, 'docs', 'process', 'release.md'));
   assert.match(release, /## Required artifact\/checklist/);
   assert.match(release, /Release target/);
   assert.match(release, /Package or artifact scope/);
+  assert.match(release, /touch external systems, credentials, quotas, or release infrastructure/);
 });
 
 test('generated subagent playbook defines parent integration gate', () => {
@@ -343,8 +373,13 @@ test('generated subagent playbook defines parent integration gate', () => {
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
 
+  const isolation = read(path.join(h, 'docs', 'process', 'isolation.md'));
+  assert.match(isolation, /fall back to task-scoped work in the shared tree/);
+  assert.doesNotMatch(isolation, /task-scoped commits in the shared tree/);
+
   const subagent = read(path.join(h, 'docs', 'process', 'subagent-development.md'));
   assert.match(subagent, /## Parent integration gate/);
+  assert.match(subagent, /parent `status\.md` updates/);
   assert.match(subagent, /active task owner owns the final integrated result/);
   assert.match(subagent, /changed or reviewed files/);
   assert.match(subagent, /verification evidence/);
@@ -355,13 +390,13 @@ test('generated subagent playbook defines parent integration gate', () => {
   assert.match(subagent, /final Observation over the integrated workspace/);
   assert.match(subagent, /supporting evidence, not a replacement/);
 
-  const processMemo = read(path.join(h, 'docs', 'layers', '03-process', 'memo.md'));
+  const processMemo = read(path.join(h, 'docs', 'layers', '03-process.md'));
   assert.match(processMemo, /parent flow or active task owner is responsible for integrating delegated outputs/);
 
-  const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop', 'memo.md'));
+  const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop.md'));
   assert.match(loopMemo, /integrated delegated state, conflicts, and next action/);
 
-  const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation', 'memo.md'));
+  const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation.md'));
   assert.match(observationMemo, /final Observation verifies the integrated result/);
 });
 
@@ -389,7 +424,7 @@ test('generated docs define external side-effect network gate', () => {
   assert.match(actionBoundary, /Transmit secrets, credentials, tokens, private data/);
   assert.match(actionBoundary, /large-scale crawling, load testing, scraping/);
 
-  const policyMemo = read(path.join(h, 'docs', 'layers', '02-policy', 'memo.md'));
+  const policyMemo = read(path.join(h, 'docs', 'layers', '02-policy.md'));
   assert.match(policyMemo, /before network or external-service actions/);
   assert.doesNotMatch(policyMemo, /## External side-effect \/ network gate/);
 });
@@ -419,7 +454,7 @@ test('generated docs define test-change gate', () => {
     /verification targets|weaken tests|loosen assertions|remove assertions|delete failing checks|skip tests|rebaseline snapshots|lower coverage|just to pass/,
   );
 
-  const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation', 'memo.md'));
+  const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation.md'));
   assert.match(observationMemo, /If verification fails, treat the failing check as evidence/);
   assert.match(observationMemo, /Do not move verification targets after a failure/);
   assert.match(observationMemo, /test-change gate in `docs\/policy\/action-boundary\.md`/);
@@ -545,7 +580,7 @@ test('--rules none installs no rule files', () => {
   const result = run(['init', workspace, '--agent', 'claude', '--rules', 'none']);
   assert.strictEqual(result.status, 0, result.stderr);
   const harnessRoot = path.join(workspace, 'harness');
-  const contextMemo = path.join(harnessRoot, 'docs', 'layers', '01-context', 'memo.md');
+  const contextMemo = path.join(harnessRoot, 'docs', 'layers', '01-context.md');
   assertDir(path.join(harnessRoot, 'docs', 'rules'));
   assertRuleDirs(harnessRoot, []);
   assert.ok(read(contextMemo).length > 0, 'layer memos should not be affected by --rules none');
@@ -757,7 +792,7 @@ test('re-init refreshes tool-managed files', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
-  const memo = path.join(workspace, 'harness', 'docs', 'layers', '01-context', 'memo.md');
+  const memo = path.join(workspace, 'harness', 'docs', 'layers', '01-context.md');
   fs.writeFileSync(memo, 'tampered\n', 'utf8');
 
   result = run(['init', workspace, '--agent', 'claude']);

@@ -2,7 +2,7 @@
 
 Use this playbook when fixing a bug or defect in current behavior.
 
-This is a concrete playbook selected by the Process layer. Use `docs/layers/03-process/memo.md` for routing rules and this file for bugfix execution.
+This is a concrete playbook selected by the Process layer. Use `docs/layers/03-process.md` for routing rules and this file for bugfix execution.
 
 ## Goal
 
@@ -32,7 +32,7 @@ Before reporting completion, make sure the task record or final response include
 
 ## Recovery
 
-Use `docs/layers/05-recovery/memo.md` when reproduction fails, tests fail, commands fail, context is missing, or a fix attempt does not work.
+Use `docs/layers/05-recovery.md` when reproduction fails, tests fail, commands fail, context is missing, or a fix attempt does not work.
 
 Do not delete failing tests, weaken assertions, disable checks, or keep retrying the same approach without new evidence.
 
@@ -40,7 +40,7 @@ If a test appears wrong, follow the test-change gate in `docs/policy/action-boun
 
 ## Memory
 
-Use `docs/layers/06-memory/memo.md` before preserving any new project fact. Keep temporary debugging notes in the workspace-level `agent-work/` directory; write only verified durable facts to `docs/project-context.md`.
+Use `docs/layers/06-memory.md` before preserving any new project fact. Keep temporary debugging notes in the workspace-level `agent-work/` directory; write only verified durable facts to `docs/project-context.md`.
 
 ## Outputs
 

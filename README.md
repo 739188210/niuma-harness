@@ -87,22 +87,15 @@ workspace/
       index.md
       project-context.md
       layers/
-        01-context/
-          memo.md
-        02-policy/
-          memo.md
-        03-process/
-          memo.md
-        04-observation/
-          memo.md
-        05-recovery/
-          memo.md
-        06-memory/
-          memo.md
-        07-loop/
-          memo.md
+        01-context.md
+        02-policy.md
+        03-process.md
+        04-observation.md
+        05-recovery.md
+        06-memory.md
+        07-loop.md
       automation/
-        hooks.md
+        automation-intent.md
       policy/
         action-boundary.md
         secret-leak.md
@@ -136,15 +129,15 @@ The generated `docs/layers/` directory is the AI agent operating model:
 
 | Layer | Memo | Purpose |
 |---|---|---|
-| Context | `docs/layers/01-context/memo.md` | What the agent should understand before acting |
-| Policy | `docs/layers/02-policy/memo.md` | What the agent may do, must not do, or must ask about |
-| Process | `docs/layers/03-process/memo.md` | How different task types move from request to delivery |
-| Observation | `docs/layers/04-observation/memo.md` | How the agent verifies whether the current state is good |
-| Recovery | `docs/layers/05-recovery/memo.md` | How the agent responds when work fails or becomes unclear |
-| Memory | `docs/layers/06-memory/memo.md` | What should be preserved and what should stay task-local |
-| Loop | `docs/layers/07-loop/memo.md` | How the agent continues, pauses, recovers, or stops |
+| Context | `docs/layers/01-context.md` | What the agent should understand before acting |
+| Policy | `docs/layers/02-policy.md` | What the agent may do, must not do, or must ask about |
+| Process | `docs/layers/03-process.md` | How different task types move from request to delivery |
+| Observation | `docs/layers/04-observation.md` | How the agent verifies whether the current state is good |
+| Recovery | `docs/layers/05-recovery.md` | How the agent responds when work fails or becomes unclear |
+| Memory | `docs/layers/06-memory.md` | What should be preserved and what should stay task-local |
+| Loop | `docs/layers/07-loop.md` | How the agent continues, pauses, recovers, or stops |
 
-The layer memos describe what each layer must do. The existing `docs/process/`, optional `docs/rules/`, and `docs/automation/` directories remain the starter execution materials referenced by those layers. Runtime task records live in the workspace-level `agent-work/` directory.
+The layer files describe what each layer must do. The existing `docs/process/`, optional `docs/rules/`, and `docs/automation/` directories remain the starter execution materials referenced by those layers. Runtime task records live in the workspace-level `agent-work/` directory.
 
 ## Manifest
 
@@ -173,7 +166,7 @@ This project-level `manifest.json` is generated inside the harness root and is *
 |---|---|
 | **Entry** (`CLAUDE.md` / `AGENTS.md`) | Merged: if the contract block is present it is refreshed; otherwise the block is inserted at the top. Your existing content is always preserved. |
 | **Tool-managed** (layers, process playbooks, policy, index, HARNESS_GUIDE, `agent-work/README.md`) | Refreshed from the template. |
-| **User-maintained** (`project-context.md`, `automation/hooks.md`) | Preserved if they exist; created from the template only when absent. |
+| **User-maintained** (`project-context.md`, `automation/automation-intent.md`) | Preserved if they exist; created from the template only when absent. |
 | `docs/rules/` | Converged to the current `--rules` / `--rules-out` selection. Selected existing rule files are preserved; unselected known rule directories are removed, including local files inside them. |
 | `manifest.json` | Regenerated every time. |
 

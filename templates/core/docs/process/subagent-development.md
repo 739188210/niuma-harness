@@ -2,7 +2,7 @@
 
 Use this playbook when coordinating large or risky work across isolated subagents with fresh-context dispatch and staged review.
 
-This is a cross-cutting playbook selected by the Process layer, like `docs/process/isolation.md`. Use `docs/layers/03-process/memo.md` for routing. This is a recommended workflow, not a hard constraint; single-agent work does not require it.
+This is a cross-cutting playbook selected by the Process layer, like `docs/process/isolation.md`. Use `docs/layers/03-process.md` for routing. This is a recommended workflow, not a hard constraint; single-agent work does not require it.
 
 ## Goal
 
@@ -23,7 +23,7 @@ Do not dispatch for trivial single-step tasks. Dispatch has coordination cost.
 - Fresh context per subagent: each implementer subagent starts clean; do not paste the parent's entire history.
 - Artifacts over diffs: hand the task scope and the file paths; let the subagent read files itself. Do not paste large diffs into the prompt.
 - Task-scoped mandate: give the subagent one bounded goal, a success check, and the relevant process playbook (`feature-development.md` / `refactor.md` / `bugfix.md`).
-- Keep state in `agent-work/`: record current stage, next action, and completed steps under `agent-work/tasks/<task>/` so any subagent can resume.
+- Keep state in `agent-work/`: record current stage, next action, completed steps, and parent `status.md` updates under `agent-work/tasks/<task>/` so any subagent can resume.
 
 ## Two-stage review
 
@@ -71,7 +71,7 @@ If the current environment has no subagent capability, degrade gracefully: perfo
 
 ## Recovery
 
-Use `docs/layers/05-recovery/memo.md` when a subagent's output fails its own verification, when review finds CRITICAL or HIGH findings, or when the staged flow itself stalls (a stage cannot complete).
+Use `docs/layers/05-recovery.md` when a subagent's output fails its own verification, when review finds CRITICAL or HIGH findings, or when the staged flow itself stalls (a stage cannot complete).
 
 ## Outputs
 

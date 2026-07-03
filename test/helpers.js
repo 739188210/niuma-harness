@@ -15,13 +15,13 @@ const allRuleDirs = fs.existsSync(rulesRoot)
     .sort()
   : [];
 const layerMemos = [
-  'docs/layers/01-context/memo.md',
-  'docs/layers/02-policy/memo.md',
-  'docs/layers/03-process/memo.md',
-  'docs/layers/04-observation/memo.md',
-  'docs/layers/05-recovery/memo.md',
-  'docs/layers/06-memory/memo.md',
-  'docs/layers/07-loop/memo.md',
+  'docs/layers/01-context.md',
+  'docs/layers/02-policy.md',
+  'docs/layers/03-process.md',
+  'docs/layers/04-observation.md',
+  'docs/layers/05-recovery.md',
+  'docs/layers/06-memory.md',
+  'docs/layers/07-loop.md',
 ];
 
 function run(args) {

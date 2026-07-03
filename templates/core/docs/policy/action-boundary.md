@@ -6,7 +6,7 @@ This file is the single source of truth for action permission boundaries.
 
 Define what agents may do autonomously, what requires user approval, and what is forbidden unless explicitly requested.
 
-Use `docs/layers/02-policy/memo.md` for the Policy protocol. Use this file for concrete action categories.
+Use `docs/layers/02-policy.md` for the Policy protocol. Use this file for concrete action categories.
 
 ## How to use
 
@@ -25,7 +25,7 @@ Agents may do these without asking when they are task-scoped and reversible:
 - Read and search project files.
 - Inspect configuration files, package manifests, and generated harness docs.
 - Edit files directly related to the approved task.
-- Run local read-only checks and project-local verification commands.
+- Run local read-only inspection commands and project-local verification commands that do not create external side effects.
 - Create task-local notes under `agent-work/tasks/`.
 - Report suspected issues without changing unrelated files.
 
@@ -102,10 +102,10 @@ Stop and ask when:
 
 ## Related files
 
-- Policy protocol: `docs/layers/02-policy/memo.md`
+- Policy protocol: `docs/layers/02-policy.md`
 - Untrusted content: `docs/policy/untrusted-content.md`
 - Secret leak response: `docs/policy/secret-leak.md`
-- Completion evidence: `docs/layers/04-observation/memo.md`
+- Completion evidence: `docs/layers/04-observation.md`
 - Task workflows: `docs/process/`
 - Engineering standards: `docs/rules/`
 - Task-local notes: `agent-work/`

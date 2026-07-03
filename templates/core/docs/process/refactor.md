@@ -2,7 +2,7 @@
 
 Use this playbook when restructuring code while preserving its intended behavior.
 
-This is a concrete playbook selected by the Process layer. Use `docs/layers/03-process/memo.md` for routing rules and this file for refactor execution.
+This is a concrete playbook selected by the Process layer. Use `docs/layers/03-process.md` for routing rules and this file for refactor execution.
 
 ## Goal
 
@@ -38,11 +38,11 @@ Changing tests during a refactor is ask-first unless the change is purely mechan
 
 ## Recovery
 
-Use `docs/layers/05-recovery/memo.md` when verification fails, behavior changes unexpectedly, or the refactor cannot be kept small and reversible.
+Use `docs/layers/05-recovery.md` when verification fails, behavior changes unexpectedly, or the refactor cannot be kept small and reversible.
 
 ## Memory and task notes
 
-For multi-step refactors, keep context, plan, verification, and handoff notes under `agent-work/tasks/<task-name>/`.
+For multi-step refactors, keep status, context, plan, verification, and handoff notes under `agent-work/tasks/<task-name>/`.
 
 ## Outputs
 

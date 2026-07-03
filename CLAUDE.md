@@ -15,7 +15,7 @@ This workspace runs a Niuma Harness. The loop below is your operating contract f
 ## The loop
 
 **1. Plan — before any change**
-- Context: read `harness/docs/project-context.md` for stable facts; inspect current files for anything task-relevant. Never guess what files can show you. (depth: `docs/layers/01-context/memo.md`)
+- Context: read `harness/docs/project-context.md` for stable facts; inspect current files for anything task-relevant. Never guess what files can show you. (depth: `docs/layers/01-context.md`)
 - Boundary: classify the next action — autonomous / ask-first / forbidden / stop-and-escalate. Proceed only if autonomous, reversible, and task-scoped. Ask before ask-first; stop at forbidden or unclear risk. (depth: `docs/policy/action-boundary.md`)
 - Route: pick a process — bugfix / feature / refactor / review / release. Skip only for trivial single-step tasks. (depth: `docs/process/`)
 
@@ -23,16 +23,16 @@ This workspace runs a Niuma Harness. The loop below is your operating contract f
 Make the minimal task-aligned change. No scope creep, no drive-by refactor, no new dependencies without asking.
 
 **3. Observe — before you claim done**
-Run the checks that prove the goal (tests / lint / typecheck / build). Record exact commands and results. Unrun checks are "unknown", never "passing". (depth: `docs/layers/04-observation/memo.md`)
+Run the checks that prove the goal (tests / lint / typecheck / build). Record exact commands and results. Unrun checks are "unknown", never "passing". (depth: `docs/layers/04-observation.md`)
 
 **4. Reflect**
 Compare evidence to success criteria. Failing or unclear → step 5. Passing → step 6.
 
 **5. Repair — bounded**
-Find the first root cause, not downstream symptoms. Smallest safe fix, then re-run the focused check. Bounded retries only — after a few focused attempts fail, stop and report. Never delete or weaken tests, assertions, or checks to force green. (depth: `docs/layers/05-recovery/memo.md`)
+Find the first root cause, not downstream symptoms. Smallest safe fix, then re-run the focused check. Bounded retries only — after a few focused attempts fail, stop and report. Never delete or weaken tests, assertions, or checks to force green. (depth: `docs/layers/05-recovery.md`)
 
 **6. Remember**
-Task-local notes → `agent-work/`. Verified durable facts → candidate for `harness/docs/project-context.md`, written back only after verification. No secrets, no guesses. (depth: `docs/layers/06-memory/memo.md`)
+Task-local notes → `agent-work/`. Verified durable facts → candidate for `harness/docs/project-context.md`, written back only after verification. No secrets, no guesses. (depth: `docs/layers/06-memory.md`)
 
 **7. Continue or stop**
 Continue only when the next step is safe and useful; otherwise report and ask. For multi-step work, keep state explicit in `agent-work/tasks/<task>/`.
@@ -48,7 +48,7 @@ Continue only when the next step is safe and useful; otherwise report and ask. F
 
 ## Depth is on-demand
 
-The loop above is all that stays in context. Each phase names the one file to open when it needs detail. Full loop spec: `harness/docs/layers/07-loop/memo.md`.
+The loop above is all that stays in context. Each phase names the one file to open when it needs detail. Full loop spec: `harness/docs/layers/07-loop.md`.
 <!-- niuma-harness:contract end -->
 
 # Development
@@ -88,7 +88,7 @@ Core modules:
 
 - **Entry** (`CLAUDE.md` / `AGENTS.md`, from `getEntryFilesForAgent`): merged in `src/scaffold/entries.js`. No file → write full `templates/entry/entry.md`; contract markers present → replace only the block; markers absent → insert the block at the top. Existing content is always preserved.
 - **Tool-managed template files** (`managed !== "user"` in `templates/manifest.json`, the default): overwritten every init.
-- **User-maintained template files** (`managed: "user"` — `docs/project-context.md`, `docs/automation/hooks.md`): skipped if they exist.
+- **User-maintained template files** (`managed: "user"` — `docs/project-context.md`, `docs/automation/automation-intent.md`): skipped if they exist.
 - **Rules** (under `templates/core/docs/rules/<name>/`): converge to the current `--rules` / `--rules-out` selection; selected existing files are preserved, unselected known rule directories are removed, including local files inside them.
 - **manifest.json**: regenerated every init (`src/scaffold/status-writer.js`).
 

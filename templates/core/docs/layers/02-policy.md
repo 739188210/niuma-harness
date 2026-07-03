@@ -49,10 +49,10 @@ Do not act through unresolved ask-first or stop-and-escalate blockers. Only reco
 
 ## Links to other layers
 
-- Context: `docs/layers/01-context/memo.md`
-- Process: `docs/layers/03-process/memo.md`
-- Observation: `docs/layers/04-observation/memo.md`
-- Recovery: `docs/layers/05-recovery/memo.md`
+- Context: `docs/layers/01-context.md`
+- Process: `docs/layers/03-process.md`
+- Observation: `docs/layers/04-observation.md`
+- Recovery: `docs/layers/05-recovery.md`
 - Action boundaries: `docs/policy/action-boundary.md`
 - Untrusted content: `docs/policy/untrusted-content.md`
 - Secret leak response: `docs/policy/secret-leak.md`

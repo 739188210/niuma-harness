@@ -91,9 +91,9 @@ During Reflect or Continue, treat these thoughts as stop-and-classify signals. A
 
 ## Links to other layers
 
-- Context: `docs/layers/01-context/memo.md`
-- Policy: `docs/layers/02-policy/memo.md`
-- Process: `docs/layers/03-process/memo.md`
-- Observation: `docs/layers/04-observation/memo.md`
-- Recovery: `docs/layers/05-recovery/memo.md`
-- Memory: `docs/layers/06-memory/memo.md`
+- Context: `docs/layers/01-context.md`
+- Policy: `docs/layers/02-policy.md`
+- Process: `docs/layers/03-process.md`
+- Observation: `docs/layers/04-observation.md`
+- Recovery: `docs/layers/05-recovery.md`
+- Memory: `docs/layers/06-memory.md`

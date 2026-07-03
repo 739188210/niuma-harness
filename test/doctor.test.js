@@ -17,7 +17,7 @@ test('doctor passes on a valid harness', () => {
   assert.strictEqual(result.status, 0, result.stderr);
   assert.match(result.stdout, /Status: OK/);
   assert.match(result.stdout, /OK manifest\.json/);
-  assert.match(result.stdout, /OK docs\/layers\/01-context\/memo\.md/);
+  assert.match(result.stdout, /OK docs\/layers\/01-context\.md/);
   assert.match(result.stdout, /OK docs\/policy\/action-boundary\.md/);
   assert.match(result.stdout, /OK docs\/policy\/untrusted-content\.md/);
   assert.match(result.stdout, /OK docs\/process\/refactor\.md/);
@@ -129,10 +129,10 @@ test('doctor fails when a layer memo is missing', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(init.status, 0, init.stderr);
-  fs.unlinkSync(path.join(workspace, 'harness', 'docs', 'layers', '05-recovery', 'memo.md'));
+  fs.unlinkSync(path.join(workspace, 'harness', 'docs', 'layers', '05-recovery.md'));
   const result = run(['doctor', workspace]);
   assert.notStrictEqual(result.status, 0, 'doctor should fail when a layer memo is missing');
-  assert.match(result.stdout, /missing docs\/layers\/05-recovery\/memo\.md/);
+  assert.match(result.stdout, /missing docs\/layers\/05-recovery\.md/);
 });
 
 test('doctor fails when action-boundary is missing', () => {
@@ -179,10 +179,10 @@ test('doctor checks templateFiles declared in package manifest', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(init.status, 0, init.stderr);
-  fs.unlinkSync(path.join(workspace, 'harness', 'docs', 'automation', 'hooks.md'));
+  fs.unlinkSync(path.join(workspace, 'harness', 'docs', 'automation', 'automation-intent.md'));
   const result = run(['doctor', workspace]);
   assert.notStrictEqual(result.status, 0, 'doctor should fail when a manifest template file is missing');
-  assert.match(result.stdout, /missing docs\/automation\/hooks\.md/);
+  assert.match(result.stdout, /missing docs\/automation\/automation-intent\.md/);
 });
 
 test('doctor fails when agent-work is missing', () => {

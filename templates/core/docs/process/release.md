@@ -2,7 +2,7 @@
 
 Use this playbook to prepare or perform a release only when the user explicitly asks for release work.
 
-This is a concrete playbook selected by the Process layer. Use `docs/layers/03-process/memo.md` for routing rules and this file for release readiness.
+This is a concrete playbook selected by the Process layer. Use `docs/layers/03-process.md` for routing rules and this file for release readiness.
 
 ## Goal
 
@@ -24,7 +24,7 @@ Before reporting completion, make sure the task record or final response include
 2. Check Policy: use `docs/policy/action-boundary.md`; publishing, tagging, pushing, deploying, and version bumps are ask-first unless explicitly requested.
 3. Confirm the release target, version intent, package or artifact scope, and user approval boundary.
 4. Inspect package contents or build artifacts with project-local dry-run commands when available.
-5. Run or request the verification checks required for the release scope.
+5. Run local verification checks required for the release scope, or request approval for checks that touch external systems, credentials, quotas, or release infrastructure.
 6. Prepare release notes or a summary from verified changes.
 7. Stop before outward-facing actions unless the user explicitly approved that exact action.
 8. Record commands, outputs, skipped checks, and remaining release risk.
@@ -35,11 +35,11 @@ Use project-specific commands from `docs/project-context.md` when verified. If c
 
 ## Recovery
 
-Use `docs/layers/05-recovery/memo.md` when package contents are wrong, verification fails, metadata is inconsistent, or approval is unclear.
+Use `docs/layers/05-recovery.md` when package contents are wrong, verification fails, metadata is inconsistent, or approval is unclear.
 
 ## Memory and task notes
 
-Keep release preparation evidence under `agent-work/tasks/<task-name>/`. Move durable release process lessons through the Memory layer before updating long-lived docs.
+Keep release preparation status and evidence under `agent-work/tasks/<task-name>/`. Move durable release process lessons through the Memory layer before updating long-lived docs.
 
 ## Outputs
 

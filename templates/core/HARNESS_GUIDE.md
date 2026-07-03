@@ -18,7 +18,7 @@ The harness gives AI coding tools a stable 7-layer operating context:
 - Memory: how agents decide what to preserve or keep task-local
 - Loop: how agents continue, pause, recover, or stop
 
-Layer memos define how agents use each capability. They do not replace the content files they point to. For example, `docs/layers/01-context/memo.md` explains how to use context, while `docs/project-context.md` stores verified project facts. `docs/layers/03-process/memo.md` explains how to choose a workflow, while `docs/process/` stores concrete playbooks.
+Layer files define how agents use each capability. They do not replace the content files they point to. For example, `docs/layers/01-context.md` explains how to use context, while `docs/project-context.md` stores verified project facts. `docs/layers/03-process.md` explains how to choose a workflow, while `docs/process/` stores concrete playbooks.
 
 ## Runtime entry
 
@@ -39,13 +39,16 @@ If project-specific facts are incomplete, agents should inspect the current work
 
 ## What changes after init
 
-### Usually stable scaffold files
+### Tool-managed scaffold files
 
-These files define how the harness works. They should not change during normal task execution:
+These files define how the harness works and are refreshed from templates on re-init. Do not edit them by hand unless you are intentionally changing the generator templates:
 
 - `HARNESS_GUIDE.md`
 - `docs/index.md`
 - `docs/layers/`
+- `docs/policy/action-boundary.md`: core action permission boundary.
+- `docs/policy/secret-leak.md`: emergency secret-leak response.
+- `docs/policy/untrusted-content.md`: untrusted-content handling protocol.
 - `docs/process/`
 - `manifest.json`
 
@@ -56,9 +59,8 @@ These files define how the harness works. They should not change during normal t
 These files may evolve as the project, team, and tool environment become clearer:
 
 - `docs/project-context.md`: verified stable project facts.
-- `docs/policy/action-boundary.md`: team-maintained action permission boundaries.
 - `docs/rules/`: selected or team-maintained engineering standards.
-- `docs/automation/hooks.md`: verified automation intent.
+- `docs/automation/automation-intent.md`: verified automation intent.
 - `CLAUDE.md` / `AGENTS.md`: entry files carrying the always-loaded operating contract (the 7-step Loop). The contract zone is tool-managed; only the project-notes zone is free to edit.
 
 Do not use these files for temporary task notes or one-off debugging logs.
@@ -69,13 +71,14 @@ Agents may create task-local records under `agent-work/tasks/` during multi-step
 
 ```text
 agent-work/tasks/<task-name>/
+  status.md
   context.md
   plan.md
   verification.md
   notes.md
 ```
 
-These files hold task-local memory, verification evidence, and handoff state. Durable project facts should move through the Memory layer before being recorded in `docs/project-context.md`.
+These files hold task-local memory, explicit status, verification evidence, and handoff state. Durable project facts should move through the Memory layer before being recorded in `docs/project-context.md`.
 
 ## Maintenance rule
 
