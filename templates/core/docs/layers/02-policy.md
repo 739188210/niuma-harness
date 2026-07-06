@@ -24,7 +24,7 @@ Use this layer before making changes, before running commands with side effects,
 
 Approval blockers and policy risks are task-local state until resolved. If a `status.md` ledger exists, record unresolved ask-first and stop-and-escalate blockers there so work can resume safely.
 
-Do not act through unresolved ask-first or stop-and-escalate blockers. Only record approvals and decisions that are explicit, task-relevant, and still applicable to the current action.
+Do not act through unresolved ask-first or stop-and-escalate blockers. Only record approvals and decisions that are explicit, task-relevant, and still applicable to the current action. When host tools or higher-priority instructions are stricter than this policy, follow the stricter requirement.
 
 ## Allowed actions
 

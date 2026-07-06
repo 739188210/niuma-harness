@@ -3,17 +3,14 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
+const { getAvailableRuleDirs, getDefaultRulesForAgent } = require('../src/rules');
+const { getAvailableSkillDirs, getSkillTargetRootsForAgent } = require('../src/skills');
 
 const root = path.resolve(__dirname, '..');
 const node = process.execPath;
 const bin = path.join(root, 'bin', 'niuma-harness.js');
-const rulesRoot = path.join(root, 'templates', 'core', 'docs', 'rules');
-const allRuleDirs = fs.existsSync(rulesRoot)
-  ? fs.readdirSync(rulesRoot, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
-    .sort()
-  : [];
+const allRuleDirs = getAvailableRuleDirs();
+const allSkillDirs = getAvailableSkillDirs();
 const layerMemos = [
   'docs/layers/01-context.md',
   'docs/layers/02-policy.md',
@@ -65,12 +62,17 @@ function readJson(filePath) {
   return JSON.parse(read(filePath));
 }
 
+function expectedDefaultRules(agent) {
+  return getDefaultRulesForAgent(agent, allRuleDirs);
+}
+
 function assertManifest(filePath, expected) {
   assertFile(filePath);
   const manifest = readJson(filePath);
   assert.strictEqual(manifest.schemaVersion, 1);
   assert.strictEqual(manifest.agent, expected.agent);
-  assert.deepStrictEqual(manifest.rules, expected.rules || ['common']);
+  assert.deepStrictEqual(manifest.rules, expected.rules || expectedDefaultRules(expected.agent));
+  assert.deepStrictEqual(manifest.skills, expected.skills || []);
   assert.strictEqual(manifest.harnessDir, expected.harnessDir || 'harness');
   assert.strictEqual(manifest.workDir, expected.workDir || 'agent-work');
   assert.deepStrictEqual(manifest.entryFiles, expected.entryFiles);
@@ -89,8 +91,22 @@ function assertRuleDirs(harnessRoot, expected) {
   }
 }
 
+function assertSkillDirs(workspaceRoot, agent, expected) {
+  for (const targetRoot of getSkillTargetRootsForAgent(agent)) {
+    for (const skillDir of allSkillDirs) {
+      const skillDirPath = path.join(workspaceRoot, ...targetRoot.split('/'), skillDir);
+      if (expected.includes(skillDir)) {
+        assertDir(skillDirPath);
+      } else {
+        assertNoPath(skillDirPath);
+      }
+    }
+  }
+}
+
 module.exports = {
   allRuleDirs,
+  allSkillDirs,
   assert,
   assertDir,
   assertFile,
@@ -98,6 +114,8 @@ module.exports = {
   assertManifest,
   assertNoPath,
   assertRuleDirs,
+  assertSkillDirs,
+  expectedDefaultRules,
   fs,
   path,
   read,

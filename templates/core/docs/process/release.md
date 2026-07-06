@@ -21,7 +21,7 @@ Before reporting completion, make sure the task record or final response include
 ## Steps
 
 1. Load Context: read `docs/index.md`, `docs/project-context.md`, package metadata, and release-related docs.
-2. Check Policy: use `docs/policy/action-boundary.md`; publishing, tagging, pushing, deploying, and version bumps are ask-first unless explicitly requested.
+2. Check Policy: use `docs/policy/action-boundary.md`; publishing, tagging, pushing, deploying, and version bumps are forbidden unless explicitly requested. An explicit request authorizes only the named action and scope; still apply ask-first gates for credentials, destructive effects, failed verification, unclear scope, or external side effects not explicitly covered by the request.
 3. Confirm the release target, version intent, package or artifact scope, and user approval boundary.
 4. Inspect package contents or build artifacts with project-local dry-run commands when available.
 5. Run local verification checks required for the release scope, or request approval for checks that touch external systems, credentials, quotas, or release infrastructure.

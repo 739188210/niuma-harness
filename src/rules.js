@@ -6,6 +6,14 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const TEMPLATE_DIR = path.join(ROOT_DIR, 'templates');
 const DEFAULT_RULES_ROOT = 'core/docs/rules';
 const DEFAULT_RULES_SELECTION = 'common';
+const DEFAULT_ENGINEERING_RULES = ['common'];
+const AGENT_RULES = {
+  claude: ['claude'],
+  codex: ['codex'],
+  opencode: ['opencode'],
+  multi: ['claude', 'codex', 'opencode'],
+};
+const PREFERRED_RULE_ORDER = ['common', 'claude', 'codex', 'opencode'];
 const SPECIAL_RULES = new Set(['all', 'none']);
 
 function getRulesRootPath(rulesRoot = DEFAULT_RULES_ROOT) {
@@ -22,7 +30,20 @@ function getAvailableRuleDirs(rulesRoot = DEFAULT_RULES_ROOT) {
     .readdirSync(rulesRootPath, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
-    .sort();
+    .sort(compareRuleDirs);
+}
+
+function compareRuleDirs(left, right) {
+  const leftIndex = PREFERRED_RULE_ORDER.indexOf(left);
+  const rightIndex = PREFERRED_RULE_ORDER.indexOf(right);
+
+  if (leftIndex !== -1 || rightIndex !== -1) {
+    if (leftIndex === -1) return 1;
+    if (rightIndex === -1) return -1;
+    return leftIndex - rightIndex;
+  }
+
+  return left.localeCompare(right);
 }
 
 // --rules 的最终结果始终是“实际要安装的规则目录数组”。
@@ -45,6 +66,32 @@ function normalizeRules(rules, availableRules = getAvailableRuleDirs()) {
   }
 
   return normalizeConcreteRules(tokens, availableRules, 'rules');
+}
+
+function getAgentRuleDirs(agent, availableRules = getAvailableRuleDirs()) {
+  const agentRules = AGENT_RULES[agent];
+  if (!agentRules) {
+    throw new Error(`unknown agent for default rules: ${agent}`);
+  }
+
+  return normalizeConcreteRules(agentRules, availableRules, 'agent rules');
+}
+
+function getDefaultRulesForAgent(agent, availableRules = getAvailableRuleDirs()) {
+  return mergeRules([...DEFAULT_ENGINEERING_RULES, ...getAgentRuleDirs(agent, availableRules)], availableRules);
+}
+
+function addAgentRules(rules, agent, availableRules = getAvailableRuleDirs()) {
+  const normalizedRules = normalizeConcreteRules(rules, availableRules, 'rules');
+  if (normalizedRules.length === 0) {
+    return [];
+  }
+
+  return mergeRules([...normalizedRules, ...getAgentRuleDirs(agent, availableRules)], availableRules);
+}
+
+function mergeRules(rules, availableRules = getAvailableRuleDirs()) {
+  return normalizeConcreteRules(rules, availableRules, 'rules');
 }
 
 // --rules-out 以 all 为基准，排除用户列出的规则目录。
@@ -120,6 +167,9 @@ module.exports = {
   normalizeRules,
   normalizeRulesOut,
   normalizeConcreteRules,
+  getAgentRuleDirs,
+  getDefaultRulesForAgent,
+  addAgentRules,
   formatRules,
   formatAvailableRules,
 };

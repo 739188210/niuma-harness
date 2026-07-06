@@ -20,8 +20,8 @@ Use this skill for database inspection and migration verification tasks where Co
 Use the bundled MySQL helper when Python has either `pymysql` or `mysql-connector-python` available:
 
 ```powershell
-python C:\Users\Administrator\.codex\skills\database-readonly\scripts\mysql_readonly.py `
-  --host 192.168.31.251 --port 3306 --user root --database overseas-trade-fat `
+python path\to\database-readonly\scripts\mysql_readonly.py `
+  --host <db-host> --port 3306 --user <db-user> --database <database-name> `
   --ask-password `
   --sql "SHOW TABLES"
 ```
@@ -29,13 +29,13 @@ python C:\Users\Administrator\.codex\skills\database-readonly\scripts\mysql_read
 Environment variables are preferred for repeated use:
 
 ```powershell
-$env:DB_HOST="192.168.31.251"
+$env:DB_HOST="<db-host>"
 $env:DB_PORT="3306"
 $env:DB_USER="root"
 $env:DB_PASSWORD="<secret>"
-$env:DB_NAME="overseas-trade-fat"
+$env:DB_NAME="<database-name>"
 
-python C:\Users\Administrator\.codex\skills\database-readonly\scripts\mysql_readonly.py --sql "SELECT COUNT(*) AS c FROM business_canton_fair_type"
+python C:\Users\Administrator\.codex\skills\database-readonly\scripts\mysql_readonly.py --sql "SELECT COUNT(*) AS c FROM <table-name>"
 ```
 
 Supported output formats:

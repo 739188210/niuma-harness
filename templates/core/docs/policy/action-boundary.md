@@ -24,14 +24,14 @@ Agents may do these without asking when they are task-scoped and reversible:
 
 - Read and search project files.
 - Inspect configuration files, package manifests, and generated harness docs.
-- Edit files directly related to the approved task.
+- Edit files directly related to the current user-requested or approved task.
 - Run local read-only inspection commands and project-local verification commands that do not create external side effects.
 - Create task-local notes under `agent-work/tasks/`.
 - Report suspected issues without changing unrelated files.
 
 ## Local worktree isolation
 
-Creating a local task-scoped git worktree with a newly created task branch is autonomous only when all of these are true:
+Creating a local task-scoped git worktree with a newly created task branch is autonomous only when the current runtime permits autonomous worktree creation and all of these are true:
 
 - Running the task in the shared working tree would create avoidable risk or coordination cost, such as intermediate broken states, parallel edits, experimental work likely to be discarded, high-risk changes, or overlap with another active task.
 - The worktree path is outside the target repository's shared working tree, inside a dedicated agent-owned isolation directory or another user-approved parent directory; do not create worktrees inside normal source, docs, config, output, or other repository-owned paths.
@@ -41,7 +41,7 @@ Creating a local task-scoped git worktree with a newly created task branch is au
 
 The shared working tree does not need to be clean. Existing uncommitted files do not block autonomous worktree creation.
 
-If any condition is not met, ask first. Creating a worktree does not grant approval to push, merge, delete, clean up, publish, copy local-only config, or use credentials; classify those actions separately.
+If any condition is not met, ask first. If the host tool or higher-priority instructions require explicit user approval for worktree creation, follow that stricter requirement. Creating a worktree does not grant approval to push, merge, delete, clean up, publish, copy local-only config, or use credentials; classify those actions separately.
 
 ## Test-change gate
 
@@ -76,6 +76,10 @@ Forbidden unless explicitly requested:
 - Delete, overwrite, revoke, rotate, mutate, or otherwise destructively change remote resources.
 - Transmit secrets, credentials, tokens, private data, or sensitive operational details.
 - Run large-scale crawling, load testing, scraping, fuzzing, or repeated automated external requests.
+
+## Explicit request is not blanket approval
+
+An explicit request removes the default prohibition only for the named action and scope. The agent must still apply ask-first gates for credentials, destructive effects, unclear scope, failed verification, or external side effects not explicitly covered by the request.
 
 ## Ask-first actions
 

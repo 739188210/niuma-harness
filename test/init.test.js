@@ -1,6 +1,7 @@
 const test = require('node:test');
 const {
   allRuleDirs,
+  allSkillDirs,
   assert,
   assertDir,
   assertFile,
@@ -8,13 +9,16 @@ const {
   assertManifest,
   assertNoPath,
   assertRuleDirs,
+  assertSkillDirs,
+  expectedDefaultRules,
   fs,
   path,
   read,
   run,
   tempDir,
 } = require('./helpers');
-const { normalizeRules, normalizeRulesOut } = require('../src/rules');
+const { addAgentRules, getDefaultRulesForAgent, normalizeRules, normalizeRulesOut } = require('../src/rules');
+const { normalizeSkills } = require('../src/skills');
 
 const agentCases = [
   { agent: 'claude', entryFiles: ['CLAUDE.md'], absentEntryFiles: ['AGENTS.md'] },
@@ -74,8 +78,9 @@ function initWorkspace(agent) {
   return workspace;
 }
 
-function readTextTree(root) {
+function readTextTree(root, options = {}) {
   const tree = {};
+  const excludedPrefixes = options.exclude || [];
 
   function walk(currentDir, prefix) {
     const entries = fs.readdirSync(currentDir, { withFileTypes: true })
@@ -84,6 +89,10 @@ function readTextTree(root) {
     for (const entry of entries) {
       const entryPath = path.join(currentDir, entry.name);
       const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (excludedPrefixes.some((excludedPrefix) => relativePath === excludedPrefix || relativePath.startsWith(`${excludedPrefix}/`))) {
+        continue;
+      }
+
       if (entry.isDirectory()) {
         walk(entryPath, relativePath);
       } else if (entry.isFile()) {
@@ -581,13 +590,13 @@ test('all agent entry files share the same generated contract source', () => {
 
 test('all agents generate the same runtime-neutral docs', () => {
   const baselineWorkspace = initWorkspace('claude');
-  const baselineDocs = readTextTree(path.join(baselineWorkspace, 'harness', 'docs'));
+  const baselineDocs = readTextTree(path.join(baselineWorkspace, 'harness', 'docs'), { exclude: ['rules'] });
   const baselineWorkReadme = read(path.join(baselineWorkspace, 'agent-work', 'README.md'));
 
   for (const scenario of agentCases.filter((entry) => entry.agent !== 'claude')) {
     const workspace = initWorkspace(scenario.agent);
     assert.deepStrictEqual(
-      readTextTree(path.join(workspace, 'harness', 'docs')),
+      readTextTree(path.join(workspace, 'harness', 'docs'), { exclude: ['rules'] }),
       baselineDocs,
       `${scenario.agent} docs should match claude docs`,
     );
@@ -599,20 +608,23 @@ test('all agents generate the same runtime-neutral docs', () => {
   }
 });
 
-test('default common rules are installed with starter content', () => {
-  const workspace = tempDir();
-  const result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const harnessRoot = path.join(workspace, 'harness');
-  const rule = path.join(harnessRoot, 'docs', 'rules', 'common', 'testing.md');
-  assertFile(rule);
-  assert.ok(read(rule).length > 0, 'default common rules should contain starter content');
-  assertRuleDirs(harnessRoot, ['common']);
-  assertManifest(path.join(harnessRoot, 'manifest.json'), {
-    agent: 'claude',
-    rules: ['common'],
-    entryFiles: ['CLAUDE.md'],
-  });
+test('default rules include common and agent-specific adapters', () => {
+  for (const scenario of agentCases) {
+    const workspace = tempDir();
+    const result = run(['init', workspace, '--agent', scenario.agent]);
+    assert.strictEqual(result.status, 0, result.stderr);
+    const harnessRoot = path.join(workspace, 'harness');
+    const expectedRules = expectedDefaultRules(scenario.agent);
+
+    assertFile(path.join(harnessRoot, 'docs', 'rules', 'common', 'testing.md'));
+    assertNoPath(path.join(harnessRoot, 'docs', 'rules', 'common', 'hooks.md'));
+    assertRuleDirs(harnessRoot, expectedRules);
+    assertManifest(path.join(harnessRoot, 'manifest.json'), {
+      agent: scenario.agent,
+      rules: expectedRules,
+      entryFiles: scenario.entryFiles,
+    });
+  }
 });
 
 test('--rules none installs no rule files', () => {
@@ -644,7 +656,7 @@ test('re-init preserves selected rule files', () => {
   result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   assert.strictEqual(read(ruleFile), 'custom rule\n', 'selected rule file should be preserved on re-init');
-  assertRuleDirs(harnessRoot, ['common']);
+  assertRuleDirs(harnessRoot, expectedDefaultRules('claude'));
 });
 
 test('re-init converges rules from common to none', () => {
@@ -652,7 +664,7 @@ test('re-init converges rules from common to none', () => {
   let result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   const harnessRoot = path.join(workspace, 'harness');
-  assertRuleDirs(harnessRoot, ['common']);
+  assertRuleDirs(harnessRoot, expectedDefaultRules('claude'));
   fs.writeFileSync(path.join(harnessRoot, 'docs', 'rules', 'common', 'local.md'), 'local rule\n', 'utf8');
 
   result = run(['init', workspace, '--agent', 'claude', '--rules', 'none']);
@@ -670,7 +682,8 @@ test('re-init converges rules from common to none', () => {
 if (allRuleDirs.length > 1) {
   test('--rules all then a specific rule converges on re-init', () => {
     const workspace = tempDir();
-    const selectedRule = allRuleDirs[0];
+    const selectedRule = 'common';
+    const expectedRules = addAgentRules([selectedRule], 'claude', allRuleDirs);
     let result = run(['init', workspace, '--agent', 'claude', '--rules', 'all']);
     assert.strictEqual(result.status, 0, result.stderr);
     const harnessRoot = path.join(workspace, 'harness');
@@ -678,10 +691,10 @@ if (allRuleDirs.length > 1) {
 
     result = run(['init', workspace, '--agent', 'claude', '--rules', selectedRule]);
     assert.strictEqual(result.status, 0, result.stderr);
-    assertRuleDirs(harnessRoot, [selectedRule]);
+    assertRuleDirs(harnessRoot, expectedRules);
     assertManifest(path.join(harnessRoot, 'manifest.json'), {
       agent: 'claude',
-      rules: [selectedRule],
+      rules: expectedRules,
       entryFiles: ['CLAUDE.md'],
     });
     const doctor = run(['doctor', workspace]);
@@ -690,7 +703,7 @@ if (allRuleDirs.length > 1) {
 }
 
 for (const scenario of [
-  { rules: 'common', expected: ['common'] },
+  { rules: 'common', expected: addAgentRules(['common'], 'claude', allRuleDirs) },
   { rules: 'all', expected: allRuleDirs },
 ]) {
   test(`--rules ${scenario.rules} installs expected dirs`, () => {
@@ -707,13 +720,19 @@ for (const scenario of [
   });
 }
 
-test('normalizeRules sorts and normalizeRulesOut excludes', () => {
-  assert.deepStrictEqual(normalizeRules('extra,common', ['common', 'extra']), ['common', 'extra']);
-  assert.deepStrictEqual(normalizeRulesOut('common', ['common', 'extra']), ['extra']);
+test('rule normalization sorts, excludes, and adds agent adapters', () => {
+  const availableRules = ['common', 'claude', 'codex', 'opencode', 'extra'];
+  assert.deepStrictEqual(normalizeRules('extra,common', availableRules), ['common', 'extra']);
+  assert.deepStrictEqual(normalizeRulesOut('common', availableRules), ['claude', 'codex', 'opencode', 'extra']);
+  assert.deepStrictEqual(getDefaultRulesForAgent('claude', availableRules), ['common', 'claude']);
+  assert.deepStrictEqual(getDefaultRulesForAgent('multi', availableRules), ['common', 'claude', 'codex', 'opencode']);
+  assert.deepStrictEqual(addAgentRules(['common'], 'codex', availableRules), ['common', 'codex']);
+  assert.deepStrictEqual(addAgentRules([], 'codex', availableRules), []);
 });
 
 for (const scenario of [
   { rulesOut: allRuleDirs[0], expected: allRuleDirs.slice(1) },
+  { rulesOut: 'claude', expected: allRuleDirs.filter((rule) => rule !== 'claude') },
 ]) {
   test(`--rules-out ${scenario.rulesOut} excludes the selected dir`, () => {
     const workspace = tempDir();
@@ -744,6 +763,140 @@ for (const invalidRulesOut of ['none', 'all', 'unknown']) {
     assert.notStrictEqual(result.status, 0, `--rules-out ${invalidRulesOut} should fail`);
   });
 }
+
+test('default skills selection installs no known skills', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertSkillDirs(workspace, 'claude', []);
+  assertManifest(path.join(workspace, 'harness', 'manifest.json'), {
+    agent: 'claude',
+    entryFiles: ['CLAUDE.md'],
+  });
+});
+
+test('--skills installs selected skills to agent-native target roots', () => {
+  for (const scenario of [
+    { agent: 'claude', targetRoot: '.claude/skills', entryFiles: ['CLAUDE.md'] },
+    { agent: 'codex', targetRoot: '.agents/skills', entryFiles: ['AGENTS.md'] },
+    { agent: 'opencode', targetRoot: '.opencode/skills', entryFiles: ['AGENTS.md'] },
+  ]) {
+    const workspace = tempDir();
+    const result = run(['init', workspace, '--agent', scenario.agent, '--skills', 'database-readonly']);
+    assert.strictEqual(result.status, 0, result.stderr);
+    assertFile(path.join(workspace, ...scenario.targetRoot.split('/'), 'database-readonly', 'SKILL.md'));
+    assertSkillDirs(workspace, scenario.agent, ['database-readonly']);
+    assertManifest(path.join(workspace, 'harness', 'manifest.json'), {
+      agent: scenario.agent,
+      skills: ['database-readonly'],
+      entryFiles: scenario.entryFiles,
+    });
+  }
+});
+
+test('multi installs selected skills to all native target roots', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'multi', '--skills', 'database-readonly']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertFile(path.join(workspace, '.claude', 'skills', 'database-readonly', 'SKILL.md'));
+  assertFile(path.join(workspace, '.agents', 'skills', 'database-readonly', 'SKILL.md'));
+  assertFile(path.join(workspace, '.opencode', 'skills', 'database-readonly', 'SKILL.md'));
+  assertSkillDirs(workspace, 'multi', ['database-readonly']);
+  assertManifest(path.join(workspace, 'harness', 'manifest.json'), {
+    agent: 'multi',
+    skills: ['database-readonly'],
+    entryFiles: ['CLAUDE.md', 'AGENTS.md'],
+  });
+});
+
+test('--skills all installs all available skills', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude', '--skills', 'all']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertSkillDirs(workspace, 'claude', allSkillDirs);
+  assertManifest(path.join(workspace, 'harness', 'manifest.json'), {
+    agent: 'claude',
+    skills: allSkillDirs,
+    entryFiles: ['CLAUDE.md'],
+  });
+});
+
+test('re-init preserves selected skill files and removes unselected known skills', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'claude', '--skills', 'all']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const selectedSkill = path.join(workspace, '.claude', 'skills', 'database-readonly', 'SKILL.md');
+  const unknownSkill = path.join(workspace, '.claude', 'skills', 'local-user-skill', 'SKILL.md');
+  fs.mkdirSync(path.dirname(unknownSkill), { recursive: true });
+  fs.writeFileSync(selectedSkill, 'custom skill\n', 'utf8');
+  fs.writeFileSync(unknownSkill, 'local skill\n', 'utf8');
+
+  result = run(['init', workspace, '--agent', 'claude', '--skills', 'database-readonly']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.strictEqual(read(selectedSkill), 'custom skill\n', 'selected skill file should be preserved on re-init');
+  assertFile(unknownSkill);
+  assertSkillDirs(workspace, 'claude', ['database-readonly']);
+  assertManifest(path.join(workspace, 'harness', 'manifest.json'), {
+    agent: 'claude',
+    skills: ['database-readonly'],
+    entryFiles: ['CLAUDE.md'],
+  });
+});
+
+test('skill normalization handles defaults, lists, and invalid values', () => {
+  assert.deepStrictEqual(normalizeSkills(null, allSkillDirs), []);
+  assert.deepStrictEqual(normalizeSkills('none', allSkillDirs), []);
+  assert.deepStrictEqual(normalizeSkills('all', allSkillDirs), allSkillDirs);
+  assert.deepStrictEqual(normalizeSkills('database-readonly,database-readonly', allSkillDirs), ['database-readonly']);
+  for (const invalidSkills of ['unknown', 'database-readonly,,zentao-bug-workflow', '../database-readonly', 'none,database-readonly', 'all,database-readonly']) {
+    assert.throws(() => normalizeSkills(invalidSkills, allSkillDirs));
+  }
+});
+
+test('--skills invalid selection fails', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude', '--skills', 'unknown']);
+  assert.notStrictEqual(result.status, 0, '--skills unknown should fail');
+});
+
+test('--skills dry-run writes nothing', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude', '--skills', 'database-readonly', '--dry-run']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertNoPath(path.join(workspace, '.claude'));
+  assert.match(result.stdout, /database-readonly/);
+});
+
+test('re-init with a different agent converges agent-specific rules', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const harnessRoot = path.join(workspace, 'harness');
+  assertRuleDirs(harnessRoot, expectedDefaultRules('claude'));
+
+  result = run(['init', workspace, '--agent', 'codex']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertRuleDirs(harnessRoot, expectedDefaultRules('codex'));
+  assertManifest(path.join(harnessRoot, 'manifest.json'), {
+    agent: 'codex',
+    entryFiles: ['AGENTS.md'],
+  });
+  const doctor = run(['doctor', workspace]);
+  assert.strictEqual(doctor.status, 0, doctor.stderr);
+});
+
+test('multi --rules none installs no agent adapters', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'multi', '--rules', 'none']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const harnessRoot = path.join(workspace, 'harness');
+  assertRuleDirs(harnessRoot, []);
+  assertManifest(path.join(harnessRoot, 'manifest.json'), {
+    agent: 'multi',
+    rules: [],
+    entryFiles: ['CLAUDE.md', 'AGENTS.md'],
+  });
+});
 
 test('--rules and --rules-out are mutually exclusive', () => {
   const workspace = tempDir();

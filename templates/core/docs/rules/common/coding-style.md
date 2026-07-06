@@ -1,5 +1,9 @@
 # Coding Style Rules
 
+## Purpose
+
+These rules define common engineering style preferences. They supplement the selected process playbook; use `docs/policy/action-boundary.md` for permission boundaries.
+
 ## Principles
 
 - Prefer simple, readable code over clever abstractions.

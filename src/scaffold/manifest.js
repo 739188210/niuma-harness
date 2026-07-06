@@ -19,6 +19,7 @@ function loadManifest() {
 function validateManifest(manifest) {
   validateDirectories(manifest);
   validateRulesRoot(manifest.rulesRoot);
+  validateSkillsRoot(manifest.skillsRoot);
   validateTemplateFiles(manifest);
 }
 
@@ -43,6 +44,15 @@ function validateRulesRoot(rulesRoot) {
 
   validateRelativePath(rulesRoot, 'manifest rules root');
   safeResolveInside(TEMPLATE_DIR, rulesRoot, 'manifest rules root');
+}
+
+function validateSkillsRoot(skillsRoot) {
+  if (!skillsRoot) {
+    return;
+  }
+
+  validateRelativePath(skillsRoot, 'manifest skills root');
+  safeResolveInside(TEMPLATE_DIR, skillsRoot, 'manifest skills root');
 }
 
 function validateTemplateFiles(manifest) {

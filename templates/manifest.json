@@ -110,5 +110,6 @@
       "template": "core/agent-work/README.md"
     }
   ],
-  "rulesRoot": "core/docs/rules"
+  "rulesRoot": "core/docs/rules",
+  "skillsRoot": "skills"
 }

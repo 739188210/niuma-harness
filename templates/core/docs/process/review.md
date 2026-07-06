@@ -26,7 +26,7 @@ Before reporting completion, make sure the task record or final response include
 4. Review correctness, security, maintainability, test coverage, and verification evidence.
 5. Apply relevant engineering standards from `docs/rules/` when rule files are installed.
 6. Classify findings by severity.
-7. Request fixes for blocking findings before reporting the work ready.
+7. Mark work as not ready while blocking findings remain unresolved.
 8. Only implement fixes when the user explicitly approved implementation changes; otherwise route fixes through the relevant bugfix, refactor, or feature playbook.
 9. Re-run or request focused verification after material fixes.
 

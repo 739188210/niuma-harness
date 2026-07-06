@@ -25,9 +25,10 @@ Do not isolate merely because a task has more than one step. Isolation has setup
 
 1. Confirm the target is a git repository. If not, ask the user before proceeding.
 2. Confirm the intended worktree action satisfies `docs/policy/action-boundary.md` local worktree isolation rules.
-3. Create a worktree on a newly created local task branch: `git worktree add <path> -b <branch>`.
-4. Work entirely inside the worktree for this task. Do not edit the shared tree while isolated.
-5. Run verification (tests, build) inside the worktree before considering the task done.
+3. If the host tool or higher-priority instructions require explicit user approval for worktree creation, stop and ask instead of running git worktree commands.
+4. Create a worktree on a newly created local task branch: `git worktree add <path> -b <branch>`.
+5. Work entirely inside the worktree for this task. Do not edit the shared tree while isolated.
+6. Run verification (tests, build) inside the worktree before considering the task done.
 
 ## Boundaries
 

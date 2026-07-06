@@ -2,8 +2,22 @@
 const { parseArgs } = require('./args');
 const { getHelpText } = require('./help');
 const { chooseAgent } = require('./prompts');
+const { addAgentRules, getDefaultRulesForAgent } = require('./rules');
 const { runDoctor } = require('./doctor');
 const { runInit } = require('./scaffold');
+
+function finalizeRules(options) {
+  if (options.rulesOut) {
+    return;
+  }
+
+  if (options.rulesProvided) {
+    options.rules = addAgentRules(options.rules, options.agent);
+    return;
+  }
+
+  options.rules = getDefaultRulesForAgent(options.agent);
+}
 
 async function main(argv) {
   const options = parseArgs(argv);
@@ -15,6 +29,7 @@ async function main(argv) {
 
   if (options.command === 'init') {
     options.agent = await chooseAgent(options.agent);
+    finalizeRules(options);
     runInit(options);
     return;
   }

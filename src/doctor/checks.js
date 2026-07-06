@@ -2,6 +2,7 @@
 const path = require('path');
 const { normalizeAgent } = require('../agents');
 const { formatRules, normalizeConcreteRules } = require('../rules');
+const { formatSkills, normalizeConcreteSkills } = require('../skills');
 const { loadManifest } = require('../scaffold/manifest');
 const { addError, addOk } = require('./result');
 const {
@@ -11,6 +12,7 @@ const {
   checkWorkDir,
 } = require('./core-checks');
 const { checkRuleFiles, getAvailableRules } = require('./rules-checks');
+const { checkSkillFiles, getAvailableSkills } = require('./skills-checks');
 
 // 保持检查顺序稳定：先 schema/字段，再文件结构，最后 workspace workDir。
 function checkHarness(harnessRoot, status, result) {
@@ -18,10 +20,12 @@ function checkHarness(harnessRoot, status, result) {
   checkSchemaVersion(context);
   checkAgent(context);
   checkRules(context);
+  checkSkills(context);
   checkEntryFiles(context);
   checkEntryContractIntegrity(context);
   checkCoreDocs(context);
   checkRuleFiles(context);
+  checkSkillFiles(context);
   checkWorkDir(context);
 }
 
@@ -30,9 +34,11 @@ function createCheckContext(harnessRoot, status, result) {
   return {
     agent: null,
     availableRules: getAvailableRules(templateManifest.rulesRoot),
+    availableSkills: getAvailableSkills(templateManifest.skillsRoot),
     harnessRoot,
     result,
     rules: null,
+    skills: null,
     status,
     templateManifest,
     workspaceRoot: path.dirname(harnessRoot),
@@ -83,6 +89,30 @@ function checkRules(context) {
 
   if (context.rules) {
     addOk(result, `rules ${formatRules(context.rules)}`);
+  }
+}
+
+function checkSkills(context) {
+  const { availableSkills, result, status } = context;
+  if (!Object.prototype.hasOwnProperty.call(status, 'skills')) {
+    context.skills = [];
+    addOk(result, 'skills none');
+    return;
+  }
+
+  if (!Array.isArray(status.skills)) {
+    addError(result, 'skills must be an array');
+    return;
+  }
+
+  context.skills = normalizeStatusField(
+    result,
+    () => normalizeConcreteSkills(status.skills, availableSkills, 'skills'),
+    'skills'
+  );
+
+  if (context.skills) {
+    addOk(result, `skills ${formatSkills(context.skills)}`);
   }
 }
 

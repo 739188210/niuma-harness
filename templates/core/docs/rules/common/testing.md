@@ -1,24 +1,19 @@
 # Testing Rules
 
-## Default expectation
+## Purpose
 
-Changes should be verified before being called complete.
+These rules define testing preferences for engineering work. They supplement `docs/layers/04-observation.md`; use the Observation evidence schema as the source of truth for completion evidence.
 
-## Test-first preference
+## Test preference
 
-For behavior changes:
+For behavior changes, prefer focused automated tests that prove the intended behavior or reproduce the defect.
 
-1. Reproduce the current behavior or failure.
-2. Add or update a focused test. If the change cannot be covered by an automated test, state why and record the manual verification used instead.
-3. Implement the smallest fix.
-4. Run the relevant verification commands.
+If automated tests are not practical, record the manual verification used instead and why.
+
+## Test integrity
+
+Do not weaken, skip, delete, or rebaseline tests to make work pass. Use `docs/policy/action-boundary.md` for the test-change gate.
 
 ## Reporting
 
-Always report:
-
-- commands run
-- whether they passed or failed
-- important skipped checks and why
-
-Do not claim completion when relevant tests fail unless the user explicitly accepts the remaining risk.
+Report relevant test or verification commands through the Observation evidence schema, including skipped checks and remaining unknowns.

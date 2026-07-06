@@ -34,8 +34,9 @@ niuma-harness check [target] [options]
 | `--agent <name>` | `claude`, `codex`, `opencode`, or `multi` |
 | `--tool <name>` | Alias for `--agent` |
 | `--harness-dir <name>` | Directory to create, default: `harness` |
-| `--rules <selection>` | `common`, `all`, `none`, or `<rule-dir>[,<rule-dir>...]`, default: `common` |
+| `--rules <selection>` | `all`, `none`, or `<rule-dir>[,<rule-dir>...]`; agent adapter rules are added automatically |
 | `--rules-out <selection>` | Exclude selected rule directories from `all` |
+| `--skills <selection>` | `all`, `none`, or `<skill>[,<skill>...]`, default: `none` |
 | `--dry-run` | Print planned actions without writing files |
 
 ### Doctor/check options
@@ -54,10 +55,12 @@ niuma-harness check [target] [options]
 
 ```bash
 npx niuma-harness init . --agent claude
-npx niuma-harness init ./workspace --agent codex --rules java,web
+npx niuma-harness init ./workspace --agent codex --rules common
+npx niuma-harness init ./workspace --agent claude --skills database-readonly
+npx niuma-harness init ./workspace --agent multi --skills all
 npx niuma-harness init ./workspace --agent claude --rules none
 npx niuma-harness init ./workspace --agent claude --rules all
-npx niuma-harness init ./workspace --agent claude --rules-out web
+npx niuma-harness init ./workspace --agent claude --rules-out opencode
 npx niuma-harness init ./workspace --agent opencode --dry-run
 npx niuma-harness init ./workspace --agent multi --harness-dir ai-harness
 npx niuma-harness doctor ./workspace
@@ -66,20 +69,23 @@ npx niuma-harness check ./workspace --harness-dir ai-harness
 
 ## Agent modes
 
-| Agent | Generated entry file |
-|---|---|
-| `claude` | `CLAUDE.md` |
-| `codex` | `AGENTS.md` |
-| `opencode` | `AGENTS.md` |
-| `multi` | `CLAUDE.md` and `AGENTS.md` |
+| Agent | Generated entry file | Default rules |
+|---|---|---|
+| `claude` | `CLAUDE.md` | `common`, `claude` |
+| `codex` | `AGENTS.md` | `common`, `codex` |
+| `opencode` | `AGENTS.md` | `common`, `opencode` |
+| `multi` | `CLAUDE.md` and `AGENTS.md` | `common`, `claude`, `codex`, `opencode` |
 
 ## Generated structure
 
-Default output:
+Default output for `--agent claude`:
 
 ```text
 workspace/
   CLAUDE.md or AGENTS.md
+  .claude/
+    skills/
+      # Optional native skills selected by --skills
   harness/
     manifest.json
     HARNESS_GUIDE.md
@@ -110,12 +116,12 @@ workspace/
         isolation.md
         subagent-development.md
       rules/
-        # Optional rule directories selected by --rules or --rules-out
         common/
           coding-style.md
-          hooks.md
           security.md
           testing.md
+        claude/
+          hooks.md
   agent-work/
     README.md
     tasks/
@@ -147,7 +153,8 @@ The layer files describe what each layer must do. The existing `docs/process/`, 
 {
   "schemaVersion": 1,
   "agent": "claude",
-  "rules": ["common"],
+  "rules": ["common", "claude"],
+  "skills": [],
   "harnessDir": "harness",
   "workDir": "agent-work",
   "entryFiles": ["CLAUDE.md"],
@@ -167,10 +174,10 @@ This project-level `manifest.json` is generated inside the harness root and is *
 | **Entry** (`CLAUDE.md` / `AGENTS.md`) | Merged: if the contract block is present it is refreshed; otherwise the block is inserted at the top. Your existing content is always preserved. |
 | **Tool-managed** (layers, process playbooks, policy, index, HARNESS_GUIDE, `agent-work/README.md`) | Refreshed from the template. |
 | **User-maintained** (`project-context.md`, `automation/automation-intent.md`) | Preserved if they exist; created from the template only when absent. |
-| `docs/rules/` | Converged to the current `--rules` / `--rules-out` selection. Selected existing rule files are preserved; unselected known rule directories are removed, including local files inside them. |
+| `docs/rules/` | Converged to the current rule selection. Selected existing rule files are preserved; unselected known rule directories are removed, including local files inside them. |
 | `manifest.json` | Regenerated every time. |
 
-Rules follow the current init parameters: re-running with a new `--rules` selection leaves only that selected rule set installed.
+Rules follow the current init parameters: re-running with a new `--agent`, `--rules`, or `--rules-out` selection converges installed known rule directories to the new final set.
 
 ## Doctor
 
@@ -188,18 +195,27 @@ Harnesses generated before the 7-layer structure may fail `doctor` until they ar
 
 ## Rules selection
 
-`--rules common` is the default and installs only the `common` rule directory.
+Rules have two roles:
+
+- `common` and future non-agent rule directories are engineering standards.
+- `claude`, `codex`, and `opencode` are agent adapter rules installed automatically for the selected `--agent`.
+
+When `--rules` is omitted, `init` installs `common` plus the selected agent adapter rules:
+
+| Agent | Installed rules |
+|---|---|
+| `claude` | `common`, `claude` |
+| `codex` | `common`, `codex` |
+| `opencode` | `common`, `opencode` |
+| `multi` | `common`, `claude`, `codex`, `opencode` |
+
+Use `--rules <selection>` to choose engineering rule directories; the current agent adapter rules are still added automatically.
 
 ```bash
-npx niuma-harness init . --agent claude --rules common
+npx niuma-harness init . --agent codex --rules common
 ```
 
-Install exactly the rule directories you want with a comma-separated list. Selecting `java,web` does not include `common`; include `common` explicitly when needed.
-
-```bash
-npx niuma-harness init . --agent claude --rules java,web
-npx niuma-harness init . --agent claude --rules common,java,web
-```
+The command above installs `common` and `codex`.
 
 Use `all` to install every available rule directory, or `none` to install no rule files.
 
@@ -208,17 +224,38 @@ npx niuma-harness init . --agent claude --rules all
 npx niuma-harness init . --agent claude --rules none
 ```
 
-Use `--rules-out` to install all available rule directories except the listed ones.
+Use `--rules-out` to install all available rule directories except the listed ones. Explicit exclusions win, including exclusions for the current agent adapter rule.
 
 ```bash
-npx niuma-harness init . --agent claude --rules-out web
+npx niuma-harness init . --agent claude --rules-out opencode
 ```
+
+## Skills selection
+
+Skills are optional native `SKILL.md` packages copied from `templates/skills/`. They default to `none`.
+
+```bash
+npx niuma-harness init . --agent claude --skills database-readonly
+npx niuma-harness init . --agent multi --skills all
+npx niuma-harness init . --agent claude --skills none
+```
+
+Installed skill targets depend on the selected agent:
+
+| Agent | Skill target roots |
+|---|---|
+| `claude` | `.claude/skills/<skill>/` |
+| `codex` | `.agents/skills/<skill>/` |
+| `opencode` | `.opencode/skills/<skill>/` |
+| `multi` | all three roots |
+
+Re-running `init` converges known skills in the current agent's target roots: selected known skills are installed and preserved, unselected known skills are removed, and unknown user-created skills are left untouched. Skills may include local config files or scripts; selected existing files are not overwritten on re-init.
 
 ## Development
 
 ```bash
 npm test
 npm run pack:dry
-node bin/niuma-harness.js init . --agent claude --dry-run
-node bin/niuma-harness.js doctor .
+node bin/niuma-harness.js init <tmp> --agent claude --dry-run
+node bin/niuma-harness.js doctor <tmp>
 ```

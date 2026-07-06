@@ -3,6 +3,7 @@ const path = require('path');
 
 const { getEntryFilesForAgent } = require('./agents');
 const { formatRules } = require('./rules');
+const { formatSkills } = require('./skills');
 const { loadManifest, validateManifest } = require('./scaffold/manifest');
 const {
   createHarnessDirectories,
@@ -15,6 +16,7 @@ const {
   writeWorkTemplateFiles,
 } = require('./scaffold/entries');
 const { writeRuleFiles } = require('./scaffold/rules-writer');
+const { writeSkillFiles } = require('./scaffold/skills-writer');
 const { writeStatusFile } = require('./scaffold/status-writer');
 
 // 通过统一 context 串联各个步骤，避免 runInit 重新堆成长方法。
@@ -28,6 +30,7 @@ function runInit(options) {
   writeTemplateFiles(context);
   writeWorkTemplateFiles(context);
   writeRuleFiles(context);
+  writeSkillFiles(context);
   writeStatusFile(context);
   printDone();
 }
@@ -75,6 +78,7 @@ function printInitSummary(context) {
   console.log(`Target: ${targetDir}`);
   console.log(`Agent: ${options.agent}`);
   console.log(`Rules: ${formatRules(options.rules)}`);
+  console.log(`Skills: ${formatSkills(options.skills)}`);
 }
 
 function printDone() {

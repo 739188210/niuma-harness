@@ -17,7 +17,7 @@ Use this document when the agent observes any of:
 
 1. Stop. Do not commit, push, copy, or echo the secret further.
 2. Do not attempt silent repair. Rotating, deleting, or rewriting history is high-risk and ask-first (see `action-boundary.md`).
-3. Preserve evidence. Record: secret type, where it was found, and exposure scope (local-only / committed / pushed / public).
+3. Preserve evidence without copying the secret value. Record only the secret type, where it was found, and exposure scope (local-only / committed / pushed / public).
 4. Escalate to the user. State the exposure scope and the recommended actions (rotate the secret, rewrite history if pushed, notify affected downstream systems).
 5. Clean only after approval. Remove the secret from the working tree when safe, and use version-control-aware cleanup for committed or pushed exposure. Never delete files merely to hide evidence.
 

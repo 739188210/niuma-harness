@@ -1,7 +1,8 @@
 // CLI 参数解析层：只负责把 argv 变成规范化 options。
 const { normalizeAgent } = require('./agents');
 const { getHelpText } = require('./help');
-const { DEFAULT_RULES_SELECTION, normalizeRules, normalizeRulesOut } = require('./rules');
+const { normalizeRules, normalizeRulesOut } = require('./rules');
+const { normalizeSkills } = require('./skills');
 
 // 解析阶段会规范化 agent/rules，并读取本地规则目录来校验选择值。
 function parseArgs(argv) {
@@ -9,9 +10,11 @@ function parseArgs(argv) {
     command: null,
     targetDir: null,
     agent: null,
-    rules: DEFAULT_RULES_SELECTION,
+    rules: null,
     rulesOut: null,
     rulesProvided: false,
+    skills: null,
+    skillsProvided: false,
     harnessDir: 'harness',
     dryRun: false,
     help: false,
@@ -30,7 +33,7 @@ function parseArgs(argv) {
       continue;
     }
 
-    if (arg === '--agent' || arg === '--tool' || arg === '--rules' || arg === '--rules-out' || arg === '--harness-dir') {
+    if (arg === '--agent' || arg === '--tool' || arg === '--rules' || arg === '--rules-out' || arg === '--skills' || arg === '--harness-dir') {
       const value = argv[index + 1];
       if (!value || value.startsWith('-')) {
         throw new Error(`${arg} requires a value.`);
@@ -40,7 +43,7 @@ function parseArgs(argv) {
       continue;
     }
 
-    if (arg.startsWith('--agent=') || arg.startsWith('--tool=') || arg.startsWith('--rules=') || arg.startsWith('--rules-out=') || arg.startsWith('--harness-dir=')) {
+    if (arg.startsWith('--agent=') || arg.startsWith('--tool=') || arg.startsWith('--rules=') || arg.startsWith('--rules-out=') || arg.startsWith('--skills=') || arg.startsWith('--harness-dir=')) {
       const [name, value] = splitLongOption(arg);
       assignOption(options, name, value);
       continue;
@@ -69,9 +72,10 @@ function parseArgs(argv) {
       throw new Error('--rules and --rules-out cannot be used together.');
     }
     options.rules = normalizeRulesOut(options.rulesOut);
-  } else {
+  } else if (options.rulesProvided) {
     options.rules = normalizeRules(options.rules);
   }
+  options.skills = normalizeSkills(options.skills);
   options.harnessDir = normalizeHarnessDir(options.harnessDir);
 
   return options;
@@ -91,6 +95,12 @@ function assignOption(options, name, value) {
 
   if (name === 'rules-out') {
     options.rulesOut = value;
+    return;
+  }
+
+  if (name === 'skills') {
+    options.skills = value;
+    options.skillsProvided = true;
     return;
   }
 

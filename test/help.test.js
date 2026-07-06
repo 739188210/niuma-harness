@@ -7,6 +7,7 @@ test('--help shows init, doctor, and --rules-out', () => {
   assert.match(result.stdout, /niuma-harness init/);
   assert.match(result.stdout, /niuma-harness doctor/);
   assert.match(result.stdout, /--rules-out/);
+  assert.match(result.stdout, /--skills/);
 });
 
 test('init --help shows --agent', () => {

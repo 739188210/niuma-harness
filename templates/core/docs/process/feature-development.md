@@ -21,7 +21,7 @@ Keep the confirmation short:
 - Proposed smallest path
 - Open questions
 
-If an open question can change the implementation direction, ask the user before planning or coding. If the user already gave complete requirements and approval to proceed, record that and continue.
+If an open question can change the implementation direction, ask the user before planning or coding. Do not pause for confirmation when the user request, acceptance criteria, and smallest path are already clear and the next action is autonomous under Policy. If the user already gave complete requirements and approval to proceed, record that and continue.
 
 ## Required artifact/checklist
 

@@ -228,6 +228,77 @@ test('doctor fails when workDir is missing from manifest', () => {
   assert.match(result.stdout, /missing workDir/);
 });
 
+test('doctor fails when skills is missing', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
+  const manifest = readJson(manifestPath);
+  delete manifest.skills;
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should fail when skills is missing');
+  assert.match(result.stdout, /missing skills/);
+});
+
+test('doctor fails when skills is a string', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
+  const manifest = readJson(manifestPath);
+  manifest.skills = 'database-readonly';
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should fail when skills is a string');
+  assert.match(result.stdout, /skills must be an array/);
+});
+
+test('doctor fails when skills contains an unknown directory', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
+  const manifest = readJson(manifestPath);
+  manifest.skills = ['unknown'];
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should fail when skills contains an unknown directory');
+  assert.match(result.stdout, /invalid skills/);
+});
+
+test('doctor passes with selected skills and ignores unknown user skills', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude', '--skills', 'database-readonly']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  const localSkill = path.join(workspace, '.claude', 'skills', 'local-user-skill', 'SKILL.md');
+  fs.mkdirSync(path.dirname(localSkill), { recursive: true });
+  fs.writeFileSync(localSkill, 'local skill\n', 'utf8');
+  const result = run(['doctor', workspace]);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(result.stdout, /skills database-readonly/);
+});
+
+test('doctor fails when a selected skill file is missing', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude', '--skills', 'database-readonly']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  fs.unlinkSync(path.join(workspace, '.claude', 'skills', 'database-readonly', 'SKILL.md'));
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should fail when a selected skill file is missing');
+  assert.match(result.stdout, /missing \.claude\/skills\/database-readonly\/SKILL\.md/);
+});
+
+test('doctor fails when a multi selected skill target is missing', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'multi', '--skills', 'database-readonly']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  fs.rmSync(path.join(workspace, '.opencode', 'skills', 'database-readonly'), { recursive: true, force: true });
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should fail when one multi skill target is missing');
+  assert.match(result.stdout, /missing \.opencode\/skills\/database-readonly\//);
+});
+
 test('doctor fails when rules is a string', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);
@@ -262,6 +333,16 @@ test('doctor fails when a selected rule file is missing', () => {
   const result = run(['doctor', workspace]);
   assert.notStrictEqual(result.status, 0, 'doctor should fail when a selected rule file is missing');
   assert.match(result.stdout, /missing docs\/rules\/common\/testing\.md/);
+});
+
+test('doctor fails when a selected agent-specific rule file is missing', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  fs.unlinkSync(path.join(workspace, 'harness', 'docs', 'rules', 'claude', 'hooks.md'));
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should fail when a selected agent rule file is missing');
+  assert.match(result.stdout, /missing docs\/rules\/claude\/hooks\.md/);
 });
 
 test('doctor does not modify the manifest', () => {
