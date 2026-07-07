@@ -1,6 +1,7 @@
 // doctor 的高层检查编排：字段校验后委托 core/rules 子检查。
 const path = require('path');
 const { normalizeAgent } = require('../agents');
+const { formatCommands, normalizeConcreteCommands } = require('../commands');
 const { formatRules, normalizeConcreteRules } = require('../rules');
 const { formatSkills, normalizeConcreteSkills } = require('../skills');
 const { loadManifest } = require('../scaffold/manifest');
@@ -11,6 +12,7 @@ const {
   checkEntryFiles,
   checkWorkDir,
 } = require('./core-checks');
+const { checkCommandFiles, getAvailableCommands } = require('./commands-checks');
 const { checkRuleFiles, getAvailableRules } = require('./rules-checks');
 const { checkSkillFiles, getAvailableSkills } = require('./skills-checks');
 
@@ -21,11 +23,13 @@ function checkHarness(harnessRoot, status, result) {
   checkAgent(context);
   checkRules(context);
   checkSkills(context);
+  checkCommands(context);
   checkEntryFiles(context);
   checkEntryContractIntegrity(context);
   checkCoreDocs(context);
   checkRuleFiles(context);
   checkSkillFiles(context);
+  checkCommandFiles(context);
   checkWorkDir(context);
 }
 
@@ -33,8 +37,10 @@ function createCheckContext(harnessRoot, status, result) {
   const templateManifest = loadManifest();
   return {
     agent: null,
+    availableCommands: getAvailableCommands(templateManifest.commandsRoot),
     availableRules: getAvailableRules(templateManifest.rulesRoot),
     availableSkills: getAvailableSkills(templateManifest.skillsRoot),
+    commands: null,
     harnessRoot,
     result,
     rules: null,
@@ -95,8 +101,7 @@ function checkRules(context) {
 function checkSkills(context) {
   const { availableSkills, result, status } = context;
   if (!Object.prototype.hasOwnProperty.call(status, 'skills')) {
-    context.skills = [];
-    addOk(result, 'skills none');
+    addError(result, 'missing skills');
     return;
   }
 
@@ -113,6 +118,29 @@ function checkSkills(context) {
 
   if (context.skills) {
     addOk(result, `skills ${formatSkills(context.skills)}`);
+  }
+}
+
+function checkCommands(context) {
+  const { availableCommands, result, status } = context;
+  if (!Object.prototype.hasOwnProperty.call(status, 'commands')) {
+    addError(result, 'missing commands');
+    return;
+  }
+
+  if (!Array.isArray(status.commands)) {
+    addError(result, 'commands must be an array');
+    return;
+  }
+
+  context.commands = normalizeStatusField(
+    result,
+    () => normalizeConcreteCommands(status.commands, availableCommands, 'commands'),
+    'commands'
+  );
+
+  if (context.commands) {
+    addOk(result, `commands ${formatCommands(context.commands)}`);
   }
 }
 

@@ -3,12 +3,19 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
+const {
+  getAvailableCommandFiles,
+  getCommandId,
+  getCommandTargetsForAgent,
+  getDefaultCommandsForAgent,
+} = require('../src/commands');
 const { getAvailableRuleDirs, getDefaultRulesForAgent } = require('../src/rules');
 const { getAvailableSkillDirs, getSkillTargetRootsForAgent } = require('../src/skills');
 
 const root = path.resolve(__dirname, '..');
 const node = process.execPath;
 const bin = path.join(root, 'bin', 'niuma-harness.js');
+const allCommandFiles = getAvailableCommandFiles();
 const allRuleDirs = getAvailableRuleDirs();
 const allSkillDirs = getAvailableSkillDirs();
 const layerMemos = [
@@ -66,13 +73,18 @@ function expectedDefaultRules(agent) {
   return getDefaultRulesForAgent(agent, allRuleDirs);
 }
 
+function expectedDefaultCommands(agent) {
+  return getDefaultCommandsForAgent(agent, allCommandFiles);
+}
+
 function assertManifest(filePath, expected) {
   assertFile(filePath);
   const manifest = readJson(filePath);
   assert.strictEqual(manifest.schemaVersion, 1);
   assert.strictEqual(manifest.agent, expected.agent);
   assert.deepStrictEqual(manifest.rules, expected.rules || expectedDefaultRules(expected.agent));
-  assert.deepStrictEqual(manifest.skills, expected.skills || []);
+  assert.deepStrictEqual(manifest.skills, expected.skills || allSkillDirs);
+  assert.deepStrictEqual(manifest.commands, expected.commands || expectedDefaultCommands(expected.agent));
   assert.strictEqual(manifest.harnessDir, expected.harnessDir || 'harness');
   assert.strictEqual(manifest.workDir, expected.workDir || 'agent-work');
   assert.deepStrictEqual(manifest.entryFiles, expected.entryFiles);
@@ -104,10 +116,44 @@ function assertSkillDirs(workspaceRoot, agent, expected) {
   }
 }
 
+function assertCommandFiles(workspaceRoot, agent, expected) {
+  for (const target of getCommandTargetsForAgent(agent)) {
+    for (const commandFile of allCommandFiles) {
+      if (target.kind === 'codex-skill-command') {
+        assertCodexCommandSkill(workspaceRoot, target.root, commandFile, expected.includes(commandFile));
+        continue;
+      }
+
+      const commandFilePath = path.join(workspaceRoot, ...target.root.split('/'), commandFile);
+      if (expected.includes(commandFile)) {
+        assertFile(commandFilePath);
+      } else {
+        assertNoPath(commandFilePath);
+      }
+    }
+  }
+}
+
+function assertCodexCommandSkill(workspaceRoot, targetRoot, commandFile, shouldExist) {
+  const commandId = getCommandId(commandFile);
+  const skillDir = path.join(workspaceRoot, ...targetRoot.split('/'), commandId);
+  if (!shouldExist) {
+    assertNoPath(skillDir);
+    return;
+  }
+
+  assertDir(skillDir);
+  assertFile(path.join(skillDir, 'SKILL.md'));
+  assertFile(path.join(skillDir, 'agents', 'openai.yaml'));
+}
+
 module.exports = {
+  allCommandFiles,
   allRuleDirs,
   allSkillDirs,
   assert,
+  assertCommandFiles,
+  assertCodexCommandSkill,
   assertDir,
   assertFile,
   assertLayerMemos,
@@ -115,6 +161,7 @@ module.exports = {
   assertNoPath,
   assertRuleDirs,
   assertSkillDirs,
+  getCommandId,
   expectedDefaultRules,
   fs,
   path,

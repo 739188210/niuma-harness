@@ -111,5 +111,6 @@
     }
   ],
   "rulesRoot": "core/docs/rules",
-  "skillsRoot": "skills"
+  "skillsRoot": "skills",
+  "commandsRoot": "commands"
 }

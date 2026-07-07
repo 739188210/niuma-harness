@@ -1,6 +1,6 @@
 // 根据已规范化的 skills 数组复制对应技能目录；重复 init 时技能目录按本次选择收敛。
 const path = require('path');
-const { getAllSkillTargetRoots, getAvailableSkillDirs, getSkillsRootPath, getSkillTargetRootsForAgent } = require('../skills');
+const { getAvailableSkillDirs, getSkillsRootPath, getSkillTargetRootsForAgent } = require('../skills');
 const {
   listFilesRecursive,
   removeDirectory,
@@ -14,7 +14,7 @@ function writeSkillFiles(context) {
   const { manifest, options } = context;
   const skillsRootPath = getSkillsRootPath(manifest.skillsRoot);
   const availableSkills = getAvailableSkillDirs(manifest.skillsRoot);
-  const cleanupRoots = getAllSkillTargetRoots();
+  const cleanupRoots = getSkillTargetRootsForAgent(options.agent);
   const writeRoots = getSkillTargetRootsForAgent(options.agent);
 
   for (const targetRoot of cleanupRoots) {
@@ -56,7 +56,11 @@ function writeSkillFile(context, skillFile, skillsRootPath, targetRoot) {
   const targetRelativePath = path.relative(skillsRootPath, skillFile).split(path.sep).join('/');
   const targetPath = safeResolveInside(workspaceDir, path.join(targetRoot, targetRelativePath), 'skill target');
   const content = renderTemplate(sourceRelativePath, variables);
-  printAction(writeFile(targetPath, content, { dryRun: options.dryRun, overwrite: false }), targetPath);
+  printAction(writeFile(targetPath, content, { dryRun: options.dryRun, overwrite: isManagedSkillFile(targetRelativePath) }), targetPath);
+}
+
+function isManagedSkillFile(targetRelativePath) {
+  return path.basename(targetRelativePath) !== 'zentao.config.json';
 }
 
 module.exports = {

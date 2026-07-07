@@ -36,7 +36,7 @@ niuma-harness check [target] [options]
 | `--harness-dir <name>` | Directory to create, default: `harness` |
 | `--rules <selection>` | `all`, `none`, or `<rule-dir>[,<rule-dir>...]`; agent adapter rules are added automatically |
 | `--rules-out <selection>` | Exclude selected rule directories from `all` |
-| `--skills <selection>` | `all`, `none`, or `<skill>[,<skill>...]`, default: `none` |
+| `--skills <selection>` | `all`, `none`, or `<skill>[,<skill>...]`, default: `all` |
 | `--dry-run` | Print planned actions without writing files |
 
 ### Doctor/check options
@@ -84,6 +84,8 @@ Default output for `--agent claude`:
 workspace/
   CLAUDE.md or AGENTS.md
   .claude/
+    commands/
+      # Native commands installed when supported by the selected agent
     skills/
       # Optional native skills selected by --skills
   harness/
@@ -154,7 +156,8 @@ The layer files describe what each layer must do. The existing `docs/process/`, 
   "schemaVersion": 1,
   "agent": "claude",
   "rules": ["common", "claude"],
-  "skills": [],
+  "skills": ["database-readonly", "zentao-bug-workflow"],
+  "commands": ["dev-check.md", "dev-summary.md", "git-status.md", "git-sync.md", "glab-projects.md"],
   "harnessDir": "harness",
   "workDir": "agent-work",
   "entryFiles": ["CLAUDE.md"],
@@ -175,9 +178,21 @@ This project-level `manifest.json` is generated inside the harness root and is *
 | **Tool-managed** (layers, process playbooks, policy, index, HARNESS_GUIDE, `agent-work/README.md`) | Refreshed from the template. |
 | **User-maintained** (`project-context.md`, `automation/automation-intent.md`) | Preserved if they exist; created from the template only when absent. |
 | `docs/rules/` | Converged to the current rule selection. Selected existing rule files are preserved; unselected known rule directories are removed, including local files inside them. |
+| Native command artifacts (`.claude/commands/`, `.agents/skills/<command-id>/`, `.opencode/commands/`) | Known command artifacts are refreshed from `templates/commands/*.md`. Unknown user-created files are left untouched. |
 | `manifest.json` | Regenerated every time. |
 
 Rules follow the current init parameters: re-running with a new `--agent`, `--rules`, or `--rules-out` selection converges installed known rule directories to the new final set.
+
+Built-in command workflows are single-sourced from `templates/commands/*.md`. `init` wraps that same workflow content for each supported agent surface:
+
+| Agent | Generated command artifacts |
+|---|---|
+| `claude` | `.claude/commands/<id>.md` |
+| `codex` | `.agents/skills/<id>/SKILL.md` and `.agents/skills/<id>/agents/openai.yaml` |
+| `opencode` | `.opencode/commands/<id>.md` |
+| `multi` | all of the above |
+
+For Codex, command-derived skills are command artifacts, not native skill templates from `templates/skills/`. Do not duplicate command workflows under `templates/skills/`; update the source file in `templates/commands/` instead.
 
 ## Doctor
 
@@ -232,9 +247,10 @@ npx niuma-harness init . --agent claude --rules-out opencode
 
 ## Skills selection
 
-Skills are optional native `SKILL.md` packages copied from `templates/skills/`. They default to `none`.
+Skills are optional native `SKILL.md` packages copied from `templates/skills/`. They default to `all`; use `--skills none` to skip native skill installation. This selection does not control command-derived Codex skills generated from `templates/commands/*.md`.
 
 ```bash
+npx niuma-harness init . --agent claude
 npx niuma-harness init . --agent claude --skills database-readonly
 npx niuma-harness init . --agent multi --skills all
 npx niuma-harness init . --agent claude --skills none
@@ -249,7 +265,7 @@ Installed skill targets depend on the selected agent:
 | `opencode` | `.opencode/skills/<skill>/` |
 | `multi` | all three roots |
 
-Re-running `init` converges known skills in the current agent's target roots: selected known skills are installed and preserved, unselected known skills are removed, and unknown user-created skills are left untouched. Skills may include local config files or scripts; selected existing files are not overwritten on re-init.
+Re-running `init` converges known skills in the current agent's target roots: selected known skills are installed, unselected known skills are removed, and unknown user-created skills are left untouched. Skill package files are refreshed from templates so script and instruction fixes propagate; local runtime config files such as `zentao.config.json` are preserved.
 
 ## Development
 

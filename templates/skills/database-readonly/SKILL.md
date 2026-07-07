@@ -1,11 +1,11 @@
 ---
 name: database-readonly
-description: Connect to SQL databases and inspect data safely with read-only queries. Use when Codex needs to test database connectivity, read table schemas, count rows, sample records, compare source and target tables before migration, validate migration results, or export query results without modifying database state.
+description: Connect to SQL databases and inspect data safely with read-only queries. Use when an agent needs to test database connectivity, read table schemas, count rows, sample records, compare source and target tables before migration, validate migration results, or export query results without modifying database state.
 ---
 
 # Database Readonly
 
-Use this skill for database inspection and migration verification tasks where Codex must connect to a database and read data only.
+Use this skill for database inspection and migration verification tasks where an agent must connect to a database and read data only.
 
 ## Safety Rules
 
@@ -17,10 +17,10 @@ Use this skill for database inspection and migration verification tasks where Co
 
 ## Quick Start
 
-Use the bundled MySQL helper when Python has either `pymysql` or `mysql-connector-python` available:
+From this skill directory, use the bundled MySQL helper when Python has either `pymysql` or `mysql-connector-python` available:
 
 ```powershell
-python path\to\database-readonly\scripts\mysql_readonly.py `
+python scripts/mysql_readonly.py `
   --host <db-host> --port 3306 --user <db-user> --database <database-name> `
   --ask-password `
   --sql "SHOW TABLES"
@@ -35,15 +35,15 @@ $env:DB_USER="root"
 $env:DB_PASSWORD="<secret>"
 $env:DB_NAME="<database-name>"
 
-python C:\Users\Administrator\.codex\skills\database-readonly\scripts\mysql_readonly.py --sql "SELECT COUNT(*) AS c FROM <table-name>"
+python scripts/mysql_readonly.py --sql "SELECT COUNT(*) AS c FROM <table-name>"
 ```
 
 Supported output formats:
 
 ```powershell
-python ...\mysql_readonly.py --sql "SELECT * FROM some_table LIMIT 20" --format table
-python ...\mysql_readonly.py --sql "SELECT * FROM some_table LIMIT 20" --format json
-python ...\mysql_readonly.py --sql "SELECT * FROM some_table LIMIT 20" --format csv
+python scripts/mysql_readonly.py --sql "SELECT * FROM some_table LIMIT 20" --format table
+python scripts/mysql_readonly.py --sql "SELECT * FROM some_table LIMIT 20" --format json
+python scripts/mysql_readonly.py --sql "SELECT * FROM some_table LIMIT 20" --format csv
 ```
 
 ## Workflow

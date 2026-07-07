@@ -9,6 +9,7 @@ function createStatus(options, manifest = {}) {
     agent: options.agent,
     rules: options.rules,
     skills: options.skills,
+    commands: options.commands || [],
     harnessDir: options.harnessDir,
     workDir: manifest.workDirectory || 'agent-work',
     entryFiles: getEntryFilesForAgent(options.agent),

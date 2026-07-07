@@ -1,78 +1,161 @@
 ---
 name: zentao-bug-workflow
-description: Read and process bugs from a self-hosted ZenTao 20.6 instance using the bundled PowerShell script and local `.env` credentials. Use when the user asks Codex to handle a ZenTao/禅道 bug, read bug details, list active ZenTao bugs, use a ZenTao bug as the basis for code changes, or optionally write a verified fix result back to ZenTao.
+description: Read and process bugs from a self-hosted ZenTao 20.6 instance using the bundled cross-platform Python script and local zentao.config.json credentials, scopes, and write policy. Use when the user asks the agent to handle a ZenTao/禅道 bug, read bug details, list active ZenTao bugs, use a ZenTao bug as the basis for code changes, or optionally write a verified fix result back to ZenTao.
 ---
 
 # ZenTao Bug Workflow
 
 ## Overview
 
-Use this workflow to read ZenTao bugs, understand the reproduction details, modify the current repository, validate the fix, and optionally resolve the bug. The skill is designed for self-hosted ZenTao Open Source 20.6 deployments that use API v1.
+Use this workflow to read ZenTao bugs, understand reproduction details, modify the current repository, validate the fix, and optionally resolve the bug. The skill is designed for self-hosted ZenTao Open Source 20.6 deployments that use API v1.
 
 ## Configuration
 
-Read credentials from `.env` in this skill directory. Do not ask the user to paste passwords or tokens into chat.
+Read all configuration from `zentao.config.json` in this skill directory. The distributed file contains placeholders for new environments. Do not ask the user to paste passwords or tokens into chat.
 
-Required keys:
+Required top-level sections:
 
-- `ZENTAO_BASE_URL`
-- `ZENTAO_ACCOUNT`
-- `ZENTAO_PASSWORD`
-- `ZENTAO_PRODUCT_ID`
-- `ZENTAO_PROJECT_ID`
-- `ZENTAO_API_PREFIX`
-- `ZENTAO_ALLOW_WRITE`
+- `api.baseUrl`
+- `api.prefix`
+- `auth.account`
+- `auth.password`
+- `scopes.read`
+- `scopes.write`
+- `writePolicy`
+- `safety`
 
-Before first use, tell the user to fill `.env` if it still contains placeholders such as `zentao.example.com` or `change-me`.
+Example:
+
+```json
+{
+  "api": {
+    "baseUrl": "http://zentao.example.com",
+    "prefix": "/api.php/v1",
+    "commentEndpoint": ""
+  },
+  "auth": {
+    "account": "agent",
+    "password": "change-me"
+  },
+  "scopes": {
+    "read": [
+      {
+        "name": "素材库",
+        "product": 21,
+        "projects": []
+      }
+    ],
+    "write": [
+      {
+        "name": "素材库",
+        "product": 21,
+        "projects": [91],
+        "actions": ["comment", "resolve"]
+      }
+    ]
+  },
+  "writePolicy": {
+    "enabled": false,
+    "autoCommentAfterValidation": false,
+    "autoResolveAfterValidation": false,
+    "resolution": "fixed"
+  },
+  "safety": {
+    "denyByDefault": true,
+    "allowProjectZero": true
+  }
+}
+```
+
+Before first use, tell the user to fill `zentao.config.json` if it still contains placeholders such as `zentao.example.com` or `change-me`.
+
+### First-Use Scope Setup
+
+If `api.baseUrl`, `api.prefix`, `auth.account`, and `auth.password` are configured but `scopes.read` or `scopes.write` is missing or empty, do not stop at the raw config error. Start a guided setup instead.
+
+Rules:
+
+- Never ask the user to paste passwords, tokens, or session cookies into chat.
+- First run `scripts/zentao_bug.py ping` to verify the address and credentials; `ping` is allowed before scopes are configured.
+- Ask for non-sensitive business identifiers first:
+  - product name, such as `素材库`
+  - project name, such as `FAT测试` or `素材中心`
+  - whether read access should cover the whole product or only the named project
+  - whether writeback is allowed: no writeback, comment only, or comment plus resolve
+- Prefer product and project names over numeric IDs because most users do not know ZenTao IDs.
+- Try to resolve product/project names to IDs through available ZenTao API pages, web pages, bug URLs, or a user-provided bug ID. If there are multiple matches, show only the non-sensitive candidates and ask the user to choose.
+- Ask for numeric product/project IDs only as a fallback when name lookup is unavailable, ambiguous, or blocked by permissions.
+- After the user confirms the intended product/project and writeback policy, update `zentao.config.json` for them.
+- Do not add, broaden, or remove scopes without explicit user confirmation in the same conversation.
+- Keep `writePolicy.autoCommentAfterValidation` and `writePolicy.autoResolveAfterValidation` disabled unless the user explicitly asks for automatic writeback.
+
+Recommended first-use questions:
+
+1. `产品名称是什么？`
+2. `项目名称是什么？读取范围是整个产品，还是只限这个项目？`
+3. `处理完成后是否允许写回禅道？不写回 / 只评论 / 评论并解决。`
 
 ## Scope Boundary
 
-Operate only inside the product and project declared in `.env`:
+Use `zentao.config.json` as the effective authorization boundary. Do not use the account's full ZenTao permissions as authorization.
 
-- Read bugs only for `ZENTAO_PRODUCT_ID`.
-- Treat `ZENTAO_PROJECT_ID` as the only authorized project context.
-- Do not list, inspect, search, update, or resolve bugs from other products or projects, even if the configured account can access them.
-- If a user gives a ZenTao URL or bug ID that appears outside the configured product/project, stop and ask for explicit confirmation before reading it.
-- Do not use account permissions as authorization. Use the `.env` product and project IDs as the effective boundary for this skill.
+- Read a bug only if its `product` and `project` match `scopes.read`.
+- Write to a bug only if `writePolicy.enabled=true`, the bug matches `scopes.write`, and the write action is listed in that scope's `actions`.
+- A read scope with `"projects": []` means product-wide read access for that product.
+- A read scope with `"projects": [91]` means only bugs in that project, plus project `0` or blank when `safety.allowProjectZero=true`.
+- `list-active` and `list-unclosed` require product-wide read scopes because ZenTao's product bug list can include bugs from multiple projects.
+- If the user gives a ZenTao URL or bug ID outside configured scopes, stop and ask for explicit confirmation before changing config.
+- Do not add, broaden, or remove scopes unless the user explicitly confirms the change.
 
 ## Commands
 
-Run commands from any working directory:
+From this skill directory, prefer the Python entrypoint because it works on Windows, Linux, and macOS:
 
-```powershell
-powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\skills\zentao-bug-workflow\scripts\zentao_bug.ps1" list-active
-powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\skills\zentao-bug-workflow\scripts\zentao_bug.ps1" list-unclosed
-powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\skills\zentao-bug-workflow\scripts\zentao_bug.ps1" get 12345
-powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\skills\zentao-bug-workflow\scripts\zentao_bug.ps1" prepare 12345
-powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\skills\zentao-bug-workflow\scripts\zentao_bug.ps1" cleanup 12345
-powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\skills\zentao-bug-workflow\scripts\zentao_bug.ps1" ping
+```bash
+python scripts/zentao_bug.py list-active
+python scripts/zentao_bug.py list-unclosed
+python scripts/zentao_bug.py get 12345
+python scripts/zentao_bug.py prepare 12345
+python scripts/zentao_bug.py cleanup 12345
+python scripts/zentao_bug.py ping
+python scripts/zentao_bug.py comment 12345 --comment "修复搜索无结果空状态多余文案。"
 ```
 
-Resolve only after explicit user approval and only when `.env` has `ZENTAO_ALLOW_WRITE=true`:
+Resolve only after explicit user approval and only when `writePolicy.enabled=true` and the bug matches a write scope with `resolve` in `actions`:
 
-```powershell
-powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\skills\zentao-bug-workflow\scripts\zentao_bug.ps1" resolve 12345
+```bash
+python scripts/zentao_bug.py resolve 12345 --comment "修复搜索无结果空状态多余文案。"
 ```
+
+When resolving a bug, the script must assign it back to the bug opener (`openedBy.account`) by default for acceptance. Use `--assigned-to <account>` only when the user explicitly specifies a different receiver.
+
+After code changes and validation, use `validated` when the user has explicitly enabled automatic ZenTao writeback. It follows `writePolicy.autoCommentAfterValidation` and `writePolicy.autoResolveAfterValidation`:
+
+```bash
+python scripts/zentao_bug.py validated 12345 --comment "修复搜索无结果空状态多余文案。"
+```
+
+On Windows, `scripts/zentao_bug.ps1` remains as a compatibility wrapper around `scripts/zentao_bug.py`.
 
 ## Bug Handling Workflow
 
 When the user asks to process a ZenTao bug:
 
 1. Read `references/zentao-20.6-api.md` if API behavior or endpoint shape is relevant.
-2. Check whether `.env` appears configured without printing secrets.
-3. Prepare a task directory with `scripts/zentao_bug.ps1 prepare <bugID>` instead of plain `get` when the goal is to fix the bug.
+2. Check whether `zentao.config.json` appears configured without printing secrets.
+3. Prepare a task directory with `scripts/zentao_bug.py prepare <bugID>` instead of plain `get` when the goal is to fix the bug.
 4. Load the generated `bug.json`, `steps.txt`, and any downloaded images from `tasks/bug-<id>-<timestamp>/images`.
 5. Summarize the bug title, reproduction steps, expected behavior, actual behavior, severity, module, assignee, build, and image evidence.
-   If the ZenTao description, reproduction steps, expected behavior, or actual behavior is unclear or internally inconsistent after reading the bug information, stop and confirm with the user before making code changes. Do not infer missing product behavior or proceed based on guesses.
+   If the ZenTao description, reproduction steps, expected behavior, or actual behavior is unclear or internally inconsistent after reading the bug information, stop and confirm with the user before making code changes.
 6. Inspect the repository before editing. Search for relevant route names, UI text, error messages, API names, stack traces, or module names from the bug.
 7. Make the smallest code change that addresses the root cause and matches existing repo patterns.
 8. Validate with the most focused relevant tests, lint, typecheck, or build available for the changed area.
 9. If the fix affects a frontend page, modal, upload flow, save action, toast/message, navigation, table/list refresh, form state, or visible UI behavior, verify the behavior with Playwright or the Browser plugin against the running app.
 10. Report the changed files, automated validation result, browser verification result, and a concise fix note suitable for ZenTao.
+    ZenTao writeback comments must be short and only describe the problem or fix, for example `修复搜索无结果空状态多余文案。`.
+    Do not write validation commands, test names, browser steps, build output, local paths, or process logs into ZenTao comments.
     End the final response with one separate line named `日志/commit 总结：`, formatted as `<bugID> <short natural-language fix summary>`.
-    Derive the summary from the resolved behavior, not by copying the full ZenTao title. Keep it short enough for a daily log or Git commit message.
-    Example: for `6515 【FAT_素材管理】上传素材页面中选择的文件 上传失败了，没有删除按钮，期望：增加删除`, output `日志/commit 总结：6515 上传素材页面新增上传文件的删除按钮`.
-11. Clean up the task directory with `scripts/zentao_bug.ps1 cleanup <bugID>` after the bug is handled and no further image inspection is needed.
+11. Clean up the task directory with `scripts/zentao_bug.py cleanup <bugID>` after the bug is handled and no further image inspection is needed.
 12. Ask before any write operation to ZenTao unless the user already gave explicit approval in the same request.
 
 ## Frontend Verification
@@ -104,21 +187,28 @@ Treat task directories as temporary. Do not modify repository code from inside `
 Default to read-only. Do not resolve, close, edit, or comment on a ZenTao bug unless all conditions are true:
 
 - The user explicitly requested the write action.
-- `.env` has `ZENTAO_ALLOW_WRITE=true`.
-- The bug belongs to the configured `ZENTAO_PRODUCT_ID` and `ZENTAO_PROJECT_ID` context.
+- `writePolicy.enabled=true`.
+- The bug belongs to a configured `scopes.write` entry.
+- The requested write action is allowed by that scope's `actions`.
 - The repository fix was made and validation was attempted.
 - The response text to be written does not include secrets, tokens, local absolute credential paths, or unrelated debugging logs.
+
+Standalone comments use ZenTao's web comment form flow by default: GET the comment form, parse `uid`, then POST `actioncomment` plus `uid`. `api.commentEndpoint` is only an override when a deployment uses a different comment path. Resolving bugs also uses ZenTao's web resolve form flow: GET the resolve form, parse `uid`, then POST `resolution`, `resolvedBuild`, `resolvedDate`, `assignedTo`, and optional rich-text `comment`. Convert resolve comments to `<p>...</p>` HTML before submit so Chinese text is preserved. The default `assignedTo` for resolve must be the bug opener (`openedBy.account`) so the issue returns to the reporter/acceptance owner instead of remaining assigned to the current handler.
+
+ZenTao writeback comments are not validation reports. Keep them concise, normally one sentence and no more than 80 Chinese characters. The Python helper rejects comments that contain common validation/process terms such as `验证：`, `pnpm`, `vitest`, `vue-tsc`, or `build:local`.
 
 If validation fails for unrelated reasons, explain that and do not resolve the ZenTao bug automatically.
 
 ## Failure Handling
 
-If authentication fails, tell the user to check `ZENTAO_BASE_URL`, `ZENTAO_ACCOUNT`, and `ZENTAO_PASSWORD` in `.env`.
+If authentication fails, tell the user to check `api.baseUrl`, `auth.account`, and `auth.password` in `zentao.config.json`.
 
-If endpoints return 404, try changing `ZENTAO_API_PREFIX` between `/api.php/v1` and `/api/v1`.
+If endpoints return 404, try changing `api.prefix` between `/api.php/v1` and `/api/v1`.
 
-If bug fields are missing or the response shape differs, inspect the JSON response and adjust `scripts/zentao_bug.ps1` rather than guessing.
+If list commands are blocked because only project-level read scopes exist, ask the user whether to add a product-wide read scope or provide a specific bug ID.
+
+If bug fields are missing or the response shape differs, inspect the JSON response and adjust `scripts/zentao_bug.py` rather than guessing.
 
 If image download fails, continue with text evidence and mention the failed image URLs without printing credentials or tokens.
 
-Never print `ZENTAO_PASSWORD` or token values in final answers.
+Never print `auth.password` or token values in final answers.

@@ -1,8 +1,11 @@
 // 按 manifest.skills 声明校验已选择的技能包文件是否完整。
+const fs = require('fs');
 const path = require('path');
 const { getAvailableSkillDirs, getSkillTargetRootsForAgent, getSkillsRootPath } = require('../skills');
 const { listFilesRecursive } = require('../fs-safe');
+const { parseMarkdownFrontmatter } = require('../frontmatter');
 const { checkDirectory, checkRegularFile } = require('./core-checks');
+const { addError, addOk } = require('./result');
 
 function getAvailableSkills(skillsRoot) {
   return getAvailableSkillDirs(skillsRoot);
@@ -38,8 +41,47 @@ function checkSkillDirectory(workspaceRoot, result, skillsRootPath, targetRoot, 
 function checkSkillFile(workspaceRoot, result, sourceDir, sourceFile, targetRoot, skillName) {
   const relativePath = path.relative(sourceDir, sourceFile).split(path.sep).join('/');
   const label = `${targetRoot}/${skillName}/${relativePath}`;
-  checkRegularFile(path.join(workspaceRoot, ...targetRoot.split('/'), skillName, ...relativePath.split('/')), label, result);
+  const targetPath = path.join(workspaceRoot, ...targetRoot.split('/'), skillName, ...relativePath.split('/'));
+  checkRegularFile(targetPath, label, result);
+
+  if (relativePath === 'SKILL.md' && isRegularFile(targetPath)) {
+    checkSkillMetadata(targetPath, label, skillName, result);
+  }
 }
+
+function isRegularFile(filePath) {
+  return fs.existsSync(filePath) && fs.lstatSync(filePath).isFile();
+}
+
+function checkSkillMetadata(filePath, label, skillName, result) {
+  const content = fs.readFileSync(filePath, 'utf8');
+  const parsed = parseMarkdownFrontmatter(content);
+  if (!parsed) {
+    addError(result, `missing frontmatter in ${label}`);
+    return;
+  }
+
+  const name = parsed.fields.name || '';
+  const description = parsed.fields.description || '';
+  if (!name) {
+    addError(result, `missing name in ${label} frontmatter`);
+  } else if (name !== skillName) {
+    addError(result, `name mismatch in ${label} frontmatter: expected ${skillName}, got ${name}`);
+  }
+
+  if (!description) {
+    addError(result, `missing description in ${label} frontmatter`);
+  }
+
+  if (!parsed.body.trim()) {
+    addError(result, `empty body in ${label}`);
+  }
+
+  if (name === skillName && description && parsed.body.trim()) {
+    addOk(result, `${label} metadata`);
+  }
+}
+
 
 module.exports = {
   getAvailableSkills,

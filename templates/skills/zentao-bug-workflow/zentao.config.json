@@ -1,0 +1,43 @@
+{
+  "api": {
+    "baseUrl": "http://zentao.example.com",
+    "prefix": "/api.php/v1",
+    "commentEndpoint": ""
+  },
+  "auth": {
+    "account": "change-me",
+    "password": "change-me"
+  },
+  "scopes": {
+    "read": [
+      {
+        "name": "example-product",
+        "product": 21,
+        "projects": []
+      }
+    ],
+    "write": [
+      {
+        "name": "example-project",
+        "product": 21,
+        "projects": [
+          91
+        ],
+        "actions": [
+          "comment",
+          "resolve"
+        ]
+      }
+    ]
+  },
+  "writePolicy": {
+    "enabled": false,
+    "autoCommentAfterValidation": false,
+    "autoResolveAfterValidation": false,
+    "resolution": "fixed"
+  },
+  "safety": {
+    "denyByDefault": true,
+    "allowProjectZero": true
+  }
+}

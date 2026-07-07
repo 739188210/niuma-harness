@@ -20,6 +20,7 @@ function validateManifest(manifest) {
   validateDirectories(manifest);
   validateRulesRoot(manifest.rulesRoot);
   validateSkillsRoot(manifest.skillsRoot);
+  validateCommandsRoot(manifest.commandsRoot);
   validateTemplateFiles(manifest);
 }
 
@@ -53,6 +54,15 @@ function validateSkillsRoot(skillsRoot) {
 
   validateRelativePath(skillsRoot, 'manifest skills root');
   safeResolveInside(TEMPLATE_DIR, skillsRoot, 'manifest skills root');
+}
+
+function validateCommandsRoot(commandsRoot) {
+  if (!commandsRoot) {
+    return;
+  }
+
+  validateRelativePath(commandsRoot, 'manifest commands root');
+  safeResolveInside(TEMPLATE_DIR, commandsRoot, 'manifest commands root');
 }
 
 function validateTemplateFiles(manifest) {

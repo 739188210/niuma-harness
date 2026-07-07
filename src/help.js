@@ -10,7 +10,7 @@ Init options:
   --harness-dir <name>   Directory to create, default: harness
   --rules <selection>    all | none | <rule-dir>[,<rule-dir>...]; agent adapter rules are added automatically
   --rules-out <dirs>     Exclude rule dirs from all installed rules
-  --skills <selection>   all | none | <skill>[,<skill>...], default: none
+  --skills <selection>   all | none | <skill>[,<skill>...], default: all
   --dry-run              Print planned actions without writing files
 
 Doctor/check options:

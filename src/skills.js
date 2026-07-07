@@ -5,7 +5,7 @@ const path = require('path');
 const ROOT_DIR = path.resolve(__dirname, '..');
 const TEMPLATE_DIR = path.join(ROOT_DIR, 'templates');
 const DEFAULT_SKILLS_ROOT = 'skills';
-const DEFAULT_SKILLS_SELECTION = 'none';
+const DEFAULT_SKILLS_SELECTION = 'all';
 const SPECIAL_SKILLS = new Set(['all', 'none']);
 const SKILL_TARGET_ROOTS = {
   claude: ['.claude/skills'],

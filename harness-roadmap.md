@@ -132,42 +132,7 @@ No P1 evidence and recovery quality items remain.
 
 ### P2: Native skills installation completion
 
-Native `SKILL.md` installation is partially implemented and should be finished as a consistency and safety pass, not rebuilt from scratch.
-
-Current confirmed state:
-
-- Source skills live under `templates/skills/`.
-- `templates/manifest.json` declares `skillsRoot`.
-- `src/skills.js` handles skill discovery, normalization, formatting, and agent-native target roots.
-- `src/args.js` parses `--skills`, defaulting to `none`.
-- `src/scaffold.js` calls `writeSkillFiles()`.
-- `src/scaffold/skills-writer.js` copies selected skills into agent-native roots.
-- `src/harness-status.js` records `skills` in generated `manifest.json`.
-- `src/doctor/skills-checks.js` validates selected skill files.
-- README and tests already mention skills.
-
-Target behavior:
-
-- `--skills none|all|<skill>[,<skill>...]` controls installation.
-- `claude` installs selected skills to `.claude/skills/<skill-name>/`.
-- `codex` installs selected skills to `.agents/skills/<skill-name>/`.
-- `opencode` installs selected skills to `.opencode/skills/<skill-name>/`.
-- `multi` installs selected skills to all three target roots.
-- Selected existing skill files are preserved on re-init.
-- Unselected known skills are removed only from the current agent's skill target roots.
-- Unknown user-created skills are untouched.
-- Generated manifests always include `skills`, including `skills: []` when none are installed.
-- `doctor` fails on missing, invalid, unknown, or incomplete selected skills.
-
-Remaining completion items:
-
-| Item | Lands in | Why |
-|---|---|---|
-| Current-agent-only skill cleanup | `src/scaffold/skills-writer.js`, `test/init.test.js` | Prevent single-agent re-init from deleting another agent's intentionally installed native skills. |
-| Required manifest `skills` validation | `src/doctor/checks.js`, `test/doctor.test.js` | Keep generated manifest schema explicit and catch old or corrupt manifests. |
-| Replace active ZenTao `.env` template with `.env.example` | `templates/skills/zentao-bug-workflow/` | Avoid shipping or encouraging active credential files in bundled skill templates. |
-| Native-path skill documentation cleanup | `templates/skills/*` | Remove legacy/global path assumptions and document workspace-native skill locations. |
-| Package verification | tests and `npm run pack:dry` | Ensure selected skills install correctly and active credential files are not packaged. |
+No P2 native skills installation items remain.
 
 ### P3: ECC / Superpowers-inspired refinements
 
@@ -201,7 +166,7 @@ Remaining completion items:
 
 ### Suggested priority
 
-1. Native skills installation completion.
+1. Capability / skill metadata model.
 2. doctor content-quality checks.
 
 ## Non-goals

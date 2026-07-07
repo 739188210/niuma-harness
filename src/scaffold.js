@@ -2,8 +2,9 @@
 const path = require('path');
 
 const { getEntryFilesForAgent } = require('./agents');
+const { formatCommands, getAvailableCommandFiles, getCommandId, getDefaultCommandsForAgent } = require('./commands');
 const { formatRules } = require('./rules');
-const { formatSkills } = require('./skills');
+const { formatSkills, getAvailableSkillDirs } = require('./skills');
 const { loadManifest, validateManifest } = require('./scaffold/manifest');
 const {
   createHarnessDirectories,
@@ -15,6 +16,7 @@ const {
   writeTemplateFiles,
   writeWorkTemplateFiles,
 } = require('./scaffold/entries');
+const { writeCommandFiles } = require('./scaffold/commands-writer');
 const { writeRuleFiles } = require('./scaffold/rules-writer');
 const { writeSkillFiles } = require('./scaffold/skills-writer');
 const { writeStatusFile } = require('./scaffold/status-writer');
@@ -31,6 +33,7 @@ function runInit(options) {
   writeWorkTemplateFiles(context);
   writeRuleFiles(context);
   writeSkillFiles(context);
+  writeCommandFiles(context);
   writeStatusFile(context);
   printDone();
 }
@@ -44,8 +47,12 @@ function createInitContext(options) {
 
   const workDirectory = manifest.workDirectory || 'agent-work';
   assertHarnessDirAvailable(options, workDirectory);
+  const availableCommands = getAvailableCommandFiles(manifest.commandsRoot);
+  assertCommandSkillIdsAvailable(availableCommands, getAvailableSkillDirs(manifest.skillsRoot));
+  const commands = getDefaultCommandsForAgent(options.agent, availableCommands);
 
   return {
+    commands,
     manifest,
     options,
     printAction,
@@ -60,6 +67,16 @@ function createInitContext(options) {
 function assertHarnessDirAvailable(options, workDirectory) {
   if (sameDirectoryName(options.harnessDir, workDirectory)) {
     throw new Error(`--harness-dir cannot be ${workDirectory} because it is reserved for runtime task records.`);
+  }
+}
+
+function assertCommandSkillIdsAvailable(commandFiles, skillDirs) {
+  const skillDirSet = new Set(skillDirs);
+  for (const commandFile of commandFiles) {
+    const commandId = getCommandId(commandFile);
+    if (skillDirSet.has(commandId)) {
+      throw new Error(`command ${commandFile} conflicts with skill directory ${commandId}`);
+    }
   }
 }
 
@@ -79,6 +96,7 @@ function printInitSummary(context) {
   console.log(`Agent: ${options.agent}`);
   console.log(`Rules: ${formatRules(options.rules)}`);
   console.log(`Skills: ${formatSkills(options.skills)}`);
+  console.log(`Commands: ${formatCommands(context.commands)}`);
 }
 
 function printDone() {

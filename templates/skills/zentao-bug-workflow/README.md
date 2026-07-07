@@ -1,22 +1,23 @@
 # ZenTao Bug Workflow Skill
 
-这个 skill 用于让 Codex 按固定流程读取自部署禅道的 Bug、保存处理证据、查看截图、修改代码并输出修复说明。
+这个 skill 用于让 agent 按固定流程读取自部署禅道的 Bug、保存处理证据、查看截图、修改代码并输出修复说明。
 
 当前适配环境：
 
 - 禅道开源版 20.6
-- API 前缀 `/api.php/v1`
+- API 前缀默认 `/api.php/v1`
 - Token 通过 `Token` 请求头传递
-- 只处理 `.env` 中指定的产品和项目范围
+- 配置文件为 `zentao.config.json`
 
 ## 目录结构
 
 ```text
 zentao-bug-workflow/
-  .env
+  zentao.config.json
   SKILL.md
   README.md
   scripts/
+    zentao_bug.py
     zentao_bug.ps1
   references/
     zentao-20.6-api.md
@@ -26,138 +27,319 @@ zentao-bug-workflow/
 
 ## 配置
 
-编辑 `.env`：
+新环境编辑 `zentao.config.json`：
 
-```env
-ZENTAO_BASE_URL=http://192.168.31.238
-ZENTAO_ACCOUNT=你的禅道账号
-ZENTAO_PASSWORD=你的禅道密码
-ZENTAO_PRODUCT_ID=21
-ZENTAO_PROJECT_ID=91
-ZENTAO_API_PREFIX=/api.php/v1
-ZENTAO_ALLOW_WRITE=false
+```json
+{
+  "api": {
+    "baseUrl": "http://192.168.31.238",
+    "prefix": "/api.php/v1",
+    "commentEndpoint": ""
+  },
+  "auth": {
+    "account": "你的禅道账号",
+    "password": "你的禅道密码"
+  },
+  "scopes": {
+    "read": [
+      {
+        "name": "素材库",
+        "product": 21,
+        "projects": []
+      }
+    ],
+    "write": [
+      {
+        "name": "素材库",
+        "product": 21,
+        "projects": [91],
+        "actions": ["comment", "resolve"]
+      }
+    ]
+  },
+  "writePolicy": {
+    "enabled": false,
+    "autoCommentAfterValidation": false,
+    "autoResolveAfterValidation": false,
+    "resolution": "fixed"
+  },
+  "safety": {
+    "denyByDefault": true,
+    "allowProjectZero": true
+  }
+}
 ```
 
 说明：
 
-- `ZENTAO_PRODUCT_ID` 是 Bug 所属产品 ID。
-- `ZENTAO_PROJECT_ID` 是授权处理的项目 ID。
-- `ZENTAO_ALLOW_WRITE=false` 表示默认只读，不允许自动改禅道状态。
-- 不要把 `.env` 里的账号、密码、token 发到聊天或提交到代码仓库。
+- `scopes.read` 是只读白名单。
+- `scopes.write` 是写入白名单。
+- `"projects": []` 表示允许该产品下所有项目。
+- `"projects": [91]` 表示只允许项目 91；当 `allowProjectZero=true` 时，禅道里 project 为 `0` 或空的 Bug 也可以通过产品级判断。
+- `writePolicy.enabled=false` 表示默认只读，不允许写回禅道。
+- `api.commentEndpoint` 是独立备注接口覆盖项。留空时使用禅道默认 Web 备注接口：`/index.php?m=action&f=comment&objectType=bug&objectID={bugID}`。
+- 分发的 `zentao.config.json` 使用占位值，新环境直接编辑该文件。
+- 不要把填入真实账号密码的 `zentao.config.json` 提交到代码仓库。
+
+## api 评论配置
+
+你们当前禅道的“添加备注”和“解决 Bug”都走 Web 表单接口。脚本已经内置备注流程：
+
+1. `GET /index.php?m=action&f=comment&objectType=bug&objectID={bugID}&t=html`
+2. 从返回 HTML 里解析 `uid`
+3. `POST /index.php?m=action&f=comment&objectType=bug&objectID={bugID}`
+4. 表单字段固定为 `actioncomment` 和 `uid`
+
+所以正常不需要配置太多字段。
+
+解决 Bug 的流程也已内置：
+
+1. `GET /index.php?m=bug&f=resolve&bugID={bugID}&t=html`
+2. 从返回 HTML 里解析 `uid`
+3. `POST /index.php?m=bug&f=resolve&bugID={bugID}`
+4. 表单字段包含 `resolution`、`resolvedBuild`、`resolvedDate`、`assignedTo`、`uid`
+5. 如果带备注，脚本会把备注转换成 `<p>...</p>` 富文本 HTML 后提交，避免中文乱码。
+
+```json
+"api": {
+  "baseUrl": "http://192.168.31.238",
+  "prefix": "/api.php/v1",
+  "commentEndpoint": ""
+}
+```
+
+### commentEndpoint
+
+类型：`string`
+
+默认建议：`""`
+
+作用：独立备注接口路径覆盖项。留空时使用脚本内置的禅道默认路径。
+
+可以使用 `{bugID}`、`{bugId}` 或 `{id}` 作为 Bug ID 占位符，例如：
+
+```json
+"commentEndpoint": "/api.php/v1/bugs/{bugID}/comments"
+```
+
+只有你们禅道二开改了备注路径时才需要配置。不要配置 HTTP method 或字段名，脚本固定按禅道 Web 备注表单提交。
+
+## writePolicy 配置
+
+`writePolicy` 控制是否允许脚本写回禅道，以及修复验证通过后的自动化策略。
+
+```json
+"writePolicy": {
+  "enabled": false,
+  "autoCommentAfterValidation": false,
+  "autoResolveAfterValidation": false,
+  "resolution": "fixed"
+}
+```
+
+### enabled
+
+类型：`boolean`
+
+默认建议：`false`
+
+作用：写入总开关。
+
+- `false`：禁止所有写操作。即使 `scopes.write` 配了，也不能解决、关闭、评论或修改 Bug。
+- `true`：允许进入写操作判断，但仍必须同时命中 `scopes.write` 和对应 `actions`。
+
+建议只有在你明确希望 agent 可以写回禅道时才改成 `true`。
+
+### autoCommentAfterValidation
+
+类型：`boolean`
+
+默认建议：`false`
+
+作用：修复并验证通过后，是否自动向禅道写处理说明。
+
+- `false`：不自动评论，只在最终回复里给出可复制的修复说明。
+- `true`：允许在验证通过后自动评论。实际写入还需要 `enabled=true`。
+
+行为规则：
+
+- 如果同时开启 `autoResolveAfterValidation=true`，脚本会通过禅道 Web resolve 表单解决 Bug，并把备注转成富文本 HTML 后一起提交，不额外调用独立备注接口。
+- 如果只开启 `autoCommentAfterValidation=true`，脚本会调用独立 `comment` 命令。此时 Bug 必须命中包含 `comment` 的写入白名单。
+
+### autoResolveAfterValidation
+
+类型：`boolean`
+
+默认建议：`false`
+
+作用：修复并验证通过后，是否自动把 Bug 标记为已解决。
+
+- `false`：不自动解决 Bug。
+- `true`：允许验证通过后自动 resolve。实际写入还需要 `enabled=true`，并且 Bug 命中包含 `resolve` 的写入白名单。
+
+这个开关风险比自动评论更高，建议等流程稳定后再开启。
+
+### resolution
+
+类型：`string`
+
+默认建议：`"fixed"`
+
+作用：执行 `resolve` 时提交给禅道的解决结果。
+
+常用值通常包括：
+
+- `"fixed"`：已修复。
+- 其它值取决于你们禅道实例的配置和 API 接受值。
+
+如果命令行显式传了 `-Resolution`，命令行参数优先；否则使用这里的配置。
+
+## safety 配置
+
+`safety` 控制白名单外的默认行为，以及禅道 project 为空或为 0 时的处理方式。
+
+```json
+"safety": {
+  "denyByDefault": true,
+  "allowProjectZero": true
+}
+```
+
+### denyByDefault
+
+类型：`boolean`
+
+默认建议：`true`
+
+作用：是否默认拒绝白名单外的 Bug。
+
+- `true`：Bug 不命中 `scopes.read` 时拒绝读取；不命中 `scopes.write` 时拒绝写入。
+- `false`：读取校验会放宽，不命中 read scope 也允许继续。
+
+强烈建议保持 `true`。如果改成 `false`，账号能访问的 Bug 更容易被脚本读取到，不适合日常使用。
+
+### allowProjectZero
+
+类型：`boolean`
+
+默认建议：`true`
+
+作用：禅道 Bug 的 `project` 字段为 `0`、空或缺失时，是否允许按产品白名单放行。
+
+- `true`：只要 `product` 命中白名单，且 Bug 的 project 是 `0`、空或缺失，就允许通过。
+- `false`：Bug 必须命中配置里的具体 project，project 为 `0` 或空也不会自动放行。
+
+禅道里很多 Bug 只绑定产品，不绑定项目，所以日常建议保持 `true`。如果你们要求所有 Bug 必须绑定项目，可以改成 `false`。
 
 ## 常用命令
 
-列出当前产品下未关闭 Bug：
+列出配置了产品级只读白名单的产品下未关闭 Bug：
 
-```powershell
-powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\skills\zentao-bug-workflow\scripts\zentao_bug.ps1" list-unclosed -Limit 10
+```bash
+python scripts/zentao_bug.py list-unclosed --limit 10
 ```
 
 读取单个 Bug JSON：
 
-```powershell
-powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\skills\zentao-bug-workflow\scripts\zentao_bug.ps1" get 6517
+```bash
+python scripts/zentao_bug.py get 6517
 ```
 
 准备 Bug 处理目录并自动下载图片：
 
-```powershell
-powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\skills\zentao-bug-workflow\scripts\zentao_bug.ps1" prepare 6517
+```bash
+python scripts/zentao_bug.py prepare 6517
 ```
 
 清理指定 Bug 的临时处理目录：
 
-```powershell
-powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\skills\zentao-bug-workflow\scripts\zentao_bug.ps1" cleanup 6517
+```bash
+python scripts/zentao_bug.py cleanup 6517
 ```
 
 测试接口认证：
 
-```powershell
-powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\skills\zentao-bug-workflow\scripts\zentao_bug.ps1" ping
+```bash
+python scripts/zentao_bug.py ping
 ```
+
+解决 Bug。需要 `writePolicy.enabled=true`，且 Bug 命中 `scopes.write`，并且对应 scope 的 `actions` 包含 `resolve`：
+
+```bash
+python scripts/zentao_bug.py resolve 6517
+```
+
+解决 Bug 并附带处理说明：
+
+```bash
+python scripts/zentao_bug.py resolve 6517 --comment "已修复并验证通过。"
+```
+
+只写备注。需要 `writePolicy.enabled=true`，且 Bug 命中包含 `comment` 的写入白名单：
+
+```bash
+python scripts/zentao_bug.py comment 6517 --comment "已修复并验证通过。"
+```
+
+验证通过后的自动写回入口。根据 `writePolicy.autoCommentAfterValidation` 和 `writePolicy.autoResolveAfterValidation` 决定是否评论或解决：
+
+```bash
+python scripts/zentao_bug.py validated 6517 --comment "已修复并验证通过。"
+```
+
+Windows 上也可以继续使用兼容包装器：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File "scripts\zentao_bug.ps1" get 6517
+```
+
+## 安全边界
+
+即使配置账号有更大权限，agent 也只能按本 skill 的边界工作：
+
+- 只读取 `scopes.read` 命中的 Bug。
+- 只写入 `scopes.write` 命中的 Bug。
+- 写操作还必须命中对应的 `actions`。
+- 默认不写回禅道。
+- 修改白名单前需要用户明确确认。
 
 ## 处理流程
 
-让 Codex 处理 Bug 时，可以直接说：
+让 agent 处理 Bug 时，可以直接说：
 
 ```text
 用禅道流程处理 Bug 6517
 ```
 
-Codex 应按以下流程执行：
+agent 应按以下流程执行：
 
-1. 运行 `prepare <bugID>`。
+1. 运行 `zentao_bug.py prepare <bugID>`。
 2. 读取临时目录里的 `bug.json`、`steps.txt` 和 `images/`。
 3. 结合文本和图片理解 Bug。
 4. 在当前代码仓库中定位相关模块。
 5. 修改代码并运行相关测试或构建。
 6. 如果涉及前端页面、弹窗、上传、保存、跳转、提示、列表刷新等可见行为，必须用 Playwright 或 Browser 插件实际打开页面验证。
 7. 输出修复说明、自动化验证结果和浏览器验证结果。
-8. 运行 `cleanup <bugID>` 删除临时目录。
-
-## 前端验证要求
-
-涉及前端 UI 的 Bug，不能只靠 `build`、`lint` 或单元测试结束。Codex 需要用 Playwright 或 Browser 插件执行真实用户路径：
-
-- 打开 Bug 复现步骤里的页面。
-- 执行点击、输入、上传、保存、删除、筛选、关闭弹窗等操作。
-- 检查提示文案、弹窗关闭、列表刷新、页面跳转、表单重置、按钮状态等结果。
-- 必要时截图留证。
-- 如果无法启动或访问前端页面，需要在最终结果里说明原因。
-
-## 临时任务目录
-
-`prepare` 会在 skill 目录下创建：
-
-```text
-tasks/bug-6517-20260702-111533/
-  bug.json
-  steps.html
-  steps.txt
-  task.json
-  images/
-    11664.png
-```
-
-这些文件只用于当前 Bug 处理：
-
-- `bug.json`：禅道原始 Bug 数据。
-- `steps.html`：Bug 复现步骤 HTML。
-- `steps.txt`：从 HTML 提取出的可读文本。
-- `task.json`：本地任务摘要和图片下载结果。
-- `images/`：Bug 中引用的截图或图片。
-
-处理完成后应执行 `cleanup <bugID>`。只有在你明确要求保留证据时，才保留 `tasks/` 下的目录。
-
-## 安全边界
-
-即使 `.env` 中的账号有更大权限，Codex 也只能按本 skill 的边界工作：
-
-- 只读取 `ZENTAO_PRODUCT_ID` 对应产品下的 Bug。
-- 只处理 `ZENTAO_PROJECT_ID` 对应项目上下文。
-- 不跨产品、不跨项目查 Bug。
-- 默认不回写禅道。
-- 只有你明确允许，并且 `.env` 中 `ZENTAO_ALLOW_WRITE=true`，才允许执行 resolve 等写操作。
+8. 运行 `zentao_bug.py cleanup <bugID>` 删除临时目录。
 
 ## 故障排查
 
 如果登录失败：
 
-- 检查 `ZENTAO_BASE_URL` 是否能访问。
-- 检查 `ZENTAO_ACCOUNT` 和 `ZENTAO_PASSWORD` 是否正确。
+- 检查 `api.baseUrl` 是否能访问。
+- 检查 `auth.account` 和 `auth.password` 是否正确。
 
-如果列表读取为空：
+如果列表读取被阻止：
 
-- 确认 `ZENTAO_PRODUCT_ID` 是否是 Bug 页面 URL 中的 `productID`。
-- 当前脚本默认使用 `status=unclosed`。
+- `list-unclosed` 需要产品级只读白名单，即该产品 scope 的 `"projects": []`。
+- 如果只想处理某个 Bug，直接使用 `get <bugID>` 或 `prepare <bugID>`。
 
 如果接口 404：
 
-- 先保持 `ZENTAO_API_PREFIX=/api.php/v1`。
+- 先保持 `api.prefix=/api.php/v1`。
 - 如果你们禅道 API 路由不同，再尝试 `/api/v1`。
 
 如果图片下载失败：
 
-- Codex 仍可根据文本处理。
+- agent 仍可根据文本处理。
 - 必要时检查禅道文件读取权限或截图 URL 是否过期。
