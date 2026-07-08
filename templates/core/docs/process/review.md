@@ -8,20 +8,10 @@ This is a concrete playbook selected by the Process layer. Use `docs/layers/03-p
 
 Identify blocking issues before work is considered ready, without turning review into unrelated redesign.
 
-## Required artifact/checklist
-
-Before reporting completion, make sure the task record or final response includes:
-
-- Review scope.
-- Intended task goal compared with actual changes.
-- Findings grouped by severity.
-- Blocking vs non-blocking status.
-- Verification evidence reviewed or requested.
-
 ## Steps
 
-1. Load Context: read `docs/index.md`, `docs/project-context.md`, and the changed files or diff.
-2. Check Policy: use `docs/policy/action-boundary.md` before recommending risky or scope-expanding actions.
+1. Load task-relevant context through `docs/layers/01-context.md`; include the changed files or diff.
+2. Check Policy: classify the review as read-only reporting before acting. Recommendations may be reported as review findings; re-classify before performing risky, destructive, external, security-sensitive, scope-expanding, or test-changing follow-up actions.
 3. Confirm the intended task goal and compare it with the actual changes.
 4. Review correctness, security, maintainability, test coverage, and verification evidence.
 5. Apply relevant engineering standards from `docs/rules/` when rule files are installed.
@@ -51,10 +41,13 @@ For multi-step reviews, keep status, findings, fix decisions, and verification e
 
 For two-stage review across isolated subagents on large or risky work, see `docs/process/subagent-development.md`.
 
-## Outputs
+## Required artifact/checklist
+
+Before reporting completion, include:
 
 - Review scope.
+- Intended task goal compared with actual changes.
 - Findings grouped by severity.
-- Blocking issues that must be resolved.
+- Blocking vs non-blocking status.
 - Verification evidence reviewed or requested.
-- Follow-up items and remaining risk.
+- Follow-up items, remaining unknowns, and material risks.

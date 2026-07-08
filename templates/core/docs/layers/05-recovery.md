@@ -6,13 +6,13 @@ Define safe behavior when execution fails, evidence is unclear, or the agent dis
 
 ## When to use
 
-Use this layer when tests fail, builds fail, commands fail, context is missing, edits are wrong, requirements are unclear, checks conflict, or the same fix attempt fails repeatedly.
+Use this layer when tests fail, builds fail, commands fail, context is missing, edits are wrong, requirements are unclear, acceptance criteria are unmet, scope drifts, process flow stalls, checks conflict, or the same fix attempt fails repeatedly.
 
 If the Loop layer flags a rationalization about missing evidence or dismissing failures as unrelated, use this layer to classify the failure or uncertainty before continuing. Scope-expansion rationalizations route through Process and Policy.
 
 ## Agent protocol
 
-1. Classify the failure type: test, build, command, context, bad edit, unclear requirement, policy block, or unknown.
+1. Classify the failure type: test, build, command, context, bad edit, unclear requirement, acceptance mismatch, scope drift, process stall, policy block, or unknown.
    - Exception: a leaked secret is not a normal failure. Route to `docs/policy/secret-leak.md` instead of the steps below.
 2. Preserve the exact failure signal needed to debug.
 3. Identify the first root cause, not every downstream symptom.
@@ -32,6 +32,9 @@ Use the failure type to choose the required response form. Do not treat all fail
 | `context` | Name the missing file, fact, decision, or prior state; inspect available context or ask the user; do not invent missing facts. |
 | `bad edit` | Identify the agent-owned edit that caused the regression; revert or correct the smallest owned change; rerun the affected check. |
 | `unclear requirement` | State the ambiguity and the implementation choices it blocks; ask for clarification before continuing. |
+| `acceptance mismatch` | Name the unmet acceptance criterion or stated goal; compare expected behavior with actual result; decide whether the implementation, test/evidence, or requirement needs correction; repair only within the approved scope or ask before changing scope. |
+| `scope drift` | Name how the work exceeded the planned slice or stopped being small and reversible; stop expansion, re-check Process and Policy, and either shrink back to the approved scope or ask for approval before continuing. |
+| `process stall` | Name the stalled stage, missing handoff, blocked subagent, or unresolved dependency; preserve current state in `status.md`; choose the next smallest unblock step or ask for a decision. |
 | `policy block` | Name the policy or approval boundary; stop or request approval; do not work around the boundary. |
 | `unknown` | Preserve the observed signal and remaining unknowns; gather the smallest additional evidence needed to reclassify; stop if it cannot be classified safely. |
 

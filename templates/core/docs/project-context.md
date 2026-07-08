@@ -1,42 +1,48 @@
 # Project Context
 
-This file stores verified stable facts about the project. It is maintained by agents and humans as durable project knowledge is discovered.
-
-Do not use this file for temporary investigation notes, unverified guesses, or task-local details. Put those in the workspace-level `agent-work/` directory or the current task record.
-
-## How to maintain this file
-
-- Verify facts against current workspace files or user confirmation before recording them.
-- Prefer concise, durable facts over long investigation narratives.
-- Update facts when the project changes and the previous context becomes stale.
-- If a fact is unknown, leave it unknown and inspect the workspace during task execution.
+This file stores verified stable facts about this project. It is maintained by agents and humans as durable project knowledge is discovered.
 
 ## Metadata
 
-- Created: Unknown until verified.
-- Last updated: Unknown until verified.
-- Scan scope: Unknown until verified.
-- Known gaps: Record verified gaps here; leave unknowns out until discovered.
+- Bootstrap status: pending
+- Last updated: Unknown
+- Scan scope: Not scanned
+- Known gaps: None recorded
+
+## Bootstrap protocol
+
+When bootstrap status is `pending`, the first agent handling non-trivial work should initialize this file before continuing the task:
+
+1. Inspect current workspace files that can establish stable project facts, such as package manifests, README files, source and test roots, config files, and existing harness docs.
+2. Replace placeholder guidance with concise verified facts. Do not keep sections that remain empty.
+3. Record only facts verified from current files or explicit user confirmation.
+4. Do not record secrets, credentials, private data, one-off logs, temporary task state, or guesses.
+5. Leave uncertain facts out, or record project-level unknowns under Open questions.
+6. Set Bootstrap status to `complete` when the basic scan is useful, or `partial` when important areas could not be checked.
+7. After bootstrap, remove this `Bootstrap protocol` section so the file stays focused on durable project context and ongoing maintenance standards.
+
+After bootstrap, keep this file focused on durable facts that future tasks should reuse. Task-local notes, debugging traces, and handoff state belong in `agent-work/tasks/<task-name>/`.
+
+## Maintenance standard
+
+Update this file only when a fact is:
+
+- Verified against current workspace files or explicit user confirmation.
+- Stable enough to help future tasks, not just the current task.
+- Concise enough to remain useful as always-consulted project context.
+- Safe to store without exposing secrets or private data.
+
+When a durable fact changes, update or remove the stale fact instead of appending conflicting notes.
 
 ## Project summary
 
-Record the product purpose, main users, and primary business or domain goals when verified.
-
 ## Technology stack
-
-Record verified runtime, language, framework, package manager, database, storage, and test framework details.
 
 ## Code map
 
-Record stable module boundaries and important paths after they are verified from the current workspace.
-
 ## Engineering conventions
 
-Record durable conventions such as API response format, error handling, auth/security model, logging, and configuration patterns.
-
 ## Build and verification commands
-
-Record the authoritative project commands here after they are verified.
 
 ```bash
 # install
@@ -48,8 +54,4 @@ Record the authoritative project commands here after they are verified.
 
 ## Reference implementations
 
-List stable reference modules or features that agents should reuse as patterns.
-
 ## Open questions
-
-Track project-level questions that cannot be answered from current files.

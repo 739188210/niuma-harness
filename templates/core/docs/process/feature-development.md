@@ -30,8 +30,9 @@ Before reporting completion, make sure the task record or final response include
 - Acceptance criteria used.
 - Non-goals and assumptions when they affect scope.
 - Smallest feature slice chosen.
+- Implementation summary and files changed.
 - Verification evidence using the Observation schema.
-- Skipped checks and remaining risks.
+- Skipped checks and remaining unknowns, including any material risks.
 
 ## Steps
 
@@ -43,7 +44,7 @@ Before reporting completion, make sure the task record or final response include
 6. Add or update focused tests for behavior changes. If automated testing is not available for the change, record the manual verification that replaces it and why.
 7. Implement the feature with task-scoped changes.
 8. Run relevant verification commands.
-9. Record changes, verification results, skipped checks, and remaining risk.
+9. Record changes, verification results, skipped checks, and remaining unknowns, including any material risks.
 
 ## When to pause
 
@@ -64,11 +65,3 @@ For multi-step features, create a task folder under `agent-work/tasks/<task-name
 
 Use `docs/layers/06-memory.md` before moving any task finding into `docs/project-context.md`.
 
-## Outputs
-
-- Acceptance criteria used.
-- Implementation summary.
-- Files changed.
-- Verification evidence.
-- Skipped checks and why.
-- Remaining risk or follow-up.

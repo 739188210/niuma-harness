@@ -13,13 +13,21 @@ agent-work/tasks/<task-name>/
   notes.md
 ```
 
+## Suggested file roles
+
+- `status.md`: goal, current stage, completed steps, next action, blockers or risks, verification summary, and resume instructions.
+- `context.md`: task-local context gathered during execution.
+- `plan.md`: current plan, scope decisions, and implementation sequence.
+- `verification.md`: exact checks, expected signals, actual results, skipped checks with reasons, and remaining unknowns.
+- `notes.md`: temporary investigation notes, findings, fix decisions, and handoff notes.
+
 ## What belongs here
 
 - Task goals and acceptance criteria.
 - Task-local status ledgers for multi-step, risky, parallel, or interruptible work.
 - Task-local context gathered during execution.
 - Plans for multi-step work.
-- Verification commands, outputs, skipped checks, and residual risks.
+- Verification commands, expected signals, actual results, skipped checks, and remaining unknowns, including material risks.
 - Handoff state after interruption.
 - Temporary investigation notes that should not become stable project facts.
 

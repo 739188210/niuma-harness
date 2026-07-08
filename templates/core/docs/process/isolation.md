@@ -2,7 +2,7 @@
 
 Use this playbook when working in the shared workspace would create avoidable risk or coordination cost. Isolation keeps one task's in-progress changes from polluting another's and makes rollback safe.
 
-This is a concrete playbook selected by the Process layer. Use `docs/layers/03-process.md` for routing and this file for isolation execution.
+This is a cross-cutting playbook selected by the Process layer, not a primary task workflow. Use `docs/layers/03-process.md` for routing and this file for isolation execution.
 
 ## Goal
 

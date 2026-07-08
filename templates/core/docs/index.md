@@ -11,6 +11,7 @@ This is the navigation map for the harness. The entry file (`CLAUDE.md` / `AGENT
 - `docs/policy/secret-leak.md` defines the secret-leak emergency response.
 - `docs/process/` contains concrete task playbooks selected by the Process layer.
 - `docs/rules/` contains optional project engineering standards selected during init.
+- `docs/automation/` stores verified automation and hook intent notes.
 - `agent-work/` stores task-local notes, plans, verification evidence, and handoff state.
 - `HARNESS_GUIDE.md` explains the harness structure for people maintaining it.
 
@@ -50,6 +51,11 @@ Project-specific code locations, commands, and stable conventions are maintained
 - Refactoring: `docs/process/refactor.md`
 - Reviews: `docs/process/review.md`
 - Release readiness: `docs/process/release.md`
+
+## Cross-cutting workflows
+
+- Workspace isolation: `docs/process/isolation.md`
+- Subagent development: `docs/process/subagent-development.md`
 
 ## Verification commands
 

@@ -15,8 +15,9 @@ Before reporting completion, make sure the task record or final response include
 - Symptom, expected behavior, and current behavior.
 - Reproduction signal before the fix, or explicit reason reproduction was not achieved.
 - First root cause or best verified explanation.
+- Files changed.
 - Passing fix verification against the same reproduction target.
-- Skipped checks and remaining risk.
+- Skipped checks and remaining unknowns, including any material risks.
 
 ## Steps
 
@@ -28,7 +29,7 @@ Before reporting completion, make sure the task record or final response include
 6. Implement the smallest safe fix.
 7. Observe: run the focused verification that proves the bug is fixed.
 8. Run broader checks when the touched area is shared or high risk.
-9. Record what changed, what passed, what failed, what was skipped, and remaining risk.
+9. Record what changed, what passed, what failed, what was skipped, and remaining unknowns, including any material risks.
 
 ## Recovery
 
@@ -42,10 +43,3 @@ If a test appears wrong, follow the test-change gate in `docs/policy/action-boun
 
 Use `docs/layers/06-memory.md` before preserving any new project fact. Keep temporary debugging notes in the workspace-level `agent-work/` directory; write only verified durable facts to `docs/project-context.md`.
 
-## Outputs
-
-- Root cause or best verified explanation.
-- Files changed.
-- Verification evidence.
-- Skipped checks and why.
-- Remaining risk or follow-up.

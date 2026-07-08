@@ -52,11 +52,3 @@ Before leaving triage, identify what evidence will show that the next step succe
 
 Use `docs/layers/05-recovery.md` when classification is unclear after reading available context. Do not guess; report the ambiguity and ask for the missing decision.
 
-## Outputs
-
-- Task classification.
-- Selected playbook or reason no playbook is needed.
-- Required context and rules.
-- Success criteria or blocker.
-- `status.md` ledger decision when work may be multi-step, risky, parallel, or interruptible.
-- Verification evidence plan.

@@ -16,7 +16,9 @@ Before reporting completion, make sure the task record or final response include
 - Approval boundary for publish/tag/deploy/version-bump actions.
 - Package or artifact scope.
 - Contents checked.
-- Verification evidence and remaining release risk.
+- Verification evidence and remaining unknowns, including release risks.
+- Release notes or summary when prepared.
+- Stop points or completed release actions.
 
 ## Steps
 
@@ -27,7 +29,7 @@ Before reporting completion, make sure the task record or final response include
 5. Run local verification checks required for the release scope, or request approval for checks that touch external systems, credentials, quotas, or release infrastructure.
 6. Prepare release notes or a summary from verified changes.
 7. Stop before outward-facing actions unless the user explicitly approved that exact action.
-8. Record commands, outputs, skipped checks, and remaining release risk.
+8. Record commands, expected signals, actual results, skipped checks, and remaining unknowns, including release risks.
 
 ## Release readiness checks
 
@@ -41,11 +43,3 @@ Use `docs/layers/05-recovery.md` when package contents are wrong, verification f
 
 Keep release preparation status and evidence under `agent-work/tasks/<task-name>/`. Move durable release process lessons through the Memory layer before updating long-lived docs.
 
-## Outputs
-
-- Release target and approval status.
-- Package or artifact contents checked.
-- Verification evidence.
-- Release notes or summary.
-- Skipped checks and why.
-- Stop points, remaining risks, or completed release actions.

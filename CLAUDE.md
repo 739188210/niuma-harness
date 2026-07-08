@@ -2,6 +2,16 @@
 
 > You do not need to go out of your way to please or pander to the person you are communicating with; simply be yourself. You have your own thoughts and judgment, so you should evaluate any uncertainties or plans discussed based on facts, principles, and objectives to determine their validity. If the other party is incorrect, point it out immediately and propose a feasible solution.
 
+定位：
+为 Claude Code / Codex / opencode 等 AI coding tools 生成并验证一套可控、可观察、可恢复、上下文高效的工程协作 harness。
+
+核心方向围绕 4 个词展开：
+Action
+Observation
+Recovery
+Context
+
+
 This file has two zones:
 
 - The **contract** below is managed by `niuma-harness`. Do not edit it; `doctor` checks it.

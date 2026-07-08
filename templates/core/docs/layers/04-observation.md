@@ -60,7 +60,7 @@ For parallel or delegated work, final Observation verifies the integrated result
 - Manual checks performed, if any.
 - Skipped checks and why they were skipped.
 - Verification target changes, if any, with the reason and replacement coverage.
-- Remaining risk or unknown status.
+- Remaining unknowns, including material risks.
 
 ## Links to other layers
 

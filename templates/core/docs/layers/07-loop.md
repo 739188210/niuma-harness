@@ -34,7 +34,7 @@ Do not create or maintain a ledger for trivial one-step work unless it helps han
 
 ## Ownership boundaries
 
-`status.md` owns the operational resume state for one active task. It records the current stage, next action, completed steps, summary verification state, blockers or risks, and resume instructions.
+`status.md` owns the operational resume state for one active task. It records the current stage, next action, completed steps, blockers or risks, resume instructions, and a pointer or short summary of the latest verification evidence.
 
 `status.md` does not own detailed verification evidence, task notes, or durable project facts. Put detailed evidence in the Observation record or task notes, and route durable facts through the Memory layer.
 
@@ -87,7 +87,7 @@ During Reflect or Continue, treat these thoughts as stop-and-classify signals. A
 - Completed steps and verification evidence.
 - `status.md` ledger path and recovery state when a ledger is used.
 - Recovery state if the loop is blocked.
-- Final summary with changes, checks, skipped checks, and remaining risks.
+- Final summary with changes, checks, skipped checks, and remaining unknowns or material risks.
 
 ## Links to other layers
 

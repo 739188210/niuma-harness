@@ -8,27 +8,17 @@ This is a concrete playbook selected by the Process layer. Use `docs/layers/03-p
 
 Make the smallest useful structural improvement without changing intended behavior.
 
-## Required artifact/checklist
-
-Before reporting completion, make sure the task record or final response includes:
-
-- Refactor goal.
-- Behavior baseline that must remain unchanged.
-- Scope boundary: what is intentionally not changed.
-- Before/after verification evidence where practical.
-- Skipped checks or behavior risks.
-
 ## Steps
 
-1. Load Context: read `docs/index.md`, `docs/project-context.md`, and the affected implementation and tests.
-2. Check Policy: use `docs/policy/action-boundary.md` before broad, risky, or force-style changes. Isolate first (`docs/process/isolation.md`) only when shared-tree work would create avoidable risk or coordination cost, such as intermediate broken states, parallel edits, experimental work, risky structural changes, or overlap with another active task. For large refactors, consider staged subagent dispatch (`docs/process/subagent-development.md`).
+1. Load task-relevant context through `docs/layers/01-context.md`; include the affected implementation and tests.
+2. Check Policy: classify intended refactor actions with `docs/policy/action-boundary.md` before acting. Pay special attention to broad, risky, force-style, behavior-adjacent, or test-changing refactors.
 3. State the refactor goal and the behavior that must remain unchanged.
 4. Identify the verification baseline before editing. Treat the baseline verification as the behavior boundary for the refactor.
 5. Split the refactor into small reversible steps.
 6. Change only files needed for the refactor goal.
 7. Run focused verification after meaningful steps.
 8. Stop if behavior changes, verification fails, or the work expands into a feature.
-9. Record changed structure, verification evidence, skipped checks, and remaining risk.
+9. Record changed structure, verification evidence, skipped checks, and remaining unknowns, including any behavior-specific material risks.
 
 ## Scope guard
 
@@ -44,11 +34,14 @@ Use `docs/layers/05-recovery.md` when verification fails, behavior changes unexp
 
 For multi-step refactors, keep status, context, plan, verification, and handoff notes under `agent-work/tasks/<task-name>/`.
 
-## Outputs
+## Required artifact/checklist
+
+Before reporting completion, include:
 
 - Refactor goal.
-- Behavior-preservation expectation.
+- Behavior baseline that must remain unchanged.
+- Scope boundary: what is intentionally not changed.
 - Files changed.
-- Verification evidence before and after.
+- Verification evidence before and after where practical.
 - Skipped checks and why.
-- Remaining risk or follow-up.
+- Remaining unknowns, behavior-specific material risks, or follow-up.
