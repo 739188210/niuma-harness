@@ -2,7 +2,7 @@
 
 ## Purpose
 
-These rules define common security engineering standards. They supplement the selected process playbook; use `docs/policy/action-boundary.md` for permission boundaries and `docs/policy/secret-leak.md` when a secret or private data exposure is discovered.
+These rules define common security engineering preferences. They are a lightweight hygiene layer and do not replace Policy boundaries, approval gates, or the secret-leak emergency response.
 
 ## Secrets
 

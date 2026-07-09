@@ -7,6 +7,7 @@
   "directories": [
     "docs",
     "docs/automation",
+    "docs/experiments",
     "docs/layers",
     "docs/policy",
     "docs/process",
@@ -20,6 +21,10 @@
     {
       "target": "docs/index.md",
       "template": "core/docs/index.md"
+    },
+    {
+      "target": "docs/experiments/task-execution-record.md",
+      "template": "core/docs/experiments/task-execution-record.md"
     },
     {
       "target": "docs/project-context.md",

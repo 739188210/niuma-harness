@@ -10,6 +10,7 @@ agent-work/tasks/<task-name>/
   context.md
   plan.md
   verification.md
+  harness-feedback.md
   notes.md
 ```
 
@@ -19,6 +20,7 @@ agent-work/tasks/<task-name>/
 - `context.md`: task-local context gathered during execution.
 - `plan.md`: current plan, scope decisions, and implementation sequence.
 - `verification.md`: exact checks, expected signals, actual results, skipped checks with reasons, and remaining unknowns.
+- `harness-feedback.md`: required for non-trivial tasks while `{{HARNESS_DIR}}/docs/experiments/task-execution-record.md` exists; records harness steps used, skipped, deviations, and friction.
 - `notes.md`: temporary investigation notes, findings, fix decisions, and handoff notes.
 
 ## What belongs here
@@ -28,6 +30,7 @@ agent-work/tasks/<task-name>/
 - Task-local context gathered during execution.
 - Plans for multi-step work.
 - Verification commands, expected signals, actual results, skipped checks, and remaining unknowns, including material risks.
+- Experimental harness execution feedback while `{{HARNESS_DIR}}/docs/experiments/task-execution-record.md` exists.
 - Handoff state after interruption.
 - Temporary investigation notes that should not become stable project facts.
 

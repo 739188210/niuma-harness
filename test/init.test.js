@@ -41,6 +41,8 @@ function assertCommonHarnessShape(workspace, options = {}) {
   assertFile(path.join(harnessRoot, 'docs', 'policy', 'action-boundary.md'));
   assertFile(path.join(harnessRoot, 'docs', 'policy', 'secret-leak.md'));
   assertFile(path.join(harnessRoot, 'docs', 'policy', 'untrusted-content.md'));
+  assertDir(path.join(harnessRoot, 'docs', 'experiments'));
+  assertFile(path.join(harnessRoot, 'docs', 'experiments', 'task-execution-record.md'));
   assertFile(path.join(harnessRoot, 'docs', 'process', 'refactor.md'));
   assertFile(path.join(harnessRoot, 'docs', 'process', 'review.md'));
   assertFile(path.join(harnessRoot, 'docs', 'process', 'release.md'));
@@ -186,6 +188,69 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
   assert.match(automationIntent, /Agents maintain this file during normal work/);
   assert.match(automationIntent, /Human maintainers retain final policy control/);
   assert.match(automationIntent, /human participation is not required for routine evidence-based updates/);
+});
+
+test('generated docs expose experimental task execution feedback guidance', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const feedbackDoc = read(path.join(h, 'docs', 'experiments', 'task-execution-record.md'));
+  assert.match(feedbackDoc, /Task Execution Feedback Record/);
+  assert.match(feedbackDoc, /active experimental requirement/);
+  assert.match(feedbackDoc, /harness-feedback\.md/);
+  assert.match(feedbackDoc, /While this file exists/);
+  assert.match(feedbackDoc, /Justified\?/);
+  assert.match(feedbackDoc, /## Decision impact/);
+  assert.match(feedbackDoc, /Changed decision\?/);
+  assert.match(feedbackDoc, /## Candidate project-context updates/);
+  assert.match(feedbackDoc, /Suggested action/);
+
+  const entry = read(path.join(workspace, 'CLAUDE.md'));
+  assert.match(entry, /docs\/experiments\/task-execution-record\.md` exists/);
+  assert.match(entry, /non-trivial tasks must record skipped harness steps, deviations, and friction/);
+
+  const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
+  assert.match(workReadme, /harness-feedback\.md/);
+  assert.match(workReadme, /required for non-trivial tasks while `harness\/docs\/experiments\/task-execution-record\.md` exists/);
+
+  const index = read(path.join(h, 'docs', 'index.md'));
+  assert.match(index, /docs\/experiments\//);
+  assert.match(index, /Task execution feedback: `docs\/experiments\/task-execution-record\.md`/);
+});
+
+test('generated project context defines first-use bootstrap protocol', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const projectContext = read(path.join(h, 'docs', 'project-context.md'));
+  assert.match(projectContext, /Bootstrap status: pending/);
+  assert.match(projectContext, /## Bootstrap protocol/);
+  assert.match(projectContext, /one-time full initial project scan after `niuma-harness init`/);
+  assert.match(projectContext, /not scoped to the current user request/);
+  assert.match(projectContext, /A small task, an obvious reference implementation, or a task-local shortcut is not a valid reason to skip bootstrap/);
+  assert.match(projectContext, /Minimum bootstrap scan/);
+  assert.match(projectContext, /package manifests, lockfiles, workspace or monorepo config/);
+  assert.match(projectContext, /Set Bootstrap status to `complete` only when the basic project map, stack, commands, and known gaps are usefully initialized/);
+  assert.match(projectContext, /Set Bootstrap status to `partial` only when the scan is blocked/);
+  assert.match(projectContext, /remove this `Bootstrap protocol` section/);
+  assert.match(projectContext, /## Maintenance standard/);
+  assert.match(projectContext, /Update this file after bootstrap only when a task verifies a durable fact/);
+  assert.match(projectContext, /Maintain these categories when evidence exists/);
+  assert.match(projectContext, /Do not store/);
+  assert.doesNotMatch(projectContext, /Unknown until verified/);
+  assert.doesNotMatch(projectContext, /Record the product purpose/);
+
+  const entry = read(path.join(workspace, 'CLAUDE.md'));
+  assert.match(entry, /if bootstrap status is `pending`, complete its one-time initial project scan before non-trivial work/);
+
+  const memoryMemo = read(path.join(h, 'docs', 'layers', '06-memory.md'));
+  assert.match(memoryMemo, /Bootstrap `docs\/project-context\.md` when its metadata says `Bootstrap status: pending`/);
+  assert.match(memoryMemo, /perform the one-time initial project scan defined in that file/);
+  assert.match(memoryMemo, /record only verified durable facts/);
 });
 
 test('generated docs define task status ledger protocol and guide task record shape', () => {
@@ -1107,7 +1172,12 @@ test('--harness-dir uses a custom directory name', () => {
   const entry = read(path.join(workspace, 'CLAUDE.md'));
   assert.match(entry, /ai-harness\/docs\/index\.md/);
   assert.match(entry, /ai-harness\/docs\/layers\/01-context\.md/);
+  assert.match(entry, /ai-harness\/docs\/experiments\/task-execution-record\.md/);
   assert.doesNotMatch(entry, /\(depth: `docs\//);
+
+  const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
+  assert.match(workReadme, /ai-harness\/docs\/experiments\/task-execution-record\.md/);
+  assert.doesNotMatch(workReadme, /`docs\/experiments\/task-execution-record\.md`/);
   const doctor = run(['doctor', workspace, '--harness-dir', 'ai-harness']);
   assert.strictEqual(doctor.status, 0, doctor.stderr);
 });

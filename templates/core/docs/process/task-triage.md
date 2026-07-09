@@ -13,6 +13,7 @@ Classify the request, load the minimum required context, identify policy risks, 
 Before reporting completion, make sure the task record or final response includes:
 
 - Task classification.
+- Risk/impact tier: quick, normal, or careful.
 - Selected playbook or reason no playbook is needed.
 - Policy boundary or blocker.
 - Success criteria or smallest useful next step.
@@ -34,15 +35,21 @@ Before reporting completion, make sure the task record or final response include
    - security-sensitive change
    - documentation update
    - verification or investigation
-4. Choose the closest playbook:
+4. Assign a lightweight risk/impact tier:
+   - `quick`: clear, low-risk, localized work that can be verified with a minimal check.
+   - `normal`: ordinary feature, bug fix, refactor, documentation, or verification work that needs explicit success criteria and evidence.
+   - `careful`: work involving security, user data, permissions, public APIs, database shape, dependencies, releases, destructive operations, broad shared code, or high cost of failure.
+
+   The tier does not replace Policy. `quick` still requires Observation, and `careful` does not automatically require heavy documentation; it means state the risk, check Policy, and choose evidence before acting.
+5. Choose the closest playbook:
    - Bug fix: `docs/process/bugfix.md`
    - Feature development: `docs/process/feature-development.md`
    - Refactor: `docs/process/refactor.md`
    - Review: `docs/process/review.md`
    - Release readiness: `docs/process/release.md`
    - Other tasks: use the closest playbook and keep task notes when needed.
-5. Define success criteria, the smallest useful next step, and whether the work needs a `status.md` ledger.
-6. Stop and ask when the request lacks enough information, expands scope, or crosses a Policy boundary.
+6. Define success criteria, the smallest useful next step, and whether the work needs a `status.md` ledger.
+7. Stop and ask when the request lacks enough information, expands scope, or crosses a Policy boundary.
 
 ## Observation
 

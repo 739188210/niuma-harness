@@ -13,7 +13,7 @@ Use this layer after discovering verified stable facts, after finishing multi-st
 1. Separate stable project facts from temporary task observations.
 2. Verify facts against current files or user confirmation before preserving them.
 3. Keep task-local investigation details in the workspace-level `agent-work/` directory or the current task record.
-4. Bootstrap `docs/project-context.md` when its metadata says `Bootstrap status: pending`: inspect current workspace files, record only verified basic durable facts, and mark the result `complete` or `partial`.
+4. Bootstrap `docs/project-context.md` when its metadata says `Bootstrap status: pending`: perform the one-time initial project scan defined in that file, record only verified durable facts, and mark the result `complete` or `partial`.
 5. Treat `agent-work/tasks/<task-name>/status.md` as task-local operational state. Its minimum fields are defined by `docs/layers/07-loop.md`.
 6. Propose updates to `docs/project-context.md` only for durable, reusable facts. A fact is durable when it is reused across multiple tasks and does not change with a single task's outcome (for example build/test commands, architecture, module ownership, or external constraints); task-specific findings stay in `agent-work/`.
 7. Do not store secrets, private data, or unverified guesses.

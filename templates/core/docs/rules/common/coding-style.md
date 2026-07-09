@@ -2,7 +2,7 @@
 
 ## Purpose
 
-These rules define common engineering style preferences. They supplement the selected process playbook; use `docs/policy/action-boundary.md` for permission boundaries.
+These rules define common engineering style preferences. They are a lightweight preference layer and do not define workflow steps, permission boundaries, or completion evidence.
 
 ## Principles
 

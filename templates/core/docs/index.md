@@ -12,6 +12,7 @@ This is the navigation map for the harness. The entry file (`CLAUDE.md` / `AGENT
 - `docs/process/` contains concrete task playbooks selected by the Process layer.
 - `docs/rules/` contains optional project engineering standards selected during init.
 - `docs/automation/` stores verified automation and hook intent notes.
+- `docs/experiments/` stores active experimental harness feedback mechanisms.
 - `agent-work/` stores task-local notes, plans, verification evidence, and handoff state.
 - `HARNESS_GUIDE.md` explains the harness structure for people maintaining it.
 
@@ -56,6 +57,10 @@ Project-specific code locations, commands, and stable conventions are maintained
 
 - Workspace isolation: `docs/process/isolation.md`
 - Subagent development: `docs/process/subagent-development.md`
+
+## Experimental feedback
+
+- Task execution feedback: `docs/experiments/task-execution-record.md`
 
 ## Verification commands
 
