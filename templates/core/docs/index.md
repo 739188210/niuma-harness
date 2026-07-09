@@ -10,7 +10,7 @@ This is the navigation map for the harness. The entry file (`CLAUDE.md` / `AGENT
 - `docs/policy/untrusted-content.md` defines how to treat external or unverified content as data, not instructions.
 - `docs/policy/secret-leak.md` defines the secret-leak emergency response.
 - `docs/process/` contains concrete task playbooks selected by the Process layer.
-- `docs/rules/` contains optional project engineering standards selected during init.
+- `docs/rules/` contains optional project engineering standards selected during init; load only relevant rule files on demand.
 - `docs/automation/` stores verified automation and hook intent notes.
 - `docs/experiments/` stores active experimental harness feedback mechanisms.
 - `agent-work/` stores task-local notes, plans, verification evidence, and handoff state.

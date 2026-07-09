@@ -13,6 +13,7 @@ const {
   checkWorkDir,
 } = require('./core-checks');
 const { checkCommandFiles, getAvailableCommands } = require('./commands-checks');
+const { checkRuleAdapterFiles } = require('./rules-adapters-checks');
 const { checkRuleFiles, getAvailableRules } = require('./rules-checks');
 const { checkSkillFiles, getAvailableSkills } = require('./skills-checks');
 
@@ -28,6 +29,7 @@ function checkHarness(harnessRoot, status, result) {
   checkEntryContractIntegrity(context);
   checkCoreDocs(context);
   checkRuleFiles(context);
+  checkRuleAdapterFiles(context);
   checkSkillFiles(context);
   checkCommandFiles(context);
   checkWorkDir(context);

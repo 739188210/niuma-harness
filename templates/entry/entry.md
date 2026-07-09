@@ -47,7 +47,7 @@ Continue only when the next step is safe and useful; otherwise report and ask. F
 
 ## Depth is on-demand
 
-The loop above is all that stays in context. Each phase names the one file to open when it needs detail. Full loop spec: `{{HARNESS_DIR}}/docs/layers/07-loop.md`.
+The loop above is all that stays in context. Each phase names the one file to open when it needs detail. Coding preferences and agent-specific rule notes live in `{{HARNESS_DIR}}/docs/rules/`; load only the relevant rule files on demand. Full loop spec: `{{HARNESS_DIR}}/docs/layers/07-loop.md`.
 <!-- niuma-harness:contract end -->
 
 # Project notes

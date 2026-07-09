@@ -69,12 +69,12 @@ npx niuma-harness check ./workspace --harness-dir ai-harness
 
 ## Agent modes
 
-| Agent | Generated entry file | Default rules |
-|---|---|---|
-| `claude` | `CLAUDE.md` | `common`, `claude` |
-| `codex` | `AGENTS.md` | `common`, `codex` |
-| `opencode` | `AGENTS.md` | `common`, `opencode` |
-| `multi` | `CLAUDE.md` and `AGENTS.md` | `common`, `claude`, `codex`, `opencode` |
+| Agent | Generated entry file | Default rules | Native rules adapter |
+|---|---|---|---|
+| `claude` | `CLAUDE.md` | `common`, `claude` | `.claude/rules/niuma-<rule>.md` pointers |
+| `codex` | `AGENTS.md` | `common`, `codex` | `AGENTS.md` pointer; no `.codex/rules` |
+| `opencode` | `AGENTS.md` | `common`, `opencode` | `opencode.json` instructions |
+| `multi` | `CLAUDE.md` and `AGENTS.md` | `common`, `claude`, `codex`, `opencode` | all applicable adapters |
 
 ## Generated structure
 
@@ -86,6 +86,9 @@ workspace/
   .claude/
     commands/
       # Native commands installed when supported by the selected agent
+    rules/
+      niuma-common.md
+      niuma-claude.md
     skills/
       # Optional native skills selected by --skills
   harness/
@@ -178,6 +181,7 @@ This project-level `manifest.json` is generated inside the harness root and is *
 | **Tool-managed** (layers, process playbooks, policy, index, HARNESS_GUIDE, `agent-work/README.md`) | Refreshed from the template. |
 | **User-maintained** (`project-context.md`, `automation/automation-intent.md`) | Preserved if they exist; created from the template only when absent. |
 | `docs/rules/` | Converged to the current rule selection. Selected existing rule files are preserved; unselected known rule directories are removed, including local files inside them. |
+| Native rules adapters (`.claude/rules/niuma-*.md`, `opencode.json` managed instructions, entry contract pointer) | Refreshed from the current rule selection. User-created `.claude/rules` files and unrelated `opencode.json` fields are preserved. Codex uses the `AGENTS.md` pointer; `.codex/rules` is not generated for coding standards. |
 | Native command artifacts (`.claude/commands/`, `.agents/skills/<command-id>/`, `.opencode/commands/`) | Known command artifacts are refreshed from `templates/commands/*.md`. Unknown user-created files are left untouched. |
 | `manifest.json` | Regenerated every time. |
 
@@ -210,10 +214,22 @@ Harnesses generated before the 7-layer structure may fail `doctor` until they ar
 
 ## Rules selection
 
-Rules have two roles:
+Rules have two layers:
 
-- `common` and future non-agent rule directories are engineering standards.
-- `claude`, `codex`, and `opencode` are agent adapter rules installed automatically for the selected `--agent`.
+```text
+templates/core/docs/rules/*  ->  harness/docs/rules/*  ->  agent-native pointers
+```
+
+The canonical rule content lives in `templates/core/docs/rules/*` and generated `harness/docs/rules/*`. Agent-native artifacts only point tools to those canonical files:
+
+- `claude` writes `.claude/rules/niuma-<rule>.md` pointer files.
+- `codex` uses the `AGENTS.md` contract pointer and does not generate `.codex/rules` for coding standards.
+- `opencode` writes a managed `opencode.json` instructions entry.
+
+Rule directories have two roles:
+
+- `common` and future non-agent rule directories are lightweight engineering preferences.
+- `claude`, `codex`, and `opencode` are agent-specific notes installed automatically for the selected `--agent`.
 
 When `--rules` is omitted, `init` installs `common` plus the selected agent adapter rules:
 

@@ -33,7 +33,7 @@ If project-specific facts are incomplete, agents should inspect the current work
 - `docs/layers/`: 7-layer harness protocols and agent operating model.
 - `docs/policy/`: concrete action permission boundaries for agents.
 - `docs/process/`: concrete task playbooks selected by the Process layer.
-- `docs/rules/`: optional engineering standards selected during init.
+- `docs/rules/`: optional engineering standards selected during init; agent-native rule adapters point back here.
 - `docs/automation/`: automation and hook intent notes.
 - `agent-work/`: workspace-level task-local records and verification evidence.
 
@@ -50,6 +50,7 @@ These files define how the harness works and are refreshed from templates on re-
 - `docs/policy/secret-leak.md`: emergency secret-leak response.
 - `docs/policy/untrusted-content.md`: untrusted-content handling protocol.
 - `docs/process/`
+- native rule adapters (`.claude/rules/niuma-*.md`, `opencode.json` managed instructions, and entry contract pointers) load selected `docs/rules/` content through each agent's supported surface.
 - `manifest.json`
 
 `manifest.json` is tool-managed state for `doctor/check`; do not edit it by hand unless you know why.

@@ -103,6 +103,48 @@ function assertRuleDirs(harnessRoot, expected) {
   }
 }
 
+function assertClaudeRulePointers(workspaceRoot, harnessDir, expected) {
+  for (const ruleDir of allRuleDirs) {
+    const pointerPath = path.join(workspaceRoot, '.claude', 'rules', `niuma-${ruleDir}.md`);
+    if (expected.includes(ruleDir)) {
+      assertFile(pointerPath);
+      assert.match(read(pointerPath), new RegExp(`${escapeRegExp(harnessDir)}/docs/rules/${escapeRegExp(ruleDir)}/`));
+    } else {
+      assertNoPath(pointerPath);
+    }
+  }
+}
+
+function assertOpenCodeRulesInstruction(workspaceRoot, harnessDir, expected) {
+  const config = readJson(path.join(workspaceRoot, 'opencode.json'));
+  const instructions = Array.isArray(config.instructions) ? config.instructions.join('\n') : config.instructions;
+  assert.strictEqual(typeof instructions, 'string');
+  assert.match(instructions, /niuma-harness:rules begin/);
+  assert.match(instructions, new RegExp(`${escapeRegExp(harnessDir)}/docs/rules/`));
+  for (const ruleDir of expected) {
+    assert.match(instructions, new RegExp(`\\b${escapeRegExp(ruleDir)}\\b`));
+  }
+}
+
+function assertNoOpenCodeManagedRulesInstruction(workspaceRoot) {
+  const configPath = path.join(workspaceRoot, 'opencode.json');
+  if (!fs.existsSync(configPath)) {
+    return;
+  }
+
+  const config = readJson(configPath);
+  const instructions = Array.isArray(config.instructions) ? config.instructions.join('\n') : config.instructions || '';
+  assert.doesNotMatch(instructions, /niuma-harness:rules begin/);
+}
+
+function assertNoCodexRulesDir(workspaceRoot) {
+  assertNoPath(path.join(workspaceRoot, '.codex', 'rules'));
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function assertSkillDirs(workspaceRoot, agent, expected) {
   for (const targetRoot of getSkillTargetRootsForAgent(agent)) {
     for (const skillDir of allSkillDirs) {
@@ -152,13 +194,17 @@ module.exports = {
   allRuleDirs,
   allSkillDirs,
   assert,
+  assertClaudeRulePointers,
   assertCommandFiles,
   assertCodexCommandSkill,
   assertDir,
   assertFile,
   assertLayerMemos,
   assertManifest,
+  assertNoCodexRulesDir,
+  assertNoOpenCodeManagedRulesInstruction,
   assertNoPath,
+  assertOpenCodeRulesInstruction,
   assertRuleDirs,
   assertSkillDirs,
   getCommandId,

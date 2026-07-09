@@ -13,6 +13,16 @@ const AGENT_RULES = {
   opencode: ['opencode'],
   multi: ['claude', 'codex', 'opencode'],
 };
+const RULE_ADAPTER_TARGETS = {
+  claude: [{ kind: 'claude-rule-pointer', root: '.claude/rules' }],
+  codex: [{ kind: 'codex-entry-pointer', file: 'AGENTS.md' }],
+  opencode: [{ kind: 'opencode-instructions', file: 'opencode.json' }],
+  multi: [
+    { kind: 'claude-rule-pointer', root: '.claude/rules' },
+    { kind: 'codex-entry-pointer', file: 'AGENTS.md' },
+    { kind: 'opencode-instructions', file: 'opencode.json' },
+  ],
+};
 const PREFERRED_RULE_ORDER = ['common', 'claude', 'codex', 'opencode'];
 const SPECIAL_RULES = new Set(['all', 'none']);
 
@@ -79,6 +89,15 @@ function getAgentRuleDirs(agent, availableRules = getAvailableRuleDirs()) {
 
 function getDefaultRulesForAgent(agent, availableRules = getAvailableRuleDirs()) {
   return mergeRules([...DEFAULT_ENGINEERING_RULES, ...getAgentRuleDirs(agent, availableRules)], availableRules);
+}
+
+function getRuleAdapterTargetsForAgent(agent) {
+  const targets = RULE_ADAPTER_TARGETS[agent];
+  if (!targets) {
+    throw new Error(`unknown agent for rule adapters: ${agent}`);
+  }
+
+  return targets.map((target) => ({ ...target }));
 }
 
 function addAgentRules(rules, agent, availableRules = getAvailableRuleDirs()) {
@@ -169,6 +188,7 @@ module.exports = {
   normalizeConcreteRules,
   getAgentRuleDirs,
   getDefaultRulesForAgent,
+  getRuleAdapterTargetsForAgent,
   addAgentRules,
   formatRules,
   formatAvailableRules,

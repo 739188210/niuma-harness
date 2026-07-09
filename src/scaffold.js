@@ -17,6 +17,7 @@ const {
   writeWorkTemplateFiles,
 } = require('./scaffold/entries');
 const { writeCommandFiles } = require('./scaffold/commands-writer');
+const { writeRuleAdapterFiles } = require('./scaffold/rules-adapters-writer');
 const { writeRuleFiles } = require('./scaffold/rules-writer');
 const { writeSkillFiles } = require('./scaffold/skills-writer');
 const { writeStatusFile } = require('./scaffold/status-writer');
@@ -32,6 +33,7 @@ function runInit(options) {
   writeTemplateFiles(context);
   writeWorkTemplateFiles(context);
   writeRuleFiles(context);
+  writeRuleAdapterFiles(context);
   writeSkillFiles(context);
   writeCommandFiles(context);
   writeStatusFile(context);

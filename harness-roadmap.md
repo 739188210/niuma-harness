@@ -78,11 +78,36 @@ CLAUDE.md / AGENTS.md
 | `<harness-dir>/docs/project-context.md` | Verified stable project facts. |
 | `<harness-dir>/docs/layers/` | 7-layer agent operating protocols. |
 | `<harness-dir>/docs/process/` | Concrete task playbooks selected by the Process layer. |
-| `<harness-dir>/docs/rules/` | Engineering standards for coding, testing, and security. |
+| `<harness-dir>/docs/rules/` | Canonical engineering preferences and agent-specific notes for coding, testing, security, and tool behavior. |
+| `.claude/rules/niuma-*.md` | Claude Code native rule pointers generated from the selected rule set; they point back to `<harness-dir>/docs/rules/` and do not duplicate rule content. |
+| `opencode.json` managed `instructions` block | OpenCode native rule pointer generated from the selected rule set; unrelated user config is preserved. |
+| `AGENTS.md` rules pointer | Codex/OpenCode entry-level navigation to `<harness-dir>/docs/rules/`; Codex does not use `.codex/rules` for coding standards. |
 | `<harness-dir>/docs/automation/` | Verified automation intent, hooks, and CI notes. |
 | `agent-work/` | Workspace-level task-local memory, plans, status ledgers, verification evidence, and handoff notes. |
 | `<harness-dir>/HARNESS_GUIDE.md` | Human-facing structure and maintenance guide. |
 | `<harness-dir>/manifest.json` | Generated harness status file used by `doctor/check`. |
+
+### Rules distribution model
+
+Rules now follow the same single-source adapter principle as commands and skills:
+
+```text
+templates/core/docs/rules/*
+  -> <harness-dir>/docs/rules/*
+  -> agent-native pointers
+```
+
+Implemented behavior:
+
+- Canonical rule content remains under `templates/core/docs/rules/*` and generated `<harness-dir>/docs/rules/*`.
+- `common` rules are intentionally lightweight engineering preferences; they do not replace Policy, Process, or Observation evidence requirements.
+- Claude receives tool-managed `.claude/rules/niuma-<rule>.md` pointer files for selected rule directories.
+- OpenCode receives a tool-managed `opencode.json.instructions` block pointing to selected rule directories while preserving unrelated user config.
+- Codex receives rules navigation through `AGENTS.md`; `.codex/rules` is not generated for coding standards.
+- Re-running `init` refreshes native rule adapters, removes stale Niuma-managed adapters for unselected rules or changed agents, and preserves unknown user-created native files/config.
+- `doctor/check` validates selected canonical rule files plus the expected native rule adapters.
+
+This keeps the rule source context-efficient: agent-native mechanisms improve discoverability, but the actual rule text is not copied into multiple tool-specific stores.
 
 ### Runtime task records
 

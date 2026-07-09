@@ -4,12 +4,16 @@ const {
   allRuleDirs,
   allSkillDirs,
   assert,
+  assertClaudeRulePointers,
   assertCommandFiles,
   assertDir,
   assertFile,
   assertLayerMemos,
   assertManifest,
+  assertNoCodexRulesDir,
+  assertNoOpenCodeManagedRulesInstruction,
   assertNoPath,
+  assertOpenCodeRulesInstruction,
   assertRuleDirs,
   assertSkillDirs,
   getCommandId,
@@ -17,6 +21,7 @@ const {
   fs,
   path,
   read,
+  readJson,
   run,
   tempDir,
 } = require('./helpers');
@@ -689,6 +694,16 @@ test('default rules include common and agent-specific adapters', () => {
     assertFile(path.join(harnessRoot, 'docs', 'rules', 'common', 'testing.md'));
     assertNoPath(path.join(harnessRoot, 'docs', 'rules', 'common', 'hooks.md'));
     assertRuleDirs(harnessRoot, expectedRules);
+    if (scenario.agent === 'claude' || scenario.agent === 'multi') {
+      assertClaudeRulePointers(workspace, 'harness', expectedRules);
+    }
+    if (scenario.agent === 'opencode' || scenario.agent === 'multi') {
+      assertOpenCodeRulesInstruction(workspace, 'harness', expectedRules);
+    }
+    if (scenario.agent === 'codex' || scenario.agent === 'multi') {
+      assert.match(read(path.join(workspace, 'AGENTS.md')), /harness\/docs\/rules\//);
+      assertNoCodexRulesDir(workspace);
+    }
     assertManifest(path.join(harnessRoot, 'manifest.json'), {
       agent: scenario.agent,
       rules: expectedRules,
@@ -705,6 +720,7 @@ test('--rules none installs no rule files', () => {
   const contextMemo = path.join(harnessRoot, 'docs', 'layers', '01-context.md');
   assertDir(path.join(harnessRoot, 'docs', 'rules'));
   assertRuleDirs(harnessRoot, []);
+  assertClaudeRulePointers(workspace, 'harness', []);
   assert.ok(read(contextMemo).length > 0, 'layer memos should not be affected by --rules none');
   assertManifest(path.join(harnessRoot, 'manifest.json'), {
     agent: 'claude',
@@ -723,9 +739,13 @@ test('re-init preserves selected rule files', () => {
   const ruleFile = path.join(harnessRoot, 'docs', 'rules', 'common', 'testing.md');
   fs.writeFileSync(ruleFile, 'custom rule\n', 'utf8');
 
+  const pointerFile = path.join(workspace, '.claude', 'rules', 'niuma-common.md');
+  fs.writeFileSync(pointerFile, 'custom pointer\n', 'utf8');
+
   result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   assert.strictEqual(read(ruleFile), 'custom rule\n', 'selected rule file should be preserved on re-init');
+  assert.match(read(pointerFile), /harness\/docs\/rules\/common\//, 'native rule pointer should be refreshed on re-init');
   assertRuleDirs(harnessRoot, expectedDefaultRules('claude'));
 });
 
@@ -740,6 +760,7 @@ test('re-init converges rules from common to none', () => {
   result = run(['init', workspace, '--agent', 'claude', '--rules', 'none']);
   assert.strictEqual(result.status, 0, result.stderr);
   assertRuleDirs(harnessRoot, []);
+  assertClaudeRulePointers(workspace, 'harness', []);
   assertManifest(path.join(harnessRoot, 'manifest.json'), {
     agent: 'claude',
     rules: [],
@@ -1110,9 +1131,15 @@ test('re-init with a different agent converges agent-specific rules', () => {
   const harnessRoot = path.join(workspace, 'harness');
   assertRuleDirs(harnessRoot, expectedDefaultRules('claude'));
 
+  const localClaudeRule = path.join(workspace, '.claude', 'rules', 'local.md');
+  fs.mkdirSync(path.dirname(localClaudeRule), { recursive: true });
+  fs.writeFileSync(localClaudeRule, 'local rule pointer\n', 'utf8');
+
   result = run(['init', workspace, '--agent', 'codex']);
   assert.strictEqual(result.status, 0, result.stderr);
   assertRuleDirs(harnessRoot, expectedDefaultRules('codex'));
+  assertClaudeRulePointers(workspace, 'harness', []);
+  assertFile(localClaudeRule);
   assertManifest(path.join(harnessRoot, 'manifest.json'), {
     agent: 'codex',
     entryFiles: ['AGENTS.md'],
@@ -1127,11 +1154,51 @@ test('multi --rules none installs no agent adapters', () => {
   assert.strictEqual(result.status, 0, result.stderr);
   const harnessRoot = path.join(workspace, 'harness');
   assertRuleDirs(harnessRoot, []);
+  assertClaudeRulePointers(workspace, 'harness', []);
+  assertNoOpenCodeManagedRulesInstruction(workspace);
+  assertNoCodexRulesDir(workspace);
   assertManifest(path.join(harnessRoot, 'manifest.json'), {
     agent: 'multi',
     rules: [],
     entryFiles: ['CLAUDE.md', 'AGENTS.md'],
   });
+});
+
+test('opencode rules instructions merge with existing config', () => {
+  const workspace = tempDir();
+  fs.writeFileSync(path.join(workspace, 'opencode.json'), JSON.stringify({
+    provider: 'local',
+    instructions: ['keep this instruction'],
+  }, null, 2), 'utf8');
+
+  const result = run(['init', workspace, '--agent', 'opencode']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const config = readJson(path.join(workspace, 'opencode.json'));
+  assert.strictEqual(config.provider, 'local');
+  assert.deepStrictEqual(config.instructions.filter((instruction) => instruction === 'keep this instruction'), ['keep this instruction']);
+  assertOpenCodeRulesInstruction(workspace, 'harness', expectedDefaultRules('opencode'));
+});
+
+test('opencode rules instructions support string instructions', () => {
+  const workspace = tempDir();
+  fs.writeFileSync(path.join(workspace, 'opencode.json'), JSON.stringify({
+    instructions: 'keep this instruction',
+  }, null, 2), 'utf8');
+
+  const result = run(['init', workspace, '--agent', 'opencode']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const config = readJson(path.join(workspace, 'opencode.json'));
+  assert.match(config.instructions, /keep this instruction/);
+  assertOpenCodeRulesInstruction(workspace, 'harness', expectedDefaultRules('opencode'));
+});
+
+test('opencode invalid json fails without overwriting config', () => {
+  const workspace = tempDir();
+  const configPath = path.join(workspace, 'opencode.json');
+  fs.writeFileSync(configPath, '{bad json', 'utf8');
+  const result = run(['init', workspace, '--agent', 'opencode']);
+  assert.notStrictEqual(result.status, 0, 'invalid opencode.json should fail');
+  assert.strictEqual(read(configPath), '{bad json');
 });
 
 test('--rules and --rules-out are mutually exclusive', () => {
@@ -1169,6 +1236,7 @@ test('--harness-dir uses a custom directory name', () => {
     harnessDir: 'ai-harness',
     entryFiles: ['CLAUDE.md'],
   });
+  assertClaudeRulePointers(workspace, 'ai-harness', expectedDefaultRules('claude'));
   const entry = read(path.join(workspace, 'CLAUDE.md'));
   assert.match(entry, /ai-harness\/docs\/index\.md/);
   assert.match(entry, /ai-harness\/docs\/layers\/01-context\.md/);

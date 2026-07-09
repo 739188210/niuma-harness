@@ -491,6 +491,45 @@ test('doctor fails when a selected agent-specific rule file is missing', () => {
   assert.match(result.stdout, /missing docs\/rules\/claude\/hooks\.md/);
 });
 
+test('doctor fails when a claude native rule pointer is missing', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  fs.unlinkSync(path.join(workspace, '.claude', 'rules', 'niuma-common.md'));
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should fail when a claude rule pointer is missing');
+  assert.match(result.stdout, /missing \.claude\/rules\/niuma-common\.md/);
+});
+
+test('doctor fails when opencode rules instructions are missing', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'opencode']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  fs.unlinkSync(path.join(workspace, 'opencode.json'));
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should fail when opencode rule instructions are missing');
+  assert.match(result.stdout, /missing opencode\.json rules instructions/);
+});
+
+test('doctor honors custom harness-dir in native rule adapter checks', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'multi', '--harness-dir', 'ai-harness']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  const result = run(['doctor', workspace, '--harness-dir', 'ai-harness']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(result.stdout, /OK \.claude\/rules\/niuma-common\.md/);
+  assert.match(result.stdout, /OK opencode\.json rules instructions/);
+});
+
+test('doctor does not require codex .codex rules', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'codex']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  const result = run(['doctor', workspace]);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.ok(!fs.existsSync(path.join(workspace, '.codex', 'rules')), 'codex rules directory should not be generated');
+});
+
 test('doctor does not modify the manifest', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);
