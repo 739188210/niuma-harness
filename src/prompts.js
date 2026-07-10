@@ -56,6 +56,5 @@ function normalizeAgentAlias(value) {
 }
 
 module.exports = {
-  ask,
   chooseAgent,
 };

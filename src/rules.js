@@ -179,17 +179,13 @@ function formatAvailableRules(availableRules = getAvailableRuleDirs()) {
 }
 
 module.exports = {
-  DEFAULT_RULES_ROOT,
-  DEFAULT_RULES_SELECTION,
   getRulesRootPath,
   getAvailableRuleDirs,
   normalizeRules,
   normalizeRulesOut,
   normalizeConcreteRules,
-  getAgentRuleDirs,
   getDefaultRulesForAgent,
   getRuleAdapterTargetsForAgent,
   addAgentRules,
   formatRules,
-  formatAvailableRules,
 };

@@ -1,4 +1,5 @@
 const assert = require('assert');
+const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -69,6 +70,18 @@ function readJson(filePath) {
   return JSON.parse(read(filePath));
 }
 
+function writeJson(filePath, value) {
+  fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+}
+
+function updateManifest(workspaceRoot, mutate, harnessDir = 'harness') {
+  const manifestPath = path.join(workspaceRoot, harnessDir, 'manifest.json');
+  const manifest = readJson(manifestPath);
+  mutate(manifest);
+  writeJson(manifestPath, manifest);
+  return manifest;
+}
+
 function expectedDefaultRules(agent) {
   return getDefaultRulesForAgent(agent, allRuleDirs);
 }
@@ -80,7 +93,7 @@ function expectedDefaultCommands(agent) {
 function assertManifest(filePath, expected) {
   assertFile(filePath);
   const manifest = readJson(filePath);
-  assert.strictEqual(manifest.schemaVersion, 1);
+  assert.strictEqual(manifest.schemaVersion, 2);
   assert.strictEqual(manifest.agent, expected.agent);
   assert.deepStrictEqual(manifest.rules, expected.rules || expectedDefaultRules(expected.agent));
   assert.deepStrictEqual(manifest.skills, expected.skills || allSkillDirs);
@@ -88,8 +101,42 @@ function assertManifest(filePath, expected) {
   assert.strictEqual(manifest.harnessDir, expected.harnessDir || 'harness');
   assert.strictEqual(manifest.workDir, expected.workDir || 'agent-work');
   assert.deepStrictEqual(manifest.entryFiles, expected.entryFiles);
+  assertArtifactRecords(filePath, manifest, expected.agent, manifest.commands, expected.artifactTargets);
   assert.strictEqual(manifest.createdBy, 'niuma-harness');
   assert.ok(!Number.isNaN(Date.parse(manifest.createdAt)), 'createdAt should be an ISO date');
+}
+
+function getExpectedCommandArtifactTargets(agent, commandFiles) {
+  const targets = [];
+  for (const target of getCommandTargetsForAgent(agent)) {
+    for (const commandFile of commandFiles) {
+      const commandId = getCommandId(commandFile);
+      if (target.kind === 'codex-skill-command') {
+        targets.push(
+          `${target.root}/${commandId}/SKILL.md`,
+          `${target.root}/${commandId}/agents/openai.yaml`
+        );
+      } else {
+        targets.push(`${target.root}/${commandFile}`);
+      }
+    }
+  }
+  return targets;
+}
+
+function assertArtifactRecords(manifestPath, manifest, agent, commandFiles, explicitTargets) {
+  assert.ok(Array.isArray(manifest.artifacts), 'manifest artifacts should be an array');
+  const workspaceRoot = path.dirname(path.dirname(manifestPath));
+  const expectedTargets = explicitTargets ? [...explicitTargets] : getExpectedCommandArtifactTargets(agent, commandFiles);
+  expectedTargets.sort((left, right) => left.localeCompare(right));
+  assert.deepStrictEqual(manifest.artifacts.map((record) => record.target), expectedTargets);
+  for (const record of manifest.artifacts) {
+    assert.strictEqual(record.kind, 'command');
+    assert.match(record.source, /^commands\/.+\.md$/);
+    const targetPath = path.join(workspaceRoot, ...record.target.split('/'));
+    const digest = `sha256:${crypto.createHash('sha256').update(fs.readFileSync(targetPath)).digest('hex')}`;
+    assert.strictEqual(record.digest, digest, `digest should match ${record.target}`);
+  }
 }
 
 function assertRuleDirs(harnessRoot, expected) {
@@ -208,6 +255,7 @@ module.exports = {
   assertRuleDirs,
   assertSkillDirs,
   getCommandId,
+  getExpectedCommandArtifactTargets,
   expectedDefaultRules,
   fs,
   path,
@@ -215,4 +263,5 @@ module.exports = {
   readJson,
   run,
   tempDir,
+  updateManifest,
 };

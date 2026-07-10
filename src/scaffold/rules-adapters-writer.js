@@ -26,7 +26,7 @@ function writeRuleAdapterFiles(context) {
   if (targetKinds.has('opencode-instructions')) {
     writeOpenCodeRulesInstruction(context, targets.find((target) => target.kind === 'opencode-instructions'));
   } else {
-    cleanupOpenCodeRulesInstruction(context, targets.find((target) => target.kind === 'opencode-instructions'));
+    cleanupOpenCodeRulesInstruction(context);
   }
 }
 

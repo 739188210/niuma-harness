@@ -100,10 +100,42 @@ function getCommandTargetsForAgent(agent) {
   return targets.map((target) => ({ ...target }));
 }
 
-function getCommandTargetRootsForAgent(agent) {
-  return getCommandTargetsForAgent(agent)
-    .filter((target) => target.kind === 'claude-command' || target.kind === 'opencode-command')
-    .map((target) => target.root);
+function getCommandArtifactDescriptors(agent, commandFiles) {
+  const descriptors = [];
+  for (const target of getCommandTargetsForAgent(agent)) {
+    for (const commandFile of commandFiles) {
+      const commandId = getCommandId(commandFile);
+      const source = path.posix.join('commands', commandFile);
+      if (target.kind === 'claude-command' || target.kind === 'opencode-command') {
+        descriptors.push({
+          kind: 'command',
+          renderer: 'markdown',
+          source,
+          target: path.posix.join(target.root, commandFile),
+        });
+        continue;
+      }
+      if (target.kind === 'codex-skill-command') {
+        descriptors.push(
+          {
+            kind: 'command',
+            renderer: 'codex-skill',
+            source,
+            target: path.posix.join(target.root, commandId, 'SKILL.md'),
+          },
+          {
+            kind: 'command',
+            renderer: 'codex-openai',
+            source,
+            target: path.posix.join(target.root, commandId, 'agents', 'openai.yaml'),
+          }
+        );
+        continue;
+      }
+      throw new Error(`unknown command target kind: ${target.kind}`);
+    }
+  }
+  return descriptors.sort((left, right) => left.target.localeCompare(right.target));
 }
 
 function getDefaultCommandsForAgent(agent, availableCommands = getAvailableCommandFiles()) {
@@ -119,15 +151,13 @@ function formatAvailableCommands(availableCommands = getAvailableCommandFiles())
 }
 
 module.exports = {
-  DEFAULT_COMMANDS_ROOT,
   getCommandsRootPath,
   getAvailableCommandFiles,
   normalizeConcreteCommands,
   getCommandId,
   parseCommandSpec,
   getCommandTargetsForAgent,
-  getCommandTargetRootsForAgent,
+  getCommandArtifactDescriptors,
   getDefaultCommandsForAgent,
   formatCommands,
-  formatAvailableCommands,
 };

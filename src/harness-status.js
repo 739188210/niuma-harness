@@ -5,11 +5,12 @@ const STATUS_FILE = 'manifest.json';
 
 function createStatus(options, manifest = {}) {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     agent: options.agent,
     rules: options.rules,
     skills: options.skills,
     commands: options.commands || [],
+    artifacts: options.artifacts || [],
     harnessDir: options.harnessDir,
     workDir: manifest.workDirectory || 'agent-work',
     entryFiles: getEntryFilesForAgent(options.agent),

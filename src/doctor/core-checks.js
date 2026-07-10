@@ -4,7 +4,7 @@ const path = require('path');
 const { getEntryFilesForAgent } = require('../agents');
 const { safeResolveInside } = require('../fs-safe');
 const { renderTemplate } = require('../scaffold/templates');
-const { CONTRACT_BEGIN, sliceContractBlock } = require('../contract');
+const { analyzeContractBlock, sliceContractBlock } = require('../contract');
 const { addError, addOk } = require('./result');
 
 // 入口文件在 workspace 根（harness 目录的父级），不在 harness root。
@@ -35,9 +35,7 @@ function checkEntryListMatches(result, actual, expected, agent) {
   addOk(result, 'entryFiles match agent');
 }
 
-// 契约区完整性：入口文件里的 contract 块必须和模板渲染结果一致，防止被 agent 或人改坏。
-// 没有 begin 标记的入口（用户自管文件）直接跳过，不误报。
-// CONTRACT_BEGIN / sliceContractBlock 复用自 ../contract，与 scaffold 的入口 merge 共用同一份定义。
+// 契约区完整性：manifest 声明的每个入口都必须包含唯一、完整且和模板一致的 contract 块。
 function checkEntryContractIntegrity(context) {
   const { result, status, workspaceRoot } = context;
   const harnessDir = status.harnessDir || 'harness';
@@ -45,7 +43,7 @@ function checkEntryContractIntegrity(context) {
     renderTemplate('entry/entry.md', { HARNESS_DIR: harnessDir })
   );
   if (!canonicalBlock) {
-    addError(result, 'entry template source has no contract block');
+    addError(result, 'entry template source has no unique contract block');
     return;
   }
 
@@ -54,22 +52,33 @@ function checkEntryContractIntegrity(context) {
     if (content === null) {
       continue; // 缺失已由 checkEntryFiles 报告
     }
-    if (!content.includes(CONTRACT_BEGIN)) {
-      continue; // 用户自管入口，无契约块，不强制
-    }
-    const block = sliceContractBlock(content);
-    if (!block) {
-      addError(result, `contract zone end marker missing in ${entryFile}`);
+
+    const analysis = analyzeContractBlock(content);
+    const error = contractAnalysisError(analysis.status, entryFile);
+    if (error) {
+      addError(result, error);
       continue;
     }
+
     // 比对前归一化换行符：用户文件可能被 git autocrlf 或编辑器转成 CRLF，避免误报 drift。
     const normalize = (value) => value.replace(/\r\n/g, '\n');
-    if (normalize(block) !== normalize(canonicalBlock)) {
+    if (normalize(analysis.block) !== normalize(canonicalBlock)) {
       addError(result, `contract zone drifted in ${entryFile}`);
       continue;
     }
     addOk(result, `contract intact in ${entryFile}`);
   }
+}
+
+function contractAnalysisError(status, entryFile) {
+  const messages = {
+    missing: `contract zone missing in ${entryFile}`,
+    'missing-begin': `contract zone begin marker missing in ${entryFile}`,
+    'missing-end': `contract zone end marker missing in ${entryFile}`,
+    multiple: `multiple contract zones in ${entryFile}`,
+    'out-of-order': `contract zone markers out of order in ${entryFile}`,
+  };
+  return messages[status] || null;
 }
 
 function readOptionalEntry(workspaceRoot, entryFile) {
@@ -183,11 +192,7 @@ module.exports = {
   checkEntryFiles,
   checkEntryContractIntegrity,
   checkCoreDocs,
-  checkTemplateDirectories,
-  checkTemplateFiles,
   checkWorkDir,
   checkRegularFile,
   checkDirectory,
-  checkRelativeFile,
-  sameStringArray,
 };

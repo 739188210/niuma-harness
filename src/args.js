@@ -1,6 +1,5 @@
 // CLI 参数解析层：只负责把 argv 变成规范化 options。
 const { normalizeAgent } = require('./agents');
-const { getHelpText } = require('./help');
 const { normalizeRules, normalizeRulesOut } = require('./rules');
 const { normalizeSkills } = require('./skills');
 
@@ -14,7 +13,6 @@ function parseArgs(argv) {
     rulesOut: null,
     rulesProvided: false,
     skills: null,
-    skillsProvided: false,
     harnessDir: 'harness',
     dryRun: false,
     help: false,
@@ -100,7 +98,6 @@ function assignOption(options, name, value) {
 
   if (name === 'skills') {
     options.skills = value;
-    options.skillsProvided = true;
     return;
   }
 
@@ -143,8 +140,4 @@ function normalizeHarnessDir(harnessDir) {
 
 module.exports = {
   parseArgs,
-  normalizeAgent,
-  normalizeRules,
-  normalizeHarnessDir,
-  getHelpText,
 };

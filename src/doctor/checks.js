@@ -12,6 +12,7 @@ const {
   checkEntryFiles,
   checkWorkDir,
 } = require('./core-checks');
+const { checkArtifactFiles } = require('./artifacts-checks');
 const { checkCommandFiles, getAvailableCommands } = require('./commands-checks');
 const { checkRuleAdapterFiles } = require('./rules-adapters-checks');
 const { checkRuleFiles, getAvailableRules } = require('./rules-checks');
@@ -25,6 +26,7 @@ function checkHarness(harnessRoot, status, result) {
   checkRules(context);
   checkSkills(context);
   checkCommands(context);
+  checkArtifactFiles(context);
   checkEntryFiles(context);
   checkEntryContractIntegrity(context);
   checkCoreDocs(context);
@@ -39,6 +41,7 @@ function createCheckContext(harnessRoot, status, result) {
   const templateManifest = loadManifest();
   return {
     agent: null,
+    artifacts: null,
     availableCommands: getAvailableCommands(templateManifest.commandsRoot),
     availableRules: getAvailableRules(templateManifest.rulesRoot),
     availableSkills: getAvailableSkills(templateManifest.skillsRoot),
@@ -55,12 +58,12 @@ function createCheckContext(harnessRoot, status, result) {
 
 function checkSchemaVersion(context) {
   const { result, status } = context;
-  if (status.schemaVersion !== 1) {
+  if (status.schemaVersion !== 2) {
     addError(result, `unsupported schemaVersion: ${status.schemaVersion}`);
     return;
   }
 
-  addOk(result, 'schemaVersion 1');
+  addOk(result, 'schemaVersion 2');
 }
 
 function checkAgent(context) {
@@ -78,71 +81,37 @@ function checkAgent(context) {
 
 // manifest 中保存的是最终安装的规则目录数组，不保存原始 CLI 参数。
 function checkRules(context) {
-  const { availableRules, result, status } = context;
-  if (!Object.prototype.hasOwnProperty.call(status, 'rules')) {
-    addError(result, 'missing rules');
-    return;
-  }
-
-  if (!Array.isArray(status.rules)) {
-    addError(result, 'rules must be an array');
-    return;
-  }
-
-  context.rules = normalizeStatusField(
-    result,
-    () => normalizeConcreteRules(status.rules, availableRules, 'rules'),
-    'rules'
-  );
-
-  if (context.rules) {
-    addOk(result, `rules ${formatRules(context.rules)}`);
-  }
+  checkConcreteArrayField(context, 'rules', context.availableRules, normalizeConcreteRules, formatRules);
 }
 
 function checkSkills(context) {
-  const { availableSkills, result, status } = context;
-  if (!Object.prototype.hasOwnProperty.call(status, 'skills')) {
-    addError(result, 'missing skills');
-    return;
-  }
-
-  if (!Array.isArray(status.skills)) {
-    addError(result, 'skills must be an array');
-    return;
-  }
-
-  context.skills = normalizeStatusField(
-    result,
-    () => normalizeConcreteSkills(status.skills, availableSkills, 'skills'),
-    'skills'
-  );
-
-  if (context.skills) {
-    addOk(result, `skills ${formatSkills(context.skills)}`);
-  }
+  checkConcreteArrayField(context, 'skills', context.availableSkills, normalizeConcreteSkills, formatSkills);
 }
 
 function checkCommands(context) {
-  const { availableCommands, result, status } = context;
-  if (!Object.prototype.hasOwnProperty.call(status, 'commands')) {
-    addError(result, 'missing commands');
+  checkConcreteArrayField(context, 'commands', context.availableCommands, normalizeConcreteCommands, formatCommands);
+}
+
+function checkConcreteArrayField(context, field, available, normalize, format) {
+  const { result, status } = context;
+  if (!Object.prototype.hasOwnProperty.call(status, field)) {
+    addError(result, `missing ${field}`);
     return;
   }
 
-  if (!Array.isArray(status.commands)) {
-    addError(result, 'commands must be an array');
+  if (!Array.isArray(status[field])) {
+    addError(result, `${field} must be an array`);
     return;
   }
 
-  context.commands = normalizeStatusField(
+  context[field] = normalizeStatusField(
     result,
-    () => normalizeConcreteCommands(status.commands, availableCommands, 'commands'),
-    'commands'
+    () => normalize(status[field], available, field),
+    field
   );
 
-  if (context.commands) {
-    addOk(result, `commands ${formatCommands(context.commands)}`);
+  if (context[field]) {
+    addOk(result, `${field} ${format(context[field])}`);
   }
 }
 

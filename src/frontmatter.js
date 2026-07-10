@@ -49,5 +49,4 @@ function stripSimpleQuotes(value) {
 
 module.exports = {
   parseMarkdownFrontmatter,
-  parseFrontmatterFields,
 };

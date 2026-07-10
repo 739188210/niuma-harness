@@ -1,14 +1,13 @@
 // 校验 manifest.commands 声明的命令源模板是否生成到当前 agent 对应的命令产物。
-const fs = require('fs');
 const path = require('path');
 const {
   getAvailableCommandFiles,
   getCommandId,
   getCommandTargetsForAgent,
 } = require('../commands');
-const { parseMarkdownFrontmatter } = require('../frontmatter');
 const { checkDirectory, checkRegularFile } = require('./core-checks');
-const { addError, addOk } = require('./result');
+const { checkMarkdownMetadata, isRegularFile } = require('./markdown-checks');
+const { addError } = require('./result');
 
 function getAvailableCommands(commandsRoot) {
   return getAvailableCommandFiles(commandsRoot);
@@ -52,44 +51,11 @@ function checkCodexSkillCommand(workspaceRoot, result, targetRoot, commandFile) 
   const skillFileLabel = `${targetRoot}/${commandId}/SKILL.md`;
   checkRegularFile(skillFile, skillFileLabel, result);
   if (isRegularFile(skillFile)) {
-    checkCommandSkillMetadata(skillFile, skillFileLabel, commandId, result);
+    checkMarkdownMetadata(skillFile, skillFileLabel, commandId, result);
   }
 
   const openAiLabel = `${targetRoot}/${commandId}/agents/openai.yaml`;
   checkRegularFile(path.join(skillDir, 'agents', 'openai.yaml'), openAiLabel, result);
-}
-
-function checkCommandSkillMetadata(filePath, label, commandId, result) {
-  const content = fs.readFileSync(filePath, 'utf8');
-  const parsed = parseMarkdownFrontmatter(content);
-  if (!parsed) {
-    addError(result, `missing frontmatter in ${label}`);
-    return;
-  }
-
-  const name = parsed.fields.name || '';
-  const description = parsed.fields.description || '';
-  if (!name) {
-    addError(result, `missing name in ${label} frontmatter`);
-  } else if (name !== commandId) {
-    addError(result, `name mismatch in ${label} frontmatter: expected ${commandId}, got ${name}`);
-  }
-
-  if (!description) {
-    addError(result, `missing description in ${label} frontmatter`);
-  }
-
-  if (!parsed.body.trim()) {
-    addError(result, `empty body in ${label}`);
-  }
-
-  if (name === commandId && description && parsed.body.trim()) {
-    addOk(result, `${label} metadata`);
-  }
-}
-
-function isRegularFile(filePath) {
-  return fs.existsSync(filePath) && fs.lstatSync(filePath).isFile();
 }
 
 module.exports = {

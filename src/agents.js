@@ -32,7 +32,6 @@ function getEntryFilesForAgent(agent) {
 }
 
 module.exports = {
-  SUPPORTED_AGENTS,
   normalizeAgent,
   getEntryFilesForAgent,
 };

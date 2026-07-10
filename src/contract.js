@@ -3,36 +3,68 @@
 const CONTRACT_BEGIN = '<!-- niuma-harness:contract begin';
 const CONTRACT_END = '<!-- niuma-harness:contract end -->';
 
-// 提取包含首尾标记的完整契约块。无 begin 或无 end 返回 null。
-function sliceContractBlock(content) {
-  const beginIdx = content.indexOf(CONTRACT_BEGIN);
-  if (beginIdx === -1) {
-    return null;
+function findAll(content, marker) {
+  const indexes = [];
+  let from = 0;
+  while (from < content.length) {
+    const index = content.indexOf(marker, from);
+    if (index === -1) {
+      break;
+    }
+    indexes.push(index);
+    from = index + marker.length;
   }
-  const endIdx = content.indexOf(CONTRACT_END, beginIdx);
-  if (endIdx === -1) {
-    return null;
-  }
-  return content.slice(beginIdx, endIdx + CONTRACT_END.length);
+  return indexes;
 }
 
-// 用新块替换已有契约块，保留块外所有内容。无块返回 null。
+// 严格分析契约标记，避免把缺失、残缺、乱序或重复块误当成正常的用户入口。
+function analyzeContractBlock(content) {
+  const begins = findAll(content, CONTRACT_BEGIN);
+  const ends = findAll(content, CONTRACT_END);
+
+  if (begins.length === 0 && ends.length === 0) {
+    return { status: 'missing' };
+  }
+  if (begins.length === 0) {
+    return { status: 'missing-begin' };
+  }
+  if (ends.length === 0) {
+    return { status: 'missing-end' };
+  }
+  if (begins.length > 1 || ends.length > 1) {
+    return { status: 'multiple' };
+  }
+  if (begins[0] > ends[0]) {
+    return { status: 'out-of-order' };
+  }
+
+  const end = ends[0] + CONTRACT_END.length;
+  return {
+    begin: begins[0],
+    block: content.slice(begins[0], end),
+    end,
+    status: 'valid',
+  };
+}
+
+// 提取唯一且完整的契约块；其他状态返回 null。
+function sliceContractBlock(content) {
+  const analysis = analyzeContractBlock(content);
+  return analysis.status === 'valid' ? analysis.block : null;
+}
+
+// 用新块替换唯一且完整的契约块，保留块外所有内容；其他状态返回 null。
 function replaceContractBlock(content, newBlock) {
-  const beginIdx = content.indexOf(CONTRACT_BEGIN);
-  if (beginIdx === -1) {
+  const analysis = analyzeContractBlock(content);
+  if (analysis.status !== 'valid') {
     return null;
   }
-  const endIdx = content.indexOf(CONTRACT_END, beginIdx);
-  if (endIdx === -1) {
-    return null;
-  }
-  const after = endIdx + CONTRACT_END.length;
-  return content.slice(0, beginIdx) + newBlock + content.slice(after);
+  return content.slice(0, analysis.begin) + newBlock + content.slice(analysis.end);
 }
 
 module.exports = {
   CONTRACT_BEGIN,
-  CONTRACT_END,
+  analyzeContractBlock,
   sliceContractBlock,
   replaceContractBlock,
 };

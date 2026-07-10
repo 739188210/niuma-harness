@@ -51,7 +51,4 @@ function inspectStatusFile(statusPath, result) {
 
 module.exports = {
   runDoctor,
-  inspectHarness,
-  findStatusFile,
-  checkHarness,
 };

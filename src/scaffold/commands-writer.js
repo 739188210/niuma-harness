@@ -1,71 +1,154 @@
-// 将 templates/commands 下的命令源模板渲染为各 agent 的原生命令产物。
+// 将 command 模板先渲染和完整预检，再统一写入各 agent 原生产物。
+const fs = require('fs');
 const path = require('path');
 const {
-  getCommandId,
+  getCommandArtifactDescriptors,
   getCommandsRootPath,
-  getCommandTargetsForAgent,
   parseCommandSpec,
 } = require('../commands');
-const { safeResolveInside, writeFile } = require('../fs-safe');
+const {
+  digestBytes,
+  findArtifactRecord,
+  mergeArtifactRecords,
+} = require('../artifact-ledger');
+const { assertNoSymlinkInPath, safeResolveInside, writeFile } = require('../fs-safe');
 const { TEMPLATE_DIR } = require('./manifest');
 const { renderTemplate } = require('./templates');
 
-function writeCommandFiles(context) {
+function prepareCommandPlan(context, previousArtifacts) {
   const { commands, manifest, options } = context;
   const commandsRootPath = getCommandsRootPath(manifest.commandsRoot);
-  const targets = getCommandTargetsForAgent(options.agent);
-
-  for (const commandFile of commands) {
-    const spec = loadCommandSpec(context, commandFile, commandsRootPath);
-    for (const target of targets) {
-      writeCommandArtifact(context, spec, target);
-    }
-  }
+  const templates = new Map(commands.map((commandFile) => [
+    commandFile,
+    loadCommandTemplate(context, commandFile, commandsRootPath),
+  ]));
+  const plan = getCommandArtifactDescriptors(options.agent, commands)
+    .map((descriptor) => renderCommandArtifact(context, descriptor, templates));
+  preflightCommandPlan(context.workspaceDir, plan, previousArtifacts);
+  return {
+    artifacts: mergeArtifactRecords(previousArtifacts, plan.map((item) => item.record)),
+    plan,
+  };
 }
 
-function loadCommandSpec(context, commandFile, commandsRootPath) {
+function loadCommandTemplate(context, commandFile, commandsRootPath) {
   const sourcePath = path.join(commandsRootPath, commandFile);
   const sourceRelativePath = path.relative(TEMPLATE_DIR, sourcePath).split(path.sep).join('/');
-  return parseCommandSpec(commandFile, renderTemplate(sourceRelativePath, context.variables));
+  const specContent = renderTemplate(sourceRelativePath, context.variables);
+  const commandSource = path.posix.join('commands', commandFile);
+  return {
+    content: sourceRelativePath === commandSource
+      ? specContent
+      : renderTemplate(commandSource, context.variables),
+    spec: parseCommandSpec(commandFile, specContent),
+  };
 }
 
-function writeCommandArtifact(context, spec, target) {
-  if (target.kind === 'claude-command') {
-    writeMarkdownCommand(context, spec, target.root);
-    return;
+function renderCommandArtifact(context, descriptor, templates) {
+  const commandFile = path.posix.basename(descriptor.source);
+  const template = templates.get(commandFile);
+  let content;
+  if (descriptor.renderer === 'markdown') {
+    content = template.content;
+  } else if (descriptor.renderer === 'codex-skill') {
+    content = renderCodexSkillMarkdown(template.spec);
+  } else if (descriptor.renderer === 'codex-openai') {
+    content = renderCodexOpenAiYaml(template.spec);
+  } else {
+    throw new Error(`unknown command renderer: ${descriptor.renderer}`);
   }
 
-  if (target.kind === 'opencode-command') {
-    writeMarkdownCommand(context, spec, target.root);
+  const bytes = Buffer.from(content, 'utf8');
+  return {
+    ...descriptor,
+    bytes,
+    content,
+    record: {
+      kind: descriptor.kind,
+      source: descriptor.source,
+      target: descriptor.target,
+      digest: digestBytes(bytes),
+    },
+    targetPath: safeResolveInside(context.workspaceDir, descriptor.target, 'command target'),
+  };
+}
+
+function preflightCommandPlan(workspaceDir, plan, previousArtifacts) {
+  const errors = [];
+  for (const item of plan) {
+    try {
+      preflightCommandArtifact(workspaceDir, item, previousArtifacts);
+    } catch (error) {
+      errors.push(error.message);
+    }
+  }
+  if (errors.length > 0) {
+    throw new Error(`command artifact preflight failed:\n- ${errors.join('\n- ')}`);
+  }
+}
+
+function preflightCommandArtifact(workspaceDir, item, previousArtifacts) {
+  const targetPath = safeResolveInside(workspaceDir, item.target, 'command target');
+  assertNoSymlinkInPath(targetPath);
+  const exists = fs.existsSync(targetPath);
+  const previous = findArtifactRecord(previousArtifacts, item.kind, item.target);
+
+  if (!exists) {
+    item.action = 'create';
+    item.observedDigest = null;
     return;
   }
-
-  if (target.kind === 'codex-skill-command') {
-    writeCodexSkillCommand(context, spec, target.root);
-    return;
+  const stat = fs.lstatSync(targetPath);
+  if (!stat.isFile()) {
+    throw new Error(`command artifact target is not a regular file: ${item.target}`);
+  }
+  if (!previous || previous.source !== item.source) {
+    throw new Error(`refusing to overwrite unowned command artifact: ${item.target}`);
   }
 
-  throw new Error(`unknown command target kind: ${target.kind}`);
+  const actualDigest = digestBytes(fs.readFileSync(targetPath));
+  if (actualDigest !== previous.digest) {
+    throw new Error(`owned command artifact drifted: ${item.target}`);
+  }
+  item.action = 'refresh';
+  item.observedDigest = actualDigest;
 }
 
-function writeMarkdownCommand(context, spec, targetRoot) {
-  const { options, printAction, variables, workspaceDir } = context;
-  const sourceRelativePath = path.posix.join('commands', spec.fileName);
-  const targetPath = safeResolveInside(workspaceDir, path.join(targetRoot, spec.fileName), 'command target');
-  const content = renderTemplate(sourceRelativePath, variables);
-  printAction(writeFile(targetPath, content, { dryRun: options.dryRun, overwrite: true }), targetPath);
+function writeCommandFiles(context) {
+  const { commandPlan, options, printAction } = context;
+  revalidateCommandPlan(context.workspaceDir, commandPlan);
+  for (const item of commandPlan) {
+    writeFile(item.targetPath, item.content, { dryRun: options.dryRun, overwrite: item.action === 'refresh' });
+    printAction(item.action, item.targetPath);
+  }
 }
 
-function writeCodexSkillCommand(context, spec, targetRoot) {
-  const skillRoot = path.join(targetRoot, spec.id);
-  writeGeneratedCommandFile(context, path.join(skillRoot, 'SKILL.md'), renderCodexSkillMarkdown(spec));
-  writeGeneratedCommandFile(context, path.join(skillRoot, 'agents', 'openai.yaml'), renderCodexOpenAiYaml(spec));
-}
-
-function writeGeneratedCommandFile(context, relativePath, content) {
-  const { options, printAction, workspaceDir } = context;
-  const targetPath = safeResolveInside(workspaceDir, relativePath, 'command target');
-  printAction(writeFile(targetPath, content, { dryRun: options.dryRun, overwrite: true }), targetPath);
+function revalidateCommandPlan(workspaceDir, plan) {
+  const errors = [];
+  for (const item of plan) {
+    try {
+      const targetPath = safeResolveInside(workspaceDir, item.target, 'command target');
+      assertNoSymlinkInPath(targetPath);
+      const exists = fs.existsSync(targetPath);
+      if (item.observedDigest === null) {
+        if (exists) {
+          throw new Error(`command artifact appeared after preflight: ${item.target}`);
+        }
+        continue;
+      }
+      if (!exists || !fs.lstatSync(targetPath).isFile()) {
+        throw new Error(`command artifact changed type after preflight: ${item.target}`);
+      }
+      if (digestBytes(fs.readFileSync(targetPath)) !== item.observedDigest) {
+        throw new Error(`command artifact changed after preflight: ${item.target}`);
+      }
+    } catch (error) {
+      errors.push(error.message);
+    }
+  }
+  if (errors.length > 0) {
+    throw new Error(`command artifact revalidation failed:\n- ${errors.join('\n- ')}`);
+  }
 }
 
 function renderCodexSkillMarkdown(spec) {
@@ -95,7 +178,7 @@ function renderCodexOpenAiYaml(spec) {
   return `interface:
   display_name: "${escapeYamlDoubleQuoted(spec.id)}"
   short_description: "${escapeYamlDoubleQuoted(spec.description)}"
-  default_prompt: "Use $${escapeYamlDoubleQuoted(getCommandId(spec.fileName))} to run this workflow."
+  default_prompt: "Use $${escapeYamlDoubleQuoted(spec.id)} to run this workflow."
 `;
 }
 
@@ -104,5 +187,6 @@ function escapeYamlDoubleQuoted(value) {
 }
 
 module.exports = {
+  prepareCommandPlan,
   writeCommandFiles,
 };

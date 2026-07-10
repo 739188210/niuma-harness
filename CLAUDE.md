@@ -1,3 +1,7 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # Niuma Harness Entry
 
 > You do not need to go out of your way to please or pander to the person you are communicating with; simply be yourself. You have your own thoughts and judgment, so you should evaluate any uncertainties or plans discussed based on facts, principles, and objectives to determine their validity. If the other party is incorrect, point it out immediately and propose a feasible solution.
@@ -5,12 +9,7 @@
 定位：
 为 Claude Code / Codex / opencode 等 AI coding tools 生成并验证一套可控、可观察、可恢复、上下文高效的工程协作 harness。
 
-核心方向围绕 4 个词展开：
-Action
-Observation
-Recovery
-Context
-
+核心方向围绕 4 个词展开：Action / Observation / Recovery / Context
 
 This file has two zones:
 
@@ -63,69 +62,57 @@ The loop above is all that stays in context. Each phase names the one file to op
 
 # Development
 
-Guidance for working on niuma-harness itself. The operating-loop contract above is the product surface; this section is for developing the generator.
+Guidance for working on niuma-harness itself. The managed operating-loop contract above is the product surface; this section is for developing the generator.
 
-Important for this source repository: it intentionally does not contain a generated `harness/` instance. When developing or reviewing niuma-harness itself, inspect `templates/core/` as the source of generated harness docs instead of trying to load `harness/docs/` from this repo root.
+This source repository intentionally does **not** contain a generated `harness/` instance. Inspect template sources instead: `templates/core/docs/` for generated harness docs, `templates/manifest.json` for scaffold shape, `templates/commands/` for command workflows, and `templates/skills/` for native skill packages.
 
 > 回答用户问题时，记得提炼精简，不要明明可以精炼却还是输出大段大段的文本。
 
 ## Commands
 
-- `npm test` — full CLI test script (`node test/cli.test.js`).
+- `npm test` — full test suite (`node test/cli.test.js`).
 - `npm run check` — alias for `npm test`.
-- `npm run pack:dry` — preview the npm package contents.
-- `node bin/niuma-harness.js --help` — CLI help from the local checkout.
-- `node bin/niuma-harness.js init <tmp> --agent claude --dry-run` — preview generation without writing.
-- `node bin/niuma-harness.js doctor <tmp>` — validate a harness.
-- Focused tests run directly: `node test/init.test.js`, `node test/doctor.test.js`, `node test/help.test.js`; `test/cli.test.js` is the aggregator.
+- `npm run pack:dry` — preview npm package contents.
+- `node bin/niuma-harness.js --help` — local CLI help.
+- `node bin/niuma-harness.js init <tmp> --agent claude --dry-run` — preview generated files without writing.
+- `node bin/niuma-harness.js init <tmp> --agent multi --skills all` — generate all supported agent surfaces in a temp workspace.
+- `node bin/niuma-harness.js doctor <tmp>` — validate a generated harness.
+- Focused tests: `node test/init.test.js`, `node test/doctor.test.js`, `node test/help.test.js`.
 
-Do not run `init .` in this repo root to test — use a temp dir. The repo has no `harness/` instance by design (see `harness-roadmap.md`, P7).
+Do not run `init .` in this repo root; use a temp directory.
 
 ## Architecture
 
-Dependency-free CommonJS Node CLI. `bin/niuma-harness.js` calls `main()` from `src/cli.js` and reports thrown errors to stderr with exit code 1. Three commands: `init`, `doctor`, `check` (alias of `doctor`).
+Dependency-free CommonJS Node CLI. `bin/niuma-harness.js` invokes `main()` from `src/cli.js`; commands are `init`, `doctor`, and `check` (alias of `doctor`). The main flow is:
 
-Core modules:
+1. `src/args.js` parses CLI flags and delegates agent/rule/skill validation to `src/agents.js`, `src/rules.js`, `src/skills.js`, and `src/commands.js`.
+2. `src/cli.js` fills a missing `--agent` via `src/prompts.js` in TTY mode, finalizes default/agent rules, then dispatches.
+3. `src/scaffold.js` builds an init context from `templates/manifest.json`, creates directories, writes entry files/templates/rules/skills/commands through `src/scaffold/*`, then regenerates the generated `harness/manifest.json` via `src/scaffold/status-writer.js`.
+4. `src/doctor.js` locates generated `manifest.json`, then `src/doctor/checks.js` validates the harness root, workspace `agent-work/`, entry contract integrity, selected rules, skills, commands, and required docs.
 
-- `src/args.js` — argument parsing; delegates to `src/agents.js`, `src/rules.js`, `src/help.js`. There is no `--force`; `init` is idempotent.
-- `src/prompts.js` — fills a missing `--agent` interactively in a TTY; non-TTY `init` without `--agent` fails.
-- `src/scaffold.js` — `init` orchestration; writers under `src/scaffold/` (directories, entries, manifest, rules-writer, status-writer, templates) plus `src/fs-safe.js` and `src/harness-status.js`.
-- `src/doctor.js` — `doctor`/`check` orchestration; checks under `src/doctor/`.
-- `src/contract.js` — shared contract-block markers + slice/replace helpers, used by scaffold (entry merge) and doctor (integrity check).
-- `src/rules.js` — discovers rule directories, normalizes `--rules` / `--rules-out`.
+`src/fs-safe.js` centralizes path confinement and symlink refusal for scaffold writes/removals. `src/contract.js` owns the managed contract markers and replacement helpers used by both entry merging and doctor integrity checks.
 
-## Init write model (idempotent, no --force)
+## Init write model
 
-`init` is safe to re-run; behavior is decided per file:
+`init` is idempotent; there is no `--force`.
 
-- **Entry** (`CLAUDE.md` / `AGENTS.md`, from `getEntryFilesForAgent`): merged in `src/scaffold/entries.js`. No file → write full `templates/entry/entry.md`; contract markers present → replace only the block; markers absent → insert the block at the top. Existing content is always preserved.
-- **Tool-managed template files** (`managed !== "user"` in `templates/manifest.json`, the default): overwritten every init.
-- **User-maintained template files** (`managed: "user"` — `docs/project-context.md`, `docs/automation/automation-intent.md`): skipped if they exist.
-- **Rules** (under `templates/core/docs/rules/<name>/`): converge to the current `--rules` / `--rules-out` selection; selected existing files are preserved, unselected known rule directories are removed, including local files inside them.
-- **manifest.json**: regenerated every init (`src/scaffold/status-writer.js`).
+- **Entry files** are agent-derived, not listed in `templates/manifest.json`: `claude` writes `CLAUDE.md`, `codex`/`opencode` write `AGENTS.md`, and `multi` writes both. `src/scaffold/entries.js` preserves all content outside the managed contract block.
+- **Harness docs** are driven by `templates/manifest.json`. Tool-managed templates refresh on each init; `managed: "user"` files (`docs/project-context.md`, `docs/automation/automation-intent.md`) are created only when missing.
+- **Rules** flow from `templates/core/docs/rules/<name>/` into `harness/docs/rules/<name>/`, then to agent-native pointers/adapters (`.claude/rules/`, `AGENTS.md` pointer behavior for Codex, and managed `opencode.json` instructions).
+- **Commands** are single-sourced from `templates/commands/*.md` and rendered per agent: Claude slash commands, Codex command-derived skills, and OpenCode commands.
+- **Skills** are copied from `templates/skills/*` into selected agent-native skill roots. Known skills converge to the current `--skills` selection; user runtime config such as `zentao.config.json` is preserved.
+- **Generated status** is `harness/manifest.json`, distinct from package-internal `templates/manifest.json`; doctor trusts the generated manifest to decide what to validate.
 
-`writeFile` (`src/fs-safe.js`) takes an explicit `{ dryRun, overwrite }`; callers set `overwrite` from the classification.
-
-## Template model
-
-`templates/manifest.json` is the source of truth for what `init` generates:
-
-- `workDirectory` / `workDirectories` — workspace-level runtime task area.
-- `directories` — created inside the harness root.
-- `templateFiles` — rendered into the harness root; each may carry `"managed": "user"` (default tool-managed).
-- `workTemplateFiles` — rendered under the workspace root (tool-managed).
-- `rulesRoot` — rule directory root (`templates/core/docs/rules/<name>/`).
-
-Entry files are not in `templates/manifest.json`; selected by `getEntryFilesForAgent()` (claude → `CLAUDE.md`, codex/opencode → `AGENTS.md`, multi → both). Single source template: `templates/entry/entry.md`.
-
-When adding or moving scaffold templates, update `templates/manifest.json` and the focused tests, or files may exist in the repository but not be generated by `init` or validated by `doctor`.
-
-## Generated harness shape
-
-Entry written to the workspace root (auto-discovered by coding tools); the rest under `target/harness/`; runtime task records under the workspace-level `agent-work/`. Generated `manifest.json` records `schemaVersion`, agent, rules, harnessDir, workDir, entryFiles, createdBy, createdAt — regenerated every init. `doctor` validates against this generated manifest and also checks the entry contract zone is intact.
-
-Docs follow a seven-layer operating model under `docs/layers/` (context, policy, process, observation, recovery, memory, loop). Process playbooks include the cross-cutting `isolation.md` and `subagent-development.md`.
+Generated harness docs follow the seven-layer model under `docs/layers/`, with policy/process docs, `docs/experiments/task-execution-record.md`, optional rules, and workspace-level runtime notes under `agent-work/`.
 
 ## Tests
 
-Plain Node scripts using built-in `assert` and temporary directories. `test/cli.test.js` is the aggregator used by `npm test`; focused coverage lives in `test/init.test.js`, `test/doctor.test.js`, and `test/help.test.js`, with shared helpers in `test/helpers.js`. Tests execute the real CLI binary, so cover parsing/scaffold/doctor changes by extending the focused test files rather than mocking internals.
+Tests are plain Node scripts using built-in `assert` and temporary directories. They execute the real CLI binary via `spawnSync` rather than mocking internals.
+
+- `test/cli.test.js` aggregates the focused suites used by `npm test`.
+- `test/init.test.js` covers scaffold shape, dry-run, entry merging, re-init convergence, custom harness dirs, rules, skills, commands, and symlink defenses.
+- `test/doctor.test.js` covers generated manifest discovery plus positive/negative integrity checks for files, entry contracts, rules, skills, commands, and `agent-work`.
+- `test/help.test.js` covers CLI help output.
+- `test/helpers.js` holds shared temp-dir and assertion helpers.
+
+When changing scaffold behavior, update `templates/manifest.json`, the relevant writer/checker, and focused tests together so generated files and doctor validation stay aligned.

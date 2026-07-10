@@ -1,4 +1,5 @@
 // init 的顶层编排层；具体写文件逻辑放在 src/scaffold/ 子模块中。
+const fs = require('fs');
 const path = require('path');
 
 const { getEntryFilesForAgent } = require('./agents');
@@ -16,7 +17,9 @@ const {
   writeTemplateFiles,
   writeWorkTemplateFiles,
 } = require('./scaffold/entries');
-const { writeCommandFiles } = require('./scaffold/commands-writer');
+const { prepareCommandPlan, writeCommandFiles } = require('./scaffold/commands-writer');
+const { STATUS_FILE } = require('./harness-status');
+const { validateArtifactRecords } = require('./artifact-ledger');
 const { writeRuleAdapterFiles } = require('./scaffold/rules-adapters-writer');
 const { writeRuleFiles } = require('./scaffold/rules-writer');
 const { writeSkillFiles } = require('./scaffold/skills-writer');
@@ -52,8 +55,7 @@ function createInitContext(options) {
   const availableCommands = getAvailableCommandFiles(manifest.commandsRoot);
   assertCommandSkillIdsAvailable(availableCommands, getAvailableSkillDirs(manifest.skillsRoot));
   const commands = getDefaultCommandsForAgent(options.agent, availableCommands);
-
-  return {
+  const context = {
     commands,
     manifest,
     options,
@@ -63,6 +65,33 @@ function createInitContext(options) {
     workDirectory,
     workspaceDir,
   };
+  const previousArtifacts = readPreviousArtifacts(targetDir);
+  const prepared = prepareCommandPlan(context, previousArtifacts);
+  context.artifacts = prepared.artifacts;
+  context.commandPlan = prepared.plan;
+  return context;
+}
+
+function readPreviousArtifacts(targetDir) {
+  const statusPath = path.join(targetDir, STATUS_FILE);
+  if (!fs.existsSync(statusPath)) {
+    return [];
+  }
+  const stat = fs.lstatSync(statusPath);
+  if (!stat.isFile()) {
+    throw new Error(`Path exists but is not a regular file: ${statusPath}`);
+  }
+
+  let status;
+  try {
+    status = JSON.parse(fs.readFileSync(statusPath, 'utf8'));
+  } catch (error) {
+    throw new Error(`invalid previous ${STATUS_FILE}: ${error.message}`);
+  }
+  if (status.schemaVersion !== 2 || status.createdBy !== 'niuma-harness') {
+    throw new Error(`unsupported previous ${STATUS_FILE}; schemaVersion 2 ownership data is required`);
+  }
+  return validateArtifactRecords(status.artifacts);
 }
 
 // 防止 harness 目录和 workspace 级运行期任务目录重名。

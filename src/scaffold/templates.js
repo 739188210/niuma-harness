@@ -17,6 +17,5 @@ function renderTemplate(relativePath, variables) {
 }
 
 module.exports = {
-  readTemplate,
   renderTemplate,
 };

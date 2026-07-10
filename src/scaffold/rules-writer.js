@@ -15,7 +15,7 @@ function writeRuleFiles(context) {
   const rulesRootPath = getRulesRootPath(manifest.rulesRoot);
   const availableRules = getAvailableRuleDirs(manifest.rulesRoot);
 
-  cleanupUnselectedRuleFiles(context, availableRules, rulesRootPath);
+  cleanupUnselectedRuleFiles(context, availableRules);
 
   for (const ruleName of context.options.rules) {
     writeRuleDirectory(context, ruleName, rulesRootPath);
@@ -23,7 +23,7 @@ function writeRuleFiles(context) {
 }
 
 // 重复 init 时让 docs/rules 收敛到本次 --rules / --rules-out 的选择。
-function cleanupUnselectedRuleFiles(context, availableRules, rulesRootPath) {
+function cleanupUnselectedRuleFiles(context, availableRules) {
   const selected = new Set(context.options.rules);
   for (const ruleName of availableRules) {
     if (!selected.has(ruleName)) {

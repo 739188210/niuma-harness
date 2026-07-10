@@ -10,6 +10,7 @@ const {
   readJson,
   run,
   tempDir,
+  updateManifest,
 } = require('./helpers');
 
 const primaryCommand = allCommandFiles[0];
@@ -128,14 +129,63 @@ test('doctor fails when the entry contract zone is tampered', () => {
   assert.match(result.stdout, /contract zone drifted in CLAUDE\.md/);
 });
 
-test('doctor leaves a user-managed entry without contract markers alone', () => {
+test('doctor fails when the entry contract zone is missing', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(init.status, 0, init.stderr);
   fs.writeFileSync(path.join(workspace, 'CLAUDE.md'), 'my own entry\n', 'utf8');
   const result = run(['doctor', workspace]);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assert.doesNotMatch(result.stdout, /contract/);
+  assert.notStrictEqual(result.status, 0, 'doctor should fail when the contract zone is missing');
+  assert.match(result.stdout, /contract zone missing in CLAUDE\.md/);
+});
+
+test('doctor fails when only the entry contract begin marker remains', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  const entry = path.join(workspace, 'CLAUDE.md');
+  fs.writeFileSync(entry, read(entry).replace('<!-- niuma-harness:contract end -->', ''), 'utf8');
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should fail when the end marker is missing');
+  assert.match(result.stdout, /contract zone end marker missing in CLAUDE\.md/);
+});
+
+test('doctor fails when only the entry contract end marker remains', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  const entry = path.join(workspace, 'CLAUDE.md');
+  fs.writeFileSync(entry, '<!-- niuma-harness:contract end -->\n', 'utf8');
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should fail when the begin marker is missing');
+  assert.match(result.stdout, /contract zone begin marker missing in CLAUDE\.md/);
+});
+
+test('doctor fails when entry contract markers are out of order', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  const entry = path.join(workspace, 'CLAUDE.md');
+  fs.writeFileSync(
+    entry,
+    '<!-- niuma-harness:contract end -->\n<!-- niuma-harness:contract begin — do not modify -->\n',
+    'utf8'
+  );
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should fail when contract markers are out of order');
+  assert.match(result.stdout, /contract zone markers out of order in CLAUDE\.md/);
+});
+
+test('doctor fails when the entry contains multiple contract zones', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  const entry = path.join(workspace, 'CLAUDE.md');
+  const body = read(entry);
+  fs.writeFileSync(entry, `${body}\n${body}`, 'utf8');
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should fail when multiple contract zones exist');
+  assert.match(result.stdout, /multiple contract zones in CLAUDE\.md/);
 });
 
 test('doctor fails when a layer memo is missing', () => {
@@ -232,10 +282,9 @@ test('doctor fails when workDir is missing from manifest', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(init.status, 0, init.stderr);
-  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
-  const manifest = readJson(manifestPath);
-  delete manifest.workDir;
-  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  updateManifest(workspace, (manifest) => {
+    delete manifest.workDir;
+  });
   const result = run(['doctor', workspace]);
   assert.notStrictEqual(result.status, 0, 'doctor should fail when workDir is missing');
   assert.match(result.stdout, /missing workDir/);
@@ -245,10 +294,9 @@ test('doctor fails when skills is missing', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(init.status, 0, init.stderr);
-  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
-  const manifest = readJson(manifestPath);
-  delete manifest.skills;
-  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  updateManifest(workspace, (manifest) => {
+    delete manifest.skills;
+  });
   const result = run(['doctor', workspace]);
   assert.notStrictEqual(result.status, 0, 'doctor should fail when skills is missing');
   assert.match(result.stdout, /missing skills/);
@@ -258,10 +306,9 @@ test('doctor fails when skills is a string', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(init.status, 0, init.stderr);
-  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
-  const manifest = readJson(manifestPath);
-  manifest.skills = primarySkill;
-  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  updateManifest(workspace, (manifest) => {
+    manifest.skills = primarySkill;
+  });
   const result = run(['doctor', workspace]);
   assert.notStrictEqual(result.status, 0, 'doctor should fail when skills is a string');
   assert.match(result.stdout, /skills must be an array/);
@@ -271,10 +318,9 @@ test('doctor fails when skills contains an unknown directory', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(init.status, 0, init.stderr);
-  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
-  const manifest = readJson(manifestPath);
-  manifest.skills = ['unknown'];
-  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  updateManifest(workspace, (manifest) => {
+    manifest.skills = ['unknown'];
+  });
   const result = run(['doctor', workspace]);
   assert.notStrictEqual(result.status, 0, 'doctor should fail when skills contains an unknown directory');
   assert.match(result.stdout, /invalid skills/);
@@ -312,14 +358,77 @@ test('doctor fails when a multi selected skill target is missing', () => {
   assert.match(result.stdout, new RegExp(`missing \\.opencode/skills/${primarySkill}/`));
 });
 
+test('doctor fails when schemaVersion 2 artifacts are missing', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  updateManifest(workspace, (manifest) => {
+    delete manifest.artifacts;
+  });
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should require the ownership ledger');
+  assert.match(result.stdout, /artifacts must be an array/);
+});
+
+test('doctor fails when a command artifact record is missing', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  let missing;
+  updateManifest(workspace, (manifest) => {
+    missing = manifest.artifacts.shift();
+  });
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should require every expected command record');
+  assert.match(result.stdout, new RegExp(`missing command artifact record ${missing.target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+});
+
+test('doctor fails when an owned command artifact drifts by one byte', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  const manifest = readJson(path.join(workspace, 'harness', 'manifest.json'));
+  const record = manifest.artifacts[0];
+  const targetPath = path.join(workspace, ...record.target.split('/'));
+  fs.appendFileSync(targetPath, 'x');
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should detect exact-byte drift');
+  assert.match(result.stdout, /artifact drifted/);
+  assert.match(result.stdout, new RegExp(record.digest));
+});
+
+test('doctor fails when artifact ledger contains duplicate targets', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  updateManifest(workspace, (manifest) => {
+    manifest.artifacts.push({ ...manifest.artifacts[0] });
+  });
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should reject duplicate ownership');
+  assert.match(result.stdout, /duplicate artifact target/);
+});
+
+test('doctor rejects schemaVersion 1 without migration', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  updateManifest(workspace, (manifest) => {
+    manifest.schemaVersion = 1;
+    delete manifest.artifacts;
+  });
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should reject schemaVersion 1');
+  assert.match(result.stdout, /unsupported schemaVersion: 1/);
+});
+
 test('doctor fails when commands is missing', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(init.status, 0, init.stderr);
-  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
-  const manifest = readJson(manifestPath);
-  delete manifest.commands;
-  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  updateManifest(workspace, (manifest) => {
+    delete manifest.commands;
+  });
   const result = run(['doctor', workspace]);
   assert.notStrictEqual(result.status, 0, 'doctor should fail when commands is missing');
   assert.match(result.stdout, /missing commands/);
@@ -329,10 +438,9 @@ test('doctor fails when commands is a string', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(init.status, 0, init.stderr);
-  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
-  const manifest = readJson(manifestPath);
-  manifest.commands = primaryCommand;
-  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  updateManifest(workspace, (manifest) => {
+    manifest.commands = primaryCommand;
+  });
   const result = run(['doctor', workspace]);
   assert.notStrictEqual(result.status, 0, 'doctor should fail when commands is a string');
   assert.match(result.stdout, /commands must be an array/);
@@ -342,10 +450,9 @@ test('doctor fails when commands contains an unknown file', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(init.status, 0, init.stderr);
-  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
-  const manifest = readJson(manifestPath);
-  manifest.commands = ['unknown.md'];
-  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  updateManifest(workspace, (manifest) => {
+    manifest.commands = ['unknown.md'];
+  });
   const result = run(['doctor', workspace]);
   assert.notStrictEqual(result.status, 0, 'doctor should fail when commands contains an unknown file');
   assert.match(result.stdout, /invalid commands/);
@@ -449,10 +556,9 @@ test('doctor fails when rules is a string', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(init.status, 0, init.stderr);
-  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
-  const manifest = readJson(manifestPath);
-  manifest.rules = 'copy';
-  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  updateManifest(workspace, (manifest) => {
+    manifest.rules = 'copy';
+  });
   const result = run(['doctor', workspace]);
   assert.notStrictEqual(result.status, 0, 'doctor should fail when rules is a string');
   assert.match(result.stdout, /rules must be an array/);
@@ -462,10 +568,9 @@ test('doctor fails when rules contains an unknown directory', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(init.status, 0, init.stderr);
-  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
-  const manifest = readJson(manifestPath);
-  manifest.rules = ['unknown'];
-  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  updateManifest(workspace, (manifest) => {
+    manifest.rules = ['unknown'];
+  });
   const result = run(['doctor', workspace]);
   assert.notStrictEqual(result.status, 0, 'doctor should fail when rules contains an unknown directory');
   assert.match(result.stdout, /invalid rules/);

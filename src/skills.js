@@ -1,11 +1,13 @@
 // skills 选择模型：从 templates/skills 发现技能包，并规范化 CLI 输入。
 const fs = require('fs');
 const path = require('path');
+const { listFilesRecursive, safeResolveInside, validateRelativePath } = require('./fs-safe');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const TEMPLATE_DIR = path.join(ROOT_DIR, 'templates');
 const DEFAULT_SKILLS_ROOT = 'skills';
 const DEFAULT_SKILLS_SELECTION = 'all';
+const SKILL_METADATA_FILE = 'niuma-skill.json';
 const SPECIAL_SKILLS = new Set(['all', 'none']);
 const SKILL_TARGET_ROOTS = {
   claude: ['.claude/skills'],
@@ -29,6 +31,61 @@ function getAvailableSkillDirs(skillsRoot = DEFAULT_SKILLS_ROOT) {
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort();
+}
+
+function loadSkillMetadata(skillName, skillsRoot = DEFAULT_SKILLS_ROOT) {
+  const skillDir = path.join(getSkillsRootPath(skillsRoot), skillName);
+  const metadataPath = path.join(skillDir, SKILL_METADATA_FILE);
+  if (!fs.existsSync(metadataPath)) {
+    return { files: {}, schemaVersion: 1 };
+  }
+
+  let metadata;
+  try {
+    metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+  } catch (error) {
+    throw new Error(`invalid skill metadata at ${metadataPath}: ${error.message}`);
+  }
+  validateSkillMetadata(metadata, metadataPath, skillDir);
+  return metadata;
+}
+
+function validateSkillMetadata(metadata, metadataPath, skillDir) {
+  if (!metadata || Array.isArray(metadata) || typeof metadata !== 'object') {
+    throw new Error(`skill metadata must contain an object: ${metadataPath}`);
+  }
+  if (metadata.schemaVersion !== 1) {
+    throw new Error(`unsupported skill metadata schemaVersion in ${metadataPath}`);
+  }
+  if (!metadata.files || Array.isArray(metadata.files) || typeof metadata.files !== 'object') {
+    throw new Error(`skill metadata files must contain an object: ${metadataPath}`);
+  }
+
+  for (const [relativePath, file] of Object.entries(metadata.files)) {
+    validateRelativePath(relativePath, 'skill metadata file');
+    const resolved = safeResolveInside(skillDir, relativePath, 'skill metadata file');
+    if (!file || Array.isArray(file) || typeof file !== 'object' || !['tool', 'user'].includes(file.ownership)) {
+      throw new Error(`invalid ownership for ${relativePath} in ${metadataPath}`);
+    }
+    if (!fs.existsSync(resolved) || !fs.lstatSync(resolved).isFile()) {
+      throw new Error(`skill metadata references missing file ${relativePath}: ${metadataPath}`);
+    }
+  }
+}
+
+function getSkillFiles(skillName, skillsRoot = DEFAULT_SKILLS_ROOT) {
+  const skillDir = path.join(getSkillsRootPath(skillsRoot), skillName);
+  const metadata = loadSkillMetadata(skillName, skillsRoot);
+  return listFilesRecursive(skillDir)
+    .filter((sourcePath) => path.relative(skillDir, sourcePath) !== SKILL_METADATA_FILE)
+    .map((sourcePath) => {
+      const relativePath = path.relative(skillDir, sourcePath).split(path.sep).join('/');
+      return {
+        ownership: metadata.files[relativePath]?.ownership || 'tool',
+        relativePath,
+        sourcePath,
+      };
+    });
 }
 
 function normalizeSkills(skills, availableSkills = getAvailableSkillDirs()) {
@@ -81,10 +138,6 @@ function getSkillTargetRootsForAgent(agent) {
   return [...targetRoots];
 }
 
-function getAllSkillTargetRoots() {
-  return [...new Set(Object.values(SKILL_TARGET_ROOTS).flat())];
-}
-
 function parseSkillTokens(value, label) {
   const raw = String(value || '').trim();
   if (!raw) {
@@ -125,14 +178,13 @@ function formatAvailableSkills(availableSkills = getAvailableSkillDirs()) {
 }
 
 module.exports = {
-  DEFAULT_SKILLS_ROOT,
-  DEFAULT_SKILLS_SELECTION,
+  SKILL_METADATA_FILE,
   getSkillsRootPath,
   getAvailableSkillDirs,
+  loadSkillMetadata,
+  getSkillFiles,
   normalizeSkills,
   normalizeConcreteSkills,
   getSkillTargetRootsForAgent,
-  getAllSkillTargetRoots,
   formatSkills,
-  formatAvailableSkills,
 };
