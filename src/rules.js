@@ -23,7 +23,7 @@ const RULE_ADAPTER_TARGETS = {
     { kind: 'opencode-instructions', file: 'opencode.json' },
   ],
 };
-const PREFERRED_RULE_ORDER = ['common', 'claude', 'codex', 'opencode'];
+const PREFERRED_RULE_ORDER = ['common', 'web', 'typescript', 'java', 'python', 'fastapi', 'claude', 'codex', 'opencode'];
 const SPECIAL_RULES = new Set(['all', 'none']);
 
 function getRulesRootPath(rulesRoot = DEFAULT_RULES_ROOT) {

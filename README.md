@@ -60,6 +60,9 @@ npx niuma-harness init ./workspace --agent claude --skills database-readonly
 npx niuma-harness init ./workspace --agent multi --skills all
 npx niuma-harness init ./workspace --agent claude --rules none
 npx niuma-harness init ./workspace --agent claude --rules all
+npx niuma-harness init ./workspace --agent claude --rules web,typescript
+npx niuma-harness init ./workspace --agent claude --rules java
+npx niuma-harness init ./workspace --agent claude --rules python,fastapi
 npx niuma-harness init ./workspace --agent claude --rules-out opencode
 npx niuma-harness init ./workspace --agent opencode --dry-run
 npx niuma-harness init ./workspace --agent multi --harness-dir ai-harness
@@ -228,8 +231,10 @@ The canonical rule content lives in `templates/core/docs/rules/*` and generated 
 
 Rule directories have two roles:
 
-- `common` and future non-agent rule directories are lightweight engineering preferences.
+- `common`, `web`, `typescript`, `java`, `python`, `fastapi`, and other non-agent rule directories are lightweight engineering preferences.
 - `claude`, `codex`, and `opencode` are agent-specific notes installed automatically for the selected `--agent`.
+
+Multiple selected rule directories can apply to the same task. For example, `.ts` / `.tsx` browser UI work may need both `web/` and `typescript/`; FastAPI API work may need both `python/` and `fastapi/`; a mixed backend/frontend workspace may select `java`, `web`, and `typescript` together.
 
 When `--rules` is omitted, `init` installs `common` plus the selected agent adapter rules:
 
@@ -244,9 +249,12 @@ Use `--rules <selection>` to choose engineering rule directories; the current ag
 
 ```bash
 npx niuma-harness init . --agent codex --rules common
+npx niuma-harness init . --agent claude --rules web,typescript
+npx niuma-harness init . --agent claude --rules java
+npx niuma-harness init . --agent claude --rules python,fastapi
 ```
 
-The command above installs `common` and `codex`.
+The first command installs `common` and `codex`. The second installs `web`, `typescript`, and `claude`. The third installs `java` and `claude`. The fourth installs `python`, `fastapi`, and `claude`.
 
 Use `all` to install every available rule directory, or `none` to install no rule files.
 

@@ -795,6 +795,15 @@ if (allRuleDirs.length > 1) {
 
 for (const scenario of [
   { rules: 'common', expected: addAgentRules(['common'], 'claude', allRuleDirs) },
+  { rules: 'web', expected: addAgentRules(['web'], 'claude', allRuleDirs) },
+  { rules: 'typescript', expected: addAgentRules(['typescript'], 'claude', allRuleDirs) },
+  { rules: 'java', expected: addAgentRules(['java'], 'claude', allRuleDirs) },
+  { rules: 'python', expected: addAgentRules(['python'], 'claude', allRuleDirs) },
+  { rules: 'fastapi', expected: addAgentRules(['fastapi'], 'claude', allRuleDirs) },
+  { rules: 'web,typescript', expected: addAgentRules(['web', 'typescript'], 'claude', allRuleDirs) },
+  { rules: 'java,web', expected: addAgentRules(['java', 'web'], 'claude', allRuleDirs) },
+  { rules: 'java,typescript', expected: addAgentRules(['java', 'typescript'], 'claude', allRuleDirs) },
+  { rules: 'python,fastapi', expected: addAgentRules(['python', 'fastapi'], 'claude', allRuleDirs) },
   { rules: 'all', expected: allRuleDirs },
 ]) {
   test(`--rules ${scenario.rules} installs expected dirs`, () => {
@@ -803,6 +812,35 @@ for (const scenario of [
     assert.strictEqual(result.status, 0, result.stderr);
     const harnessRoot = path.join(workspace, 'harness');
     assertRuleDirs(harnessRoot, scenario.expected);
+    if (scenario.expected.includes('typescript')) {
+      assertFile(path.join(harnessRoot, 'docs', 'rules', 'typescript', 'coding-style.md'));
+      assertFile(path.join(harnessRoot, 'docs', 'rules', 'typescript', 'testing.md'));
+      assertFile(path.join(harnessRoot, 'docs', 'rules', 'typescript', 'security.md'));
+      assertNoPath(path.join(harnessRoot, 'docs', 'rules', 'typescript', 'patterns.md'));
+      assertNoPath(path.join(harnessRoot, 'docs', 'rules', 'typescript', 'hooks.md'));
+    }
+    if (scenario.expected.includes('java')) {
+      assertFile(path.join(harnessRoot, 'docs', 'rules', 'java', 'coding-style.md'));
+      assertFile(path.join(harnessRoot, 'docs', 'rules', 'java', 'patterns.md'));
+      assertFile(path.join(harnessRoot, 'docs', 'rules', 'java', 'testing.md'));
+      assertFile(path.join(harnessRoot, 'docs', 'rules', 'java', 'security.md'));
+      assertNoPath(path.join(harnessRoot, 'docs', 'rules', 'java', 'hooks.md'));
+    }
+    if (scenario.expected.includes('python')) {
+      assertFile(path.join(harnessRoot, 'docs', 'rules', 'python', 'coding-style.md'));
+      assertFile(path.join(harnessRoot, 'docs', 'rules', 'python', 'testing.md'));
+      assertFile(path.join(harnessRoot, 'docs', 'rules', 'python', 'security.md'));
+      assertNoPath(path.join(harnessRoot, 'docs', 'rules', 'python', 'patterns.md'));
+      assertNoPath(path.join(harnessRoot, 'docs', 'rules', 'python', 'hooks.md'));
+    }
+    if (scenario.expected.includes('fastapi')) {
+      assertFile(path.join(harnessRoot, 'docs', 'rules', 'fastapi', 'patterns.md'));
+      assertFile(path.join(harnessRoot, 'docs', 'rules', 'fastapi', 'testing.md'));
+      assertFile(path.join(harnessRoot, 'docs', 'rules', 'fastapi', 'security.md'));
+      assertNoPath(path.join(harnessRoot, 'docs', 'rules', 'fastapi', 'coding-style.md'));
+      assertNoPath(path.join(harnessRoot, 'docs', 'rules', 'fastapi', 'hooks.md'));
+    }
+    assertClaudeRulePointers(workspace, 'harness', scenario.expected);
     assertManifest(path.join(harnessRoot, 'manifest.json'), {
       agent: 'claude',
       rules: scenario.expected,
