@@ -7,18 +7,21 @@ argument-hint: ""
 
 ## 执行步骤
 
-1. 检查 `glab` 认证状态：
-   `glab auth status --hostname 192.168.31.107:9090`
+1. 确定本次查询的 GitLab host：
+   - 优先采用用户已设置的 `GITLAB_HOST`；否则根据当前仓库的 Git remote 和 `glab` 配置判断。
+   - 如果存在多个候选实例且无法确定，询问用户，不要猜测 host。
+   - 将选定值记为 `<gitlab-host>`；不要在模板中写死 IP、域名或端口。
+
+2. 检查选定实例的认证状态：
+   `glab auth status --hostname <gitlab-host>`
    - 如果失败，停止并提示用户先登录。
 
-2. 优先使用 `GITLAB_HOST` 指定自建实例，并用 `glab repo list` 查看成员项目：
-   `GITLAB_HOST=192.168.31.107:9090 glab repo list --member --per-page 100`
-
-3. 如果第 2 步输出为空或信息不足，使用 GitLab API 兜底，同样显式指定 host：
-   `GITLAB_HOST=192.168.31.107:9090 glab api "projects?membership=true&per_page=100"`
+3. 通过 `GITLAB_HOST` 显式指定同一 host，并列出当前用户参与的全部项目：
+   `GITLAB_HOST=<gitlab-host> glab api --paginate "projects?membership=true&per_page=100"`
+   - 不要对包含端口的自建实例使用 `glab api --hostname`；部分 `glab` 版本会将其判定为无效 hostname。
 
 4. 如需更易读的结果，可以用 Python 解析 API JSON：
-   `GITLAB_HOST=192.168.31.107:9090 glab api "projects?membership=true&per_page=100" | python -c "import sys,json; data=json.load(sys.stdin); print('membership_count=' + str(len(data))); print('\n'.join('{}\t{}\t{}\t{}'.format(p.get('id'), p.get('path_with_namespace'), p.get('visibility'), p.get('last_activity_at')) for p in data))"`
+   `GITLAB_HOST=<gitlab-host> glab api --paginate "projects?membership=true&per_page=100" | python -c "import sys,json; data=json.load(sys.stdin); print('membership_count=' + str(len(data))); print('\n'.join('{}\t{}\t{}\t{}'.format(p.get('id'), p.get('path_with_namespace'), p.get('visibility'), p.get('last_activity_at')) for p in data))"`
 
 ## 输出要求
 
@@ -32,4 +35,4 @@ argument-hint: ""
 
 - 只读查询，不要创建、删除或修改项目。
 - 不要输出 token 或敏感配置。
-- 如果 `gitlab.com` 的认证失败但 `192.168.31.107:9090` 正常，不要把它当作阻塞错误；说明当前自建 GitLab 正常即可。
+- 只检查并使用本次明确选定的 GitLab 实例；其他已配置实例的认证失败不应视为阻塞错误。

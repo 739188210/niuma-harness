@@ -1,29 +1,17 @@
 // 将 command 模板先渲染和完整预检，再统一写入各 agent 原生产物。
 const fs = require('fs');
-const path = require('path');
-const {
-  getCommandArtifactDescriptors,
-  getCommandsRootPath,
-  parseCommandSpec,
-} = require('../commands');
+const { renderCommandArtifacts } = require('../command-artifacts');
 const {
   digestBytes,
   findArtifactRecord,
   mergeArtifactRecords,
 } = require('../artifact-ledger');
-const { assertNoSymlinkInPath, safeResolveInside, writeFile } = require('../fs-safe');
-const { TEMPLATE_DIR } = require('./manifest');
-const { renderTemplate } = require('./templates');
+const { inspectFileTarget, safeResolveInside, writeFile } = require('../fs-safe');
 
 function prepareCommandPlan(context, previousArtifacts) {
   const { commands, manifest, options } = context;
-  const commandsRootPath = getCommandsRootPath(manifest.commandsRoot);
-  const templates = new Map(commands.map((commandFile) => [
-    commandFile,
-    loadCommandTemplate(context, commandFile, commandsRootPath),
-  ]));
-  const plan = getCommandArtifactDescriptors(options.agent, commands)
-    .map((descriptor) => renderCommandArtifact(context, descriptor, templates));
+  const plan = renderCommandArtifacts(options.agent, commands, manifest.commandsRoot, context.variables)
+    .map((artifact) => prepareRenderedArtifact(context, artifact));
   preflightCommandPlan(context.workspaceDir, plan, previousArtifacts);
   return {
     artifacts: mergeArtifactRecords(previousArtifacts, plan.map((item) => item.record)),
@@ -31,45 +19,18 @@ function prepareCommandPlan(context, previousArtifacts) {
   };
 }
 
-function loadCommandTemplate(context, commandFile, commandsRootPath) {
-  const sourcePath = path.join(commandsRootPath, commandFile);
-  const sourceRelativePath = path.relative(TEMPLATE_DIR, sourcePath).split(path.sep).join('/');
-  const specContent = renderTemplate(sourceRelativePath, context.variables);
-  const commandSource = path.posix.join('commands', commandFile);
+function prepareRenderedArtifact(context, artifact) {
+  const bytes = Buffer.from(artifact.content, 'utf8');
   return {
-    content: sourceRelativePath === commandSource
-      ? specContent
-      : renderTemplate(commandSource, context.variables),
-    spec: parseCommandSpec(commandFile, specContent),
-  };
-}
-
-function renderCommandArtifact(context, descriptor, templates) {
-  const commandFile = path.posix.basename(descriptor.source);
-  const template = templates.get(commandFile);
-  let content;
-  if (descriptor.renderer === 'markdown') {
-    content = template.content;
-  } else if (descriptor.renderer === 'codex-skill') {
-    content = renderCodexSkillMarkdown(template.spec);
-  } else if (descriptor.renderer === 'codex-openai') {
-    content = renderCodexOpenAiYaml(template.spec);
-  } else {
-    throw new Error(`unknown command renderer: ${descriptor.renderer}`);
-  }
-
-  const bytes = Buffer.from(content, 'utf8');
-  return {
-    ...descriptor,
+    ...artifact,
     bytes,
-    content,
     record: {
-      kind: descriptor.kind,
-      source: descriptor.source,
-      target: descriptor.target,
+      kind: artifact.kind,
+      source: artifact.source,
+      target: artifact.target,
       digest: digestBytes(bytes),
     },
-    targetPath: safeResolveInside(context.workspaceDir, descriptor.target, 'command target'),
+    targetPath: safeResolveInside(context.workspaceDir, artifact.target, 'command target'),
   };
 }
 
@@ -89,8 +50,7 @@ function preflightCommandPlan(workspaceDir, plan, previousArtifacts) {
 
 function preflightCommandArtifact(workspaceDir, item, previousArtifacts) {
   const targetPath = safeResolveInside(workspaceDir, item.target, 'command target');
-  assertNoSymlinkInPath(targetPath);
-  const exists = fs.existsSync(targetPath);
+  const exists = inspectFileTarget(targetPath);
   const previous = findArtifactRecord(previousArtifacts, item.kind, item.target);
 
   if (!exists) {
@@ -128,8 +88,7 @@ function revalidateCommandPlan(workspaceDir, plan) {
   for (const item of plan) {
     try {
       const targetPath = safeResolveInside(workspaceDir, item.target, 'command target');
-      assertNoSymlinkInPath(targetPath);
-      const exists = fs.existsSync(targetPath);
+      const exists = inspectFileTarget(targetPath);
       if (item.observedDigest === null) {
         if (exists) {
           throw new Error(`command artifact appeared after preflight: ${item.target}`);
@@ -149,41 +108,6 @@ function revalidateCommandPlan(workspaceDir, plan) {
   if (errors.length > 0) {
     throw new Error(`command artifact revalidation failed:\n- ${errors.join('\n- ')}`);
   }
-}
-
-function renderCodexSkillMarkdown(spec) {
-  const argumentHint = spec.argumentHint || '';
-  return `---
-name: ${spec.id}
-description: ${spec.description}
----
-
-# ${spec.id}
-
-Generated from \`templates/commands/${spec.fileName}\`.
-
-## Arguments
-
-Argument hint: \`${argumentHint}\`
-
-When the workflow mentions \`$ARGUMENTS\`, treat it as the user-supplied invocation arguments. If no arguments were supplied, \`$ARGUMENTS\` is empty.
-
-## Workflow
-
-${spec.body.trim()}
-`;
-}
-
-function renderCodexOpenAiYaml(spec) {
-  return `interface:
-  display_name: "${escapeYamlDoubleQuoted(spec.id)}"
-  short_description: "${escapeYamlDoubleQuoted(spec.description)}"
-  default_prompt: "Use $${escapeYamlDoubleQuoted(spec.id)} to run this workflow."
-`;
-}
-
-function escapeYamlDoubleQuoted(value) {
-  return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
 module.exports = {

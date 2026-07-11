@@ -2,39 +2,27 @@
 const fs = require('fs');
 const path = require('path');
 
-const { getEntryFilesForAgent } = require('./agents');
 const { formatCommands, getAvailableCommandFiles, getCommandId, getDefaultCommandsForAgent } = require('./commands');
 const { formatRules } = require('./rules');
 const { formatSkills, getAvailableSkillDirs } = require('./skills');
 const { loadManifest, validateManifest } = require('./scaffold/manifest');
-const {
-  createHarnessDirectories,
-  createTargetDirectory,
-  createWorkDirectories,
-} = require('./scaffold/directories');
-const {
-  writeEntryFiles,
-  writeTemplateFiles,
-  writeWorkTemplateFiles,
-} = require('./scaffold/entries');
+const { createDirectories, prepareDirectoryPlan } = require('./scaffold/directories');
+const { prepareFilePlan, writeFilePlan } = require('./scaffold/entries');
 const { prepareCommandPlan, writeCommandFiles } = require('./scaffold/commands-writer');
 const { STATUS_FILE } = require('./harness-status');
 const { validateArtifactRecords } = require('./artifact-ledger');
-const { writeRuleAdapterFiles } = require('./scaffold/rules-adapters-writer');
-const { writeRuleFiles } = require('./scaffold/rules-writer');
-const { writeSkillFiles } = require('./scaffold/skills-writer');
-const { writeStatusFile } = require('./scaffold/status-writer');
+const { prepareRuleAdapterPlan, writeRuleAdapterFiles } = require('./scaffold/rules-adapters-writer');
+const { prepareRulePlan, writeRuleFiles } = require('./scaffold/rules-writer');
+const { prepareSkillPlan, writeSkillFiles } = require('./scaffold/skills-writer');
+const { prepareStatusPlan, writeStatusFile } = require('./scaffold/status-writer');
+const { createTemplateVariables } = require('./template-variables');
 
 // 通过统一 context 串联各个步骤，避免 runInit 重新堆成长方法。
 function runInit(options) {
   const context = createInitContext(options);
   printInitSummary(context);
-  createTargetDirectory(context);
-  createHarnessDirectories(context);
-  createWorkDirectories(context);
-  writeEntryFiles(context);
-  writeTemplateFiles(context);
-  writeWorkTemplateFiles(context);
+  createDirectories(context);
+  writeFilePlan(context);
   writeRuleFiles(context);
   writeRuleAdapterFiles(context);
   writeSkillFiles(context);
@@ -69,6 +57,12 @@ function createInitContext(options) {
   const prepared = prepareCommandPlan(context, previousArtifacts);
   context.artifacts = prepared.artifacts;
   context.commandPlan = prepared.plan;
+  context.directoryPlan = prepareDirectoryPlan(context);
+  context.filePlan = prepareFilePlan(context);
+  context.rulePlan = prepareRulePlan(context);
+  context.ruleAdapterPlan = prepareRuleAdapterPlan(context);
+  context.skillPlan = prepareSkillPlan(context);
+  context.statusPlan = prepareStatusPlan(context);
   return context;
 }
 
@@ -109,14 +103,6 @@ function assertCommandSkillIdsAvailable(commandFiles, skillDirs) {
       throw new Error(`command ${commandFile} conflicts with skill directory ${commandId}`);
     }
   }
-}
-
-function createTemplateVariables(options, workDirectory) {
-  return {
-    ENTRY_FILES: getEntryFilesForAgent(options.agent).join(', '),
-    HARNESS_DIR: options.harnessDir,
-    WORK_DIR: workDirectory,
-  };
 }
 
 function printInitSummary(context) {

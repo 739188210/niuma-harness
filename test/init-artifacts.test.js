@@ -1,6 +1,5 @@
 const test = require('node:test');
 const {
-  SKILL_METADATA_FILE,
   allCommandFiles,
   allSkillDirs,
   assert,
@@ -175,18 +174,27 @@ test('--skills installs selected skills to agent-native target roots', () => {
 });
 
 if (allSkillDirs.includes('zentao-bug-workflow')) {
-  test('zentao skill declares editable config through generic ownership metadata', () => {
+  test('zentao skill distributes a managed example without a local config', () => {
     const files = getSkillFiles('zentao-bug-workflow');
-    const config = files.find((file) => file.relativePath === 'zentao.config.json');
-    assert.strictEqual(config?.ownership, 'user');
+    assert.ok(files.some((file) => file.relativePath === 'zentao.config.example.json'));
+    assert.ok(!files.some((file) => file.relativePath === 'zentao.config.json'));
+    assert.ok(!files.some((file) => file.relativePath === 'niuma-skill.json'));
 
     const workspace = tempDir();
     const result = run(['init', workspace, '--agent', 'claude', '--skills', 'zentao-bug-workflow']);
     assert.strictEqual(result.status, 0, result.stderr);
     const skillRoot = path.join(workspace, '.claude', 'skills', 'zentao-bug-workflow');
-    assertFile(path.join(skillRoot, 'zentao.config.json'));
-    assertNoPath(path.join(skillRoot, SKILL_METADATA_FILE));
-    assertNoPath(path.join(skillRoot, 'zentao.config.default.json'));
+    const examplePath = path.join(skillRoot, 'zentao.config.example.json');
+    assertFile(examplePath);
+    assertNoPath(path.join(skillRoot, 'zentao.config.json'));
+    assertNoPath(path.join(skillRoot, 'niuma-skill.json'));
+
+    const example = JSON.parse(read(examplePath));
+    assert.deepStrictEqual(example.scopes.read, []);
+    assert.deepStrictEqual(example.scopes.write, []);
+    assert.strictEqual(example.writePolicy.enabled, false);
+    assert.strictEqual(example.writePolicy.autoCommentAfterValidation, false);
+    assert.strictEqual(example.writePolicy.autoResolveAfterValidation, false);
   });
 
   test('zentao helper refuses placeholder config values before network requests', () => {
@@ -200,7 +208,16 @@ if (allSkillDirs.includes('zentao-bug-workflow')) {
     assert.match(helper, /normalize_hostname\(parse\.urlparse\(value\.strip\(\)\)\.hostname or ""\)/);
     assert.match(helper, /host\.endswith\("\.example\.com"\)/);
     assert.match(helper, /assert_not_placeholder_config\(section, key, value\)/);
+    assert.match(helper, /zentao\.config\.example\.json/);
+    assert.match(helper, /Copy \{example\.name\} to \{path\.name\}/);
+    assert.match(helper, /Do not paste passwords, tokens, cookies, or the populated config into chat/);
     assert.match(helper, /Edit the local config file before running ZenTao network requests/);
+    assert.match(helper, /scopes\.read is empty/);
+    assert.match(helper, /scopes\.write may remain empty for read-only use/);
+    assert.match(helper, /def validate_scope_entries\(scopes: list\[Any\], scope_type: str\) -> None:/);
+    assert.match(helper, /scopes must be an object/);
+    assert.match(helper, /\.projects must be an array/);
+    assert.match(helper, /\.actions must be an array containing only comment or resolve/);
   });
 
   test('zentao local config is preserved while managed skill files refresh on re-init', () => {
@@ -209,14 +226,18 @@ if (allSkillDirs.includes('zentao-bug-workflow')) {
     assert.strictEqual(result.status, 0, result.stderr);
     const skillRoot = path.join(workspace, '.claude', 'skills', 'zentao-bug-workflow');
     const configPath = path.join(skillRoot, 'zentao.config.json');
+    const examplePath = path.join(skillRoot, 'zentao.config.example.json');
     const scriptPath = path.join(skillRoot, 'scripts', 'zentao_bug.py');
+    const originalExample = read(examplePath);
     const originalScript = read(scriptPath);
     fs.writeFileSync(configPath, '{"local": true}\n', 'utf8');
+    fs.writeFileSync(examplePath, '{"unsafeExample": true}\n', 'utf8');
     fs.writeFileSync(scriptPath, 'old unsafe script\n', 'utf8');
 
     result = run(['init', workspace, '--agent', 'claude', '--skills', 'zentao-bug-workflow']);
     assert.strictEqual(result.status, 0, result.stderr);
     assert.strictEqual(read(configPath), '{"local": true}\n', 'local zentao config should be preserved');
+    assert.strictEqual(read(examplePath), originalExample, 'managed ZenTao example should be refreshed');
     assert.strictEqual(read(scriptPath), originalScript, 'managed ZenTao helper should be refreshed');
   });
 
@@ -234,6 +255,7 @@ if (allSkillDirs.includes('zentao-bug-workflow')) {
     assert.strictEqual(result.status, 0, result.stderr);
     assert.strictEqual(read(configPath), '{"local": true}\n', 'deselect should preserve local zentao config');
     assert.strictEqual(read(localFile), 'keep me\n', 'deselect should preserve unknown user files');
+    assertNoPath(path.join(skillRoot, 'zentao.config.example.json'));
     assertNoPath(path.join(skillRoot, 'SKILL.md'));
     assertNoPath(path.join(skillRoot, 'scripts', 'zentao_bug.py'));
     assertNoPath(path.join(skillRoot, 'scripts'));

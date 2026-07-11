@@ -3,10 +3,10 @@ const path = require('path');
 const {
   getAvailableSkillDirs,
   getSkillFiles,
-  getSkillsRootPath,
   getSkillTargetRootsForAgent,
 } = require('../skills');
 const {
+  inspectFileTarget,
   removeEmptyDirsUntil,
   removeFile,
   safeResolveInside,
@@ -15,74 +15,44 @@ const {
 const { TEMPLATE_DIR } = require('./manifest');
 const { renderTemplate } = require('./templates');
 
-function writeSkillFiles(context) {
-  const { manifest, options } = context;
-  const skillsRootPath = getSkillsRootPath(manifest.skillsRoot);
-  const availableSkills = getAvailableSkillDirs(manifest.skillsRoot);
-  const getCachedSkillFiles = createSkillFilesCache(manifest.skillsRoot);
-  const targetRoots = getSkillTargetRootsForAgent(options.agent);
-
-  for (const targetRoot of targetRoots) {
-    cleanupUnselectedSkillFiles(context, availableSkills, getCachedSkillFiles, targetRoot);
-  }
-
-  for (const targetRoot of targetRoots) {
-    for (const skillName of options.skills) {
-      writeSkillDirectory(context, skillName, getCachedSkillFiles(skillName), skillsRootPath, targetRoot);
-    }
-  }
-}
-
-function createSkillFilesCache(skillsRoot) {
-  const cache = new Map();
-  return (skillName) => {
-    if (!cache.has(skillName)) {
-      cache.set(skillName, getSkillFiles(skillName, skillsRoot));
-    }
-    return cache.get(skillName);
-  };
-}
-
-function cleanupUnselectedSkillFiles(context, availableSkills, getCachedSkillFiles, targetRoot) {
+function prepareSkillPlan(context) {
+  const availableSkills = getAvailableSkillDirs(context.manifest.skillsRoot);
   const selected = new Set(context.options.skills);
-  for (const skillName of availableSkills) {
-    if (!selected.has(skillName)) {
-      removeSkillDirectoryFiles(context, targetRoot, skillName, getCachedSkillFiles(skillName));
+  const filesBySkill = new Map(availableSkills.map((name) => [name, getSkillFiles(name, context.manifest.skillsRoot)]));
+  const plan = [];
+
+  for (const targetRoot of getSkillTargetRootsForAgent(context.options.agent)) {
+    for (const skillName of availableSkills) {
+      const skillFiles = filesBySkill.get(skillName);
+      const targetSkillDir = safeResolveInside(context.workspaceDir, path.join(targetRoot, skillName), 'skill target');
+      for (const skillFile of skillFiles) {
+        const targetPath = safeResolveInside(context.workspaceDir, path.join(targetRoot, skillName, skillFile.relativePath), 'skill target');
+        const exists = inspectFileTarget(targetPath);
+        if (!selected.has(skillName)) {
+          plan.push({ kind: 'remove', targetPath, targetSkillDir, targetRoot: path.join(context.workspaceDir, targetRoot) });
+          continue;
+        }
+        const sourceRelativePath = path.relative(TEMPLATE_DIR, skillFile.sourcePath).split(path.sep).join('/');
+        plan.push({ kind: 'write', content: renderTemplate(sourceRelativePath, context.variables), targetPath, action: exists ? 'overwrite' : 'create' });
+      }
     }
   }
+  return plan;
 }
 
-function removeSkillDirectoryFiles(context, targetRoot, skillName, skillFiles) {
-  const { options, printAction, workspaceDir } = context;
-  const targetSkillDir = safeResolveInside(workspaceDir, path.join(targetRoot, skillName), 'skill target');
-
-  for (const skillFile of skillFiles) {
-    if (skillFile.ownership !== 'tool') {
+function writeSkillFiles(context) {
+  for (const item of context.skillPlan) {
+    if (item.kind === 'write') {
+      context.printAction(writeFile(item.targetPath, item.content, { dryRun: context.options.dryRun, overwrite: true }), item.targetPath);
       continue;
     }
-    const targetRelativePath = path.join(skillName, skillFile.relativePath);
-    const targetPath = safeResolveInside(workspaceDir, path.join(targetRoot, targetRelativePath), 'skill target');
-    printAction(removeFile(targetPath, { dryRun: options.dryRun }), targetPath);
-    removeEmptyDirsUntil(path.dirname(targetPath), targetSkillDir, options.dryRun);
+    context.printAction(removeFile(item.targetPath, { dryRun: context.options.dryRun }), item.targetPath);
+    removeEmptyDirsUntil(path.dirname(item.targetPath), item.targetSkillDir, context.options.dryRun);
+    removeEmptyDirsUntil(item.targetSkillDir, item.targetRoot, context.options.dryRun);
   }
-  removeEmptyDirsUntil(targetSkillDir, path.join(workspaceDir, targetRoot), options.dryRun);
-}
-
-function writeSkillDirectory(context, skillName, skillFiles, skillsRootPath, targetRoot) {
-  for (const skillFile of skillFiles) {
-    writeSkillFile(context, skillName, skillFile, skillsRootPath, targetRoot);
-  }
-}
-
-function writeSkillFile(context, skillName, skillFile, skillsRootPath, targetRoot) {
-  const { options, printAction, variables, workspaceDir } = context;
-  const sourceRelativePath = path.relative(TEMPLATE_DIR, skillFile.sourcePath).split(path.sep).join('/');
-  const targetRelativePath = path.join(skillName, skillFile.relativePath);
-  const targetPath = safeResolveInside(workspaceDir, path.join(targetRoot, targetRelativePath), 'skill target');
-  const content = renderTemplate(sourceRelativePath, variables);
-  printAction(writeFile(targetPath, content, { dryRun: options.dryRun, overwrite: skillFile.ownership === 'tool' }), targetPath);
 }
 
 module.exports = {
+  prepareSkillPlan,
   writeSkillFiles,
 };

@@ -301,7 +301,13 @@ Installed skill targets depend on the selected agent:
 | `opencode` | `.opencode/skills/<skill>/` |
 | `multi` | all three roots |
 
-Re-running `init` converges known skills in the current agent's target roots: selected known skills are installed, unselected known skill files owned by Niuma are removed, and unknown user-created files are left untouched. Skill package files are refreshed from templates so script and instruction fixes propagate. A skill can declare user-maintained payload files in its package-only `niuma-skill.json`; those files are created when absent and preserved during re-init or deselection. Files not declared there default to tool-managed. The metadata file itself is not copied into agent-native skill directories.
+Re-running `init` converges known skills in the current agent's target roots: files listed under `templates/skills/<skill>/` are installed, refreshed, or removed with the selected skill, while unknown user-created files are left untouched. A skill may distribute an example configuration and instruct the user to create a separate local runtime file; because that local file is not part of the template list, re-init and deselection preserve it.
+
+## Doctor integrity boundary
+
+`doctor` does not treat generated `harness/manifest.json` as an unrestricted source of truth. It binds `createdBy`, the actual harness directory, package-defined `workDir`, agent-derived entry files, and package-and-agent-derived command selection. It then exact-compares tool-managed core/work templates, selected skill package files, Claude rule pointers, the Niuma-managed OpenCode instruction block, and current package-rendered command artifacts.
+
+The integrity boundary intentionally excludes user-maintained `project-context.md` and `automation-intent.md`, generated rule bodies, entry content outside the managed contract, local runtime files such as `zentao.config.json`, unknown files, and OpenCode fields or instructions outside the Niuma-managed block. `rules` and `skills` remain manifest selections, so explicit `--rules none` and `--rules-out` exclusions retain their existing semantics.
 
 ## Development
 

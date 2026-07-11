@@ -2,6 +2,8 @@
 const path = require('path');
 const { getAvailableRuleDirs, getRulesRootPath } = require('../rules');
 const {
+  inspectDirectoryTarget,
+  inspectFileTarget,
   listFilesRecursive,
   removeDirectory,
   safeResolveInside,
@@ -10,51 +12,43 @@ const {
 const { TEMPLATE_DIR } = require('./manifest');
 const { renderTemplate } = require('./templates');
 
-function writeRuleFiles(context) {
-  const { manifest } = context;
-  const rulesRootPath = getRulesRootPath(manifest.rulesRoot);
-  const availableRules = getAvailableRuleDirs(manifest.rulesRoot);
-
-  cleanupUnselectedRuleFiles(context, availableRules);
-
-  for (const ruleName of context.options.rules) {
-    writeRuleDirectory(context, ruleName, rulesRootPath);
-  }
-}
-
-// 重复 init 时让 docs/rules 收敛到本次 --rules / --rules-out 的选择。
-function cleanupUnselectedRuleFiles(context, availableRules) {
+function prepareRulePlan(context) {
+  const rulesRootPath = getRulesRootPath(context.manifest.rulesRoot);
+  const availableRules = getAvailableRuleDirs(context.manifest.rulesRoot);
   const selected = new Set(context.options.rules);
+  const plan = [];
+
   for (const ruleName of availableRules) {
     if (!selected.has(ruleName)) {
-      removeRuleDirectoryFiles(context, ruleName);
+      const targetPath = safeResolveInside(context.targetDir, path.join('docs', 'rules', ruleName), 'rule target');
+      inspectDirectoryTarget(targetPath);
+      plan.push({ kind: 'remove-directory', targetPath });
+    }
+  }
+  for (const ruleName of context.options.rules) {
+    const sourceDir = path.join(rulesRootPath, ruleName);
+    for (const sourcePath of listFilesRecursive(sourceDir)) {
+      const sourceRelativePath = path.relative(TEMPLATE_DIR, sourcePath).split(path.sep).join('/');
+      const targetRelativePath = path.relative(rulesRootPath, sourcePath).split(path.sep).join('/');
+      const targetPath = safeResolveInside(context.targetDir, path.join('docs', 'rules', targetRelativePath), 'rule target');
+      const exists = inspectFileTarget(targetPath);
+      plan.push({ kind: 'write', action: exists ? 'skip' : 'create', content: renderTemplate(sourceRelativePath, context.variables), targetPath });
+    }
+  }
+  return plan;
+}
+
+function writeRuleFiles(context) {
+  for (const item of context.rulePlan) {
+    if (item.kind === 'remove-directory') {
+      context.printAction(removeDirectory(item.targetPath, { dryRun: context.options.dryRun }), item.targetPath);
+    } else {
+      context.printAction(writeFile(item.targetPath, item.content, { dryRun: context.options.dryRun, overwrite: false }), item.targetPath);
     }
   }
 }
 
-function removeRuleDirectoryFiles(context, ruleName) {
-  const { options, targetDir, printAction } = context;
-  const targetPath = safeResolveInside(targetDir, path.join('docs', 'rules', ruleName), 'rule target');
-  printAction(removeDirectory(targetPath, { dryRun: options.dryRun }), targetPath);
-}
-
-function writeRuleDirectory(context, ruleName, rulesRootPath) {
-  const ruleSourceDir = path.join(rulesRootPath, ruleName);
-  for (const ruleFile of listFilesRecursive(ruleSourceDir)) {
-    writeRuleFile(context, ruleFile, rulesRootPath);
-  }
-}
-
-// sourceRelativePath 用于读取模板，targetRelativePath 用于保留规则目录结构。
-function writeRuleFile(context, ruleFile, rulesRootPath) {
-  const { options, targetDir, variables, printAction } = context;
-  const sourceRelativePath = path.relative(TEMPLATE_DIR, ruleFile).split(path.sep).join('/');
-  const targetRelativePath = path.relative(rulesRootPath, ruleFile).split(path.sep).join('/');
-  const targetPath = safeResolveInside(targetDir, path.join('docs', 'rules', targetRelativePath), 'rule target');
-  const content = renderTemplate(sourceRelativePath, variables);
-  printAction(writeFile(targetPath, content, { dryRun: options.dryRun, overwrite: false }), targetPath);
-}
-
 module.exports = {
+  prepareRulePlan,
   writeRuleFiles,
 };

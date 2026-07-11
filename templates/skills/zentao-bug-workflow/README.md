@@ -7,13 +7,14 @@
 - 禅道开源版 20.6
 - API 前缀默认 `/api.php/v1`
 - Token 通过 `Token` 请求头传递
-- 配置文件为 `zentao.config.json`
+- 运行配置为本地 `zentao.config.json`，由分发的 `zentao.config.example.json` 首次创建
 
 ## 目录结构
 
 ```text
 zentao-bug-workflow/
-  zentao.config.json
+  zentao.config.example.json
+  zentao.config.json       # 首次使用时在本地创建，不由 Niuma 分发
   SKILL.md
   README.md
   scripts/
@@ -27,12 +28,20 @@ zentao-bug-workflow/
 
 ## 配置
 
-新环境编辑 `zentao.config.json`：
+首次使用时：
+
+1. 在 skill 目录中将 `zentao.config.example.json` 复制为 `zentao.config.json`。
+2. 只在本地填写 `api.baseUrl`、账号和密码；不要把密码、Token、Cookie 或完整配置粘贴到聊天中。
+3. 不要直接把 example 当作运行配置，也不要在 example 中保存真实凭据；re-init 会刷新它。
+4. 本地配置完成后运行 `python scripts/zentao_bug.py ping`。
+5. 再根据产品、项目、读取范围和写回策略配置 scope；扩大 scope 或启用写回前需要用户明确确认。
+
+`zentao.config.json` 不由 Niuma 管理，也不应提交到代码仓库。其结构如下：
 
 ```json
 {
   "api": {
-    "baseUrl": "http://192.168.31.238",
+    "baseUrl": "http://zentao.example.com",
     "prefix": "/api.php/v1",
     "commentEndpoint": ""
   },
@@ -41,21 +50,8 @@ zentao-bug-workflow/
     "password": "你的禅道密码"
   },
   "scopes": {
-    "read": [
-      {
-        "name": "素材库",
-        "product": 21,
-        "projects": []
-      }
-    ],
-    "write": [
-      {
-        "name": "素材库",
-        "product": 21,
-        "projects": [91],
-        "actions": ["comment", "resolve"]
-      }
-    ]
+    "read": [],
+    "write": []
   },
   "writePolicy": {
     "enabled": false,
@@ -78,7 +74,8 @@ zentao-bug-workflow/
 - `"projects": [91]` 表示只允许项目 91；当 `allowProjectZero=true` 时，禅道里 project 为 `0` 或空的 Bug 也可以通过产品级判断。
 - `writePolicy.enabled=false` 表示默认只读，不允许写回禅道。
 - `api.commentEndpoint` 是独立备注接口覆盖项。留空时使用禅道默认 Web 备注接口：`/index.php?m=action&f=comment&objectType=bug&objectID={bugID}`。
-- 分发的 `zentao.config.json` 使用占位值，新环境直接编辑该文件。
+- 分发的 `zentao.config.example.json` 使用占位值和空 scope，仅用于创建本地配置。
+- `scopes.read=[]` 表示读取范围尚未授权；`scopes.write=[]` 可以作为长期只读配置。
 - 不要把填入真实账号密码的 `zentao.config.json` 提交到代码仓库。
 
 ## api 评论配置
@@ -102,7 +99,7 @@ zentao-bug-workflow/
 
 ```json
 "api": {
-  "baseUrl": "http://192.168.31.238",
+  "baseUrl": "http://zentao.example.com",
   "prefix": "/api.php/v1",
   "commentEndpoint": ""
 }

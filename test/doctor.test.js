@@ -1,8 +1,11 @@
 const test = require('node:test');
+require('./doctor-integrity.test');
 const {
   allCommandFiles,
   allSkillDirs,
   assert,
+  assertFile,
+  assertNoPath,
   fs,
   getCommandId,
   path,
@@ -336,6 +339,32 @@ test('doctor passes with selected skills and ignores unknown user skills', () =>
   const result = run(['doctor', workspace]);
   assert.strictEqual(result.status, 0, result.stderr);
   assert.match(result.stdout, new RegExp(`skills ${primarySkill}`));
+});
+
+test('doctor passes for ZenTao with only the distributed example config', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude', '--skills', 'zentao-bug-workflow']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  const skillRoot = path.join(workspace, '.claude', 'skills', 'zentao-bug-workflow');
+  assertFile(path.join(skillRoot, 'zentao.config.example.json'));
+  assertNoPath(path.join(skillRoot, 'zentao.config.json'));
+
+  const result = run(['doctor', workspace]);
+  assert.strictEqual(result.status, 0, result.stderr);
+});
+
+test('doctor requires the ZenTao example but ignores the local config', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude', '--skills', 'zentao-bug-workflow']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  const skillRoot = path.join(workspace, '.claude', 'skills', 'zentao-bug-workflow');
+  fs.writeFileSync(path.join(skillRoot, 'zentao.config.json'), '{"local": true}\n', 'utf8');
+  fs.unlinkSync(path.join(skillRoot, 'zentao.config.example.json'));
+
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should require the distributed ZenTao example');
+  assert.match(result.stdout, /missing \.claude\/skills\/zentao-bug-workflow\/zentao\.config\.example\.json/);
+  assert.doesNotMatch(result.stdout, /missing .*zentao\.config\.json/);
 });
 
 test('doctor fails when a selected skill file is missing', () => {

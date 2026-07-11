@@ -56,6 +56,27 @@ function assertNoPath(targetPath) {
   assert.ok(!fs.existsSync(targetPath), `${targetPath} should not exist`);
 }
 
+function snapshotTree(rootPath) {
+  if (!fs.existsSync(rootPath)) {
+    return null;
+  }
+  const stat = fs.lstatSync(rootPath);
+  if (stat.isFile()) {
+    return { type: 'file', content: fs.readFileSync(rootPath, 'base64') };
+  }
+  if (!stat.isDirectory()) {
+    return { type: stat.isSymbolicLink() ? 'symlink' : 'other' };
+  }
+  return {
+    type: 'directory',
+    entries: Object.fromEntries(fs.readdirSync(rootPath).sort().map((name) => [name, snapshotTree(path.join(rootPath, name))])),
+  };
+}
+
+function assertTreeUnchanged(rootPath, before) {
+  assert.deepStrictEqual(snapshotTree(rootPath), before, `${rootPath} should remain unchanged`);
+}
+
 function assertLayerMemos(harnessRoot) {
   for (const layerMemo of layerMemos) {
     assertFile(path.join(harnessRoot, ...layerMemo.split('/')));
@@ -254,6 +275,7 @@ module.exports = {
   assertOpenCodeRulesInstruction,
   assertRuleDirs,
   assertSkillDirs,
+  assertTreeUnchanged,
   getCommandId,
   getExpectedCommandArtifactTargets,
   expectedDefaultRules,
@@ -262,6 +284,7 @@ module.exports = {
   read,
   readJson,
   run,
+  snapshotTree,
   tempDir,
   updateManifest,
 };

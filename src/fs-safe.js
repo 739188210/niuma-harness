@@ -73,14 +73,52 @@ function listFilesRecursive(directoryPath) {
   return files.sort();
 }
 
-function ensureDir(dirPath, dryRun) {
-  assertNoSymlinkInPath(dirPath);
-
-  if (fs.existsSync(dirPath)) {
-    const stat = fs.lstatSync(dirPath);
-    if (!stat.isDirectory()) {
-      throw new Error(`Path exists but is not a directory: ${dirPath}`);
+function inspectParentDirectories(targetPath) {
+  const resolved = path.resolve(targetPath);
+  const root = path.parse(resolved).root;
+  const parts = path.relative(root, path.dirname(resolved)).split(path.sep).filter(Boolean);
+  let current = root;
+  for (const part of parts) {
+    current = path.join(current, part);
+    if (!fs.existsSync(current)) {
+      continue;
     }
+    const stat = fs.lstatSync(current);
+    if (stat.isSymbolicLink()) {
+      throw new Error(`Refusing to write through symlink: ${current}`);
+    }
+    if (!stat.isDirectory()) {
+      throw new Error(`Parent path exists but is not a directory: ${current}`);
+    }
+  }
+}
+
+function inspectFileTarget(filePath) {
+  inspectParentDirectories(filePath);
+  assertNoSymlinkInPath(filePath);
+  if (!fs.existsSync(filePath)) {
+    return false;
+  }
+  if (!fs.lstatSync(filePath).isFile()) {
+    throw new Error(`Path exists but is not a regular file: ${filePath}`);
+  }
+  return true;
+}
+
+function inspectDirectoryTarget(dirPath) {
+  inspectParentDirectories(dirPath);
+  assertNoSymlinkInPath(dirPath);
+  if (!fs.existsSync(dirPath)) {
+    return false;
+  }
+  if (!fs.lstatSync(dirPath).isDirectory()) {
+    throw new Error(`Path exists but is not a directory: ${dirPath}`);
+  }
+  return true;
+}
+
+function ensureDir(dirPath, dryRun) {
+  if (inspectDirectoryTarget(dirPath)) {
     return 'skip';
   }
 
@@ -93,19 +131,10 @@ function ensureDir(dirPath, dryRun) {
 // 所有 scaffold 文件写入都走这里，统一处理 skip/overwrite/dry-run。
 // 调用方决定是否覆盖：tool-managed 传 overwrite=true，user-maintained 传 false（已存在则保留）。
 function writeFile(filePath, content, writeOptions = {}) {
-  assertNoSymlinkInPath(filePath);
-
   const { dryRun = false, overwrite = false } = writeOptions;
-  const exists = fs.existsSync(filePath);
+  const exists = inspectFileTarget(filePath);
   if (exists && !overwrite) {
     return 'skip';
-  }
-
-  if (exists) {
-    const stat = fs.lstatSync(filePath);
-    if (!stat.isFile()) {
-      throw new Error(`Path exists but is not a regular file: ${filePath}`);
-    }
   }
 
   if (!dryRun) {
@@ -188,6 +217,8 @@ module.exports = {
   validateRelativePath,
   safeResolveInside,
   assertNoSymlinkInPath,
+  inspectFileTarget,
+  inspectDirectoryTarget,
   listFilesRecursive,
   ensureDir,
   writeFile,

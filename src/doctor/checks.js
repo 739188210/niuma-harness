@@ -1,11 +1,12 @@
 // doctor 的高层检查编排：字段校验后委托 core/rules 子检查。
 const path = require('path');
-const { normalizeAgent } = require('../agents');
-const { formatCommands, normalizeConcreteCommands } = require('../commands');
+const { getEntryFilesForAgent, normalizeAgent } = require('../agents');
+const { formatCommands, getDefaultCommandsForAgent } = require('../commands');
 const { formatRules, normalizeConcreteRules } = require('../rules');
 const { formatSkills, normalizeConcreteSkills } = require('../skills');
 const { loadManifest } = require('../scaffold/manifest');
 const { addError, addOk } = require('./result');
+const { checkManagedContentIntegrity } = require('./integrity-checks');
 const {
   checkCoreDocs,
   checkEntryContractIntegrity,
@@ -22,6 +23,9 @@ const { checkSkillFiles, getAvailableSkills } = require('./skills-checks');
 function checkHarness(harnessRoot, status, result) {
   const context = createCheckContext(harnessRoot, status, result);
   checkSchemaVersion(context);
+  checkCreatedBy(context);
+  checkHarnessDir(context);
+  checkWorkDirBinding(context);
   checkAgent(context);
   checkRules(context);
   checkSkills(context);
@@ -34,6 +38,7 @@ function checkHarness(harnessRoot, status, result) {
   checkRuleAdapterFiles(context);
   checkSkillFiles(context);
   checkCommandFiles(context);
+  checkManagedContentIntegrity(context);
   checkWorkDir(context);
 }
 
@@ -66,6 +71,35 @@ function checkSchemaVersion(context) {
   addOk(result, 'schemaVersion 2');
 }
 
+function checkCreatedBy(context) {
+  const { result, status } = context;
+  if (status.createdBy !== 'niuma-harness') {
+    addError(result, 'createdBy must be niuma-harness');
+    return;
+  }
+  addOk(result, 'createdBy niuma-harness');
+}
+
+function checkHarnessDir(context) {
+  const { harnessRoot, result, status } = context;
+  const expected = path.basename(harnessRoot);
+  if (status.harnessDir !== expected) {
+    addError(result, `harnessDir must match actual harness root: ${expected}`);
+    return;
+  }
+  addOk(result, `harnessDir ${expected}`);
+}
+
+function checkWorkDirBinding(context) {
+  const { result, status, templateManifest } = context;
+  const expected = templateManifest.workDirectory || 'agent-work';
+  if (status.workDir !== expected) {
+    addError(result, `workDir must match package manifest: ${expected}`);
+    return;
+  }
+  addOk(result, `workDir binding ${expected}`);
+}
+
 function checkAgent(context) {
   const { result, status } = context;
   if (!status.agent) {
@@ -89,7 +123,25 @@ function checkSkills(context) {
 }
 
 function checkCommands(context) {
-  checkConcreteArrayField(context, 'commands', context.availableCommands, normalizeConcreteCommands, formatCommands);
+  const { agent, availableCommands, result, status } = context;
+  if (!Object.prototype.hasOwnProperty.call(status, 'commands')) {
+    addError(result, 'missing commands');
+    return;
+  }
+  if (!Array.isArray(status.commands)) {
+    addError(result, 'commands must be an array');
+    return;
+  }
+  if (!agent) {
+    return;
+  }
+  const expected = getDefaultCommandsForAgent(agent, availableCommands);
+  if (!sameStringArray(status.commands, expected)) {
+    addError(result, `invalid commands: must match package and agent ${agent}: ${formatCommands(expected)}`);
+    return;
+  }
+  context.commands = expected;
+  addOk(result, `commands ${formatCommands(expected)}`);
 }
 
 function checkConcreteArrayField(context, field, available, normalize, format) {
@@ -113,6 +165,10 @@ function checkConcreteArrayField(context, field, available, normalize, format) {
   if (context[field]) {
     addOk(result, `${field} ${format(context[field])}`);
   }
+}
+
+function sameStringArray(left, right) {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
 function normalizeStatusField(result, normalize, label) {

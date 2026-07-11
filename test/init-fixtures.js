@@ -26,7 +26,7 @@ const {
   tempDir,
 } = require('./helpers');
 const { addAgentRules, getDefaultRulesForAgent, normalizeRules, normalizeRulesOut } = require('../src/rules');
-const { getSkillFiles, normalizeSkills, SKILL_METADATA_FILE } = require('../src/skills');
+const { getSkillFiles, normalizeSkills } = require('../src/skills');
 
 const agentCases = [
   { agent: 'claude', entryFiles: ['CLAUDE.md'], absentEntryFiles: ['AGENTS.md'] },
@@ -118,7 +118,6 @@ function readTextTree(root, options = {}) {
 }
 
 module.exports = {
-  SKILL_METADATA_FILE,
   addAgentRules,
   agentCases,
   allCommandFiles,

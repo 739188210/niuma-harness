@@ -2,7 +2,6 @@
 const fs = require('fs');
 const path = require('path');
 const { safeResolveInside, validateRelativePath } = require('../fs-safe');
-const { getAvailableSkillDirs, loadSkillMetadata } = require('../skills');
 
 const ROOT_DIR = path.resolve(__dirname, '..', '..');
 const TEMPLATE_DIR = path.join(ROOT_DIR, 'templates');
@@ -55,9 +54,6 @@ function validateSkillsRoot(skillsRoot) {
 
   validateRelativePath(skillsRoot, 'manifest skills root');
   safeResolveInside(TEMPLATE_DIR, skillsRoot, 'manifest skills root');
-  for (const skillName of getAvailableSkillDirs(skillsRoot)) {
-    loadSkillMetadata(skillName, skillsRoot);
-  }
 }
 
 function validateCommandsRoot(commandsRoot) {

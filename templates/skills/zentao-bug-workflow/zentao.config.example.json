@@ -9,26 +9,8 @@
     "password": "change-me"
   },
   "scopes": {
-    "read": [
-      {
-        "name": "example-product",
-        "product": 21,
-        "projects": []
-      }
-    ],
-    "write": [
-      {
-        "name": "example-project",
-        "product": 21,
-        "projects": [
-          91
-        ],
-        "actions": [
-          "comment",
-          "resolve"
-        ]
-      }
-    ]
+    "read": [],
+    "write": []
   },
   "writePolicy": {
     "enabled": false,

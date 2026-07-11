@@ -4,7 +4,7 @@ Use these notes for self-hosted ZenTao Open Source 20.6 integrations.
 
 ## Configuration
 
-Read configuration from `zentao.config.json` in the skill directory:
+The helper reads runtime configuration only from `zentao.config.json` in the skill directory. On first use, copy the distributed `zentao.config.example.json` to that name and fill sensitive values locally. The example is a managed template, not an authorization source or runtime fallback. Never ask the user to paste the populated config, passwords, tokens, or cookies into chat.
 
 - `api.baseUrl`: Base URL without a trailing slash.
 - `api.prefix`: Default `/api.php/v1` for older ZenTao API v1 installs.

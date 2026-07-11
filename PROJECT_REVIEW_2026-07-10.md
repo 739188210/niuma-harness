@@ -16,13 +16,13 @@
 | 原评审项 | 状态 | 当前结果 |
 |---|---|---|
 | P0-1 删除 entry contract 后 doctor 仍通过 | 已完成 | doctor 要求唯一、完整、顺序正确且内容一致的 contract；缺失、单侧 marker、重复、乱序和 drift 都会失败 |
-| P0-2 取消选择 skill 会删除用户维护配置 | 已完成 | skill 使用通用 package-only `niuma-skill.json` 声明 ownership；deselect 只删除 tool-owned 文件，保留 user-owned 和未知文件 |
+| P0-2 取消选择 skill 会删除用户维护配置 | 已完成 | skill 只管理 `templates/skills/<skill>/` 中的已知模板文件；ZenTao 仅分发 example，用户创建的实际配置和其他未知文件在 re-init/deselect 时保留 |
 | P0-3 Codex command-derived skill 覆盖同名用户 skill | 已完成 | schema-2 artifact ownership ledger 覆盖全部 native command artifacts；未登记目标和已漂移目标均拒绝覆盖 |
-| P0-4 init 后期失败留下半初始化状态 | 部分完成 | command artifacts 已在任何 scaffold 写入前完成全量 render/preflight，并在写入前二次 revalidate；其他 writer，尤其无效 `opencode.json`，尚未纳入统一全局 preflight/事务机制 |
-| P1-1 doctor 过度信任 generated manifest | 部分完成 | schema 2 ledger 会校验 command records、路径和 exact-byte digest；manifest 其他字段与实际 harness root/package manifest 的可信绑定仍未完成 |
-| P1-2 tool-managed 内容被替换后 doctor 仍通过 | 部分完成 | entry contract 和 ledger 中的 native command artifacts 已做内容完整性检查；core docs、rules、skill tool-owned payload 等仍主要检查结构或浅层 metadata |
+| P0-4 init 后期失败留下半初始化状态 | 已完成（限定边界） | 所有 domain 在首个 workspace mutation 前完成 source/render/config/target preflight；可预见错误不会留下部分状态。apply 期 I/O、并发修改、进程崩溃和强事务不在本项保证内 |
+| P1-1 doctor 过度信任 generated manifest | 已完成（明确边界） | doctor 绑定 plain-object manifest、`createdBy`、实际 harness root、package `workDir`、agent entryFiles 和 package+agent commands；rules/skills 保持 manifest selection |
+| P1-2 tool-managed 内容被替换后 doctor 仍通过 | 已完成（明确边界） | exact compare 覆盖 tool-managed core/work templates、selected skill package files、Claude pointers、OpenCode managed block 和当前 package-rendered commands；用户维护内容明确排除 |
 | P1-3 切换 agent 后旧 surfaces 不会收敛 | 部分完成 | previous-agent command ownership records 会保留并由 doctor 持续验证；旧 entry、rules adapters、skills 和 command surfaces 尚未自动清理 |
-| P1-4 user-maintained 目标为目录时 init 错误成功 | 未处理 | 仍待调整 `writeFile()` 的目标类型检查顺序 |
+| P1-4 user-maintained 目标为目录时 init 错误成功 | 已完成 | preserve/skip 前先验证目标必须是普通文件，并纳入 init 全局 preflight |
 | P1-5 macOS `/var/...` 合法 workspace 被拒绝 | 未处理 | 仍待重新定义 canonical workspace root 与 workspace 内 symlink 边界 |
 | P1-6 duplicate contract blocks 未被拒绝 | 已完成 | 与 P0-1 一并修复，init 和 doctor 都拒绝重复 contract |
 | P1-7 修改 `--harness-dir` 形成竞争 harness | 未处理 | 仍待定义显式迁移或冲突停止语义 |
@@ -47,11 +47,11 @@
 - P0-1
 - P1-6
 
-#### 通用 skill payload ownership
+#### Skill 模板清单与本地配置保留
 
-新增 package-only `templates/skills/<skill>/niuma-skill.json`。未声明文件默认属于 tool-managed；显式 `ownership: "user"` 的文件首次缺失时创建，re-init 和 deselect 时保留。未知 workspace 文件始终保留，metadata 本身不分发到 agent-native skill 目录。
+skill 直接按 `templates/skills/<skill>/` 文件清单分发：清单中的文件由 Niuma 刷新并在 deselect 时移除，清单外的 workspace 文件始终保留。ZenTao 只分发 `zentao.config.example.json`；首次使用时创建的 `zentao.config.json` 不在模板清单中，因此 re-init 和 deselect 都不会覆盖或删除它。
 
-实现不包含 ZenTao-specific ownership 分支，可用于后续新增 skill。
+该模型不再需要 package-only ownership metadata，也不包含 ZenTao-specific writer 分支。
 
 该整改关闭：
 
@@ -93,12 +93,34 @@ command plan 会在任何 scaffold mutation 前完整 render/preflight，并在 
 - P1-2
 - P1-3
 
+#### Init 全局 preflight
+
+`createInitContext()` 现在是统一 mutation barrier：directories、entries、templates、rules、native rule adapters、skills、commands 和 generated status 都会先完成源文件读取、模板渲染、配置解析及目标路径/类型/symlink 检查，全部成功后才进入 apply。无效 `opencode.json`、残缺 entry contract、后序 rule/skill/command 目标冲突和 status 目标冲突均会在 workspace 修改前失败。
+
+该整改同时修复 preserve 模式先 `skip` 后检查文件类型的问题。当前保证限定为“基于当前输入和文件系统状态可预见的失败不产生部分写入”；apply 期间的 I/O 故障、外部并发修改、进程崩溃、rollback、staging、锁和强事务仍不在保证范围内。
+
+该整改关闭：
+
+- P0-4（限定边界）
+- P1-4
+
+#### Doctor trusted bindings 与 managed-content integrity
+
+生成态 manifest 必须是 plain object，且 `createdBy`、实际 harness 目录名、package-defined `workDir`、agent-derived `entryFiles`、package+agent-derived `commands` 不能通过修改 manifest 自行降级。`rules` 与 `skills` 仍表示实际 init selection；因此 `--rules none` 与 `--rules-out` 排除 agent rule 的语义保持不变。
+
+新增 package-derived exact comparison，覆盖 tool-managed core/work templates、selected skill package files、Claude pointers、OpenCode managed block 和当前 command artifact render。artifact ledger 保留原有 ownership/drift 职责，不扩展到其他文件。明确排除 `project-context.md`、`automation-intent.md`、generated rules 正文、entry contract 外内容、`zentao.config.json`、unknown files，以及 OpenCode managed block 外字段和 instruction。
+
+该整改关闭：
+
+- P1-1（明确边界）
+- P1-2（明确边界）
+
 ### 0.3 后续代码质量整理
 
 在不改变 CLI 行为、错误文本、生成内容和测试断言语义的前提下，完成了：
 
 - command 模板在单次 plan 中复用渲染结果，减少重复同步读取；
-- skill 文件清单和 ownership metadata 在单次 init/doctor 中按需缓存；
+- skill 文件清单在单次 init/doctor 中按需缓存；
 - doctor 的 rules/skills/commands manifest 数组字段校验抽取为共享流程；
 - command-derived skill 与 native skill 共用 Markdown metadata 校验；
 - `test/init.test.js` 按 docs、agents、rules、artifacts、workspace 拆分为 focused suites；
@@ -119,23 +141,18 @@ git diff --check
 
 结果：
 
-- `npm test`：167 passed，0 failed。
-- `npm run pack:dry`：通过，package preview 共 106 个文件；新增 ledger、artifact doctor 和 Markdown checker 模块均包含在 package 中。
-- `git diff --check`：通过，无输出。
-- 临时 workspace smoke：fresh multi init 生成 schema 2 和 20 条 command artifact records；doctor 通过；drift/unowned collision 会在预期位置停止且保留用户字节；clean dry-run 不写文件。
+- `npm test`：194 passed，0 failed；其中 `test/doctor-integrity.test.js` 由 focused `test/doctor.test.js` 和 full aggregator 共同执行。
+- `node test/doctor-integrity.test.js`：13 passed，0 failed；`node test/init.test.js`：114 passed，0 failed。
+- `npm run pack:dry`：通过，package preview 共 108 个文件；包含全局 preflight、ZenTao example config、共享 command renderer、template variables 和 doctor integrity checker。
+- `git diff --check`：通过，无 whitespace error（仅 Windows 行尾转换 warning）。
+- CLI runtime smoke：fresh multi + custom `ai-harness` doctor 通过并验证三类 native command render；用户维护 docs、entry free content 和本地 ZenTao config 修改仍通过；tool-managed core drift 返回 exit 1；`--rules none` 与 `--rules-out claude` 均通过；non-object manifest 返回结构化错误且 stderr 为空。
+- 代码审查发现并已修复：managed path 父级 symlink、OpenCode 孤立/重复 marker、未选择 rules/skills stale files、篡改 harnessDir 的级联诊断，以及 rules cleanup 对无 instructions managed block（包括其他字段中的 marker 示例）的用户 `opencode.json` 无条件重序列化问题。
 
 尚未执行：commit、push、PR、package 发布、真实 tarball 安装 smoke、Windows CI、真实 ZenTao/MySQL 网络或数据库行为验证。
 
 ### 0.5 下一整改项
 
-按 P0 顺序，下一项是 **P0-4：init 全局 preflight 与失败一致性**。建议先将所有可预见失败前置到统一 plan：
-
-1. entry contract 与所有 entry 目标；
-2. `opencode.json` 解析、类型和 managed instruction 合并；
-3. template/rules/skills/commands 的读取与渲染；
-4. 所有目标路径、类型、symlink 和 ownership 冲突；
-5. 全部 preflight 成功后再进入 apply；
-6. 之后再评估 atomic write、staging、rollback journal 和跨进程锁。
+P0、P1-1 和 P1-2 已在当前明确边界内关闭。下一优先项是 **P1-3：agent 切换后的 stale surface 收敛**；其后处理 `--harness-dir` 迁移语义与 macOS canonical workspace/symlink 边界。
 
 ## 1. 结论摘要
 

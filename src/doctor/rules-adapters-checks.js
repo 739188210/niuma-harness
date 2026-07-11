@@ -33,7 +33,7 @@ function checkRuleAdapterFiles(context) {
 }
 
 function checkClaudeRulePointers(context, target) {
-  const { result, rules, status, workspaceRoot } = context;
+  const { result, rules, workspaceRoot } = context;
   if (rules.length === 0) {
     return;
   }
@@ -53,7 +53,7 @@ function checkClaudeRulePointers(context, target) {
       continue;
     }
 
-    const expectedPointer = `${status.harnessDir || 'harness'}/docs/rules/${ruleName}/`;
+    const expectedPointer = `${path.basename(context.harnessRoot)}/docs/rules/${ruleName}/`;
     const content = fs.readFileSync(pointerPath, 'utf8');
     if (!content.includes(expectedPointer)) {
       addError(result, `${label} must point to ${expectedPointer}`);
@@ -65,7 +65,7 @@ function checkClaudeRulePointers(context, target) {
 }
 
 function checkOpenCodeRulesInstruction(context, target) {
-  const { result, rules, status, workspaceRoot } = context;
+  const { result, rules, workspaceRoot } = context;
   if (rules.length === 0) {
     checkNoStaleOpenCodeRulesInstruction(context);
     return;
@@ -92,7 +92,7 @@ function checkOpenCodeRulesInstruction(context, target) {
     return;
   }
 
-  const expectedRoot = `${status.harnessDir || 'harness'}/docs/rules/`;
+  const expectedRoot = `${path.basename(context.harnessRoot)}/docs/rules/`;
   if (!instructions.includes(expectedRoot)) {
     addError(result, `opencode.json rules instructions must point to ${expectedRoot}`);
     return;

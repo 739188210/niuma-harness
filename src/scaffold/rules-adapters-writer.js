@@ -4,6 +4,7 @@ const path = require('path');
 
 const { getAvailableRuleDirs, getRuleAdapterTargetsForAgent } = require('../rules');
 const {
+  inspectFileTarget,
   removeEmptyDirsUntil,
   removeFile,
   safeResolveInside,
@@ -13,15 +14,58 @@ const {
 const MANAGED_RULES_BEGIN = '<!-- niuma-harness:rules begin -->';
 const MANAGED_RULES_END = '<!-- niuma-harness:rules end -->';
 
-function writeRuleAdapterFiles(context) {
+function prepareRuleAdapterPlan(context) {
   const targets = getRuleAdapterTargetsForAgent(context.options.agent);
   const targetKinds = new Set(targets.map((target) => target.kind));
-
-  if (targetKinds.has('claude-rule-pointer')) {
-    writeClaudeRulePointers(context, targets.find((target) => target.kind === 'claude-rule-pointer'));
-  } else {
-    cleanupClaudeRulePointers(context);
+  const availableRules = getAvailableRuleDirs(context.manifest.rulesRoot);
+  const pointerRoot = '.claude/rules';
+  const pointerActions = availableRules.map((ruleName) => ({
+    kind: 'remove',
+    targetPath: getClaudeRulePointerPath(context, pointerRoot, ruleName),
+  }));
+  for (const item of pointerActions) {
+    inspectFileTarget(item.targetPath);
   }
+  const claudeTarget = targets.find((target) => target.kind === 'claude-rule-pointer');
+  if (claudeTarget) {
+    for (const ruleName of context.options.rules) {
+      const targetPath = getClaudeRulePointerPath(context, claudeTarget.root, ruleName);
+      inspectFileTarget(targetPath);
+      pointerActions.push({
+        content: renderClaudeRulePointer(context.options.harnessDir, ruleName),
+        kind: 'write',
+        targetPath,
+      });
+    }
+  }
+
+  const openCodeTarget = targets.find((target) => target.kind === 'opencode-instructions');
+  const configPath = getOpenCodeConfigPath(context, openCodeTarget || { file: 'opencode.json' });
+  let openCodeContent = null;
+  if (inspectFileTarget(configPath)) {
+    const existing = fs.readFileSync(configPath, 'utf8');
+    const needsManagedWrite = openCodeTarget && context.options.rules.length > 0;
+    if (needsManagedWrite || existing.includes(MANAGED_RULES_BEGIN) || existing.includes(MANAGED_RULES_END)) {
+      const config = readOpenCodeConfig(configPath);
+      const hasInstructionBlock = instructionsHaveManagedBlock(config.instructions);
+      if (needsManagedWrite || hasInstructionBlock) {
+        const next = openCodeTarget
+          ? mergeOpenCodeRulesInstruction(config, context.options.rules, context.options.harnessDir)
+          : removeOpenCodeRulesInstruction(config);
+        openCodeContent = `${JSON.stringify(next, null, 2)}\n`;
+      }
+    }
+  } else if (openCodeTarget && context.options.rules.length > 0) {
+    const next = mergeOpenCodeRulesInstruction({}, context.options.rules, context.options.harnessDir);
+    openCodeContent = `${JSON.stringify(next, null, 2)}\n`;
+  }
+  return { configPath, openCodeContent, pointerActions, targets, targetKinds };
+}
+
+function writeRuleAdapterFiles(context) {
+  const { targets, targetKinds } = context.ruleAdapterPlan;
+
+  writeClaudeRulePointers(context);
 
   if (targetKinds.has('opencode-instructions')) {
     writeOpenCodeRulesInstruction(context, targets.find((target) => target.kind === 'opencode-instructions'));
@@ -30,24 +74,17 @@ function writeRuleAdapterFiles(context) {
   }
 }
 
-function writeClaudeRulePointers(context, target) {
-  cleanupClaudeRulePointers(context);
-
-  for (const ruleName of context.options.rules) {
-    const targetPath = getClaudeRulePointerPath(context, target.root, ruleName);
-    const content = renderClaudeRulePointer(context.options.harnessDir, ruleName);
-    context.printAction(writeFile(targetPath, content, { dryRun: context.options.dryRun, overwrite: true }), targetPath);
-  }
-}
-
-function cleanupClaudeRulePointers(context) {
-  const rulesRoot = '.claude/rules';
-  for (const ruleName of getAvailableRuleDirs(context.manifest.rulesRoot)) {
-    const targetPath = getClaudeRulePointerPath(context, rulesRoot, ruleName);
-    const action = removeFile(targetPath, { dryRun: context.options.dryRun });
-    context.printAction(action, targetPath);
+function writeClaudeRulePointers(context) {
+  const rulesRoot = safeResolveInside(context.workspaceDir, '.claude/rules', 'claude rules root');
+  for (const item of context.ruleAdapterPlan.pointerActions) {
+    if (item.kind === 'write') {
+      context.printAction(writeFile(item.targetPath, item.content, { dryRun: context.options.dryRun, overwrite: true }), item.targetPath);
+      continue;
+    }
+    const action = removeFile(item.targetPath, { dryRun: context.options.dryRun });
+    context.printAction(action, item.targetPath);
     if (action === 'remove') {
-      removeEmptyDirsUntil(path.dirname(targetPath), safeResolveInside(context.workspaceDir, rulesRoot, 'claude rules root'), context.options.dryRun);
+      removeEmptyDirsUntil(path.dirname(item.targetPath), rulesRoot, context.options.dryRun);
     }
   }
 }
@@ -60,32 +97,15 @@ function renderClaudeRulePointer(harnessDir, ruleName) {
   return `# Niuma ${ruleName} Rules Pointer\n\nThis file is generated by \`niuma-harness\`.\n\nCanonical rule content lives under:\n\n- \`${harnessDir}/docs/rules/${ruleName}/\`\n\nLoad the relevant files in that directory when the current task needs these preferences.\n\nWhen multiple Niuma rule directories are selected, load all directories relevant to the task. For example, a browser UI task in \`.ts\` or \`.tsx\` may need both \`web/\` and \`typescript/\`.\n\nDo not duplicate rule content here.\n`;
 }
 
-function writeOpenCodeRulesInstruction(context, target) {
-  if (context.options.rules.length === 0) {
-    cleanupOpenCodeRulesInstruction(context, target);
-    return;
+function writeOpenCodeRulesInstruction(context) {
+  const { configPath, openCodeContent } = context.ruleAdapterPlan;
+  if (openCodeContent !== null) {
+    context.printAction(writeFile(configPath, openCodeContent, { dryRun: context.options.dryRun, overwrite: true }), configPath);
   }
-
-  const configPath = getOpenCodeConfigPath(context, target);
-  const config = readOpenCodeConfig(configPath);
-  const nextConfig = mergeOpenCodeRulesInstruction(config, context.options.rules, context.options.harnessDir);
-  context.printAction(writeFile(configPath, `${JSON.stringify(nextConfig, null, 2)}\n`, { dryRun: context.options.dryRun, overwrite: true }), configPath);
 }
 
-function cleanupOpenCodeRulesInstruction(context, target) {
-  const configPath = getOpenCodeConfigPath(context, target || { file: 'opencode.json' });
-  if (!fs.existsSync(configPath)) {
-    return;
-  }
-
-  const content = fs.readFileSync(configPath, 'utf8');
-  if (!hasManagedBlock(content)) {
-    return;
-  }
-
-  const config = readOpenCodeConfig(configPath);
-  const nextConfig = removeOpenCodeRulesInstruction(config);
-  context.printAction(writeFile(configPath, `${JSON.stringify(nextConfig, null, 2)}\n`, { dryRun: context.options.dryRun, overwrite: true }), configPath);
+function cleanupOpenCodeRulesInstruction(context) {
+  writeOpenCodeRulesInstruction(context);
 }
 
 function getOpenCodeConfigPath(context, target) {
@@ -217,6 +237,14 @@ function hasManagedBlock(text) {
   return text.includes(MANAGED_RULES_BEGIN) && text.includes(MANAGED_RULES_END);
 }
 
+function instructionsHaveManagedBlock(instructions) {
+  if (typeof instructions === 'string') {
+    return hasManagedBlock(instructions);
+  }
+  return Array.isArray(instructions)
+    && instructions.some((instruction) => typeof instruction === 'string' && hasManagedBlock(instruction));
+}
+
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -224,5 +252,8 @@ function escapeRegExp(value) {
 module.exports = {
   MANAGED_RULES_BEGIN,
   MANAGED_RULES_END,
+  prepareRuleAdapterPlan,
+  renderClaudeRulePointer,
+  renderOpenCodeRulesInstruction,
   writeRuleAdapterFiles,
 };

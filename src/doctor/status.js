@@ -20,7 +20,12 @@ function findStatusFile(targetDir, harnessDir) {
 
 function readStatus(statusPath, result) {
   try {
-    return JSON.parse(fs.readFileSync(statusPath, 'utf8'));
+    const status = JSON.parse(fs.readFileSync(statusPath, 'utf8'));
+    if (!status || Array.isArray(status) || typeof status !== 'object') {
+      addError(result, `${STATUS_FILE} must contain a JSON object`);
+      return null;
+    }
+    return status;
   } catch (error) {
     addError(result, `invalid ${STATUS_FILE}: ${error.message}`);
     return null;

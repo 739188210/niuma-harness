@@ -11,7 +11,17 @@ Use this workflow to read ZenTao bugs, understand reproduction details, modify t
 
 ## Configuration
 
-Read all configuration from `zentao.config.json` in this skill directory. The distributed file contains placeholders for new environments. Do not ask the user to paste passwords or tokens into chat.
+Read runtime configuration from `zentao.config.json` in this skill directory. Niuma distributes `zentao.config.example.json`, not the runtime config. The example is tool-managed and may be refreshed on re-init; never edit it as the live config.
+
+Before first use:
+
+1. Check whether `zentao.config.json` exists beside the example.
+2. If it is missing, copy `zentao.config.example.json` to `zentao.config.json` in the same directory. Do not make the helper fall back to the example.
+3. Ask the user to fill the address, account, and password locally. Never ask them to paste passwords, tokens, session cookies, or the populated config into chat.
+4. Run `scripts/zentao_bug.py ping` only after those local connection values are configured.
+5. Guide the user through the non-sensitive scope and writeback choices below.
+
+The local `zentao.config.json` is not managed by Niuma and should not be committed.
 
 Required top-level sections:
 
@@ -38,21 +48,8 @@ Example:
     "password": "change-me"
   },
   "scopes": {
-    "read": [
-      {
-        "name": "素材库",
-        "product": 21,
-        "projects": []
-      }
-    ],
-    "write": [
-      {
-        "name": "素材库",
-        "product": 21,
-        "projects": [91],
-        "actions": ["comment", "resolve"]
-      }
-    ]
+    "read": [],
+    "write": []
   },
   "writePolicy": {
     "enabled": false,
@@ -67,11 +64,11 @@ Example:
 }
 ```
 
-Before first use, tell the user to fill `zentao.config.json` if it still contains placeholders such as `zentao.example.com` or `change-me`.
+If an existing `zentao.config.json` still contains placeholders such as `zentao.example.com` or `change-me`, stop before network access and ask the user to update those values locally.
 
 ### First-Use Scope Setup
 
-If `api.baseUrl`, `api.prefix`, `auth.account`, and `auth.password` are configured but `scopes.read` or `scopes.write` is missing or empty, do not stop at the raw config error. Start a guided setup instead.
+The distributed example starts with empty read and write scopes. If the connection values are configured but `scopes.read` is missing or empty, start a guided setup instead of continuing to a normal bug command. An empty `scopes.write` is a valid read-only choice.
 
 Rules:
 

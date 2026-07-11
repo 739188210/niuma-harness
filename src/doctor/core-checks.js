@@ -21,7 +21,7 @@ function checkEntryFiles(context) {
 
   const expected = getEntryFilesForAgent(agent);
   checkEntryListMatches(result, status.entryFiles, expected, agent);
-  for (const entryFile of status.entryFiles) {
+  for (const entryFile of expected) {
     checkRelativeFile(workspaceRoot, entryFile, `entry file ${entryFile}`, result);
   }
 }
@@ -37,8 +37,11 @@ function checkEntryListMatches(result, actual, expected, agent) {
 
 // 契约区完整性：manifest 声明的每个入口都必须包含唯一、完整且和模板一致的 contract 块。
 function checkEntryContractIntegrity(context) {
-  const { result, status, workspaceRoot } = context;
-  const harnessDir = status.harnessDir || 'harness';
+  const { agent, result, status, workspaceRoot } = context;
+  if (!agent) {
+    return;
+  }
+  const harnessDir = path.basename(context.harnessRoot);
   const canonicalBlock = sliceContractBlock(
     renderTemplate('entry/entry.md', { HARNESS_DIR: harnessDir })
   );
@@ -47,7 +50,7 @@ function checkEntryContractIntegrity(context) {
     return;
   }
 
-  for (const entryFile of status.entryFiles) {
+  for (const entryFile of getEntryFilesForAgent(agent)) {
     const content = readOptionalEntry(workspaceRoot, entryFile);
     if (content === null) {
       continue; // 缺失已由 checkEntryFiles 报告

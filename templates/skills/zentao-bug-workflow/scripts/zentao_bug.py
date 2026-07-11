@@ -42,7 +42,11 @@ def skill_root() -> Path:
 def load_config(root: Path) -> dict[str, Any]:
     path = root / "zentao.config.json"
     if not path.exists():
-        raise RuntimeError(f"Missing JSON config at {path}")
+        example = root / "zentao.config.example.json"
+        raise RuntimeError(
+            f"Missing local config at {path}. Copy {example.name} to {path.name}, then fill sensitive values locally. "
+            "Do not paste passwords, tokens, cookies, or the populated config into chat."
+        )
     with path.open("r", encoding="utf-8-sig") as fh:
         return json.load(fh)
 
@@ -61,6 +65,39 @@ def require_config(config: dict[str, Any], include_scopes: bool = True) -> None:
         if value is None or (isinstance(value, str) and not value.strip()):
             raise RuntimeError(f"Missing required zentao.config.json value: {section}.{key}")
         assert_not_placeholder_config(section, key, value)
+
+    if include_scopes:
+        scopes = config.get("scopes")
+        if not isinstance(scopes, dict):
+            raise RuntimeError("zentao.config.json scopes must be an object")
+        read_scopes = scopes.get("read")
+        write_scopes = scopes.get("write")
+        if not isinstance(read_scopes, list) or not isinstance(write_scopes, list):
+            raise RuntimeError("zentao.config.json scopes.read and scopes.write must be arrays")
+        validate_scope_entries(read_scopes, "read")
+        validate_scope_entries(write_scopes, "write")
+        if not read_scopes:
+            raise RuntimeError(
+                "zentao.config.json scopes.read is empty. Complete the First-Use Scope Setup before running bug commands; "
+                "scopes.write may remain empty for read-only use."
+            )
+
+
+def validate_scope_entries(scopes: list[Any], scope_type: str) -> None:
+    for index, scope in enumerate(scopes):
+        label = f"scopes.{scope_type}[{index}]"
+        if not isinstance(scope, dict):
+            raise RuntimeError(f"zentao.config.json {label} must be an object")
+        if scope.get("product") is None or isinstance(scope.get("product"), (dict, list, bool)):
+            raise RuntimeError(f"zentao.config.json {label}.product must be a product ID")
+        if not isinstance(scope.get("projects"), list):
+            raise RuntimeError(f"zentao.config.json {label}.projects must be an array")
+        if scope_type == "write":
+            actions = scope.get("actions")
+            if not isinstance(actions, list) or any(action not in {"comment", "resolve"} for action in actions):
+                raise RuntimeError(
+                    f"zentao.config.json {label}.actions must be an array containing only comment or resolve"
+                )
 
 
 def assert_not_placeholder_config(section: str, key: str, value: Any) -> None:

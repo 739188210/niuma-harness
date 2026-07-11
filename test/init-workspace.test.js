@@ -35,6 +35,26 @@ test('multi --rules none installs no agent adapters', () => {
   });
 });
 
+test('opencode --rules none leaves config without a managed block byte-identical', () => {
+  const workspace = tempDir();
+  const configPath = path.join(workspace, 'opencode.json');
+  const original = '{\n  "large": 9007199254740993,\n  "instructions": "keep"\n}\n';
+  fs.writeFileSync(configPath, original, 'utf8');
+  const result = run(['init', workspace, '--agent', 'opencode', '--rules', 'none']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.strictEqual(read(configPath), original);
+});
+
+test('rules cleanup ignores marker examples outside OpenCode instructions', () => {
+  const workspace = tempDir();
+  const configPath = path.join(workspace, 'opencode.json');
+  const original = '{\n  "large": 9007199254740993,\n  "note": "<!-- niuma-harness:rules begin --> example <!-- niuma-harness:rules end -->",\n  "instructions": "keep"\n}\n';
+  fs.writeFileSync(configPath, original, 'utf8');
+  const result = run(['init', workspace, '--agent', 'claude', '--rules', 'none']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.strictEqual(read(configPath), original);
+});
+
 test('opencode rules instructions merge with existing config', () => {
   const workspace = tempDir();
   fs.writeFileSync(path.join(workspace, 'opencode.json'), JSON.stringify({
