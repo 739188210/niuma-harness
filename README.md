@@ -33,7 +33,7 @@ niuma-harness check [target] [options]
 |---|---|
 | `--agent <name>` | `claude`, `codex`, `opencode`, or `multi` |
 | `--tool <name>` | Alias for `--agent` |
-| `--harness-dir <name>` | Directory to create, default: `harness` |
+| `--harness-dir <name>` | Harness directory for first init or same-name re-init, default: `harness`; changing it is not migration |
 | `--rules <selection>` | `all`, `none`, or `<rule-dir>[,<rule-dir>...]`; agent adapter rules are added automatically |
 | `--rules-out <selection>` | Exclude selected rule directories from `all` |
 | `--skills <selection>` | `all`, `none`, or `<skill>[,<skill>...]`, default: `all` |
@@ -211,7 +211,13 @@ Built-in command workflows are single-sourced from `templates/commands/*.md`. `i
 
 For Codex, command-derived skills are command artifacts, not native skill templates from `templates/skills/`. Do not duplicate command workflows under `templates/skills/`; update the source file in `templates/commands/` instead.
 
-Before any scaffold mutation, `init` renders and preflights the complete command artifact set. A missing target can be created; an existing target can be refreshed only when its ledger record matches and its current digest equals the previously recorded digest. Missing owned files may be recreated. `--dry-run` performs the same ownership checks without writing. Re-running with a different agent retains prior valid records so future stale-artifact cleanup can still identify them; `doctor` continues validating those retained files. The implementation performs a second full preflight before command writes, but it does not yet provide a cross-process lock or crash-proof rollback for filesystem failures.
+Before any scaffold mutation, `init` renders and preflights the complete command artifact set. A missing target can be created; an existing target can be refreshed only when its ledger record matches and its current digest equals the previously recorded digest. Missing owned files may be recreated. `--dry-run` performs the same ownership checks without writing.
+
+A workspace may contain only one recognizable Niuma harness. `init` scans direct child directories for Niuma-owned `manifest.json` files without following sibling directory or manifest symlinks. If a harness exists under another name, normal init and `--dry-run` stop before planning or mutation. `--harness-dir` does not move, merge, adopt, or delete an existing harness; resolve duplicate directories explicitly or re-run with the unique existing directory name. Workspace-mode `doctor` reports competing harnesses, while pointing `doctor` directly at a harness root checks only that root.
+
+`init`, `doctor`, and `check` canonicalize the target before establishing the workspace boundary. This accepts standard filesystem aliases such as macOS `/var/...` → `/private/var/...`, a workspace symlink/junction, and a missing workspace below an aliased existing parent. After that boundary is established, Niuma still refuses symlinks, junctions, and dangling links in paths it reads, writes, or removes inside the canonical workspace. Competing-harness discovery still does not follow sibling directory or manifest links.
+
+Re-running with a different agent in the same workspace and `--harness-dir` converges agent-native surfaces. Retired command artifacts are removed only when canonical targets, ledger ownership, and the recorded digest all match; the new ledger contains only current-agent commands. Retired entry files lose only their Niuma contract unless the whole file is the untouched generated entry. Retired skill roots lose only package-known files from the previous selection; local configuration and unknown files remain. Ambiguous contracts, drifted artifacts, invalid target types, and internal symlinks stop during preflight. The implementation revalidates destructive plans before applying them, but it does not provide cross-process TOCTOU protection, a workspace lock, or crash-proof rollback for filesystem failures.
 
 ## Doctor
 

@@ -15,6 +15,10 @@ function normalizeAgent(agent) {
 }
 
 // entry 文件不放在模板 manifest 中，而是由 agent 模式决定。
+function getAllEntryFiles() {
+  return ['CLAUDE.md', 'AGENTS.md'];
+}
+
 function getEntryFilesForAgent(agent) {
   if (agent === 'claude') {
     return ['CLAUDE.md'];
@@ -33,5 +37,6 @@ function getEntryFilesForAgent(agent) {
 
 module.exports = {
   normalizeAgent,
+  getAllEntryFiles,
   getEntryFilesForAgent,
 };

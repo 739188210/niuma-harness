@@ -21,11 +21,11 @@
 | P0-4 init 后期失败留下半初始化状态 | 已完成（限定边界） | 所有 domain 在首个 workspace mutation 前完成 source/render/config/target preflight；可预见错误不会留下部分状态。apply 期 I/O、并发修改、进程崩溃和强事务不在本项保证内 |
 | P1-1 doctor 过度信任 generated manifest | 已完成（明确边界） | doctor 绑定 plain-object manifest、`createdBy`、实际 harness root、package `workDir`、agent entryFiles 和 package+agent commands；rules/skills 保持 manifest selection |
 | P1-2 tool-managed 内容被替换后 doctor 仍通过 | 已完成（明确边界） | exact compare 覆盖 tool-managed core/work templates、selected skill package files、Claude pointers、OpenCode managed block 和当前 package-rendered commands；用户维护内容明确排除 |
-| P1-3 切换 agent 后旧 surfaces 不会收敛 | 部分完成 | previous-agent command ownership records 会保留并由 doctor 持续验证；旧 entry、rules adapters、skills 和 command surfaces 尚未自动清理 |
+| P1-3 切换 agent 后旧 surfaces 不会收敛 | 已完成（明确边界） | 同一 workspace、同一 harnessDir 的切换会退休旧 entry contract、ledger-owned commands 和 previous-selection skill 模板文件；共享 surface、local config 和未知文件保留 |
 | P1-4 user-maintained 目标为目录时 init 错误成功 | 已完成 | preserve/skip 前先验证目标必须是普通文件，并纳入 init 全局 preflight |
-| P1-5 macOS `/var/...` 合法 workspace 被拒绝 | 未处理 | 仍待重新定义 canonical workspace root 与 workspace 内 symlink 边界 |
+| P1-5 macOS `/var/...` 合法 workspace 被拒绝 | 已完成（canonical boundary） | init/doctor/check 在入口 canonicalize target，允许 workspace 外祖先及 target 本身的有效 alias；canonical workspace 内 Niuma 访问路径的 symlink/junction 仍拒绝 |
 | P1-6 duplicate contract blocks 未被拒绝 | 已完成 | 与 P0-1 一并修复，init 和 doctor 都拒绝重复 contract |
-| P1-7 修改 `--harness-dir` 形成竞争 harness | 未处理 | 仍待定义显式迁移或冲突停止语义 |
+| P1-7 修改 `--harness-dir` 形成竞争 harness | 已完成（conflict-stop 边界） | `--harness-dir` 仅用于首次命名或同名 re-init；workspace 存在其他可识别 Niuma harness 时，init 在任何 plan/mutation 前停止，不自动迁移 |
 
 ### 0.2 已完成整改
 
@@ -78,7 +78,7 @@ skill 直接按 `templates/skills/<skill>/` 文件清单分发：清单中的文
 - 已登记但当前内容漂移：停止并保留现有字节。
 - 已登记文件缺失：允许重建。
 - symlink、dangling symlink、目录或其他非普通文件目标：拒绝。
-- agent 切换时保留 previous-agent command records，doctor 继续验证其文件和 digest。
+- 同一 harnessDir 内切换 agent 时，只在 canonical target、previous ledger ownership 和 digest 均匹配时删除退出 agent 的 command artifacts；新 ledger 仅记录当前 agent artifacts。
 
 command plan 会在任何 scaffold mutation 前完整 render/preflight，并在 command 写入前再次全量 revalidate。该机制防止已知 command collision 导致部分 scaffold 写入，但尚不等价于跨 writer、跨进程或崩溃安全的文件系统事务。
 
@@ -86,12 +86,48 @@ command plan 会在任何 scaffold mutation 前完整 render/preflight，并在 
 
 - P0-3
 
-并部分推进：
+并推进：
 
 - P0-4
 - P1-1
 - P1-2
-- P1-3
+- P1-3（后续已由 agent-switch surface convergence 完成）
+
+#### Agent-switch surface convergence
+
+同一 workspace、同一 `harnessDir` 的 re-init 现在以经过验证的 previous schema-2 status 为切换上下文，并只通过 agent/package canonical mappings 推导清理候选：
+
+- retired entry 与 previous 完整模板 exact 相同时删除整文件，否则仅移除唯一合法 contract；无 marker 的用户文件保留，歧义 marker 在 mutation 前失败；
+- retired command 必须由 canonical descriptor、ledger source/target 和 exact digest 共同证明 ownership；成功后 ledger 仅保留当前 agent records；
+- retired-only skill roots 只删除 previous selected skills 的 package-known template files，`zentao.config.json` 和未知文件保留；
+- rules adapters 延续已有跨 agent 收敛；共享 `AGENTS.md` 等 surface 不误删；
+- doctor 拒绝 inactive entry contract 和 inactive command ledger record，但不扫描 inactive skill roots猜测 ownership。
+
+该边界不包含 `--harness-dir` 迁移、package migration、workspace lock、rollback 或崩溃事务。
+
+该整改关闭：
+
+- P1-3（明确边界）
+
+#### Competing harness conflict-stop
+
+`--harness-dir` 现在只表示首次命名或同名 re-init，不再隐式形成第二套 harness。init 在任何 domain plan 和 workspace mutation 前扫描 workspace 直接子目录：只识别普通目录中的普通 `manifest.json`，不跟随 sibling directory/manifest symlink；`createdBy: "niuma-harness"` 或带固定 Niuma 结构的损坏 manifest 会形成候选。requested harness 外存在候选时，init 和 dry-run 均明确停止，不移动、合并或删除任何 root 或 user-maintained docs。
+
+Workspace-mode doctor 会报告 competing harness；直接对某个 harness root 运行 doctor 时仍只检查该 root，便于只读恢复诊断。自动 migration 和重复 user docs 合并不属于本项。
+
+该整改关闭：
+
+- P1-7（conflict-stop 边界）
+
+#### Canonical workspace boundary
+
+`init`、`doctor` 和 `check` 现在在定位 harness 前统一 canonicalize 用户 target：对最近现存祖先执行 realpath，再安全拼回不存在的 workspace 后缀。因此 macOS `/var -> /private/var`、workspace 本身的有效 symlink/junction，以及 alias parent 下的新 workspace 都映射到同一个真实 root。
+
+边界建立后，Niuma 访问、写入或删除的 canonical workspace 内路径仍沿用 symlink/junction/dangling-link 拒绝；competing harness discovery 也不跟随 sibling directory 或 manifest link。本项不允许内部链接，也不提供跨进程 TOCTOU 防护、workspace lock、rollback 或 crash-safe transaction。
+
+该整改关闭：
+
+- P1-5（canonical boundary）
 
 #### Init 全局 preflight
 

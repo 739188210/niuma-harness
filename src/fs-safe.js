@@ -2,6 +2,46 @@
 const fs = require('fs');
 const path = require('path');
 
+function canonicalizeWorkspacePath(targetPath) {
+  const resolved = path.resolve(targetPath || '.');
+  const missingSegments = [];
+  let current = resolved;
+  let stat;
+
+  while (true) {
+    try {
+      stat = fs.lstatSync(current);
+      break;
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        throw error;
+      }
+
+      const parent = path.dirname(current);
+      if (parent === current) {
+        throw error;
+      }
+      missingSegments.unshift(path.basename(current));
+      current = parent;
+    }
+  }
+
+  if (missingSegments.length > 0 && !stat.isDirectory() && !stat.isSymbolicLink()) {
+    throw new Error(`Parent path exists but is not a directory: ${current}`);
+  }
+
+  const realpath = fs.realpathSync.native || fs.realpathSync;
+  const canonicalAncestor = realpath(current);
+  if (missingSegments.length === 0) {
+    return canonicalAncestor;
+  }
+
+  if (!fs.statSync(canonicalAncestor).isDirectory()) {
+    throw new Error(`Parent path exists but is not a directory: ${current}`);
+  }
+  return path.join(canonicalAncestor, ...missingSegments);
+}
+
 function validateRelativePath(relativePath, label) {
   if (!relativePath || typeof relativePath !== 'string') {
     throw new Error(`Invalid ${label}: path must be a non-empty string.`);
@@ -214,6 +254,7 @@ function removeEmptyDirsUntil(dirPath, stopDir, dryRun) {
 }
 
 module.exports = {
+  canonicalizeWorkspacePath,
   validateRelativePath,
   safeResolveInside,
   assertNoSymlinkInPath,

@@ -62,9 +62,19 @@ function replaceContractBlock(content, newBlock) {
   return content.slice(0, analysis.begin) + newBlock + content.slice(analysis.end);
 }
 
+// 移除唯一且完整的契约块，块外字节保持不变；其他状态返回 null。
+function removeContractBlock(content) {
+  const analysis = analyzeContractBlock(content);
+  if (analysis.status !== 'valid') {
+    return null;
+  }
+  return content.slice(0, analysis.begin) + content.slice(analysis.end);
+}
+
 module.exports = {
   CONTRACT_BEGIN,
   analyzeContractBlock,
   sliceContractBlock,
   replaceContractBlock,
+  removeContractBlock,
 };

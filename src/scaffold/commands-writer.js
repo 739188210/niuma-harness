@@ -1,20 +1,31 @@
-// 将 command 模板先渲染和完整预检，再统一写入各 agent 原生产物。
+// 将当前 command 产物和退出 agent 的已登记产物一起预检，再统一应用。
 const fs = require('fs');
+const path = require('path');
 const { renderCommandArtifacts } = require('../command-artifacts');
+const { getCommandArtifactDescriptors, getCommandTargetsForAgent } = require('../commands');
 const {
   digestBytes,
   findArtifactRecord,
-  mergeArtifactRecords,
+  validateArtifactRecords,
 } = require('../artifact-ledger');
-const { inspectFileTarget, safeResolveInside, writeFile } = require('../fs-safe');
+const {
+  inspectFileTarget,
+  removeEmptyDirsUntil,
+  removeFile,
+  safeResolveInside,
+  writeFile,
+} = require('../fs-safe');
 
-function prepareCommandPlan(context, previousArtifacts) {
-  const { commands, manifest, options } = context;
-  const plan = renderCommandArtifacts(options.agent, commands, manifest.commandsRoot, context.variables)
+function prepareCommandPlan(context) {
+  const { commands, manifest, options, previousStatus } = context;
+  const writes = renderCommandArtifacts(options.agent, commands, manifest.commandsRoot, context.variables)
     .map((artifact) => prepareRenderedArtifact(context, artifact));
-  preflightCommandPlan(context.workspaceDir, plan, previousArtifacts);
+  const activeTargets = new Set(writes.map((item) => item.target));
+  const removals = prepareRetiredArtifacts(context, activeTargets);
+  const plan = [...writes, ...removals];
+  preflightCommandPlan(context.workspaceDir, plan, previousStatus ? previousStatus.artifacts : []);
   return {
-    artifacts: mergeArtifactRecords(previousArtifacts, plan.map((item) => item.record)),
+    artifacts: validateArtifactRecords(writes.map((item) => item.record)),
     plan,
   };
 }
@@ -24,6 +35,7 @@ function prepareRenderedArtifact(context, artifact) {
   return {
     ...artifact,
     bytes,
+    operation: 'write',
     record: {
       kind: artifact.kind,
       source: artifact.source,
@@ -32,6 +44,42 @@ function prepareRenderedArtifact(context, artifact) {
     },
     targetPath: safeResolveInside(context.workspaceDir, artifact.target, 'command target'),
   };
+}
+
+function prepareRetiredArtifacts(context, activeTargets) {
+  const { previousStatus } = context;
+  if (!previousStatus) {
+    return [];
+  }
+
+  const previousDescriptors = getCommandArtifactDescriptors(
+    previousStatus.agent,
+    previousStatus.commands
+  );
+  const previousTargets = new Set(previousDescriptors.map((item) => item.target));
+  for (const record of previousStatus.artifacts) {
+    if (!previousTargets.has(record.target)) {
+      throw new Error(`inactive command artifact record cannot be reconciled: ${record.target}`);
+    }
+  }
+
+  return previousDescriptors
+    .filter((descriptor) => !activeTargets.has(descriptor.target))
+    .map((descriptor) => ({
+      ...descriptor,
+      operation: 'remove',
+      targetPath: safeResolveInside(context.workspaceDir, descriptor.target, 'command target'),
+      targetRoot: getCommandTargetRoot(context.workspaceDir, previousStatus.agent, descriptor.target),
+    }));
+}
+
+function getCommandTargetRoot(workspaceDir, agent, target) {
+  const match = getCommandTargetsForAgent(agent)
+    .find((candidate) => target === candidate.root || target.startsWith(`${candidate.root}/`));
+  if (!match) {
+    throw new Error(`command target is not canonical for agent ${agent}: ${target}`);
+  }
+  return safeResolveInside(workspaceDir, match.root, 'command root');
 }
 
 function preflightCommandPlan(workspaceDir, plan, previousArtifacts) {
@@ -53,14 +101,22 @@ function preflightCommandArtifact(workspaceDir, item, previousArtifacts) {
   const exists = inspectFileTarget(targetPath);
   const previous = findArtifactRecord(previousArtifacts, item.kind, item.target);
 
+  if (item.operation === 'remove') {
+    if (!previous || previous.source !== item.source) {
+      throw new Error(`refusing to remove unowned command artifact: ${item.target}`);
+    }
+    item.action = exists ? 'remove' : 'skip';
+    item.observedDigest = exists ? digestBytes(fs.readFileSync(targetPath)) : null;
+    if (exists && item.observedDigest !== previous.digest) {
+      throw new Error(`owned command artifact drifted: ${item.target}`);
+    }
+    return;
+  }
+
   if (!exists) {
     item.action = 'create';
     item.observedDigest = null;
     return;
-  }
-  const stat = fs.lstatSync(targetPath);
-  if (!stat.isFile()) {
-    throw new Error(`command artifact target is not a regular file: ${item.target}`);
   }
   if (!previous || previous.source !== item.source) {
     throw new Error(`refusing to overwrite unowned command artifact: ${item.target}`);
@@ -78,6 +134,14 @@ function writeCommandFiles(context) {
   const { commandPlan, options, printAction } = context;
   revalidateCommandPlan(context.workspaceDir, commandPlan);
   for (const item of commandPlan) {
+    if (item.operation === 'remove') {
+      const action = removeFile(item.targetPath, { dryRun: options.dryRun });
+      printAction(action, item.targetPath);
+      if (action === 'remove') {
+        removeEmptyDirsUntil(path.dirname(item.targetPath), item.targetRoot, options.dryRun);
+      }
+      continue;
+    }
     writeFile(item.targetPath, item.content, { dryRun: options.dryRun, overwrite: item.action === 'refresh' });
     printAction(item.action, item.targetPath);
   }
@@ -95,8 +159,8 @@ function revalidateCommandPlan(workspaceDir, plan) {
         }
         continue;
       }
-      if (!exists || !fs.lstatSync(targetPath).isFile()) {
-        throw new Error(`command artifact changed type after preflight: ${item.target}`);
+      if (!exists) {
+        throw new Error(`command artifact disappeared after preflight: ${item.target}`);
       }
       if (digestBytes(fs.readFileSync(targetPath)) !== item.observedDigest) {
         throw new Error(`command artifact changed after preflight: ${item.target}`);

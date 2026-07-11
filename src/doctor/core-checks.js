@@ -1,8 +1,8 @@
 // doctor 的通用文件/目录检查，以及入口文件、核心文档和 workDir 校验。
 const fs = require('fs');
 const path = require('path');
-const { getEntryFilesForAgent } = require('../agents');
-const { safeResolveInside } = require('../fs-safe');
+const { getAllEntryFiles, getEntryFilesForAgent } = require('../agents');
+const { assertNoSymlinkInPath, safeResolveInside } = require('../fs-safe');
 const { renderTemplate } = require('../scaffold/templates');
 const { analyzeContractBlock, sliceContractBlock } = require('../contract');
 const { addError, addOk } = require('./result');
@@ -24,6 +24,46 @@ function checkEntryFiles(context) {
   for (const entryFile of expected) {
     checkRelativeFile(workspaceRoot, entryFile, `entry file ${entryFile}`, result);
   }
+  checkInactiveEntryContracts(context, new Set(expected));
+}
+
+function checkInactiveEntryContracts(context, activeEntries) {
+  const { result, workspaceRoot } = context;
+  const harnessDir = path.basename(context.harnessRoot);
+  const canonicalBlock = sliceContractBlock(
+    renderTemplate('entry/entry.md', { HARNESS_DIR: harnessDir })
+  );
+  const normalize = (value) => value.replace(/\r\n/g, '\n');
+  for (const entryFile of getAllEntryFiles()) {
+    if (activeEntries.has(entryFile)) {
+      continue;
+    }
+    const content = readOptionalEntry(workspaceRoot, entryFile, result);
+    if (content === null) {
+      continue;
+    }
+    const analysis = analyzeContractBlock(content);
+    if (analysis.status === 'missing') {
+      continue;
+    }
+    if (analysis.status === 'valid') {
+      if (canonicalBlock && normalize(analysis.block) === normalize(canonicalBlock)) {
+        addError(result, `stale contract zone in ${entryFile}`);
+      }
+      continue;
+    }
+    addError(result, staleContractAnalysisError(analysis.status, entryFile));
+  }
+}
+
+function staleContractAnalysisError(status, entryFile) {
+  const messages = {
+    'missing-begin': `stale contract zone begin marker missing in ${entryFile}`,
+    'missing-end': `stale contract zone end marker missing in ${entryFile}`,
+    multiple: `multiple stale contract zones in ${entryFile}`,
+    'out-of-order': `stale contract zone markers out of order in ${entryFile}`,
+  };
+  return messages[status] || `invalid stale contract zone in ${entryFile}`;
 }
 
 function checkEntryListMatches(result, actual, expected, agent) {
@@ -51,7 +91,7 @@ function checkEntryContractIntegrity(context) {
   }
 
   for (const entryFile of getEntryFilesForAgent(agent)) {
-    const content = readOptionalEntry(workspaceRoot, entryFile);
+    const content = readOptionalEntry(workspaceRoot, entryFile, result);
     if (content === null) {
       continue; // 缺失已由 checkEntryFiles 报告
     }
@@ -84,14 +124,24 @@ function contractAnalysisError(status, entryFile) {
   return messages[status] || null;
 }
 
-function readOptionalEntry(workspaceRoot, entryFile) {
+function readOptionalEntry(workspaceRoot, entryFile, result) {
   let filePath;
   try {
     filePath = safeResolveInside(workspaceRoot, entryFile, `entry file ${entryFile}`);
+    assertNoSymlinkInPath(filePath);
   } catch (error) {
+    if (result) {
+      addError(result, error.message);
+    }
     return null;
   }
   if (!fs.existsSync(filePath)) {
+    return null;
+  }
+  if (!fs.lstatSync(filePath).isFile()) {
+    if (result) {
+      addError(result, `not a regular file entry file ${entryFile}`);
+    }
     return null;
   }
   return fs.readFileSync(filePath, 'utf8');

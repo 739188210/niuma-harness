@@ -173,6 +173,46 @@ test('doctor rejects managed content reached through a parent symlink', () => {
   expectDoctorError(workspace, /Refusing to write through symlink/);
 });
 
+test('doctor rejects inactive entry contracts but allows user-only inactive entries', () => {
+  const workspace = initWorkspace();
+  fs.copyFileSync(path.join(workspace, 'CLAUDE.md'), path.join(workspace, 'AGENTS.md'));
+  expectDoctorError(workspace, /stale contract zone in AGENTS\.md/);
+  fs.writeFileSync(path.join(workspace, 'AGENTS.md'), 'user notes\n', 'utf8');
+  const result = doctor(workspace);
+  assert.strictEqual(result.status, 0, result.stdout);
+});
+
+test('direct doctor ignores an inactive entry contract owned by another harness directory', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'claude', '--harness-dir', 'ai-harness', '--rules', 'none', '--skills', 'none']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const otherHarnessEntry = read(path.join(workspace, 'CLAUDE.md'))
+    .replaceAll('ai-harness/', 'harness/');
+  fs.writeFileSync(path.join(workspace, 'AGENTS.md'), otherHarnessEntry, 'utf8');
+  result = doctor(path.join(workspace, 'ai-harness'));
+  assert.strictEqual(result.status, 0, result.stdout);
+});
+
+test('doctor reports a non-file inactive entry without crashing', () => {
+  const workspace = initWorkspace();
+  fs.mkdirSync(path.join(workspace, 'AGENTS.md'));
+  const result = expectDoctorError(workspace, /not a regular file entry file AGENTS\.md/);
+  assert.strictEqual(result.stderr, '');
+});
+
+test('doctor rejects inactive command artifact records', () => {
+  const workspace = initWorkspace();
+  updateManifest(workspace, (manifest) => {
+    manifest.artifacts.push({
+      kind: 'command',
+      source: 'commands/dev-check.md',
+      target: '.opencode/commands/dev-check.md',
+      digest: manifest.artifacts[0].digest,
+    });
+  });
+  expectDoctorError(workspace, /inactive command artifact record \.opencode\/commands\/dev-check\.md/);
+});
+
 test('doctor ignores OpenCode fields and instructions outside the managed block', () => {
   const workspace = initWorkspace('opencode');
   const configPath = path.join(workspace, 'opencode.json');

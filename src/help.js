@@ -7,7 +7,7 @@ function getHelpText() {
 Init options:
   --agent <name>         claude | codex | opencode | multi
   --tool <name>          Alias for --agent
-  --harness-dir <name>   Directory to create, default: harness
+  --harness-dir <name>   Harness name for first init or same-name re-init; not migration
   --rules <selection>    all | none | <rule-dir>[,<rule-dir>...]; agent adapter rules are added automatically
   --rules-out <dirs>     Exclude rule dirs from all installed rules
   --skills <selection>   all | none | <skill>[,<skill>...], default: all

@@ -37,10 +37,7 @@ function run(args) {
 }
 
 function tempDir() {
-  // macOS: os.tmpdir() returns /var/... where /var is a symlink to /private/var;
-  // resolve it so the scaffold's symlink guard does not refuse the path.
-  const base = fs.realpathSync(os.tmpdir());
-  return fs.mkdtempSync(path.join(base, 'niuma-harness-'));
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'niuma-harness-'));
 }
 
 function assertFile(filePath) {

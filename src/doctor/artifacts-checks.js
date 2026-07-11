@@ -21,23 +21,38 @@ function checkArtifactFiles(context) {
   context.artifacts = artifacts;
   addOk(result, `artifacts ${artifacts.length}`);
 
+  let activeArtifacts = artifacts;
   if (agent && commands) {
-    checkExpectedCommandRecords(result, artifacts, getCommandArtifactDescriptors(agent, commands));
+    activeArtifacts = checkExpectedCommandRecords(
+      result,
+      artifacts,
+      getCommandArtifactDescriptors(agent, commands)
+    );
   }
-  for (const record of artifacts) {
+  for (const record of activeArtifacts) {
     checkArtifactFile(workspaceRoot, result, record);
   }
 }
 
 function checkExpectedCommandRecords(result, artifacts, expected) {
+  const expectedByTarget = new Map(expected.map((descriptor) => [descriptor.target, descriptor]));
+  const active = [];
   for (const descriptor of expected) {
     const record = findArtifactRecord(artifacts, descriptor.kind, descriptor.target);
     if (!record || record.source !== descriptor.source) {
       addError(result, `missing command artifact record ${descriptor.target}`);
       continue;
     }
+    active.push(record);
     addOk(result, `command artifact record ${descriptor.target}`);
   }
+  for (const record of artifacts) {
+    const descriptor = expectedByTarget.get(record.target);
+    if (!descriptor || record.kind !== descriptor.kind || record.source !== descriptor.source) {
+      addError(result, `inactive command artifact record ${record.target}`);
+    }
+  }
+  return active;
 }
 
 function checkArtifactFile(workspaceRoot, result, record) {

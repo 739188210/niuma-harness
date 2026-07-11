@@ -134,6 +134,9 @@ function normalizeHarnessDir(harnessDir) {
   if (!/^[A-Za-z0-9._-]+$/.test(value)) {
     throw new Error('--harness-dir may only contain letters, numbers, dots, underscores, and dashes.');
   }
+  if (process.platform === 'win32' && value.endsWith('.')) {
+    throw new Error('--harness-dir cannot end with a dot on Windows.');
+  }
 
   return value;
 }

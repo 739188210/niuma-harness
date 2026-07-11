@@ -110,6 +110,44 @@ test('--dry-run writes nothing', () => {
   assert.match(result.stdout, /agent-work/);
 });
 
+test('init and re-init accept a workspace directory alias', (t) => {
+  const root = tempDir();
+  const workspace = path.join(root, 'workspace');
+  const alias = path.join(root, 'workspace-alias');
+  fs.mkdirSync(workspace);
+  try {
+    fs.symlinkSync(workspace, alias, process.platform === 'win32' ? 'junction' : 'dir');
+  } catch (error) {
+    t.skip(`directory links unavailable: ${error.code || error.message}`);
+    return;
+  }
+
+  let result = run(['init', alias, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertFile(path.join(workspace, 'harness', 'manifest.json'));
+  result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  result = run(['doctor', alias]);
+  assert.strictEqual(result.status, 0, result.stdout);
+});
+
+test('init creates a missing workspace below a directory alias', (t) => {
+  const root = tempDir();
+  const realParent = path.join(root, 'real');
+  const alias = path.join(root, 'alias');
+  fs.mkdirSync(realParent);
+  try {
+    fs.symlinkSync(realParent, alias, process.platform === 'win32' ? 'junction' : 'dir');
+  } catch (error) {
+    t.skip(`directory links unavailable: ${error.code || error.message}`);
+    return;
+  }
+
+  const result = run(['init', path.join(alias, 'new', 'workspace'), '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertFile(path.join(realParent, 'new', 'workspace', 'harness', 'manifest.json'));
+});
+
 test('--harness-dir uses a custom directory name', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude', '--harness-dir', 'ai-harness']);
@@ -141,7 +179,14 @@ test('--harness-dir uses a custom directory name', () => {
   assert.strictEqual(doctor.status, 0, doctor.stderr);
 });
 
-for (const harnessDir of ['.', '../outside', 'bad/name', 'agent-work', 'AGENT-WORK', 'agent-work.']) {
+for (const harnessDir of [
+  '.',
+  '../outside',
+  'bad/name',
+  'agent-work',
+  'AGENT-WORK',
+  ...(process.platform === 'win32' ? ['agent-work.', 'harness.'] : []),
+]) {
   test(`--harness-dir ${harnessDir} fails`, () => {
     const workspace = tempDir();
     const result = run(['init', workspace, '--agent', 'claude', '--harness-dir', harnessDir]);
@@ -159,6 +204,42 @@ test('existing root entry gets the contract merged in (user content preserved)',
   assert.match(body, /<!-- niuma-harness:contract begin/, 'contract block should be inserted at top');
   assert.match(body, /<!-- niuma-harness:contract end/, 'contract block should be closed');
   assert.ok(body.endsWith('my project notes\n'), 'user content should be preserved after the contract block');
+});
+
+test('agent switch removes an untouched retired entry', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'multi']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertNoPath(path.join(workspace, 'AGENTS.md'));
+  assertFile(path.join(workspace, 'CLAUDE.md'));
+});
+
+test('agent switch removes only the retired contract when user content exists', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'multi']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const entry = path.join(workspace, 'AGENTS.md');
+  const body = `prefix\r\n${read(entry).replace(/\n/g, '\r\n')}suffix`;
+  fs.writeFileSync(entry, body, 'utf8');
+
+  result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const retired = read(entry);
+  assert.match(retired, /^prefix\r\n/);
+  assert.ok(retired.endsWith('suffix'));
+  assert.doesNotMatch(retired, /niuma-harness:contract/);
+});
+
+test('codex and opencode keep their shared AGENTS entry', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'codex']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  result = run(['init', workspace, '--agent', 'opencode']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertFile(path.join(workspace, 'AGENTS.md'));
+  assert.match(read(path.join(workspace, 'AGENTS.md')), /niuma-harness:contract begin/);
 });
 
 test('re-init refreshes the entry contract block (idempotent)', () => {
@@ -256,7 +337,7 @@ test('re-init preserves user-maintained project-context.md', () => {
   assert.strictEqual(read(ctx), 'my project facts\n', 'user-maintained project-context should be preserved');
 });
 
-test('directory symlink attack is rejected', () => {
+test('directory symlink attack is rejected', (t) => {
   const workspace = tempDir();
   const outside = tempDir();
   const harnessLink = path.join(workspace, 'harness');
@@ -267,14 +348,16 @@ test('directory symlink attack is rejected', () => {
     created = false;
   }
 
-  if (created) {
-    const result = run(['init', workspace, '--agent', 'claude']);
-    assert.notStrictEqual(result.status, 0, 'directory symlink should fail');
-    assertNoPath(path.join(outside, 'CLAUDE.md'));
+  if (!created) {
+    t.skip('directory links unavailable');
+    return;
   }
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.notStrictEqual(result.status, 0, 'directory symlink should fail');
+  assertNoPath(path.join(outside, 'CLAUDE.md'));
 });
 
-test('root entry symlink is rejected without overwriting the target', () => {
+test('root entry symlink is rejected without overwriting the target', (t) => {
   const workspace = tempDir();
   const target = path.join(workspace, 'outside.md');
   fs.writeFileSync(target, 'outside', 'utf8');
@@ -286,14 +369,16 @@ test('root entry symlink is rejected without overwriting the target', () => {
     created = false;
   }
 
-  if (created) {
-    const result = run(['init', workspace, '--agent', 'claude']);
-    assert.notStrictEqual(result.status, 0, 'root entry symlink should fail');
-    assert.strictEqual(read(target), 'outside', 'symlink target should not be overwritten');
+  if (!created) {
+    t.skip('file symlinks unavailable');
+    return;
   }
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.notStrictEqual(result.status, 0, 'root entry symlink should fail');
+  assert.strictEqual(read(target), 'outside', 'symlink target should not be overwritten');
 });
 
-test('dangling root entry symlink is rejected', () => {
+test('dangling root entry symlink is rejected', (t) => {
   const workspace = tempDir();
   const outside = tempDir();
   const danglingTarget = path.join(outside, 'created-through-link.md');
@@ -305,11 +390,13 @@ test('dangling root entry symlink is rejected', () => {
     created = false;
   }
 
-  if (created) {
-    const result = run(['init', workspace, '--agent', 'claude']);
-    assert.notStrictEqual(result.status, 0, 'dangling root entry symlink should fail');
-    assertNoPath(danglingTarget);
+  if (!created) {
+    t.skip('file symlinks unavailable');
+    return;
   }
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.notStrictEqual(result.status, 0, 'dangling root entry symlink should fail');
+  assertNoPath(danglingTarget);
 });
 
 test('harness path that is a file fails', () => {

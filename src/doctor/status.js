@@ -4,18 +4,34 @@ const path = require('path');
 const { STATUS_FILE } = require('../harness-status');
 const { addError } = require('./result');
 
-function findStatusFile(targetDir, harnessDir) {
+function locateStatusFile(targetDir, harnessDir) {
   const direct = path.join(targetDir, STATUS_FILE);
   if (fs.existsSync(direct)) {
-    return direct;
+    return {
+      harnessRoot: targetDir,
+      mode: 'direct-harness',
+      statusPath: direct,
+      workspaceDir: path.dirname(targetDir),
+    };
   }
 
-  const nested = path.join(targetDir, harnessDir || 'harness', STATUS_FILE);
+  const harnessRoot = path.join(targetDir, harnessDir || 'harness');
+  const nested = path.join(harnessRoot, STATUS_FILE);
   if (fs.existsSync(nested)) {
-    return nested;
+    return {
+      harnessRoot,
+      mode: 'workspace',
+      statusPath: nested,
+      workspaceDir: targetDir,
+    };
   }
 
   return null;
+}
+
+function findStatusFile(targetDir, harnessDir) {
+  const location = locateStatusFile(targetDir, harnessDir);
+  return location ? location.statusPath : null;
 }
 
 function readStatus(statusPath, result) {
@@ -34,5 +50,6 @@ function readStatus(statusPath, result) {
 
 module.exports = {
   findStatusFile,
+  locateStatusFile,
   readStatus,
 };

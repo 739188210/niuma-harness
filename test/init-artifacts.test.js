@@ -342,26 +342,29 @@ test('deselecting a known skill preserves unknown files inside its directory', (
   assertNoPath(path.join(skillRoot, 'SKILL.md'));
 });
 
-test('single-agent re-init does not remove other agent skill roots', () => {
+test('single-agent re-init removes known files from retired agent skill roots', () => {
   assert.ok(allSkillDirs.length > 1, 'test requires at least two known skills');
   const selectedSkill = allSkillDirs[0];
   const otherAgentSkill = allSkillDirs.find((skillDir) => skillDir !== selectedSkill);
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'multi', '--skills', 'all']);
   assert.strictEqual(result.status, 0, result.stderr);
+  const localFile = path.join(workspace, '.agents', 'skills', selectedSkill, 'local-notes.md');
+  fs.writeFileSync(localFile, 'keep me\n', 'utf8');
 
   result = run(['init', workspace, '--agent', 'claude', '--skills', selectedSkill]);
   assert.strictEqual(result.status, 0, result.stderr);
 
   assertFile(path.join(workspace, '.claude', 'skills', selectedSkill, 'SKILL.md'));
   assertNoPath(path.join(workspace, '.claude', 'skills', otherAgentSkill, 'SKILL.md'));
-  assertFile(path.join(workspace, '.agents', 'skills', otherAgentSkill, 'SKILL.md'));
-  assertFile(path.join(workspace, '.opencode', 'skills', otherAgentSkill, 'SKILL.md'));
+  assertNoPath(path.join(workspace, '.agents', 'skills', otherAgentSkill, 'SKILL.md'));
+  assertNoPath(path.join(workspace, '.opencode', 'skills', otherAgentSkill, 'SKILL.md'));
+  assert.strictEqual(read(localFile), 'keep me\n');
   assertManifest(path.join(workspace, 'harness', 'manifest.json'), {
     agent: 'claude',
     skills: [selectedSkill],
     entryFiles: ['CLAUDE.md'],
-    artifactTargets: getExpectedCommandArtifactTargets('multi', allCommandFiles),
+    artifactTargets: getExpectedCommandArtifactTargets('claude', allCommandFiles),
   });
 });
 
@@ -408,10 +411,7 @@ test('re-init with a different agent converges agent-specific rules', () => {
   assertManifest(path.join(harnessRoot, 'manifest.json'), {
     agent: 'codex',
     entryFiles: ['AGENTS.md'],
-    artifactTargets: [
-      ...getExpectedCommandArtifactTargets('claude', allCommandFiles),
-      ...getExpectedCommandArtifactTargets('codex', allCommandFiles),
-    ],
+    artifactTargets: getExpectedCommandArtifactTargets('codex', allCommandFiles),
   });
   const doctor = run(['doctor', workspace]);
   assert.strictEqual(doctor.status, 0, doctor.stderr);

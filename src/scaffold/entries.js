@@ -1,9 +1,21 @@
-// 写入 agent 入口文件和普通模板文件。
+// 写入当前 agent 入口、退休旧入口契约，并处理普通模板文件。
 const fs = require('fs');
 const { getEntryFilesForAgent } = require('../agents');
-const { inspectFileTarget, safeResolveInside, writeFile } = require('../fs-safe');
+const { digestBytes } = require('../artifact-ledger');
+const {
+  inspectFileTarget,
+  removeFile,
+  safeResolveInside,
+  writeFile,
+} = require('../fs-safe');
+const { createTemplateVariables } = require('../template-variables');
 const { renderTemplate } = require('./templates');
-const { analyzeContractBlock, sliceContractBlock, replaceContractBlock } = require('../contract');
+const {
+  analyzeContractBlock,
+  removeContractBlock,
+  sliceContractBlock,
+  replaceContractBlock,
+} = require('../contract');
 
 function prepareFilePlan(context) {
   return [
@@ -19,14 +31,30 @@ function prepareEntryPlan(context) {
   if (!freshBlock) {
     throw new Error('entry template is missing a valid contract zone');
   }
-  return getEntryFilesForAgent(context.options.agent)
+
+  const currentEntries = getEntryFilesForAgent(context.options.agent);
+  const current = currentEntries
     .map((entryFile) => prepareEntryWrite(context.workspaceDir, entryFile, freshFull, freshBlock));
+  if (!context.previousStatus) {
+    return current;
+  }
+
+  const previousVariables = createTemplateVariables(
+    { agent: context.previousStatus.agent, harnessDir: context.options.harnessDir },
+    context.workDirectory
+  );
+  const previousFull = renderTemplate('entry/entry.md', previousVariables);
+  const active = new Set(currentEntries);
+  const retired = getEntryFilesForAgent(context.previousStatus.agent)
+    .filter((entryFile) => !active.has(entryFile))
+    .map((entryFile) => prepareEntryRetirement(context.workspaceDir, entryFile, previousFull));
+  return [...retired, ...current];
 }
 
 function prepareEntryWrite(workspaceDir, entryFile, freshFull, freshBlock) {
   const targetPath = safeResolveInside(workspaceDir, entryFile, 'entry target');
   if (!inspectFileTarget(targetPath)) {
-    return { action: 'create', content: freshFull, targetPath };
+    return { action: 'create', content: freshFull, kind: 'write', targetPath };
   }
 
   const existing = fs.readFileSync(targetPath, 'utf8');
@@ -34,12 +62,40 @@ function prepareEntryWrite(workspaceDir, entryFile, freshFull, freshBlock) {
   const block = eol === '\r\n' ? freshBlock.replace(/\n/g, '\r\n') : freshBlock;
   const analysis = analyzeContractBlock(existing);
   if (analysis.status === 'valid') {
-    return { action: 'refresh', content: replaceContractBlock(existing, block), targetPath };
+    return { action: 'refresh', content: replaceContractBlock(existing, block), kind: 'write', targetPath };
   }
   if (analysis.status === 'missing') {
-    return { action: 'merge', content: `${block}${eol}${eol}${existing}`, targetPath };
+    return { action: 'merge', content: `${block}${eol}${eol}${existing}`, kind: 'write', targetPath };
   }
   throw new Error(contractMergeError(analysis.status, entryFile));
+}
+
+function prepareEntryRetirement(workspaceDir, entryFile, previousFull) {
+  const targetPath = safeResolveInside(workspaceDir, entryFile, 'retired entry target');
+  if (!inspectFileTarget(targetPath)) {
+    return { action: 'skip', kind: 'retire-entry', observedDigest: null, targetPath };
+  }
+
+  const existing = fs.readFileSync(targetPath, 'utf8');
+  const observedDigest = digestBytes(existing);
+  if (existing === previousFull) {
+    return { action: 'remove', kind: 'retire-entry', observedDigest, targetPath };
+  }
+
+  const analysis = analyzeContractBlock(existing);
+  if (analysis.status === 'missing') {
+    return { action: 'skip', kind: 'retire-entry', observedDigest, targetPath };
+  }
+  if (analysis.status !== 'valid') {
+    throw new Error(contractRetirementError(analysis.status, entryFile));
+  }
+  return {
+    action: 'retire',
+    content: removeContractBlock(existing),
+    kind: 'retire-entry',
+    observedDigest,
+    targetPath,
+  };
 }
 
 function prepareTemplatePlan(context, files, baseDir, label, forceOverwrite = false) {
@@ -50,13 +106,19 @@ function prepareTemplatePlan(context, files, baseDir, label, forceOverwrite = fa
     return {
       action: exists ? (overwrite ? 'overwrite' : 'skip') : 'create',
       content: renderTemplate(file.template, context.variables),
+      kind: 'write',
       targetPath,
     };
   });
 }
 
 function writeFilePlan(context) {
+  revalidateRetiredEntries(context.filePlan);
   for (const item of context.filePlan) {
+    if (item.kind === 'retire-entry') {
+      writeRetiredEntry(context, item);
+      continue;
+    }
     if (item.action === 'skip') {
       inspectFileTarget(item.targetPath);
       context.printAction(item.action, item.targetPath);
@@ -64,6 +126,45 @@ function writeFilePlan(context) {
     }
     writeFile(item.targetPath, item.content, { dryRun: context.options.dryRun, overwrite: item.action !== 'create' });
     context.printAction(item.action, item.targetPath);
+  }
+}
+
+function writeRetiredEntry(context, item) {
+  if (item.action === 'remove') {
+    context.printAction(removeFile(item.targetPath, { dryRun: context.options.dryRun }), item.targetPath);
+    return;
+  }
+  if (item.action === 'retire') {
+    writeFile(item.targetPath, item.content, { dryRun: context.options.dryRun, overwrite: true });
+    context.printAction(item.action, item.targetPath);
+    return;
+  }
+  context.printAction('skip', item.targetPath);
+}
+
+function revalidateRetiredEntries(plan) {
+  const errors = [];
+  for (const item of plan.filter((candidate) => candidate.kind === 'retire-entry')) {
+    try {
+      const exists = inspectFileTarget(item.targetPath);
+      if (item.observedDigest === null) {
+        if (exists) {
+          throw new Error(`retired entry appeared after preflight: ${item.targetPath}`);
+        }
+        continue;
+      }
+      if (!exists) {
+        throw new Error(`retired entry disappeared after preflight: ${item.targetPath}`);
+      }
+      if (digestBytes(fs.readFileSync(item.targetPath)) !== item.observedDigest) {
+        throw new Error(`retired entry changed after preflight: ${item.targetPath}`);
+      }
+    } catch (error) {
+      errors.push(error.message);
+    }
+  }
+  if (errors.length > 0) {
+    throw new Error(`retired entry revalidation failed:\n- ${errors.join('\n- ')}`);
   }
 }
 
@@ -75,6 +176,10 @@ function contractMergeError(status, entryFile) {
     'out-of-order': `contract zone markers out of order in ${entryFile}`,
   };
   return messages[status] || `invalid contract zone in ${entryFile}`;
+}
+
+function contractRetirementError(status, entryFile) {
+  return `cannot retire ${entryFile}: ${contractMergeError(status, entryFile)}`;
 }
 
 module.exports = {

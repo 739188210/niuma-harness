@@ -54,6 +54,29 @@ test('check alias runs the same validation', () => {
   assert.match(result.stdout, /Status: OK/);
 });
 
+test('doctor accepts workspace and direct harness aliases', (t) => {
+  const root = tempDir();
+  const workspace = path.join(root, 'workspace');
+  fs.mkdirSync(workspace);
+  let result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+
+  const workspaceAlias = path.join(root, 'workspace-alias');
+  const harnessAlias = path.join(root, 'harness-alias');
+  try {
+    fs.symlinkSync(workspace, workspaceAlias, process.platform === 'win32' ? 'junction' : 'dir');
+    fs.symlinkSync(path.join(workspace, 'harness'), harnessAlias, process.platform === 'win32' ? 'junction' : 'dir');
+  } catch (error) {
+    t.skip(`directory links unavailable: ${error.code || error.message}`);
+    return;
+  }
+
+  result = run(['doctor', workspaceAlias]);
+  assert.strictEqual(result.status, 0, result.stdout);
+  result = run(['doctor', harnessAlias]);
+  assert.strictEqual(result.status, 0, result.stdout);
+});
+
 test('doctor works when pointed at the harness subdir', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);

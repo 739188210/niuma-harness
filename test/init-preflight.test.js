@@ -88,6 +88,33 @@ test('command parent path conflict leaves workspace unchanged', () => {
   assert.match(result.stderr, /Parent path exists but is not a directory/);
 });
 
+test('malformed retired entry leaves workspace unchanged', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'multi']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const entry = path.join(workspace, 'AGENTS.md');
+  const invalid = fs.readFileSync(entry, 'utf8').replace('<!-- niuma-harness:contract end -->', '');
+  fs.writeFileSync(entry, invalid, 'utf8');
+  const before = snapshotTree(workspace);
+  result = run(['init', workspace, '--agent', 'claude']);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stderr, /cannot retire AGENTS\.md/);
+  assertTreeUnchanged(workspace, before);
+});
+
+test('drifted retired command leaves workspace unchanged', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'multi']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const target = path.join(workspace, '.opencode', 'commands', 'dev-check.md');
+  fs.appendFileSync(target, 'drift\n', 'utf8');
+  const before = snapshotTree(workspace);
+  result = run(['init', workspace, '--agent', 'claude']);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stderr, /owned command artifact drifted/);
+  assertTreeUnchanged(workspace, before);
+});
+
 test('dry-run performs full preflight without mutation', () => {
   const workspace = tempDir();
   fs.mkdirSync(path.join(workspace, '.claude', 'skills', allSkillDirs[0], 'SKILL.md'), { recursive: true });
