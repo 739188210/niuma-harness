@@ -29,6 +29,8 @@
 | P2-1 Rules 的 canonical ownership 语义冲突 | 已完成（READY） | `templates/rules/*` 为 canonical；generated rules 为 tool-managed，受 mixed command/rule ledger、preflight、backup-first repair 与 Doctor 精确校验保护 |
 | P2-2 Bootstrap、task ledger 和 feedback 是 prose-only | 已完成（限定边界） | schema 1 marker records 与只读 `audit` CLI 已覆盖 bootstrap、task rating、context、action boundary、execution、verification、recovery、outcome 的自报告一致性；不证明真实执行或客观实现正确性 |
 | P2-3 实验文档宣称可禁用，但实现上强制存在 | 已完成 | 删除不受支持的 workspace disable/remove 声明；当前 release 明确为 package-enabled，未来退役由 package release 决定 |
+| P2-4 Capability/skill metadata 模型尚未完成 | 暂缓（非当前核心需求） | 当前只要求 Harness 完整准确地分发 Skill、保证支持的 Agent 能正确加载，并持续改进 Skill 自身质量；不建设 capability metadata 或 runtime readiness 模型 |
+| P2-5 Runtime enforcement 目前完全是 advisory | 已完成（明确产品边界） | Red lines 是 Agent 必须遵守的操作协议；`harness-feedback.md`、`verification.md` 与只读 `audit` 提供事后一致性检查，但 Niuma 不拦截任意 Agent 操作，也不证明实际执行或客观正确性 |
 
 ### 0.2 已完成整改
 
@@ -215,7 +217,7 @@ Task #215 closure smoke 使用真实 CLI、`--agent multi`、自定义 `ai-harne
 
 ### 0.5 下一整改项
 
-P0、P1、P2-1、P2-2 与 P2-3 已在当前文档明确的边界内关闭。P2-2 提供的是结构化自报告的一致性审计，不应升级解释为 runtime enforcement 或 objective correctness proof；P2-3 通过删除不受支持的 disable 声明关闭，而不是新增 workspace feature flag。下一优先项为 **P2-4：Capability/skill metadata 模型尚未完成**；同时保留 Hooks/runtime event 证据、objective truth、真实 tarball 安装 smoke 和 Windows CI 为未验证项。
+P0、P1、P2-1、P2-2、P2-3 与 P2-5 已在当前文档明确的边界内关闭。P2-2 提供的是结构化自报告的一致性审计，不应升级解释为 runtime enforcement 或 objective correctness proof；P2-3 通过删除不受支持的 disable 声明关闭，而不是新增 workspace feature flag；P2-5 通过明确“强制 Agent 操作协议 + 事后一致性审计”的产品边界关闭，而不是新增 Runtime 拦截系统。P2-4 暂缓，不作为当前核心目标。下一优先项为 **6.1：安装真实 npm tarball 后执行 smoke test**；同时保留 Hooks/runtime event 证据、objective truth 和 Windows CI 为未验证项。
 
 ## 1. 结论摘要
 
@@ -707,6 +709,8 @@ README/Roadmap 将 package templates 和 generated rules 描述为 canonical 分
 - 收紧产品承诺，明确依赖 agent compliance；
 - 提供可选 native hooks/adapters，在支持的平台上加强 enforcement 和 telemetry。
 
+整改状态（2026-07-12）：采用第一种边界并关闭本项，不新增 Runtime enforcement。`Red lines` 仍是 Agent 必须遵守的操作协议，而不是可选建议；技术执行依赖参与任务的 Agent/runtime 遵循该协议。`harness-feedback.md` 是结构化任务记录，`verification.md` 保存其引用的验证证据，`niuma-harness audit` 对这些本地自报告执行事后一致性检查。Niuma 当前不安装或运行 hooks、approval gate、completion interception、sandbox control 或 runtime-event telemetry，因此不能阻止非遵循型 Agent 跳过分类、测试或记录，也不能证明文档实际读取、命令实际执行或实现客观正确。
+
 ## 6. 测试和发布缺口
 
 ### 6.1 未安装真实 npm tarball 后执行 smoke test
@@ -854,4 +858,4 @@ README/Roadmap 将 package templates 和 generated rules 描述为 canonical 分
 4. 让 agent 切换和配置变化真正收敛。
 5. 明确 advisory protocol 与 runtime enforcement 的产品边界。
 
-这些问题修复后，项目才具备继续推进 capability metadata、content-quality doctor 和更广泛 agent 适配的可靠基础。
+上述底座问题已按第 0 节记录的边界完成或裁定；P2-4 capability metadata 暂缓。下一步优先用真实 npm tarball 安装 smoke 验证发布产物，再继续 Skill 加载/行为质量与跨平台验证。

@@ -126,7 +126,7 @@ agent-work/tasks/<task-name>/
   notes.md
 ```
 
-Task files hold task-local memory, explicit progress state, schema-1 verification evidence, structured execution feedback, and handoff state. The current package enables the task-execution-record experiment unconditionally; there is no workspace disable state. `audit` reads these user-owned records and safe local references to evaluate eight-dimensional self-report consistency, but it does not prove actual reads, command execution, or objective correctness. Durable project facts should move through the Memory layer before being recorded in `<harness-dir>/docs/project-context.md`.
+Task files hold task-local memory, explicit progress state, schema-1 verification evidence, structured execution feedback, and handoff state. The current package enables the task-execution-record experiment unconditionally; there is no workspace disable state. The operating rules, including the Red lines, are mandatory Agent instructions, while technical compliance depends on the participating Agent/runtime. `audit` reads these user-owned records and safe local references to perform a post-hoc eight-dimensional self-report consistency check; it does not intercept Agent operations or prove actual reads, command execution, or objective correctness. Durable project facts should move through the Memory layer before being recorded in `<harness-dir>/docs/project-context.md`.
 
 ## Verification strategy
 
@@ -153,8 +153,11 @@ npm run pack:dry
 
 ### Suggested priority
 
-1. Capability / skill metadata model.
-2. doctor content-quality checks.
+1. Install the real npm tarball in a clean workspace and smoke-test generated Harness and Skill distribution.
+2. Verify supported agents can load distributed Skills and continuously improve Skill behavior quality.
+3. Add cross-platform validation for the supported environments.
+
+Capability metadata and runtime-readiness modeling are deferred because the current product goal is accurate Skill distribution, loading, and quality rather than a general capability runtime.
 
 ## Non-goals
 

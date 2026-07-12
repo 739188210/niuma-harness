@@ -71,7 +71,7 @@ Do not use these files for temporary task notes or one-off debugging logs.
 
 ### Runtime-generated task files
 
-Agents may create task-local records under `agent-work/tasks/` during multi-step work:
+Runtime task records are stored under `agent-work/tasks/`:
 
 ```text
 agent-work/tasks/<task-name>/
@@ -83,7 +83,9 @@ agent-work/tasks/<task-name>/
   notes.md
 ```
 
-These files hold task-local memory, explicit status, verification evidence, structured execution feedback, and handoff state. `niuma-harness audit [target] [--task <name> | --all] [--strict]` reads bootstrap, execution, and verification marker JSON and reports self-reported consistency without modifying records or claiming objective correctness. The experiment is enabled by the current package and is not workspace-disableable. Durable project facts should move through the Memory layer before being recorded in `docs/project-context.md`.
+`harness-feedback.md` stores the structured record used for non-trivial tasks, and `verification.md` stores the evidence referenced by that record. The other files support explicit progress, context, planning, notes, or handoff state when a task needs them.
+
+`niuma-harness audit` performs a read-only consistency check over these self-reported records. It does not prove that recorded actions occurred or that the implementation is objectively correct. See `docs/experiments/task-execution-record.md` for the complete record contract. Durable project facts should move through the Memory layer before being recorded in `docs/project-context.md`.
 
 ## Maintenance rule
 

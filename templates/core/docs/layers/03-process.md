@@ -12,8 +12,8 @@ Use this layer after loading context and policy, before implementation, and when
 
 ## Agent protocol
 
-1. Classify the task into a concrete workflow route. Primary routes are triage, bugfix, feature, refactor, review, and release; documentation, cleanup, investigation, and verification are task intents that should route to the closest existing workflow rather than imply separate playbooks.
-2. Select the closest workflow from `docs/process/`.
+1. If the task type or risk is unclear, use `docs/process/task-triage.md` first to classify it. Triage is a routing step, not the final execution playbook.
+2. Select the final execution playbook from bugfix, feature, refactor, review, or release. Documentation, cleanup, investigation, and verification are task intents that should route to the closest existing playbook; use `none` only when no execution playbook applies.
 3. Follow any confirmation gate defined by the selected workflow before writing detailed plans or implementation docs.
 4. If working in the shared tree would create avoidable risk or coordination cost, isolate the workspace first (`docs/process/isolation.md`) before acting. Do not isolate merely because a task has more than one step. For large or risky work, consider staged subagent dispatch (`docs/process/subagent-development.md`).
 5. Define the smallest useful goal and success criteria.
