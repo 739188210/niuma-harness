@@ -1,7 +1,11 @@
 require('./fs-safe.test');
 require('./artifact-ledger.test');
+require('./rule-artifacts.test');
 require('./agent-switch.test');
 require('./workspace-harness-conflict.test');
 require('./init.test');
 require('./doctor.test');
+require('./repair-cli.test');
+require('./repair.test');
+require('./repair-orchestration.test');
 require('./help.test');

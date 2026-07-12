@@ -3,6 +3,7 @@ function getHelpText() {
   niuma-harness init [target] [options]
   niuma-harness doctor [target] [options]
   niuma-harness check [target] [options]
+  niuma-harness repair [target] [options]
 
 Init options:
   --agent <name>         claude | codex | opencode | multi
@@ -15,6 +16,16 @@ Init options:
 
 Doctor/check options:
   --harness-dir <name>   Directory to inspect, default: harness
+
+Repair options:
+  --harness-dir <name>   Harness to repair, auto-detected when unique
+  --backup-dir <path>    Backup parent, default: .niuma-harness/repairs
+  --agent <name>         Recovery agent when manifest state is unusable
+  --rules <selection>    Recovery rules when manifest state is unusable
+  --rules-out <dirs>     Recovery rule exclusions when manifest is unusable
+  --skills <selection>   Recovery skills when manifest state is unusable
+  --dry-run              Print all issues and actions without writing
+  -y, --yes              Print the plan and skip confirmation
 
 Global options:
   -h, --help             Show help
@@ -30,7 +41,9 @@ Examples:
   niuma-harness init . --agent multi --harness-dir ai-harness
   niuma-harness init . --agent opencode --dry-run
   niuma-harness doctor .
-  niuma-harness check . --harness-dir ai-harness`;
+  niuma-harness check . --harness-dir ai-harness
+  niuma-harness repair . --dry-run
+  niuma-harness repair . -y`;
 }
 
 module.exports = {

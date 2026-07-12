@@ -23,7 +23,11 @@ function prepareCommandPlan(context) {
   const activeTargets = new Set(writes.map((item) => item.target));
   const removals = prepareRetiredArtifacts(context, activeTargets);
   const plan = [...writes, ...removals];
-  preflightCommandPlan(context.workspaceDir, plan, previousStatus ? previousStatus.artifacts : []);
+  preflightCommandPlan(
+    context.workspaceDir,
+    plan,
+    previousStatus ? previousStatus.artifacts.filter((record) => record.kind === 'command') : []
+  );
   return {
     artifacts: validateArtifactRecords(writes.map((item) => item.record)),
     plan,
@@ -57,7 +61,7 @@ function prepareRetiredArtifacts(context, activeTargets) {
     previousStatus.commands
   );
   const previousTargets = new Set(previousDescriptors.map((item) => item.target));
-  for (const record of previousStatus.artifacts) {
+  for (const record of previousStatus.artifacts.filter((record) => record.kind === 'command')) {
     if (!previousTargets.has(record.target)) {
       throw new Error(`inactive command artifact record cannot be reconciled: ${record.target}`);
     }

@@ -88,5 +88,6 @@ function inspectStatusFile(statusPath, result) {
 }
 
 module.exports = {
+  inspectHarness,
   runDoctor,
 };

@@ -5,6 +5,7 @@ const { chooseAgent } = require('./prompts');
 const { addAgentRules, getDefaultRulesForAgent } = require('./rules');
 const { runDoctor } = require('./doctor');
 const { runInit } = require('./scaffold');
+const { runRepair } = require('./repair');
 
 function finalizeRules(options) {
   if (options.rulesOut) {
@@ -39,7 +40,12 @@ async function main(argv) {
     return;
   }
 
-  throw new Error(`Unknown command: ${options.command}. Use "init", "doctor", or "check".`);
+  if (options.command === 'repair') {
+    await runRepair(options);
+    return;
+  }
+
+  throw new Error(`Unknown command: ${options.command}. Use "init", "doctor", "check", or "repair".`);
 }
 
 module.exports = {

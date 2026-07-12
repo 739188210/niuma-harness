@@ -55,6 +55,17 @@ function normalizeAgentAlias(value) {
   return normalizeAgent(aliases[normalized] || normalized);
 }
 
+async function confirmRepair() {
+  if (!process.stdin.isTTY) {
+    throw new Error('Repair confirmation requires a TTY. Re-run with -y or --yes.');
+  }
+  const answer = String(await ask('Apply this repair plan? Existing affected targets will be backed up permanently. [y/N] '))
+    .trim()
+    .toLowerCase();
+  return answer === 'y' || answer === 'yes';
+}
+
 module.exports = {
   chooseAgent,
+  confirmRepair,
 };

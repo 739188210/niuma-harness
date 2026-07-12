@@ -4,7 +4,7 @@ const path = require('path');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const TEMPLATE_DIR = path.join(ROOT_DIR, 'templates');
-const DEFAULT_RULES_ROOT = 'core/docs/rules';
+const DEFAULT_RULES_ROOT = 'rules';
 const DEFAULT_RULES_SELECTION = 'common';
 const DEFAULT_ENGINEERING_RULES = ['common'];
 const AGENT_RULES = {

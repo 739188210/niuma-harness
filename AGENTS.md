@@ -66,6 +66,7 @@ Important for this source repository: it intentionally does not contain a genera
 - `npm run pack:dry` — preview the npm package contents.
 - `node bin/niuma-harness.js --help` — CLI help from the local checkout.
 - `node bin/niuma-harness.js init <tmp> --agent Codex --dry-run` — preview generation without writing.
+- `node bin/niuma-harness.js repair <tmp> --dry-run` — inspect backup-first recovery without mutation.
 - `node bin/niuma-harness.js doctor <tmp>` — validate a harness.
 - Focused tests run directly: `node test/init.test.js`, `node test/doctor.test.js`, `node test/help.test.js`; `test/cli.test.js` is the aggregator.
 
@@ -73,16 +74,16 @@ Do not run `init .` in this repo root to test — use a temp dir. The repo has n
 
 ## Architecture
 
-Dependency-free CommonJS Node CLI. `bin/niuma-harness.js` calls `main()` from `src/cli.js` and reports thrown errors to stderr with exit code 1. Three commands: `init`, `doctor`, `check` (alias of `doctor`).
+Dependency-free CommonJS Node CLI. `bin/niuma-harness.js` calls `main()` from `src/cli.js` and reports thrown errors to stderr with exit code 1. Commands: `init`, `repair`, `doctor`, and `check` (alias of `doctor`).
 
 Core modules:
 
 - `src/args.js` — argument parsing; delegates to `src/agents.js`, `src/rules.js`, `src/help.js`. There is no `--force`; `init` is idempotent.
 - `src/prompts.js` — fills a missing `--agent` interactively in a TTY; non-TTY `init` without `--agent` fails.
-- `src/scaffold.js` — `init` orchestration; writers under `src/scaffold/` (directories, entries, manifest, rules-writer, status-writer, templates) plus `src/fs-safe.js` and `src/harness-status.js`.
+- `src/scaffold.js` — `init` orchestration; writers under `src/scaffold/` (directories, entries, manifest, rules-writer, status-writer, templates) plus `src/fs-safe.js`, `src/artifact-ledger.js`, and `src/rule-artifacts.js`.
 - `src/doctor.js` — `doctor`/`check` orchestration; checks under `src/doctor/`.
 - `src/contract.js` — shared contract-block markers + slice/replace helpers, used by scaffold (entry merge) and doctor (integrity check).
-- `src/rules.js` — discovers rule directories, normalizes `--rules` / `--rules-out`.
+- `src/rules.js` — discovers canonical package rule directories under `templates/rules/`, normalizes `--rules` / `--rules-out`.
 
 ## Init write model (idempotent, no --force)
 
@@ -91,7 +92,7 @@ Core modules:
 - **Entry** (`AGENTS.md` / `AGENTS.md`, from `getEntryFilesForAgent`): merged in `src/scaffold/entries.js`. No file → write full `templates/entry/entry.md`; contract markers present → replace only the block; markers absent → insert the block at the top. Existing content is always preserved.
 - **Tool-managed template files** (`managed !== "user"` in `templates/manifest.json`, the default): overwritten every init.
 - **User-maintained template files** (`managed: "user"` — `docs/project-context.md`, `docs/automation/automation-intent.md`): skipped if they exist.
-- **Rules** (under `templates/core/docs/rules/<name>/`): converge to the current `--rules` / `--rules-out` selection; selected existing files are preserved, unselected known rule directories are removed, including local files inside them.
+- **Rules** are package-canonical artifacts from `templates/rules/<name>/`. The schema-2 mixed command/rule artifact ledger records `kind`, `source`, `target`, and exact-byte `digest`: re-init refreshes clean owned files and can adopt exact-current legacy files; drift or an unowned occupied target stops before mutation and directs users to `repair --dry-run`. Repair restores canonical content from a permanent backup. Deselect removes only unchanged ledger-owned rule files; unknown local files and nonempty directories are preserved. Direct rule-body edits and override layers are unsupported.
 - **manifest.json**: regenerated every init (`src/scaffold/status-writer.js`).
 
 `writeFile` (`src/fs-safe.js`) takes an explicit `{ dryRun, overwrite }`; callers set `overwrite` from the classification.
@@ -104,7 +105,7 @@ Core modules:
 - `directories` — created inside the harness root.
 - `templateFiles` — rendered into the harness root; each may carry `"managed": "user"` (default tool-managed).
 - `workTemplateFiles` — rendered under the workspace root (tool-managed).
-- `rulesRoot` — rule directory root (`templates/core/docs/rules/<name>/`).
+- `rulesRoot` — canonical package rule directory root (`templates/rules/<name>/`).
 
 Entry files are not in `templates/manifest.json`; selected by `getEntryFilesForAgent()` (Codex → `AGENTS.md`, codex/opencode → `AGENTS.md`, multi → both). Single source template: `templates/entry/entry.md`.
 
@@ -112,7 +113,7 @@ When adding or moving scaffold templates, update `templates/manifest.json` and t
 
 ## Generated harness shape
 
-Entry written to the workspace root (auto-discovered by coding tools); the rest under `target/harness/`; runtime task records under the workspace-level `agent-work/`. Generated `manifest.json` records `schemaVersion`, agent, rules, harnessDir, workDir, entryFiles, createdBy, createdAt — regenerated every init. `doctor` validates against this generated manifest and also checks the entry contract zone is intact.
+Entry written to the workspace root (auto-discovered by coding tools); the rest under `target/harness/`; runtime task records under the workspace-level `agent-work/`. Generated schema-2 `manifest.json` records selections and the mixed command/rule artifact ledger; it is regenerated every init. `doctor` validates the generated manifest, selected rule descriptors and ledger/disk bytes, and the entry contract zone.
 
 Docs follow a seven-layer operating model under `docs/layers/` (context, policy, process, observation, recovery, memory, loop). Process playbooks include the cross-cutting `isolation.md` and `subagent-development.md`.
 

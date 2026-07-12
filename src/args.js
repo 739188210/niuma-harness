@@ -9,12 +9,19 @@ function parseArgs(argv) {
     command: null,
     targetDir: null,
     agent: null,
+    agentProvided: false,
     rules: null,
     rulesOut: null,
     rulesProvided: false,
+    rulesOutProvided: false,
     skills: null,
+    skillsProvided: false,
     harnessDir: 'harness',
+    harnessDirProvided: false,
+    backupDir: null,
+    backupDirProvided: false,
     dryRun: false,
+    yes: false,
     help: false,
   };
 
@@ -31,7 +38,12 @@ function parseArgs(argv) {
       continue;
     }
 
-    if (arg === '--agent' || arg === '--tool' || arg === '--rules' || arg === '--rules-out' || arg === '--skills' || arg === '--harness-dir') {
+    if (arg === '-y' || arg === '--yes') {
+      options.yes = true;
+      continue;
+    }
+
+    if (arg === '--agent' || arg === '--tool' || arg === '--rules' || arg === '--rules-out' || arg === '--skills' || arg === '--harness-dir' || arg === '--backup-dir') {
       const value = argv[index + 1];
       if (!value || value.startsWith('-')) {
         throw new Error(`${arg} requires a value.`);
@@ -41,7 +53,7 @@ function parseArgs(argv) {
       continue;
     }
 
-    if (arg.startsWith('--agent=') || arg.startsWith('--tool=') || arg.startsWith('--rules=') || arg.startsWith('--rules-out=') || arg.startsWith('--skills=') || arg.startsWith('--harness-dir=')) {
+    if (arg.startsWith('--agent=') || arg.startsWith('--tool=') || arg.startsWith('--rules=') || arg.startsWith('--rules-out=') || arg.startsWith('--skills=') || arg.startsWith('--harness-dir=') || arg.startsWith('--backup-dir=')) {
       const [name, value] = splitLongOption(arg);
       assignOption(options, name, value);
       continue;
@@ -75,6 +87,7 @@ function parseArgs(argv) {
   }
   options.skills = normalizeSkills(options.skills);
   options.harnessDir = normalizeHarnessDir(options.harnessDir);
+  validateCommandOptions(options);
 
   return options;
 }
@@ -82,6 +95,7 @@ function parseArgs(argv) {
 function assignOption(options, name, value) {
   if (name === 'agent' || name === 'tool') {
     options.agent = value;
+    options.agentProvided = true;
     return;
   }
 
@@ -93,16 +107,25 @@ function assignOption(options, name, value) {
 
   if (name === 'rules-out') {
     options.rulesOut = value;
+    options.rulesOutProvided = true;
     return;
   }
 
   if (name === 'skills') {
     options.skills = value;
+    options.skillsProvided = true;
     return;
   }
 
   if (name === 'harness-dir') {
     options.harnessDir = value;
+    options.harnessDirProvided = true;
+    return;
+  }
+
+  if (name === 'backup-dir') {
+    options.backupDir = value;
+    options.backupDirProvided = true;
     return;
   }
 
@@ -119,6 +142,28 @@ function splitLongOption(arg) {
   }
 
   return [name, value];
+}
+
+function validateCommandOptions(options) {
+  if (options.command === 'init') {
+    if (options.yes || options.backupDirProvided) {
+      throw new Error('--yes and --backup-dir are only available for repair.');
+    }
+    return;
+  }
+
+  if (options.command === 'doctor' || options.command === 'check') {
+    if (options.agentProvided || options.rulesProvided || options.rulesOutProvided || options.skillsProvided
+        || options.yes || options.backupDirProvided || options.dryRun) {
+      throw new Error('doctor/check only supports --harness-dir.');
+    }
+    return;
+  }
+
+  if (options.command !== 'repair'
+      && (options.yes || options.backupDirProvided)) {
+    throw new Error('--yes and --backup-dir are only available for repair.');
+  }
 }
 
 function normalizeHarnessDir(harnessDir) {

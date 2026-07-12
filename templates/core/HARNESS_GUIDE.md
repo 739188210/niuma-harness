@@ -33,7 +33,7 @@ If project-specific facts are incomplete, agents should inspect the current work
 - `docs/layers/`: 7-layer harness protocols and agent operating model.
 - `docs/policy/`: concrete action permission boundaries for agents.
 - `docs/process/`: concrete task playbooks selected by the Process layer.
-- `docs/rules/`: optional engineering standards selected during init; agent-native rule adapters point back here.
+- `docs/rules/`: selected canonical engineering standards; agent-native rule adapters point back here.
 - `docs/automation/`: automation and hook intent notes.
 - `agent-work/`: workspace-level task-local records and verification evidence.
 
@@ -50,17 +50,19 @@ These files define how the harness works and are refreshed from templates on re-
 - `docs/policy/secret-leak.md`: emergency secret-leak response.
 - `docs/policy/untrusted-content.md`: untrusted-content handling protocol.
 - `docs/process/`
+- `docs/rules/` template-known selected files: Niuma-managed canonical artifacts; direct edits are unsupported.
 - native rule adapters (`.claude/rules/niuma-*.md`, `opencode.json` managed instructions, and entry contract pointers) load selected `docs/rules/` content through each agent's supported surface.
 - `manifest.json`
 
-`manifest.json` is tool-managed state for `doctor/check`; do not edit it by hand unless you know why.
+`manifest.json` is tool-managed state for `doctor/check`; do not edit it by hand. It records command and rule ownership as source, target, and digest, and is the authoritative ownership/history state for this installed harness. Coordinated edits to both an artifact and its recorded digest are treated as an explicit project-state change and are outside Niuma's integrity guarantees.
+
+On re-init, clean ledger-owned rule files refresh from the package; exact-current legacy files are adopted. Drifted or unowned occupied template-known rule files stop before mutation and direct you to `repair --dry-run`. Repair permanently backs up affected paths, restores canonical content, and Doctor exact-validates package, ledger, and disk. Deselect removes only unchanged ledger-owned files; unknown local files and nonempty directories remain. No rule override layer is supported in this release.
 
 ### Project-maintained files
 
 These files may evolve as the project, team, and tool environment become clearer:
 
 - `docs/project-context.md`: verified stable project facts.
-- `docs/rules/`: selected or team-maintained engineering standards.
 - `docs/automation/automation-intent.md`: verified automation intent.
 - `CLAUDE.md` / `AGENTS.md`: entry files carrying the always-loaded operating contract (the 7-step Loop). The contract zone is tool-managed; only the project-notes zone is free to edit.
 

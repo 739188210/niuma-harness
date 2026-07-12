@@ -29,6 +29,56 @@ test('invalid opencode config on fresh init leaves workspace unchanged', () => {
   assert.match(result.stderr, /not valid JSON/);
 });
 
+for (const scenario of [
+  {
+    name: 'missing managed end marker',
+    mutate: (instructions) => instructions.replace('<!-- niuma-harness:rules end -->', ''),
+  },
+  {
+    name: 'duplicate managed block',
+    mutate: (instructions) => `${instructions}\n${instructions}`,
+  },
+  {
+    name: 'managed markers split across instructions',
+    mutate: () => [
+      '<!-- niuma-harness:rules begin -->',
+      '<!-- niuma-harness:rules end -->',
+    ],
+  },
+]) {
+  test(`opencode re-init rejects ${scenario.name} without mutation`, () => {
+    const workspace = tempDir();
+    let result = run(['init', workspace, '--agent', 'opencode']);
+    assert.strictEqual(result.status, 0, result.stderr);
+    const configPath = path.join(workspace, 'opencode.json');
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    config.instructions = scenario.mutate(config.instructions);
+    fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+    const before = snapshotTree(workspace);
+
+    result = run(['init', workspace, '--agent', 'opencode']);
+    assert.notStrictEqual(result.status, 0);
+    assert.match(result.stderr, /invalid niuma rules markers/);
+    assertTreeUnchanged(workspace, before);
+  });
+}
+
+test('agent switch rejects incomplete opencode managed markers without mutation', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'opencode']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const configPath = path.join(workspace, 'opencode.json');
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  config.instructions = config.instructions.replace('<!-- niuma-harness:rules end -->', '');
+  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+  const before = snapshotTree(workspace);
+
+  result = run(['init', workspace, '--agent', 'claude']);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stderr, /invalid niuma rules markers/);
+  assertTreeUnchanged(workspace, before);
+});
+
 test('invalid entry leaves workspace unchanged', () => {
   const result = assertFreshFailureLeavesNoChanges('claude', (workspace) => {
     fs.writeFileSync(path.join(workspace, 'CLAUDE.md'), '<!-- niuma-harness:contract begin -->\n', 'utf8');
@@ -50,11 +100,14 @@ test('work template directory conflict leaves workspace unchanged', () => {
   assert.match(result.stderr, /not a regular file/);
 });
 
-test('late rule conflict leaves workspace unchanged', () => {
+test('unowned differing rule target leaves workspace unchanged and points to repair', () => {
   const result = assertFreshFailureLeavesNoChanges('claude', (workspace) => {
-    fs.mkdirSync(path.join(workspace, 'harness', 'docs', 'rules', 'common', 'coding-style.md'), { recursive: true });
+    const target = path.join(workspace, 'harness', 'docs', 'rules', 'common', 'testing.md');
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, 'user rule\n', 'utf8');
   }, ['--rules', 'common']);
-  assert.match(result.stderr, /not a regular file/);
+  assert.match(result.stderr, /unowned rule artifact/);
+  assert.match(result.stderr, /repair --dry-run/);
 });
 
 test('late rule pointer conflict leaves workspace unchanged', () => {
@@ -112,6 +165,19 @@ test('drifted retired command leaves workspace unchanged', () => {
   result = run(['init', workspace, '--agent', 'claude']);
   assert.notStrictEqual(result.status, 0);
   assert.match(result.stderr, /owned command artifact drifted/);
+  assertTreeUnchanged(workspace, before);
+});
+
+test('drifted retired agent rule leaves workspace unchanged', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'multi']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const target = path.join(workspace, 'harness', 'docs', 'rules', 'opencode', 'automation.md');
+  fs.appendFileSync(target, 'drift\n', 'utf8');
+  const before = snapshotTree(workspace);
+  result = run(['init', workspace, '--agent', 'claude']);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stderr, /owned rule artifact drifted/);
   assertTreeUnchanged(workspace, before);
 });
 

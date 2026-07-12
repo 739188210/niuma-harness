@@ -85,8 +85,11 @@ test('discovery ignores unrelated manifests and recognizes damaged harness struc
   writeManifestCandidate(workspace, 'array', '[]\n');
   const damaged = writeManifestCandidate(workspace, 'damaged', '{}\n');
   fs.mkdirSync(path.join(damaged, 'docs', 'layers'), { recursive: true });
-  fs.writeFileSync(path.join(damaged, 'HARNESS_GUIDE.md'), 'guide\n', 'utf8');
-  fs.writeFileSync(path.join(damaged, 'docs', 'layers', '07-loop.md'), 'loop\n', 'utf8');
+  fs.mkdirSync(path.join(damaged, 'docs', 'policy'), { recursive: true });
+  fs.writeFileSync(path.join(damaged, 'HARNESS_GUIDE.md'), '# Niuma Harness Guide\n\nstable 7-layer operating context\n', 'utf8');
+  fs.writeFileSync(path.join(damaged, 'docs', 'index.md'), '# Harness Runtime Index\n\n## 7-layer harness model\n', 'utf8');
+  fs.writeFileSync(path.join(damaged, 'docs', 'layers', '07-loop.md'), '# Loop Runtime Layer Memo\n\nagent-work/tasks/<task-name>/status.md\n', 'utf8');
+  fs.writeFileSync(path.join(damaged, 'docs', 'policy', 'action-boundary.md'), '# Action Boundary Policy\n\n## Autonomous actions\n', 'utf8');
 
   assert.deepStrictEqual(
     scanWorkspaceHarnesses(workspace).map((candidate) => [candidate.directoryName, candidate.damaged]),

@@ -83,12 +83,13 @@ Do not run `init .` in this repo root; use a temp directory.
 
 ## Architecture
 
-Dependency-free CommonJS Node CLI. `bin/niuma-harness.js` invokes `main()` from `src/cli.js`; commands are `init`, `doctor`, and `check` (alias of `doctor`). The main flow is:
+Dependency-free CommonJS Node CLI. `bin/niuma-harness.js` invokes `main()` from `src/cli.js`; commands are `init`, `doctor`, `check` (alias of `doctor`), and `repair`. The main flow is:
 
 1. `src/args.js` parses CLI flags and delegates agent/rule/skill validation to `src/agents.js`, `src/rules.js`, `src/skills.js`, and `src/commands.js`.
 2. `src/cli.js` fills a missing `--agent` via `src/prompts.js` in TTY mode, finalizes default/agent rules, then dispatches.
 3. `src/scaffold.js` builds an init context from `templates/manifest.json`, creates directories, writes entry files/templates/rules/skills/commands through `src/scaffold/*`, then regenerates the generated `harness/manifest.json` via `src/scaffold/status-writer.js`.
 4. `src/doctor.js` locates generated `manifest.json`, then `src/doctor/checks.js` validates the harness root, workspace `agent-work/`, entry contract integrity, selected rules, skills, commands, and required docs.
+5. `src/repair.js` resolves the installed harness and recovery selections, builds a canonical desired state through `src/scaffold/desired-state.js`, prints the complete repair plan, creates and verifies permanent no-follow backups, revalidates observations, applies the plan with the manifest last, then runs Doctor and performs best-effort synchronous rollback on validation failure. The focused stages live under `src/repair/`.
 
 `src/fs-safe.js` centralizes path confinement and symlink refusal for scaffold writes/removals. `src/contract.js` owns the managed contract markers and replacement helpers used by both entry merging and doctor integrity checks.
 
@@ -98,10 +99,10 @@ Dependency-free CommonJS Node CLI. `bin/niuma-harness.js` invokes `main()` from 
 
 - **Entry files** are agent-derived, not listed in `templates/manifest.json`: `claude` writes `CLAUDE.md`, `codex`/`opencode` write `AGENTS.md`, and `multi` writes both. `src/scaffold/entries.js` preserves all content outside the managed contract block.
 - **Harness docs** are driven by `templates/manifest.json`. Tool-managed templates refresh on each init; `managed: "user"` files (`docs/project-context.md`, `docs/automation/automation-intent.md`) are created only when missing.
-- **Rules** flow from `templates/core/docs/rules/<name>/` into `harness/docs/rules/<name>/`, then to agent-native pointers/adapters (`.claude/rules/`, `AGENTS.md` pointer behavior for Codex, and managed `opencode.json` instructions).
+- **Rules** flow from `templates/rules/<name>/` into `harness/docs/rules/<name>/` as ledger-owned canonical artifacts, then to agent-native pointers/adapters (`.claude/rules/`, `AGENTS.md` pointer behavior for Codex, and managed `opencode.json` instructions). Clean owned rules refresh on re-init; drifted or unowned template-known targets stop before mutation and direct recovery through `repair --dry-run`. Direct edits and rule override layers are unsupported.
 - **Commands** are single-sourced from `templates/commands/*.md` and rendered per agent: Claude slash commands, Codex command-derived skills, and OpenCode commands.
 - **Skills** are copied from `templates/skills/*` into selected agent-native skill roots. Known template files converge to the current `--skills` selection; locally created files outside the template list, such as `zentao.config.json`, are preserved.
-- **Generated status** is `harness/manifest.json`, distinct from package-internal `templates/manifest.json`; doctor keeps rules/skills as recorded selections but binds identity, paths, entry files, and commands to package-derived facts, then exact-checks tool-managed generated content.
+- **Generated status** is `harness/manifest.json`, distinct from package-internal `templates/manifest.json`; its artifact ledger covers commands and selected rules (`kind`, `source`, `target`, exact-byte digest). Doctor keeps rules/skills as recorded selections but exact-validates selected rule package descriptors, ledger records, and disk bytes alongside other package-derived facts. Deselect removes only unchanged ledger-owned rule files; unknown local files survive and nonempty directories remain. Repair permanently backs up then restores canonical rule content.
 
 Generated harness docs follow the seven-layer model under `docs/layers/`, with policy/process docs, `docs/experiments/task-execution-record.md`, optional rules, and workspace-level runtime notes under `agent-work/`.
 

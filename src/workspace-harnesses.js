@@ -3,11 +3,25 @@ const fs = require('fs');
 const path = require('path');
 
 const DAMAGED_HARNESS_MARKERS = [
-  'HARNESS_GUIDE.md',
-  'docs/layers/07-loop.md',
+  {
+    fragments: ['# Niuma Harness Guide', 'stable 7-layer operating context'],
+    relativePath: 'HARNESS_GUIDE.md',
+  },
+  {
+    fragments: ['# Harness Runtime Index', '## 7-layer harness model'],
+    relativePath: 'docs/index.md',
+  },
+  {
+    fragments: ['# Loop Runtime Layer Memo', 'agent-work/tasks/<task-name>/status.md'],
+    relativePath: 'docs/layers/07-loop.md',
+  },
+  {
+    fragments: ['# Action Boundary Policy', '## Autonomous actions'],
+    relativePath: 'docs/policy/action-boundary.md',
+  },
 ];
 
-function scanWorkspaceHarnesses(workspaceDir) {
+function scanWorkspaceHarnesses(workspaceDir, options = {}) {
   if (!fs.existsSync(workspaceDir) || !fs.lstatSync(workspaceDir).isDirectory()) {
     return [];
   }
@@ -17,7 +31,7 @@ function scanWorkspaceHarnesses(workspaceDir) {
     if (!entry.isDirectory() || entry.isSymbolicLink()) {
       continue;
     }
-    const candidate = inspectHarnessCandidate(workspaceDir, entry.name);
+    const candidate = inspectHarnessCandidate(workspaceDir, entry.name, options);
     if (candidate) {
       candidates.push(candidate);
     }
@@ -25,11 +39,13 @@ function scanWorkspaceHarnesses(workspaceDir) {
   return candidates.sort((left, right) => left.directoryName.localeCompare(right.directoryName));
 }
 
-function inspectHarnessCandidate(workspaceDir, directoryName) {
+function inspectHarnessCandidate(workspaceDir, directoryName, options = {}) {
   const directoryPath = path.join(workspaceDir, directoryName);
   const manifestPath = path.join(directoryPath, 'manifest.json');
   if (!isRegularFileWithoutSymlink(manifestPath)) {
-    return null;
+    return options.includeMissingManifest && hasDamagedHarnessStructure(directoryPath)
+      ? { damaged: true, directoryName, directoryPath, manifestPath }
+      : null;
   }
 
   let status;
@@ -51,8 +67,11 @@ function inspectHarnessCandidate(workspaceDir, directoryName) {
 }
 
 function hasDamagedHarnessStructure(directoryPath) {
-  return DAMAGED_HARNESS_MARKERS.every((relativePath) =>
-    isRegularFileInsideWithoutSymlink(directoryPath, relativePath));
+  return DAMAGED_HARNESS_MARKERS.every(({ fragments, relativePath }) => {
+    if (!isRegularFileInsideWithoutSymlink(directoryPath, relativePath)) return false;
+    const content = fs.readFileSync(path.join(directoryPath, ...relativePath.split('/')), 'utf8');
+    return fragments.every((fragment) => content.includes(fragment));
+  });
 }
 
 function isRegularFileInsideWithoutSymlink(baseDir, relativePath) {
@@ -101,5 +120,6 @@ function formatCompetingHarnessError(workspaceDir, requestedHarnessDir, conflict
 module.exports = {
   findCompetingHarnesses,
   formatCompetingHarnessError,
+  hasDamagedHarnessStructure,
   scanWorkspaceHarnesses,
 };

@@ -47,8 +47,11 @@ function prepareRuleAdapterPlan(context) {
     const needsManagedWrite = openCodeTarget && context.options.rules.length > 0;
     if (needsManagedWrite || existing.includes(MANAGED_RULES_BEGIN) || existing.includes(MANAGED_RULES_END)) {
       const config = readOpenCodeConfig(configPath);
-      const hasInstructionBlock = instructionsHaveManagedBlock(config.instructions);
-      if (needsManagedWrite || hasInstructionBlock) {
+      const markerState = analyzeManagedRulesInstructions(config.instructions);
+      if (!markerState.valid) {
+        throw new Error('Cannot update opencode.json because it contains invalid niuma rules markers.');
+      }
+      if (needsManagedWrite || markerState.hasBlock) {
         const next = openCodeTarget
           ? mergeOpenCodeRulesInstruction(config, context.options.rules, context.options.harnessDir)
           : removeOpenCodeRulesInstruction(config);
@@ -237,12 +240,37 @@ function hasManagedBlock(text) {
   return text.includes(MANAGED_RULES_BEGIN) && text.includes(MANAGED_RULES_END);
 }
 
-function instructionsHaveManagedBlock(instructions) {
-  if (typeof instructions === 'string') {
-    return hasManagedBlock(instructions);
+function analyzeManagedRulesInstructions(instructions) {
+  if (instructions === undefined) {
+    return { hasBlock: false, valid: true };
   }
-  return Array.isArray(instructions)
-    && instructions.some((instruction) => typeof instruction === 'string' && hasManagedBlock(instruction));
+
+  const values = typeof instructions === 'string' ? [instructions] : instructions;
+  if (!Array.isArray(values) || values.some((value) => typeof value !== 'string')) {
+    return { hasBlock: false, valid: true }; // existing type validation owns this error
+  }
+
+  let blockCount = 0;
+  for (const value of values) {
+    const beginCount = countOccurrences(value, MANAGED_RULES_BEGIN);
+    const endCount = countOccurrences(value, MANAGED_RULES_END);
+    if (beginCount !== endCount || beginCount > 1) {
+      return { hasBlock: false, valid: false };
+    }
+    if (beginCount === 1) {
+      const begin = value.indexOf(MANAGED_RULES_BEGIN);
+      const end = value.indexOf(MANAGED_RULES_END);
+      if (begin > end) {
+        return { hasBlock: false, valid: false };
+      }
+      blockCount += 1;
+    }
+  }
+  return { hasBlock: blockCount === 1, valid: blockCount <= 1 };
+}
+
+function countOccurrences(value, marker) {
+  return value.split(marker).length - 1;
 }
 
 function escapeRegExp(value) {

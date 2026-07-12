@@ -148,6 +148,31 @@ test('init creates a missing workspace below a directory alias', (t) => {
   assertFile(path.join(realParent, 'new', 'workspace', 'harness', 'manifest.json'));
 });
 
+test('custom ai-harness multi OpenCode adapter uses the actual harness root', () => {
+  const workspace = tempDir();
+  const configPath = path.join(workspace, 'opencode.json');
+  fs.writeFileSync(configPath, `${JSON.stringify({ provider: 'local' }, null, 2)}\n`, 'utf8');
+
+  const result = run(['init', workspace, '--agent', 'multi', '--harness-dir', 'ai-harness']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const config = readJson(configPath);
+  assert.strictEqual(config.provider, 'local');
+  assertOpenCodeRulesInstruction(workspace, 'ai-harness', expectedDefaultRules('multi'));
+  const instructions = Array.isArray(config.instructions) ? config.instructions.join('\n') : config.instructions;
+  assert.doesNotMatch(instructions, /(^|[^-])harness\/docs\/rules\//);
+  assertManifest(path.join(workspace, 'ai-harness', 'manifest.json'), {
+    agent: 'multi',
+    harnessDir: 'ai-harness',
+    rules: expectedDefaultRules('multi'),
+    entryFiles: ['CLAUDE.md', 'AGENTS.md'],
+  });
+
+  let doctor = run(['doctor', workspace, '--harness-dir', 'ai-harness']);
+  assert.strictEqual(doctor.status, 0, doctor.stdout || doctor.stderr);
+  doctor = run(['doctor', path.join(workspace, 'ai-harness')]);
+  assert.strictEqual(doctor.status, 0, doctor.stdout || doctor.stderr);
+});
+
 test('--harness-dir uses a custom directory name', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude', '--harness-dir', 'ai-harness']);

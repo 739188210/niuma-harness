@@ -77,12 +77,16 @@ function createInitContext(options) {
     workDirectory,
     workspaceDir,
   };
-  const prepared = prepareCommandPlan(context);
-  context.artifacts = prepared.artifacts;
-  context.commandPlan = prepared.plan;
+  const preparedCommands = prepareCommandPlan(context);
+  context.commandPlan = preparedCommands.plan;
+  const preparedRules = prepareRulePlan(context);
+  context.rulePlan = preparedRules.plan;
+  context.artifacts = validateArtifactRecords([
+    ...preparedCommands.artifacts,
+    ...preparedRules.artifacts,
+  ]);
   context.directoryPlan = prepareDirectoryPlan(context);
   context.filePlan = prepareFilePlan(context);
-  context.rulePlan = prepareRulePlan(context);
   context.ruleAdapterPlan = prepareRuleAdapterPlan(context);
   context.skillPlan = prepareSkillPlan(context);
   context.statusPlan = prepareStatusPlan(context);

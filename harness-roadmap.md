@@ -85,27 +85,30 @@ CLAUDE.md / AGENTS.md
 | `<harness-dir>/docs/automation/` | Verified automation intent, hooks, and CI notes. |
 | `agent-work/` | Workspace-level task-local memory, plans, status ledgers, verification evidence, and handoff notes. |
 | `<harness-dir>/HARNESS_GUIDE.md` | Human-facing structure and maintenance guide. |
-| `<harness-dir>/manifest.json` | Generated harness status file used by `doctor/check`. |
+| `<harness-dir>/manifest.json` | Generated harness status and authoritative project ownership/history state used by `doctor/check` and backup-first `repair`. |
 
 ### Rules distribution model
 
 Rules now follow the same single-source adapter principle as commands and skills:
 
 ```text
-templates/core/docs/rules/*
+templates/rules/*
   -> <harness-dir>/docs/rules/*
   -> agent-native pointers
 ```
 
 Implemented behavior:
 
-- Canonical rule content remains under `templates/core/docs/rules/*` and generated `<harness-dir>/docs/rules/*`.
+- `templates/rules/*` is the package canonical source; template-known generated `<harness-dir>/docs/rules/*` files are Niuma-managed artifacts tracked in the shared command-and-rule ledger (`kind`, `source`, `target`, exact-byte `digest`).
 - `common` rules are intentionally lightweight engineering preferences; they do not replace Policy, Process, or Observation evidence requirements.
 - Claude receives tool-managed `.claude/rules/niuma-<rule>.md` pointer files for selected rule directories.
 - OpenCode receives a tool-managed `opencode.json.instructions` block pointing to selected rule directories while preserving unrelated user config.
 - Codex receives rules navigation through `AGENTS.md`; `.codex/rules` is not generated for coding standards.
-- Re-running `init` refreshes native rule adapters, removes stale Niuma-managed adapters for unselected rules or changed agents, and preserves unknown user-created native files/config.
-- `doctor/check` validates selected canonical rule files plus the expected native rule adapters.
+- Clean ledger-owned rule files refresh on re-init and package upgrades; exact-current legacy files are safely adopted. Drifted or unowned occupied template-known rule targets fail before mutation and direct recovery through `repair --dry-run`.
+- Deselect removes only unchanged ledger-owned rule files. Unknown local files survive, and nonempty rule directories remain.
+- Backup-first `repair` is implemented: it permanently backs up affected paths before restoring canonical rules, removes obsolete exact-owned rule files whose package templates disappeared, and stops on drifted obsolete files. `doctor/check` exact-validates the selected package descriptor, ledger record, and on-disk bytes, plus expected native adapters.
+- The project manifest is authoritative ownership/history state. Coordinated manifest-plus-artifact edits are explicit project-state changes outside the integrity guarantee; signatures and external trust stores are not part of this release.
+- Direct editing of generated rules is unsupported; this release has no override layer.
 
 This keeps the rule source context-efficient: agent-native mechanisms improve discoverability, but the actual rule text is not copied into multiple tool-specific stores.
 
@@ -162,4 +165,4 @@ npm run pack:dry
 - A package that silently installs hooks, dependencies, or external services.
 - A tool that guesses project facts without verification.
 
-Future commands such as `repair`, `upgrade`, `profile`, or `diff` may be useful later, but they are not the core purpose. The core purpose is to generate and maintain a project-local AI engineering harness that agents can use safely and consistently.
+`repair` is implemented as the backup-first recovery path. Future commands such as `upgrade`, `profile`, or `diff` may be useful later, but they are not the core purpose. The core purpose is to generate and maintain a project-local AI engineering harness that agents can use safely and consistently.

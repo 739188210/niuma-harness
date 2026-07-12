@@ -1,5 +1,4 @@
 const assert = require('assert');
-const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -11,6 +10,10 @@ const {
   getDefaultCommandsForAgent,
 } = require('../src/commands');
 const { getAvailableRuleDirs, getDefaultRulesForAgent } = require('../src/rules');
+const { renderCommandArtifacts } = require('../src/command-artifacts');
+const { digestBytes } = require('../src/artifact-ledger');
+const { renderRuleArtifacts } = require('../src/rule-artifacts');
+const { createTemplateVariables } = require('../src/template-variables');
 const { getAvailableSkillDirs, getSkillTargetRootsForAgent } = require('../src/skills');
 
 const root = path.resolve(__dirname, '..');
@@ -32,6 +35,21 @@ const layerMemos = [
 function run(args) {
   return spawnSync(node, [bin, ...args], {
     cwd: root,
+    encoding: 'utf8',
+  });
+}
+
+function copyCliPackage() {
+  const cliRoot = tempDir();
+  for (const entry of ['bin', 'src', 'templates', 'package.json']) {
+    fs.cpSync(path.join(root, entry), path.join(cliRoot, entry), { recursive: true });
+  }
+  return cliRoot;
+}
+
+function runWithCliRoot(cliRoot, args) {
+  return spawnSync(node, [path.join(cliRoot, 'bin', 'niuma-harness.js'), ...args], {
+    cwd: cliRoot,
     encoding: 'utf8',
   });
 }
@@ -145,16 +163,41 @@ function getExpectedCommandArtifactTargets(agent, commandFiles) {
 function assertArtifactRecords(manifestPath, manifest, agent, commandFiles, explicitTargets) {
   assert.ok(Array.isArray(manifest.artifacts), 'manifest artifacts should be an array');
   const workspaceRoot = path.dirname(path.dirname(manifestPath));
-  const expectedTargets = explicitTargets ? [...explicitTargets] : getExpectedCommandArtifactTargets(agent, commandFiles);
-  expectedTargets.sort((left, right) => left.localeCompare(right));
-  assert.deepStrictEqual(manifest.artifacts.map((record) => record.target), expectedTargets);
-  for (const record of manifest.artifacts) {
-    assert.strictEqual(record.kind, 'command');
-    assert.match(record.source, /^commands\/.+\.md$/);
+  const expected = getExpectedArtifactRecords(
+    agent,
+    commandFiles,
+    manifest.rules,
+    manifest.harnessDir,
+    explicitTargets
+  );
+  const actual = manifest.artifacts.map(({ kind, source, target, digest }) => ({ kind, source, target, digest }));
+  assert.deepStrictEqual(actual, expected);
+  for (const record of actual) {
     const targetPath = path.join(workspaceRoot, ...record.target.split('/'));
-    const digest = `sha256:${crypto.createHash('sha256').update(fs.readFileSync(targetPath)).digest('hex')}`;
-    assert.strictEqual(record.digest, digest, `digest should match ${record.target}`);
+    assert.strictEqual(record.digest, digestBytes(fs.readFileSync(targetPath)), `digest should match ${record.target}`);
   }
+}
+
+function getExpectedArtifactRecords(agent, commandFiles, rules, harnessDir = 'harness', explicitCommandTargets) {
+  const variables = createTemplateVariables({ agent, harnessDir }, 'agent-work');
+  const commandArtifacts = renderCommandArtifacts(agent, commandFiles, undefined, variables);
+  const expectedCommands = explicitCommandTargets
+    ? commandArtifacts.filter((artifact) => explicitCommandTargets.includes(artifact.target))
+    : commandArtifacts;
+  const ruleArtifacts = renderRuleArtifacts(rules, harnessDir, undefined, variables);
+  return [...expectedCommands, ...ruleArtifacts]
+    .map(({ kind, source, target, digest, content }) => ({
+      kind,
+      source,
+      target,
+      digest: digest || digestBytes(Buffer.from(content, 'utf8')),
+    }))
+    .sort((left, right) => left.target.localeCompare(right.target));
+}
+
+function getExpectedRuleArtifactTargets(rules, harnessDir = 'harness') {
+  const variables = createTemplateVariables({ agent: 'claude', harnessDir }, 'agent-work');
+  return renderRuleArtifacts(rules, harnessDir, undefined, variables).map((artifact) => artifact.target);
 }
 
 function assertRuleDirs(harnessRoot, expected) {
@@ -273,7 +316,9 @@ module.exports = {
   assertRuleDirs,
   assertSkillDirs,
   assertTreeUnchanged,
+  copyCliPackage,
   getCommandId,
+  getExpectedArtifactRecords,
   getExpectedCommandArtifactTargets,
   expectedDefaultRules,
   fs,
@@ -281,6 +326,7 @@ module.exports = {
   read,
   readJson,
   run,
+  runWithCliRoot,
   snapshotTree,
   tempDir,
   updateManifest,

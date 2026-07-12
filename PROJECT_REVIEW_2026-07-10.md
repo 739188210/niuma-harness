@@ -26,6 +26,7 @@
 | P1-5 macOS `/var/...` 合法 workspace 被拒绝 | 已完成（canonical boundary） | init/doctor/check 在入口 canonicalize target，允许 workspace 外祖先及 target 本身的有效 alias；canonical workspace 内 Niuma 访问路径的 symlink/junction 仍拒绝 |
 | P1-6 duplicate contract blocks 未被拒绝 | 已完成 | 与 P0-1 一并修复，init 和 doctor 都拒绝重复 contract |
 | P1-7 修改 `--harness-dir` 形成竞争 harness | 已完成（conflict-stop 边界） | `--harness-dir` 仅用于首次命名或同名 re-init；workspace 存在其他可识别 Niuma harness 时，init 在任何 plan/mutation 前停止，不自动迁移 |
+| P2-1 Rules 的 canonical ownership 语义冲突 | 已完成（READY） | `templates/rules/*` 为 canonical；generated rules 为 tool-managed，受 mixed command/rule ledger、preflight、backup-first repair 与 Doctor 精确校验保护 |
 
 ### 0.2 已完成整改
 
@@ -140,11 +141,29 @@ Workspace-mode doctor 会报告 competing harness；直接对某个 harness root
 - P0-4（限定边界）
 - P1-4
 
+#### 审查复核后的边界修正
+
+后续独立复核发现并修复了三个边界遗漏：
+
+- OpenCode `instructions` 中单侧、重复或跨数组元素分散的 Niuma rules markers，现在会在 init/re-init/agent switch 的全局 preflight 阶段失败，不再追加重复 block 或遗留残缺 marker；失败时 workspace 保持不变。
+- inactive entry 中属于当前 harness 的唯一合法但内容漂移 contract 现在也会被 doctor 判定为 stale；直接 doctor 仍会忽略可证明属于另一个 `harnessDir` 的完整 canonical contract。
+- `canonicalizeWorkspacePath()` 遇到 file ancestor 的 `ENOTDIR` 现在统一转换为稳定的 `Parent path exists but is not a directory` 错误。
+
+这些修复补齐 P0-4、P1-2、P1-3、P1-4 与 P1-5 的已声明边界。
+
+#### P2-1 Rules canonical ownership（已完成，READY）
+
+Rules 采用 package-owned canonical 模型：`templates/rules/*` 是唯一 canonical source，selected template-known generated rule files 是 tool-managed artifacts。schema-2 mixed command/rule ledger 为每项记录 `kind/source/target/digest`；init 在 mutation 前完成 preflight，clean owned files 可 refresh，exact-current legacy files 可 adopt，drift 或无 ownership 的占用目标停止并提示 `repair --dry-run`。deselect 只移除 unchanged ledger-owned files；unknown local files 与非空目录保留。
+
+生成态 manifest 是项目的 authoritative ownership/history trust boundary；它不是签名或外部 trust store，协调修改 artifact 与 digest 属于显式项目状态修改，不在完整性保证内。repair 为 backup-first：先永久备份并验证，再恢复 canonical 内容。Doctor 对 selected rules 精确比对 package descriptor、ledger record 与 disk bytes。当前版本不支持直接编辑 generated rule 或 override layer。
+
+原始 §5.3 发现保留为历史整改基线，不以当前状态改写。
+
 #### Doctor trusted bindings 与 managed-content integrity
 
 生成态 manifest 必须是 plain object，且 `createdBy`、实际 harness 目录名、package-defined `workDir`、agent-derived `entryFiles`、package+agent-derived `commands` 不能通过修改 manifest 自行降级。`rules` 与 `skills` 仍表示实际 init selection；因此 `--rules none` 与 `--rules-out` 排除 agent rule 的语义保持不变。
 
-新增 package-derived exact comparison，覆盖 tool-managed core/work templates、selected skill package files、Claude pointers、OpenCode managed block 和当前 command artifact render。artifact ledger 保留原有 ownership/drift 职责，不扩展到其他文件。明确排除 `project-context.md`、`automation-intent.md`、generated rules 正文、entry contract 外内容、`zentao.config.json`、unknown files，以及 OpenCode managed block 外字段和 instruction。
+新增 package-derived exact comparison，覆盖 tool-managed core/work templates、selected skill package files、Claude pointers、OpenCode managed block 和当前 command artifact render；selected generated rules 正文也由 Doctor 精确校验 package descriptor、ledger record 与 disk bytes。artifact ledger 保留 ownership/drift 职责，不扩展到其他文件。明确排除 `project-context.md`、`automation-intent.md`、entry contract 外内容、`zentao.config.json`、unknown files，以及 OpenCode managed block 外字段和 instruction。生成态 manifest 是项目 authoritative ownership/history state；协调修改 artifact 与其 digest 属于显式项目状态修改，不在完整性保证内，不以签名或外部 trust store 防御。
 
 该整改关闭：
 
@@ -177,18 +196,16 @@ git diff --check
 
 结果：
 
-- `npm test`：194 passed，0 failed；其中 `test/doctor-integrity.test.js` 由 focused `test/doctor.test.js` 和 full aggregator 共同执行。
-- `node test/doctor-integrity.test.js`：13 passed，0 failed；`node test/init.test.js`：114 passed，0 failed。
-- `npm run pack:dry`：通过，package preview 共 108 个文件；包含全局 preflight、ZenTao example config、共享 command renderer、template variables 和 doctor integrity checker。
-- `git diff --check`：通过，无 whitespace error（仅 Windows 行尾转换 warning）。
-- CLI runtime smoke：fresh multi + custom `ai-harness` doctor 通过并验证三类 native command render；用户维护 docs、entry free content 和本地 ZenTao config 修改仍通过；tool-managed core drift 返回 exit 1；`--rules none` 与 `--rules-out claude` 均通过；non-object manifest 返回结构化错误且 stderr 为空。
-- 代码审查发现并已修复：managed path 父级 symlink、OpenCode 孤立/重复 marker、未选择 rules/skills stale files、篡改 harnessDir 的级联诊断，以及 rules cleanup 对无 instructions managed block（包括其他字段中的 marker 示例）的用户 `opencode.json` 无条件重序列化问题。
+- `npm test`：336 passed，0 failed。
+- `npm run pack:dry`：通过，package preview 共 117 个文件；包含 `templates/rules/*` 与 `src/rule-artifacts.js`，不包含已废弃的 `templates/core/docs/rules/` 路径。
+- `git diff --check`：通过，无 whitespace error。
+- managed-rules CLI smoke：fresh multi + custom `ai-harness` 初始化与 Doctor 通过；修改 selected generated rule 后 re-init 在 preflight 停止且 workspace 不变；`repair --dry-run` 仅报告 backup/write，`repair --yes` 保留含 drift bytes 的 backup 并恢复 package canonical，Doctor 通过；deselect 后 managed rule/ledger record 收敛，unknown local file 与非空目录保留，Doctor 通过。
 
 尚未执行：commit、push、PR、package 发布、真实 tarball 安装 smoke、Windows CI、真实 ZenTao/MySQL 网络或数据库行为验证。
 
 ### 0.5 下一整改项
 
-P0、P1-1 和 P1-2 已在当前明确边界内关闭。下一优先项是 **P1-3：agent 切换后的 stale surface 收敛**；其后处理 `--harness-dir` 迁移语义与 macOS canonical workspace/symlink 边界。
+P0、P1 与 P2-1 已在当前文档明确的边界内关闭。按文档顺序，下一优先项为 **P2-2：Bootstrap、task ledger 和 feedback 是 prose-only**；随后处理其余 P2 与第 6 节发布质量缺口。
 
 ## 1. 结论摘要
 

@@ -16,6 +16,15 @@ function record(target, digest = digestBytes(Buffer.from(target))) {
   };
 }
 
+function ruleRecord(target, digest = digestBytes(Buffer.from(target))) {
+  return {
+    kind: 'rule',
+    source: 'rules/common/testing.md',
+    target,
+    digest,
+  };
+}
+
 test('artifact ledger hashes exact bytes with sha256', () => {
   assert.strictEqual(
     digestBytes(Buffer.from('hello\n', 'utf8')),
@@ -24,14 +33,18 @@ test('artifact ledger hashes exact bytes with sha256', () => {
   assert.notStrictEqual(digestBytes(Buffer.from('hello\n')), digestBytes(Buffer.from('hello\r\n')));
 });
 
-test('artifact ledger validates and sorts canonical records', () => {
+test('artifact ledger validates command and rule records with deterministic mixed sorting', () => {
   const records = validateArtifactRecords([
+    ruleRecord('harness/docs/rules/common/testing.md'),
     record('.opencode/commands/example.md'),
     record('.claude/commands/example.md'),
+    ruleRecord('harness/docs/rules/common/security.md'),
   ]);
   assert.deepStrictEqual(records.map((item) => item.target), [
     '.claude/commands/example.md',
     '.opencode/commands/example.md',
+    'harness/docs/rules/common/security.md',
+    'harness/docs/rules/common/testing.md',
   ]);
 });
 
@@ -46,8 +59,10 @@ test('artifact ledger rejects malformed records and duplicate targets', () => {
     [record('path//empty.md')],
     [{ ...record('valid.md'), digest: 'sha256:ABC' }],
     [{ ...record('valid.md'), kind: '' }],
+    [{ ...record('valid.md'), kind: 'skill' }],
     [{ ...record('valid.md'), source: '' }],
     [record('duplicate.md'), record('duplicate.md')],
+    [record('duplicate.md'), ruleRecord('duplicate.md')],
   ]) {
     assert.throws(() => validateArtifactRecords(invalid));
   }
@@ -64,8 +79,9 @@ test('artifact ledger finds records by kind and target', () => {
 
 test('artifact ledger merges planned records and retains other owned artifacts', () => {
   const retained = record('.opencode/commands/example.md');
+  const retainedRule = ruleRecord('harness/docs/rules/common/testing.md');
   const old = record('.claude/commands/example.md', digestBytes(Buffer.from('old')));
   const refreshed = record('.claude/commands/example.md', digestBytes(Buffer.from('new')));
-  const merged = mergeArtifactRecords([old, retained], [refreshed]);
-  assert.deepStrictEqual(merged, [refreshed, retained]);
+  const merged = mergeArtifactRecords([old, retained, retainedRule], [refreshed]);
+  assert.deepStrictEqual(merged, [refreshed, retained, retainedRule]);
 });

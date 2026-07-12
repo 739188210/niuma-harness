@@ -134,11 +134,10 @@ test('doctor compares current command artifacts against package rendering even w
   expectDoctorError(workspace, new RegExp(`managed content drifted \\.claude/commands/${command.replace('.', '\\.')}`));
 });
 
-test('doctor excludes user-maintained docs entry free content local config unknown files and generated rules bodies', () => {
+test('doctor excludes user-maintained docs entry free content local config and unknown files', () => {
   const workspace = initWorkspace('claude', ['--skills', 'zentao-bug-workflow']);
   append(path.join(workspace, 'harness', 'docs', 'project-context.md'));
   append(path.join(workspace, 'harness', 'docs', 'automation', 'automation-intent.md'));
-  append(path.join(workspace, 'harness', 'docs', 'rules', 'common', 'testing.md'));
   append(path.join(workspace, 'CLAUDE.md'), '\nUser free content\n');
   fs.writeFileSync(path.join(workspace, '.claude', 'skills', 'zentao-bug-workflow', 'zentao.config.json'), '{"local":true}\n', 'utf8');
   fs.writeFileSync(path.join(workspace, 'unknown.txt'), 'unknown\n', 'utf8');
@@ -182,6 +181,14 @@ test('doctor rejects inactive entry contracts but allows user-only inactive entr
   assert.strictEqual(result.status, 0, result.stdout);
 });
 
+test('doctor rejects a drifted inactive entry contract', () => {
+  const workspace = initWorkspace();
+  const drifted = read(path.join(workspace, 'CLAUDE.md'))
+    .replace('Niuma Harness — Operating Loop', 'Niuma Harness — Drifted Loop');
+  fs.writeFileSync(path.join(workspace, 'AGENTS.md'), drifted, 'utf8');
+  expectDoctorError(workspace, /stale contract zone in AGENTS\.md/);
+});
+
 test('direct doctor ignores an inactive entry contract owned by another harness directory', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'claude', '--harness-dir', 'ai-harness', '--rules', 'none', '--skills', 'none']);
@@ -198,6 +205,128 @@ test('doctor reports a non-file inactive entry without crashing', () => {
   fs.mkdirSync(path.join(workspace, 'AGENTS.md'));
   const result = expectDoctorError(workspace, /not a regular file entry file AGENTS\.md/);
   assert.strictEqual(result.stderr, '');
+});
+
+test('doctor validates selected rule records against canonical package descriptors', async (t) => {
+  const cases = [
+    {
+      name: 'missing record',
+      mutate({ manifest, record }) {
+        manifest.artifacts = manifest.artifacts.filter((item) => item !== record);
+      },
+      expected: /missing rule artifact record harness\/docs\/rules\/common\/testing\.md/,
+    },
+    {
+      name: 'wrong kind',
+      mutate({ record }) { record.kind = 'command'; },
+      expected: /invalid rule artifact record harness\/docs\/rules\/common\/testing\.md/,
+    },
+    {
+      name: 'unknown source',
+      mutate({ record }) { record.source = 'rules/common/unknown.md'; },
+      expected: /invalid rule artifact record harness\/docs\/rules\/common\/testing\.md/,
+    },
+    {
+      name: 'wrong target',
+      mutate({ record }) { record.target = 'harness/docs/rules/common/wrong.md'; },
+      expected: /missing rule artifact record harness\/docs\/rules\/common\/testing\.md/,
+    },
+    {
+      name: 'package digest mismatch',
+      mutate({ record }) { record.digest = `sha256:${'0'.repeat(64)}`; },
+      expected: /rule artifact package mismatch harness\/docs\/rules\/common\/testing\.md/,
+    },
+    {
+      name: 'forged digest and forged file',
+      mutate({ workspace, record }) {
+        const forged = Buffer.from('forged rule body\n');
+        fs.writeFileSync(path.join(workspace, ...record.target.split('/')), forged);
+        record.digest = `sha256:${require('crypto').createHash('sha256').update(forged).digest('hex')}`;
+      },
+      expected: /rule artifact package mismatch harness\/docs\/rules\/common\/testing\.md/,
+    },
+    {
+      name: 'disk drift',
+      mutate({ workspace, record }) {
+        fs.appendFileSync(path.join(workspace, ...record.target.split('/')), 'drift\n');
+      },
+      expected: /artifact drifted harness\/docs\/rules\/common\/testing\.md/,
+    },
+  ];
+
+  for (const scenario of cases) {
+    await t.test(scenario.name, () => {
+      const workspace = initWorkspace();
+      updateManifest(workspace, (manifest) => {
+        const record = manifest.artifacts.find((item) => item.target === 'harness/docs/rules/common/testing.md');
+        scenario.mutate({ manifest, record, workspace });
+      });
+      expectDoctorError(workspace, scenario.expected);
+    });
+  }
+});
+
+test('doctor rejects duplicate and stale unselected rule records', async (t) => {
+  await t.test('duplicate target', () => {
+    const workspace = initWorkspace();
+    updateManifest(workspace, (manifest) => {
+      const record = manifest.artifacts.find((item) => item.kind === 'rule');
+      manifest.artifacts.push({ ...record });
+    });
+    expectDoctorError(workspace, /duplicate artifact target/);
+  });
+
+  await t.test('stale unselected record', () => {
+    const workspace = initWorkspace();
+    updateManifest(workspace, (manifest) => {
+      manifest.rules = manifest.rules.filter((rule) => rule !== 'common');
+    });
+    expectDoctorError(workspace, /inactive rule artifact record harness\/docs\/rules\/common\/testing\.md/);
+  });
+});
+
+test('doctor rejects non-regular and linked selected rule targets', async (t) => {
+  await t.test('directory target', () => {
+    const workspace = initWorkspace();
+    const target = path.join(workspace, 'harness', 'docs', 'rules', 'common', 'testing.md');
+    fs.rmSync(target);
+    fs.mkdirSync(target);
+    expectDoctorError(workspace, /not a regular artifact file harness\/docs\/rules\/common\/testing\.md/);
+  });
+
+  await t.test('symlink target', () => {
+    const workspace = initWorkspace();
+    const target = path.join(workspace, 'harness', 'docs', 'rules', 'common', 'testing.md');
+    const outside = path.join(tempDir(), 'testing.md');
+    fs.writeFileSync(outside, read(target));
+    fs.rmSync(target);
+    fs.symlinkSync(outside, target);
+    expectDoctorError(workspace, /Refusing to write through symlink/);
+  });
+});
+
+test('doctor accepts unknown local files beside selected and unselected known rules', () => {
+  const workspace = initWorkspace('claude', ['--rules-out', 'python']);
+  const rulesRoot = path.join(workspace, 'harness', 'docs', 'rules');
+  fs.writeFileSync(path.join(rulesRoot, 'common', 'local.md'), 'selected local file\n');
+  fs.mkdirSync(path.join(rulesRoot, 'python'), { recursive: true });
+  fs.writeFileSync(path.join(rulesRoot, 'python', 'local.md'), 'unselected local file\n');
+  const result = doctor(workspace);
+  assert.strictEqual(result.status, 0, result.stdout);
+});
+
+test('doctor uses the actual custom harness directory for rule descriptors in workspace and direct modes', () => {
+  const workspace = initWorkspace('claude', ['--harness-dir', 'ai-harness']);
+  let result = doctor(workspace, ['--harness-dir', 'ai-harness']);
+  assert.strictEqual(result.status, 0, result.stdout);
+  result = doctor(path.join(workspace, 'ai-harness'));
+  assert.strictEqual(result.status, 0, result.stdout);
+
+  updateManifest(workspace, (manifest) => {
+    const record = manifest.artifacts.find((item) => item.target === 'ai-harness/docs/rules/common/testing.md');
+    record.target = 'harness/docs/rules/common/testing.md';
+  }, 'ai-harness');
+  expectDoctorError(path.join(workspace, 'ai-harness'), /missing rule artifact record ai-harness\/docs\/rules\/common\/testing\.md/);
 });
 
 test('doctor rejects inactive command artifact records', () => {

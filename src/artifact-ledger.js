@@ -4,6 +4,7 @@ const path = require('path');
 const { validateRelativePath } = require('./fs-safe');
 
 const DIGEST_PATTERN = /^sha256:[0-9a-f]{64}$/;
+const ARTIFACT_KINDS = new Set(['command', 'rule']);
 
 function digestBytes(value) {
   const bytes = Buffer.isBuffer(value) ? value : Buffer.from(value, 'utf8');
@@ -36,6 +37,9 @@ function validateArtifactRecord(record, index) {
     }
   }
 
+  if (!ARTIFACT_KINDS.has(record.kind)) {
+    throw new Error(`artifact record ${index} has unknown kind: ${record.kind}`);
+  }
   validateArtifactPath(record.source, `artifact source ${index}`);
   validateArtifactPath(record.target, `artifact target ${index}`);
   if (!DIGEST_PATTERN.test(record.digest)) {

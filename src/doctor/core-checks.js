@@ -47,13 +47,25 @@ function checkInactiveEntryContracts(context, activeEntries) {
       continue;
     }
     if (analysis.status === 'valid') {
-      if (canonicalBlock && normalize(analysis.block) === normalize(canonicalBlock)) {
-        addError(result, `stale contract zone in ${entryFile}`);
+      if (canonicalBlock && contractBelongsToOtherHarness(analysis.block, canonicalBlock, harnessDir, normalize)) {
+        continue;
       }
+      addError(result, `stale contract zone in ${entryFile}`);
       continue;
     }
     addError(result, staleContractAnalysisError(analysis.status, entryFile));
   }
+}
+
+function contractBelongsToOtherHarness(block, canonicalBlock, harnessDir, normalize) {
+  const placeholder = '__NIUMA_HARNESS_DIR__';
+  const expected = normalize(canonicalBlock).split(`${harnessDir}/`).join(`${placeholder}/`);
+  const actual = normalize(block);
+  const match = actual.match(/(?:^|[\s`(])([A-Za-z0-9._-]+)\/docs\//);
+  if (!match || match[1] === harnessDir) {
+    return false;
+  }
+  return actual.split(`${match[1]}/`).join(`${placeholder}/`) === expected;
 }
 
 function staleContractAnalysisError(status, entryFile) {

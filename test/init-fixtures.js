@@ -15,6 +15,9 @@ const {
   assertOpenCodeRulesInstruction,
   assertRuleDirs,
   assertSkillDirs,
+  assertTreeUnchanged,
+  copyCliPackage,
+  runWithCliRoot,
   getCommandId,
   getExpectedCommandArtifactTargets,
   expectedDefaultRules,
@@ -23,6 +26,7 @@ const {
   read,
   readJson,
   run,
+  snapshotTree,
   tempDir,
 } = require('./helpers');
 const { addAgentRules, getDefaultRulesForAgent, normalizeRules, normalizeRulesOut } = require('../src/rules');
@@ -137,6 +141,8 @@ module.exports = {
   assertOpenCodeRulesInstruction,
   assertRuleDirs,
   assertSkillDirs,
+  assertTreeUnchanged,
+  copyCliPackage,
   expectedDefaultRules,
   fs,
   getCommandId,
@@ -154,5 +160,7 @@ module.exports = {
   readJson,
   readTextTree,
   run,
+  runWithCliRoot,
+  snapshotTree,
   tempDir,
 };

@@ -13,6 +13,9 @@ function canonicalizeWorkspacePath(targetPath) {
       stat = fs.lstatSync(current);
       break;
     } catch (error) {
+      if (error.code === 'ENOTDIR') {
+        throw new Error(`Parent path exists but is not a directory: ${path.dirname(current)}`);
+      }
       if (error.code !== 'ENOENT') {
         throw error;
       }
