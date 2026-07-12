@@ -77,7 +77,8 @@ This source repository intentionally does **not** contain a generated `harness/`
 - `node bin/niuma-harness.js init <tmp> --agent claude --dry-run` — preview generated files without writing.
 - `node bin/niuma-harness.js init <tmp> --agent multi --skills all` — generate all supported agent surfaces in a temp workspace.
 - `node bin/niuma-harness.js doctor <tmp>` — validate a generated harness.
-- Focused tests: `node test/init.test.js`, `node test/doctor.test.js`, `node test/help.test.js`.
+- `node bin/niuma-harness.js audit <tmp> --task <task-name>` — read-only consistency audit of structured task evidence.
+- Focused tests: `node test/init.test.js`, `node test/doctor.test.js`, `node test/audit.test.js`, `node test/audit-cli.test.js`, `node test/help.test.js`.
 
 Do not run `init .` in this repo root; use a temp directory.
 
@@ -90,6 +91,7 @@ Dependency-free CommonJS Node CLI. `bin/niuma-harness.js` invokes `main()` from 
 3. `src/scaffold.js` builds an init context from `templates/manifest.json`, creates directories, writes entry files/templates/rules/skills/commands through `src/scaffold/*`, then regenerates the generated `harness/manifest.json` via `src/scaffold/status-writer.js`.
 4. `src/doctor.js` locates generated `manifest.json`, then `src/doctor/checks.js` validates the harness root, workspace `agent-work/`, entry contract integrity, selected rules, skills, commands, and required docs.
 5. `src/repair.js` resolves the installed harness and recovery selections, builds a canonical desired state through `src/scaffold/desired-state.js`, prints the complete repair plan, creates and verifies permanent no-follow backups, revalidates observations, applies the plan with the manifest last, then runs Doctor and performs best-effort synchronous rollback on validation failure. The focused stages live under `src/repair/`.
+6. `src/audit.js` locates the installed Harness and read-only task records; `src/audit/records.js`, `evaluator.js`, and `report.js` parse marker JSON, evaluate eight self-report consistency dimensions, and render stable reports. Audit does not prove objective behavior or modify runtime records.
 
 `src/fs-safe.js` centralizes path confinement and symlink refusal for scaffold writes/removals. `src/contract.js` owns the managed contract markers and replacement helpers used by both entry merging and doctor integrity checks.
 

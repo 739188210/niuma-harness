@@ -19,6 +19,7 @@ If the Loop layer flags a rationalization about missing evidence or dismissing f
 4. Make the smallest safe repair attempt.
 5. Re-run the smallest relevant check.
 6. Stop and report if the same failure persists after focused retries or if repair requires user approval.
+7. When recovery applies, record the failure, root cause, bounded attempts, verification evidence IDs, focused rechecks, stop condition, and declared recovery result in `harness-feedback.md`; otherwise explicitly record recovery as not applicable.
 
 ## Failure response map
 

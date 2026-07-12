@@ -50,7 +50,7 @@ Before pausing or stopping delegated work, the active task owner records the int
 4. Reflect: compare evidence with success criteria and update current stage, completed steps, and next action.
 5. Repair: enter Recovery if the result is failing, unclear, or unsafe. Retries for the same failure are bounded (a small fixed number of focused attempts); once the limit is reached, stop, preserve the failure signal, and report instead of continuing the loop.
 6. Remember: capture verified durable facts through the Memory layer.
-7. Continue or stop: proceed only when the next step is safe and useful; otherwise report and ask. Before pausing or stopping interruptible work, make sure `status.md` is enough to resume from.
+7. Continue or stop: proceed only when the next step is safe and useful; otherwise report and ask. Before pausing or stopping interruptible work, make sure `status.md` is enough to resume from. For non-trivial tasks, finalize `verification.md` and `harness-feedback.md` so every success criterion maps to stable evidence IDs and the declared result, gaps, risks, recovery, and review outcome agree.
 
 ## Rationalization red flags
 

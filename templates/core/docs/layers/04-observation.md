@@ -19,15 +19,39 @@ Use this layer before declaring work complete, after any code or documentation c
 
 ## Evidence schema
 
-Record verification evidence with these fields:
+In `agent-work/tasks/<task-name>/verification.md`, keep exactly one marker-delimited schema 1 JSON block. Copy this shape and replace the example evidence truthfully:
 
-| Field | Meaning |
-|---|---|
-| Check | Exact command, manual action, or review performed. |
-| Expected signal | The result that would prove the task goal or expose failure. |
-| Actual result | Observed result, including pass/fail status, exit code when available, and the relevant output or finding. |
-| Skipped checks | Checks not run, with the reason each was skipped. Use `None` only when no relevant checks were skipped. |
-| Remaining unknowns | What is still unverified, risky, or dependent on external/user confirmation. Use `None` only when nothing material remains unknown. |
+<!-- niuma-verification-record:begin -->
+```json
+{
+  "schemaVersion": 1,
+  "evidence": [
+    {
+      "id": "focused-tests",
+      "kind": "command",
+      "check": "node test/example.test.js",
+      "expectedSignal": "The focused test exits successfully.",
+      "actualResult": "The focused test passed.",
+      "outcome": "passed",
+      "exitCode": 0,
+      "remainingUnknowns": []
+    },
+    {
+      "id": "external-check",
+      "kind": "manual",
+      "check": "Confirm behavior in an unavailable external environment.",
+      "expectedSignal": "The external behavior matches the task criteria.",
+      "actualResult": "Not checked in this workspace.",
+      "outcome": "unknown",
+      "exitCode": null,
+      "remainingUnknowns": ["External environment behavior remains unverified."]
+    }
+  ]
+}
+```
+<!-- niuma-verification-record:end -->
+
+`kind` is `command`, `manual`, or `review`; `outcome` is `passed`, `failed`, `skipped`, or `unknown`. A passed/failed command requires an integer `exitCode` (`0` for passed, non-zero for failed); skipped/unknown command evidence uses `null`. Use stable unique evidence IDs, and use an empty `remainingUnknowns` array only when nothing material remains unknown. Record skipped checks as evidence with `outcome: "skipped"`, the reason in `actualResult`, and the unresolved impact in `remainingUnknowns`.
 
 ## Evidence ownership
 

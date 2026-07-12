@@ -6,6 +6,7 @@ const { addAgentRules, getDefaultRulesForAgent } = require('./rules');
 const { runDoctor } = require('./doctor');
 const { runInit } = require('./scaffold');
 const { runRepair } = require('./repair');
+const { runAudit } = require('./audit');
 
 function finalizeRules(options) {
   if (options.rulesOut) {
@@ -45,7 +46,12 @@ async function main(argv) {
     return;
   }
 
-  throw new Error(`Unknown command: ${options.command}. Use "init", "doctor", "check", or "repair".`);
+  if (options.command === 'audit') {
+    runAudit(options);
+    return;
+  }
+
+  throw new Error(`Unknown command: ${options.command}. Use "init", "doctor", "check", "repair", or "audit".`);
 }
 
 module.exports = {

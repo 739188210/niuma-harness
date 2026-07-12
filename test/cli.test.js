@@ -8,4 +8,8 @@ require('./doctor.test');
 require('./repair-cli.test');
 require('./repair.test');
 require('./repair-orchestration.test');
+require('./audit-cli.test');
+require('./audit-records.test');
+require('./audit.test');
+require('./audit-regression.test');
 require('./help.test');

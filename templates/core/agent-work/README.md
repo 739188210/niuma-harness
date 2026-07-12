@@ -20,7 +20,7 @@ agent-work/tasks/<task-name>/
 - `context.md`: task-local context gathered during execution.
 - `plan.md`: current plan, scope decisions, and implementation sequence.
 - `verification.md`: exact checks, expected signals, actual results, skipped checks with reasons, and remaining unknowns.
-- `harness-feedback.md`: required for non-trivial tasks while `{{HARNESS_DIR}}/docs/experiments/task-execution-record.md` exists; records harness steps used, skipped, deviations, and friction.
+- `harness-feedback.md`: required for non-trivial tasks in this package release; records structured execution evidence for `niuma-harness audit`.
 - `notes.md`: temporary investigation notes, findings, fix decisions, and handoff notes.
 
 ## What belongs here
@@ -30,7 +30,7 @@ agent-work/tasks/<task-name>/
 - Task-local context gathered during execution.
 - Plans for multi-step work.
 - Verification commands, expected signals, actual results, skipped checks, and remaining unknowns, including material risks.
-- Experimental harness execution feedback while `{{HARNESS_DIR}}/docs/experiments/task-execution-record.md` exists.
+- Package-enabled experimental Harness execution records for non-trivial tasks.
 - Handoff state after interruption.
 - Temporary investigation notes that should not become stable project facts.
 
@@ -41,6 +41,32 @@ agent-work/tasks/<task-name>/
 - Secrets, credentials, tokens, or private data.
 - Unverified guesses presented as truth.
 - One-off logs that do not help future task work.
+
+## Copyable verification record
+
+Use one schema 1 marker block in `verification.md`; `harness-feedback.md` references its stable evidence IDs.
+
+<!-- niuma-verification-record:begin -->
+```json
+{
+  "schemaVersion": 1,
+  "evidence": [
+    {
+      "id": "focused-tests",
+      "kind": "command",
+      "check": "node test/example.test.js",
+      "expectedSignal": "The focused test exits successfully.",
+      "actualResult": "The focused test passed.",
+      "outcome": "passed",
+      "exitCode": 0,
+      "remainingUnknowns": []
+    }
+  ]
+}
+```
+<!-- niuma-verification-record:end -->
+
+`kind` is `command`, `manual`, or `review`; `outcome` is `passed`, `failed`, `skipped`, or `unknown`. Completed command checks use an integer exit code; skipped/unknown command checks use `null`. Unknowns are always an array of non-empty strings, or `[]` when none remain. The full execution-record schema is in `{{HARNESS_DIR}}/docs/experiments/task-execution-record.md`.
 
 ## Runtime protocol
 

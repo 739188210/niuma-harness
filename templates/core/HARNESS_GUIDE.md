@@ -35,6 +35,7 @@ If project-specific facts are incomplete, agents should inspect the current work
 - `docs/process/`: concrete task playbooks selected by the Process layer.
 - `docs/rules/`: selected canonical engineering standards; agent-native rule adapters point back here.
 - `docs/automation/`: automation and hook intent notes.
+- `docs/experiments/task-execution-record.md`: package-enabled structured execution-record contract for non-trivial tasks.
 - `agent-work/`: workspace-level task-local records and verification evidence.
 
 ## What changes after init
@@ -78,10 +79,11 @@ agent-work/tasks/<task-name>/
   context.md
   plan.md
   verification.md
+  harness-feedback.md
   notes.md
 ```
 
-These files hold task-local memory, explicit status, verification evidence, and handoff state. Durable project facts should move through the Memory layer before being recorded in `docs/project-context.md`.
+These files hold task-local memory, explicit status, verification evidence, structured execution feedback, and handoff state. `niuma-harness audit [target] [--task <name> | --all] [--strict]` reads bootstrap, execution, and verification marker JSON and reports self-reported consistency without modifying records or claiming objective correctness. The experiment is enabled by the current package and is not workspace-disableable. Durable project facts should move through the Memory layer before being recorded in `docs/project-context.md`.
 
 ## Maintenance rule
 

@@ -122,10 +122,11 @@ agent-work/tasks/<task-name>/
   context.md
   plan.md
   verification.md
+  harness-feedback.md
   notes.md
 ```
 
-Task files hold task-local memory, explicit progress state, verification evidence, and handoff state. Durable project facts should move through the Memory layer before being recorded in `<harness-dir>/docs/project-context.md`.
+Task files hold task-local memory, explicit progress state, schema-1 verification evidence, structured execution feedback, and handoff state. The current package enables the task-execution-record experiment unconditionally; there is no workspace disable state. `audit` reads these user-owned records and safe local references to evaluate eight-dimensional self-report consistency, but it does not prove actual reads, command execution, or objective correctness. Durable project facts should move through the Memory layer before being recorded in `<harness-dir>/docs/project-context.md`.
 
 ## Verification strategy
 
@@ -145,6 +146,7 @@ npm test
 node bin/niuma-harness.js init <tmp> --agent claude
 node bin/niuma-harness.js doctor <tmp>
 node bin/niuma-harness.js check <tmp>
+node bin/niuma-harness.js audit <tmp> --task <task-name>
 node bin/niuma-harness.js init <tmp> --agent claude --dry-run
 npm run pack:dry
 ```

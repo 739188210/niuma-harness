@@ -26,6 +26,7 @@ niuma-harness init [target] [options]
 niuma-harness repair [target] [options]
 niuma-harness doctor [target] [options]
 niuma-harness check [target] [options]
+niuma-harness audit [target] [--harness-dir <name>] [--task <name> | --all] [--strict]
 ```
 
 ### Init options
@@ -45,6 +46,17 @@ niuma-harness check [target] [options]
 | Option | Description |
 |---|---|
 | `--harness-dir <name>` | Directory to inspect, default: `harness` |
+
+### Audit options
+
+| Option | Description |
+|---|---|
+| `--harness-dir <name>` | Harness to inspect, default: `harness` |
+| `--task <name>` | Audit one direct task directory |
+| `--all` | Audit all direct task directories in stable order |
+| `--strict` | Exit non-zero for `PARTIAL` as well as `FAIL` |
+
+`audit` is read-only and separate from Doctor. It checks the internal consistency of structured bootstrap, `harness-feedback.md`, and `verification.md` self-reports plus safe local references; it cannot prove actual reads, command execution, or objective implementation correctness. The task-execution-record experiment is enabled by the current package and is not workspace-disableable.
 
 ### Global options
 
@@ -69,6 +81,8 @@ npx niuma-harness init ./workspace --agent opencode --dry-run
 npx niuma-harness init ./workspace --agent multi --harness-dir ai-harness
 npx niuma-harness doctor ./workspace
 npx niuma-harness check ./workspace --harness-dir ai-harness
+npx niuma-harness audit ./workspace --task task-214
+npx niuma-harness audit ./workspace --all --strict
 ```
 
 ## Agent modes
@@ -260,6 +274,18 @@ For ambiguous active entry or `opencode.json` markers, the whole original file i
 If a valid generated manifest exists, its agent/rules/skills selections are retained. If the manifest is unusable, interactive repair asks for the agent when needed; non-interactive `-y` requires `--agent`. `--rules`, `--rules-out`, and `--skills` may provide recovery selections in that damaged-state case. With multiple harness roots, select one explicitly using `--harness-dir`; repair does not migrate or merge competing harnesses.
 
 Repair does not provide `--force` or `--include-*` bypasses. It is backup-first and performs best-effort synchronous rollback, but it does not claim cross-process locking or crash-safe transactions.
+
+## Audit
+
+`audit` evaluates structured execution records without modifying the workspace:
+
+```bash
+npx niuma-harness audit .
+npx niuma-harness audit . --task task-214
+npx niuma-harness audit . --all --strict
+```
+
+It reports eight dimensions: Bootstrap, Task rating, Context, Action boundary, Execution, Verification, Recovery, and Outcome. By default it selects the task with the latest valid `task.recordedAt`; ambiguous or invalid timestamps require `--task`. Results are `PASS`, `PARTIAL`, or `FAIL`; default exit codes treat `PARTIAL` as non-failing, while `--strict` exits non-zero for `PARTIAL`. Audit is a consistency checker over self-reports and safe local references, not an agent runtime or proof that recorded actions occurred.
 
 ## Doctor
 

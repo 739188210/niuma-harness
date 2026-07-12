@@ -98,22 +98,31 @@ test('generated docs expose experimental task execution feedback guidance', () =
 
   const feedbackDoc = read(path.join(h, 'docs', 'experiments', 'task-execution-record.md'));
   assert.match(feedbackDoc, /Task Execution Feedback Record/);
-  assert.match(feedbackDoc, /active experimental requirement/);
-  assert.match(feedbackDoc, /harness-feedback\.md/);
-  assert.match(feedbackDoc, /While this file exists/);
-  assert.match(feedbackDoc, /Justified\?/);
-  assert.match(feedbackDoc, /## Decision impact/);
-  assert.match(feedbackDoc, /Changed decision\?/);
-  assert.match(feedbackDoc, /## Candidate project-context updates/);
-  assert.match(feedbackDoc, /Suggested action/);
+  assert.match(feedbackDoc, /enabled by the current Niuma Harness package/);
+  assert.match(feedbackDoc, /not workspace-disableable/);
+  assert.match(feedbackDoc, /deleting this document does not disable the requirement/);
+  assert.match(feedbackDoc, /niuma-audit-record:begin/);
+  assert.match(feedbackDoc, /"scopeChanges": \[\]/);
+  assert.match(feedbackDoc, /"deviations": \[\]/);
+  assert.match(feedbackDoc, /"authorizationReferences": \[\]/);
+  assert.match(feedbackDoc, /"declaredResult": "success"/);
+  assert.match(feedbackDoc, /"evidenceSources"/);
+  assert.match(feedbackDoc, /self-report cannot prove/);
+  assert.doesNotMatch(feedbackDoc, /can be removed or disabled/i);
 
   const entry = read(path.join(workspace, 'CLAUDE.md'));
-  assert.match(entry, /docs\/experiments\/task-execution-record\.md` exists/);
-  assert.match(entry, /non-trivial tasks must record skipped harness steps, deviations, and friction/);
+  assert.match(entry, /Non-trivial tasks must maintain the structured execution record/);
+  assert.match(entry, /niuma-harness audit --task <task>/);
 
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
   assert.match(workReadme, /harness-feedback\.md/);
-  assert.match(workReadme, /required for non-trivial tasks while `harness\/docs\/experiments\/task-execution-record\.md` exists/);
+  assert.match(workReadme, /required for non-trivial tasks in this package release/);
+  assert.match(workReadme, /Package-enabled experimental Harness execution records/);
+  assert.doesNotMatch(workReadme, /while .*task-execution-record\.md.*exists/i);
+  assert.match(workReadme, /niuma-verification-record:begin/);
+  assert.match(workReadme, /"kind": "command"/);
+  assert.match(workReadme, /"exitCode": 0/);
+  assert.match(workReadme, /"remainingUnknowns": \[\]/);
 
   const index = read(path.join(h, 'docs', 'index.md'));
   assert.match(index, /docs\/experiments\//);
@@ -127,16 +136,22 @@ test('generated project context defines first-use bootstrap protocol', () => {
   const h = path.join(workspace, 'harness');
 
   const projectContext = read(path.join(h, 'docs', 'project-context.md'));
-  assert.match(projectContext, /Bootstrap status: pending/);
+  assert.match(projectContext, /niuma-bootstrap-record:begin/);
+  assert.match(projectContext, /"schemaVersion": 1/);
+  assert.match(projectContext, /"status": "pending"/);
+  assert.match(projectContext, /"recordedAt": null/);
+  assert.match(projectContext, /"filesInspected": \[\]/);
+  assert.match(projectContext, /"scanScope": "Not scanned"/);
+  assert.match(projectContext, /"knownGaps"/);
   assert.match(projectContext, /## Bootstrap protocol/);
   assert.match(projectContext, /one-time full initial project scan after `niuma-harness init`/);
   assert.match(projectContext, /not scoped to the current user request/);
   assert.match(projectContext, /A small task, an obvious reference implementation, or a task-local shortcut is not a valid reason to skip bootstrap/);
   assert.match(projectContext, /Minimum bootstrap scan/);
   assert.match(projectContext, /package manifests, lockfiles, workspace or monorepo config/);
-  assert.match(projectContext, /Set Bootstrap status to `complete` only when the basic project map, stack, commands, and known gaps are usefully initialized/);
-  assert.match(projectContext, /Set Bootstrap status to `partial` only when the scan is blocked/);
-  assert.match(projectContext, /remove this `Bootstrap protocol` section/);
+  assert.match(projectContext, /Set `status` to `complete` only when the basic project map, stack, commands, and known gaps are usefully initialized/);
+  assert.match(projectContext, /Set `status` to `partial` only when the scan is blocked/);
+  assert.match(projectContext, /Remove only this explanatory `Bootstrap protocol` section/);
   assert.match(projectContext, /## Maintenance standard/);
   assert.match(projectContext, /Update this file after bootstrap only when a task verifies a durable fact/);
   assert.match(projectContext, /Maintain these categories when evidence exists/);
@@ -148,7 +163,7 @@ test('generated project context defines first-use bootstrap protocol', () => {
   assert.match(entry, /if bootstrap status is `pending`, complete its one-time initial project scan before non-trivial work/);
 
   const memoryMemo = read(path.join(h, 'docs', 'layers', '06-memory.md'));
-  assert.match(memoryMemo, /Bootstrap `docs\/project-context\.md` when its metadata says `Bootstrap status: pending`/);
+  assert.match(memoryMemo, /Bootstrap `docs\/project-context\.md` when its structured bootstrap record has `"status": "pending"`/);
   assert.match(memoryMemo, /perform the one-time initial project scan defined in that file/);
   assert.match(memoryMemo, /record only verified durable facts/);
 });
@@ -206,11 +221,15 @@ test('generated observation memo defines evidence schema', () => {
 
   const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation.md'));
   assert.match(observationMemo, /## Evidence schema/);
-  assert.match(observationMemo, /Check/);
-  assert.match(observationMemo, /Expected signal/);
-  assert.match(observationMemo, /Actual result/);
-  assert.match(observationMemo, /Skipped checks/);
-  assert.match(observationMemo, /Remaining unknowns/);
+  assert.match(observationMemo, /niuma-verification-record:begin/);
+  assert.match(observationMemo, /"kind": "command"/);
+  assert.match(observationMemo, /"check"/);
+  assert.match(observationMemo, /"expectedSignal"/);
+  assert.match(observationMemo, /"actualResult"/);
+  assert.match(observationMemo, /"outcome": "passed"/);
+  assert.match(observationMemo, /"exitCode": 0/);
+  assert.match(observationMemo, /"remainingUnknowns"/);
+  assert.match(observationMemo, /outcome: "skipped"/);
   assert.match(observationMemo, /`status\.md` may summarize verification state, but it does not replace evidence/);
   assert.match(observationMemo, /project-local commands documented in `docs\/project-context\.md`/);
   assert.match(observationMemo, /use `docs\/index\.md` only as navigation/);

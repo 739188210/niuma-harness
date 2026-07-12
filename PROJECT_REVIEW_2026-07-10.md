@@ -5,7 +5,7 @@
 - 评审性质：全项目只读评审
 - 评审范围：产品定位、CLI、初始化流程、doctor/check、rules/skills/commands 分发与收敛、文件系统安全、文档与模板一致性、测试与发布准备度
 - 代码修改：评审当日无；后续已按本文件优先级开始整改
-- 最近更新：2026-07-11
+- 最近更新：2026-07-12
 
 ## 0. 后续整改进度（2026-07-11）
 
@@ -27,6 +27,8 @@
 | P1-6 duplicate contract blocks 未被拒绝 | 已完成 | 与 P0-1 一并修复，init 和 doctor 都拒绝重复 contract |
 | P1-7 修改 `--harness-dir` 形成竞争 harness | 已完成（conflict-stop 边界） | `--harness-dir` 仅用于首次命名或同名 re-init；workspace 存在其他可识别 Niuma harness 时，init 在任何 plan/mutation 前停止，不自动迁移 |
 | P2-1 Rules 的 canonical ownership 语义冲突 | 已完成（READY） | `templates/rules/*` 为 canonical；generated rules 为 tool-managed，受 mixed command/rule ledger、preflight、backup-first repair 与 Doctor 精确校验保护 |
+| P2-2 Bootstrap、task ledger 和 feedback 是 prose-only | 已完成（限定边界） | schema 1 marker records 与只读 `audit` CLI 已覆盖 bootstrap、task rating、context、action boundary、execution、verification、recovery、outcome 的自报告一致性；不证明真实执行或客观实现正确性 |
+| P2-3 实验文档宣称可禁用，但实现上强制存在 | 已完成 | 删除不受支持的 workspace disable/remove 声明；当前 release 明确为 package-enabled，未来退役由 package release 决定 |
 
 ### 0.2 已完成整改
 
@@ -196,16 +198,24 @@ git diff --check
 
 结果：
 
-- `npm test`：336 passed，0 failed。
-- `npm run pack:dry`：通过，package preview 共 117 个文件；包含 `templates/rules/*` 与 `src/rule-artifacts.js`，不包含已废弃的 `templates/core/docs/rules/` 路径。
+- `npm test`：388 passed，0 failed，0 skipped，exit 0。
+- `npm run pack:dry`：通过，package preview 共 121 个文件，package size 148.4 kB、unpacked size 534.3 kB；audit runtime 与 marker schema templates 均包含在预览中。
 - `git diff --check`：通过，无 whitespace error。
 - managed-rules CLI smoke：fresh multi + custom `ai-harness` 初始化与 Doctor 通过；修改 selected generated rule 后 re-init 在 preflight 停止且 workspace 不变；`repair --dry-run` 仅报告 backup/write，`repair --yes` 保留含 drift bytes 的 backup 并恢复 package canonical，Doctor 通过；deselect 后 managed rule/ledger record 收敛，unknown local file 与非空目录保留，Doctor 通过。
 
-尚未执行：commit、push、PR、package 发布、真实 tarball 安装 smoke、Windows CI、真实 ZenTao/MySQL 网络或数据库行为验证。
+Task #215 closure smoke 使用真实 CLI、`--agent multi`、自定义 `ai-harness`，保留工作区：
+
+```text
+/private/var/folders/6s/652fgw31393_ffwgltqn6xz00000gn/T/niuma-task215-pgvab7pi/workspace
+```
+
+证据目录为同级 `evidence/`，共记录 24 次 CLI 调用。结果：fresh init 与 Doctor `Status: OK`；fresh audit 为 `PARTIAL`/exit 0，`--strict` 为 exit 1；按文档 marker schema 完成 bootstrap，并创建 `earlier-pass`（`2026-07-12T10:01:00Z`）与 `latest-pass`（`2026-07-12T10:02:00Z`）两条完整记录，默认选择后者并 `PASS`，`--task earlier-pass` 为 `PASS`，两次 `--all` 输出 byte-identical 且均 `PASS`。缺失及格式错误的 `recordedAt` 即使设置为更新 mtime，默认选择仍拒绝 mtime fallback，返回 `PARTIAL`；strict case 为 exit 1。failed command evidence 与 passed claim、ask-first 缺失授权、ask-first 错误授权、outcome criterion mismatch 四类矛盾均 `FAIL`/exit 1。legacy feedback 为 `PARTIAL` 且 SHA-256 `ccfc2377e16a14ccc96b2a6b9f97c688ddd3d4e549170630154610a46abb6013` 保持不变。verification symlink 和 `../` escape 均 `FAIL`/exit 1，外部 canary 未出现在输出中。对含 10 个 task 目录、29 个 snapshot entries（18 个普通文件、1 个 symlink）的完整 task tree，audit、re-init、Doctor、unrelated managed-doc `repair --dry-run` 与 `repair --yes` 前后 snapshot 完全一致；repair 后 Doctor 再次 `Status: OK`。smoke 未发现需要修改 production 的缺陷。
+
+尚未执行或无法由当前 audit 自报告证明：真实 Hooks/runtime event 证据、实现目标的 objective truth、真实 npm tarball 安装 smoke、Windows CI；另未执行 commit、push、PR、package 发布及真实 ZenTao/MySQL 网络或数据库行为验证。
 
 ### 0.5 下一整改项
 
-P0、P1 与 P2-1 已在当前文档明确的边界内关闭。按文档顺序，下一优先项为 **P2-2：Bootstrap、task ledger 和 feedback 是 prose-only**；随后处理其余 P2 与第 6 节发布质量缺口。
+P0、P1、P2-1、P2-2 与 P2-3 已在当前文档明确的边界内关闭。P2-2 提供的是结构化自报告的一致性审计，不应升级解释为 runtime enforcement 或 objective correctness proof；P2-3 通过删除不受支持的 disable 声明关闭，而不是新增 workspace feature flag。下一优先项为 **P2-4：Capability/skill metadata 模型尚未完成**；同时保留 Hooks/runtime event 证据、objective truth、真实 tarball 安装 smoke 和 Windows CI 为未验证项。
 
 ## 1. 结论摘要
 
@@ -656,6 +666,8 @@ README/Roadmap 将 package templates 和 generated rules 描述为 canonical 分
 实验文档称机制可以被移除或禁用，但它是无条件 tool-managed template：删除后 doctor 失败，re-init 会重新生成。当前不存在 supported disabled state。
 
 建议提供 feature flag/manifest state，或删除可禁用声明。
+
+整改状态（2026-07-12）：P2-3 的文档矛盾已解决。当前 package release 明确将该实验设为 package-enabled，workspace 不支持删除或禁用；模板已删除错误的 remove/disable 声明。未来只能由 package release 基于审计证据退役该实验，本轮未引入 workspace feature flag。P2-2 已由 Task #215 的最终回归与端到端证据在“结构化自报告一致性审计”的限定边界内关闭；audit 仍不验证 Hooks/runtime events、真实命令执行或 objective implementation correctness。
 
 ### P2-4 Capability/skill metadata 模型尚未完成
 

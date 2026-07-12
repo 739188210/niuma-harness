@@ -19,6 +19,7 @@ Use this layer after loading context and policy, before implementation, and when
 5. Define the smallest useful goal and success criteria.
 6. Break work into observable steps.
 7. Escalate to the user if the task scope expands beyond the selected workflow.
+8. For non-trivial tasks, record the classification, tier and rationale, risk factors, selected playbook, canonical success criteria, performed/skipped steps, decision impact, deviations, and any scope-triggered reclassification in `harness-feedback.md`.
 
 ## Task state ownership
 

@@ -17,6 +17,7 @@ Use this layer at the start of every task, after a context reset, when entering 
 3. Inspect current project files when a fact affects the task; do not rely only on stale notes.
 4. Identify the task-relevant modules, commands, and constraints before proposing changes.
 5. If project notes conflict with current files, treat current files as the source of truth and record the conflict in task notes.
+6. For non-trivial tasks, record the task-relevant project files and Harness docs with their purpose, reused implementations, known gaps, and a context-sufficiency claim in `harness-feedback.md`; this is self-reported evidence, not proof of a read event.
 
 ## Allowed actions
 

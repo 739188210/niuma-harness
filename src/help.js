@@ -4,6 +4,7 @@ function getHelpText() {
   niuma-harness doctor [target] [options]
   niuma-harness check [target] [options]
   niuma-harness repair [target] [options]
+  niuma-harness audit [target] [--harness-dir <name>] [--task <name> | --all] [--strict]
 
 Init options:
   --agent <name>         claude | codex | opencode | multi
@@ -27,6 +28,12 @@ Repair options:
   --dry-run              Print all issues and actions without writing
   -y, --yes              Print the plan and skip confirmation
 
+Audit options:
+  --harness-dir <name>   Harness to inspect, default: harness
+  --task <name>          Audit one task directory
+  --all                  Audit every task directory
+  --strict               Exit non-zero when evidence is partial
+
 Global options:
   -h, --help             Show help
 
@@ -43,7 +50,9 @@ Examples:
   niuma-harness doctor .
   niuma-harness check . --harness-dir ai-harness
   niuma-harness repair . --dry-run
-  niuma-harness repair . -y`;
+  niuma-harness repair . -y
+  niuma-harness audit . --task release-42
+  niuma-harness audit . --all --strict`;
 }
 
 module.exports = {

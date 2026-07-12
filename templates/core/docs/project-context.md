@@ -4,10 +4,20 @@ This file stores verified stable facts about this project. It is maintained by a
 
 ## Metadata
 
-- Bootstrap status: pending
-- Last updated: Unknown
-- Scan scope: Not scanned
-- Known gaps: None recorded
+<!-- niuma-bootstrap-record:begin -->
+```json
+{
+  "schemaVersion": 1,
+  "status": "pending",
+  "recordedAt": null,
+  "filesInspected": [],
+  "scanScope": "Not scanned",
+  "knownGaps": ["Initial project bootstrap has not been completed."]
+}
+```
+<!-- niuma-bootstrap-record:end -->
+
+`status` is `pending`, `partial`, or `complete`. Use a canonical UTC timestamp for `recordedAt` after inspection. Paths in `filesInspected` are workspace-relative regular files. A `partial` record names the limited scan and its gaps; a `complete` record also requires substantive Project summary, Technology stack, and Code map sections plus at least one explicit verification command below.
 
 ## Bootstrap protocol
 
@@ -22,9 +32,9 @@ Minimum bootstrap scan:
 3. Identify the project summary, technology stack, code map, engineering conventions, verified build and verification commands, reference implementations, and open questions or known gaps.
 4. Record only facts verified from current files or explicit user confirmation.
 5. Do not record secrets, credentials, private data, one-off logs, temporary task state, or guesses.
-6. Set Bootstrap status to `complete` only when the basic project map, stack, commands, and known gaps are usefully initialized.
-7. Set Bootstrap status to `partial` only when the scan is blocked, intentionally limited by explicit user instruction, or cannot safely determine the project boundary. Record the reason under Known gaps.
-8. After bootstrap, remove this `Bootstrap protocol` section so the file stays focused on durable project context and ongoing maintenance standards.
+6. Set `status` to `complete` only when the basic project map, stack, commands, and known gaps are usefully initialized.
+7. Set `status` to `partial` only when the scan is blocked, intentionally limited by explicit user instruction, or cannot safely determine the project boundary. Record the reason in `knownGaps`.
+8. Keep the marker block when bootstrap is complete; audit reads it. Remove only this explanatory `Bootstrap protocol` section so the file stays focused on durable project context and ongoing maintenance standards.
 
 After bootstrap, keep this file focused on durable facts that future tasks should reuse. Task-local notes, debugging traces, and handoff state belong in `agent-work/tasks/<task-name>/`.
 
