@@ -26,6 +26,10 @@ The entry file (`CLAUDE.md` / `AGENTS.md`) is always in agent context and carrie
 
 If project-specific facts are incomplete, agents should inspect the current workspace and update durable facts only when verified. The harness should be useful immediately after init; it should not depend on a human filling every placeholder before agents can begin.
 
+## Assurance boundary
+
+The generated Markdown is an agent-facing operating contract, not a runtime enforcement layer. `init` copies generated harness artifacts into the workspace; it does not copy the `niuma-harness` CLI implementation. `doctor` and `audit` are available only while the CLI can still be invoked through an installed package or another configured command path. `doctor` checks installed managed state, while `audit` checks the internal consistency of self-reported task evidence. Preventing tool actions at runtime depends on controls provided by the host, such as permissions, hooks, or a sandbox.
+
 ## Directory map
 
 - `docs/index.md`: navigation map and reading order; reached from the entry loop's Context phase.
@@ -52,7 +56,7 @@ These files define how the harness works and are refreshed from templates on re-
 - `docs/policy/untrusted-content.md`: untrusted-content handling protocol.
 - `docs/process/`
 - `docs/rules/` template-known selected files: Niuma-managed canonical artifacts; direct edits are unsupported.
-- native rule adapters (`.claude/rules/niuma-*.md`, `opencode.json` managed instructions, and entry contract pointers) load selected `docs/rules/` content through each agent's supported surface.
+- native rule adapters (`.claude/rules/niuma-*.md`, exact selected rule-file paths in `opencode.json.instructions`, and entry contract pointers) load selected `docs/rules/` content through each agent's supported surface. OpenCode loads these paths as additional instruction files alongside `AGENTS.md`; user paths, globs, URLs, and unrelated config fields remain outside Niuma ownership.
 - `manifest.json`
 
 `manifest.json` is tool-managed state for `doctor/check`; do not edit it by hand. It records command and rule ownership as source, target, and digest, and is the authoritative ownership/history state for this installed harness. Coordinated edits to both an artifact and its recorded digest are treated as an explicit project-state change and are outside Niuma's integrity guarantees.
@@ -83,7 +87,7 @@ agent-work/tasks/<task-name>/
   notes.md
 ```
 
-`harness-feedback.md` stores the structured record used for non-trivial tasks, and `verification.md` stores the evidence referenced by that record. The other files support explicit progress, context, planning, notes, or handoff state when a task needs them.
+`harness-feedback.md` stores the structured record used for non-trivial tasks, and `verification.md` stores the evidence referenced by that record. The other files support explicit status and progress, context, planning, notes, or handoff state when a task needs them.
 
 `niuma-harness audit` performs a read-only consistency check over these self-reported records. It does not prove that recorded actions occurred or that the implementation is objectively correct. See `docs/experiments/task-execution-record.md` for the complete record contract. Durable project facts should move through the Memory layer before being recorded in `docs/project-context.md`.
 

@@ -31,6 +31,7 @@ function checkHarness(harnessRoot, status, result) {
   checkSkills(context);
   checkCommands(context);
   checkArtifactFiles(context);
+  checkOpenCodeInstructionOwnership(context);
   checkEntryFiles(context);
   checkEntryContractIntegrity(context);
   checkCoreDocs(context);
@@ -142,6 +143,34 @@ function checkCommands(context) {
   }
   context.commands = expected;
   addOk(result, `commands ${formatCommands(expected)}`);
+}
+
+function checkOpenCodeInstructionOwnership(context) {
+  const { result, status } = context;
+  if (!Object.prototype.hasOwnProperty.call(status, 'openCodeInstructions')) {
+    addError(result, 'missing openCodeInstructions');
+    return;
+  }
+  if (!Array.isArray(status.openCodeInstructions)
+      || status.openCodeInstructions.some((item) => typeof item !== 'string')) {
+    addError(result, 'openCodeInstructions must be an array of strings');
+    return;
+  }
+  const ruleTargets = new Set((context.artifacts || [])
+    .filter((item) => item.kind === 'rule')
+    .map((item) => item.target));
+  for (const item of status.openCodeInstructions) {
+    if (!ruleTargets.has(item)) {
+      addError(result, `openCodeInstructions contains unowned path ${item}`);
+      return;
+    }
+  }
+  const openCodeActive = context.agent === 'opencode' || context.agent === 'multi';
+  if (!openCodeActive && status.openCodeInstructions.length > 0) {
+    addError(result, 'openCodeInstructions must be empty for the active agent');
+    return;
+  }
+  addOk(result, `openCodeInstructions ${status.openCodeInstructions.length}`);
 }
 
 function checkConcreteArrayField(context, field, available, normalize, format) {

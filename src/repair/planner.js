@@ -12,7 +12,10 @@ const {
 const { getCommandArtifactDescriptors } = require('../commands');
 const { getAvailableRuleDirs } = require('../rules');
 const { getAvailableSkillDirs, getSkillFiles, getSkillTargetRootsForAgent } = require('../skills');
-const { renderOpenCodeRulesInstruction, MANAGED_RULES_BEGIN, MANAGED_RULES_END } = require('../scaffold/rules-adapters-writer');
+const {
+  assertNoLossyJsonNumbers,
+  reconcileOpenCodeInstructions,
+} = require('../opencode-instructions');
 const { createDesiredState } = require('../scaffold/desired-state');
 
 function createRepairPlan(state, backupRoot) {
@@ -260,46 +263,61 @@ function planOpenCode(collector, desired, state) {
   const targetPath = path.join(state.workspaceDir, desired.openCode.target);
   const observed = inspectNode(targetPath);
   if (observed.type === 'missing') {
-    if (desired.openCode.block) {
-      const content = Buffer.from(`${JSON.stringify({ instructions: desired.openCode.block }, null, 2)}\n`);
-      collector.add('adapters', 'missing', targetPath, 'OpenCode config with managed rules block is missing', {
+    if (desired.openCode.paths.length > 0) {
+      const content = Buffer.from(`${JSON.stringify({ instructions: desired.openCode.paths }, null, 2)}\n`);
+      collector.add('adapters', 'missing', targetPath, 'OpenCode config with managed rule paths is missing', {
         action: 'write-file', content, expectedType: 'file', observed, requiresBackup: false,
       });
     }
     return;
   }
   if (observed.type !== 'file') {
-    const value = desired.openCode.block ? { instructions: desired.openCode.block } : {};
+    const value = desired.openCode.paths.length > 0 ? { instructions: desired.openCode.paths } : {};
     collector.add('adapters', 'type-conflict', targetPath, `expected OpenCode config file, found ${observed.type}`, {
       action: 'replace-file', content: Buffer.from(`${JSON.stringify(value, null, 2)}\n`), expectedType: 'file', observed, requiresBackup: true,
     });
     return;
   }
+
   const raw = fs.readFileSync(targetPath, 'utf8');
   let config;
-  try { config = JSON.parse(raw); } catch {
-    config = null;
-  }
-  const validObject = config && !Array.isArray(config) && typeof config === 'object';
-  if (validObject && !desired.openCode.block && !hasOpenCodeInstructionMarkers(config.instructions)) {
+  try {
+    assertNoLossyJsonNumbers(raw);
+    config = JSON.parse(raw);
+  } catch (error) {
+    collector.add('adapters', 'invalid-json', targetPath, error.message || 'OpenCode config is invalid JSON and cannot be safely merged');
     return;
   }
-  const marker = validObject ? analyzeOpenCodeMarkers(config.instructions) : { valid: false };
-  let next;
-  let code;
-  if (!validObject || !marker.valid) {
-    next = desired.openCode.block ? { instructions: desired.openCode.block } : {};
-    code = !validObject ? 'invalid-json' : 'ambiguous-markers';
-  } else {
-    next = { ...config };
-    if (desired.openCode.block) next.instructions = mergeInstruction(config.instructions, desired.openCode.block);
-    else next.instructions = removeManagedInstructions(config.instructions);
-    if (next.instructions === undefined) delete next.instructions;
-    code = 'drift';
+  if (!config || Array.isArray(config) || typeof config !== 'object') {
+    collector.add('adapters', 'type-conflict', targetPath, 'OpenCode config must contain a JSON object');
+    return;
   }
+
+  let next;
+  let nextOwnedPaths;
+  let code = 'drift';
+  let message = 'OpenCode managed rule paths differ';
+  try {
+    const reconciled = reconcileOpenCodeInstructions(
+      config,
+      desired.openCode.paths,
+      state.selections.openCodeInstructions || []
+    );
+    next = reconciled.config;
+    nextOwnedPaths = reconciled.ownedPaths;
+  } catch (error) {
+    if (desired.openCode.paths.length === 0) {
+      return;
+    }
+    next = { ...config, instructions: desired.openCode.paths };
+    nextOwnedPaths = desired.openCode.paths;
+    code = 'invalid-instructions';
+    message = error.message;
+  }
+  desired.status.openCodeInstructions = nextOwnedPaths;
   const content = `${JSON.stringify(next, null, 2)}\n`;
   if (content !== raw) {
-    collector.add('adapters', code, targetPath, code === 'drift' ? 'OpenCode managed rules block differs' : 'OpenCode config cannot be safely merged', {
+    collector.add('adapters', code, targetPath, message, {
       action: 'write-file', content: Buffer.from(content), expectedType: 'file', observed, requiresBackup: true,
     });
   }
@@ -430,51 +448,6 @@ function snapshotDirectory(root) {
   });
 }
 
-function hasOpenCodeInstructionMarkers(instructions) {
-  const values = typeof instructions === 'string' ? [instructions]
-    : (Array.isArray(instructions) ? instructions.filter((item) => typeof item === 'string') : []);
-  return values.some((value) => value.includes(MANAGED_RULES_BEGIN) || value.includes(MANAGED_RULES_END));
-}
-
-function analyzeOpenCodeMarkers(instructions) {
-  const supported = instructions === undefined
-    || typeof instructions === 'string'
-    || (Array.isArray(instructions) && instructions.every((item) => typeof item === 'string'));
-  if (!supported) return { valid: false };
-  const values = typeof instructions === 'string' ? [instructions] : (instructions || []);
-  let blocks = 0;
-  for (const value of values) {
-    const begins = value.split(MANAGED_RULES_BEGIN).length - 1;
-    const ends = value.split(MANAGED_RULES_END).length - 1;
-    if (begins !== ends || begins > 1 || (begins === 1 && value.indexOf(MANAGED_RULES_BEGIN) > value.indexOf(MANAGED_RULES_END))) return { valid: false };
-    blocks += begins;
-  }
-  return { valid: blocks <= 1 };
-}
-
-function mergeInstruction(instructions, block) {
-  if (instructions === undefined) return block;
-  if (typeof instructions === 'string') {
-    if (!instructions.includes(MANAGED_RULES_BEGIN)) return instructions ? `${instructions}\n\n${block}` : block;
-    return instructions.replace(new RegExp(`${escape(MANAGED_RULES_BEGIN)}[\\s\\S]*?${escape(MANAGED_RULES_END)}`), block);
-  }
-  const result = instructions.filter((item) => !item.includes(MANAGED_RULES_BEGIN));
-  result.push(block);
-  return result;
-}
-
-function removeManagedInstructions(instructions) {
-  if (typeof instructions === 'string') {
-    const value = instructions.replace(new RegExp(`\\n?${escape(MANAGED_RULES_BEGIN)}[\\s\\S]*?${escape(MANAGED_RULES_END)}\\n?`), '\n').trim();
-    return value || undefined;
-  }
-  if (Array.isArray(instructions)) {
-    const values = instructions.filter((item) => !item.includes(MANAGED_RULES_BEGIN));
-    return values.length ? values : undefined;
-  }
-  return instructions;
-}
-
 function normalizeOperations(operations) {
   return [...operations].sort((a, b) => a.relativePath.localeCompare(b.relativePath));
 }
@@ -491,6 +464,5 @@ function neutralizeContractMarkers(content) {
 
 function normalizeEol(value) { return value.replace(/\r\n/g, '\n'); }
 function relative(root, target) { return path.relative(root, target).split(path.sep).join('/') || '.'; }
-function escape(value) { return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
 module.exports = { createRepairPlan, inspectNode };

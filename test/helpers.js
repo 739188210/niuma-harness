@@ -137,6 +137,10 @@ function assertManifest(filePath, expected) {
   assert.strictEqual(manifest.harnessDir, expected.harnessDir || 'harness');
   assert.strictEqual(manifest.workDir, expected.workDir || 'agent-work');
   assert.deepStrictEqual(manifest.entryFiles, expected.entryFiles);
+  const expectedOpenCode = (expected.agent === 'opencode' || expected.agent === 'multi')
+    ? getExpectedRuleArtifactTargets(manifest.rules, manifest.harnessDir)
+    : [];
+  assert.deepStrictEqual(manifest.openCodeInstructions, expectedOpenCode);
   assertArtifactRecords(filePath, manifest, expected.agent, manifest.commands, expected.artifactTargets);
   assert.strictEqual(manifest.createdBy, 'niuma-harness');
   assert.ok(!Number.isNaN(Date.parse(manifest.createdAt)), 'createdAt should be an ISO date');
@@ -225,24 +229,31 @@ function assertClaudeRulePointers(workspaceRoot, harnessDir, expected) {
 
 function assertOpenCodeRulesInstruction(workspaceRoot, harnessDir, expected) {
   const config = readJson(path.join(workspaceRoot, 'opencode.json'));
-  const instructions = Array.isArray(config.instructions) ? config.instructions.join('\n') : config.instructions;
-  assert.strictEqual(typeof instructions, 'string');
-  assert.match(instructions, /niuma-harness:rules begin/);
-  assert.match(instructions, new RegExp(`${escapeRegExp(harnessDir)}/docs/rules/`));
-  for (const ruleDir of expected) {
-    assert.match(instructions, new RegExp(`\\b${escapeRegExp(ruleDir)}\\b`));
+  assert.ok(Array.isArray(config.instructions), 'OpenCode instructions must be an array');
+  assert.ok(config.instructions.every((instruction) => typeof instruction === 'string'));
+  const managed = getExpectedRuleArtifactTargets(expected, harnessDir);
+  for (const target of managed) {
+    assert.strictEqual(
+      config.instructions.filter((instruction) => instruction === target).length,
+      1,
+      `OpenCode instructions must contain ${target} exactly once`
+    );
   }
+  assert.doesNotMatch(config.instructions.join('\n'), /niuma-harness:rules begin/);
 }
 
-function assertNoOpenCodeManagedRulesInstruction(workspaceRoot) {
+function assertNoOpenCodeManagedRulesInstruction(workspaceRoot, harnessDir = 'harness') {
   const configPath = path.join(workspaceRoot, 'opencode.json');
   if (!fs.existsSync(configPath)) {
     return;
   }
 
   const config = readJson(configPath);
-  const instructions = Array.isArray(config.instructions) ? config.instructions.join('\n') : config.instructions || '';
-  assert.doesNotMatch(instructions, /niuma-harness:rules begin/);
+  if (!Array.isArray(config.instructions)) {
+    return;
+  }
+  const known = new Set(getExpectedRuleArtifactTargets(allRuleDirs, harnessDir));
+  assert.ok(config.instructions.every((instruction) => !known.has(instruction)));
 }
 
 function assertNoCodexRulesDir(workspaceRoot) {

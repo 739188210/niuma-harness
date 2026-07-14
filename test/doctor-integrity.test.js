@@ -110,15 +110,17 @@ test('doctor detects exact drift in selected skill package files', () => {
   expectDoctorError(workspace, new RegExp(`managed content drifted \\.claude/skills/${skill}/SKILL\\.md`));
 });
 
-test('doctor detects exact drift in Claude pointers and OpenCode managed block', () => {
+test('doctor detects exact drift in Claude pointers and OpenCode managed paths', () => {
   const claudeWorkspace = initWorkspace();
   append(path.join(claudeWorkspace, '.claude', 'rules', 'niuma-common.md'));
   expectDoctorError(claudeWorkspace, /managed content drifted \.claude\/rules\/niuma-common\.md/);
 
   const openCodeWorkspace = initWorkspace('opencode');
   const configPath = path.join(openCodeWorkspace, 'opencode.json');
-  fs.writeFileSync(configPath, read(configPath).replace('Do not duplicate rule text', 'Do not copy rule text'), 'utf8');
-  expectDoctorError(openCodeWorkspace, /managed content drifted opencode\.json rules instructions/);
+  const config = JSON.parse(read(configPath));
+  config.instructions = config.instructions.filter((item) => !item.endsWith('/common/testing.md'));
+  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+  expectDoctorError(openCodeWorkspace, /must contain harness\/docs\/rules\/common\/testing\.md exactly once/);
 });
 
 test('doctor compares current command artifacts against package rendering even with a forged ledger', () => {
@@ -145,21 +147,13 @@ test('doctor excludes user-maintained docs entry free content local config and u
   assert.strictEqual(result.status, 0, result.stdout);
 });
 
-test('doctor rejects extra or incomplete OpenCode managed markers', () => {
+test('doctor rejects duplicate and stale OpenCode managed paths', () => {
   const workspace = initWorkspace('opencode');
   const configPath = path.join(workspace, 'opencode.json');
   const config = JSON.parse(read(configPath));
-  config.instructions = `<!-- niuma-harness:rules begin -->\n${config.instructions}`;
+  config.instructions.push(config.instructions[0]);
   fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
-  expectDoctorError(workspace, /managed content drifted opencode\.json rules instructions/);
-
-  const noneWorkspace = initWorkspace('opencode', ['--rules', 'none']);
-  fs.writeFileSync(
-    path.join(noneWorkspace, 'opencode.json'),
-    '{"instructions":"<!-- niuma-harness:rules begin -->"}\n',
-    'utf8'
-  );
-  expectDoctorError(noneWorkspace, /managed content drifted opencode\.json rules instructions/);
+  expectDoctorError(workspace, /exactly once/);
 });
 
 test('doctor rejects managed content reached through a parent symlink', () => {
@@ -342,12 +336,12 @@ test('doctor rejects inactive command artifact records', () => {
   expectDoctorError(workspace, /inactive command artifact record \.opencode\/commands\/dev-check\.md/);
 });
 
-test('doctor ignores OpenCode fields and instructions outside the managed block', () => {
+test('doctor ignores OpenCode fields and user instruction paths', () => {
   const workspace = initWorkspace('opencode');
   const configPath = path.join(workspace, 'opencode.json');
   const config = JSON.parse(read(configPath));
   config.theme = 'user-theme';
-  config.instructions = ['user instruction', config.instructions, 'another user instruction'];
+  config.instructions = ['docs/team-rules.md', ...config.instructions, 'https://example.com/rules.md'];
   fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
   const result = doctor(workspace);
   assert.strictEqual(result.status, 0, result.stdout);

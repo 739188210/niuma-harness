@@ -1,5 +1,6 @@
 const test = require('node:test');
 const { digestBytes } = require('../src/artifact-ledger');
+const { canonicalizeWorkspacePath } = require('../src/fs-safe');
 const {
   allCommandFiles,
   assert,
@@ -60,7 +61,7 @@ test('repair -y backs up all affected targets and finishes doctor-green', () => 
   assert.strictEqual(result.status, 0, result.stdout);
 });
 
-test('repair leaves user-only OpenCode config byte-identical when no managed block is desired', () => {
+test('repair leaves user-only OpenCode config byte-identical when no managed rule paths are desired', () => {
   const workspace = initWorkspace('claude');
   const configPath = path.join(workspace, 'opencode.json');
   const raw = '{\n  "instructions" : { "custom": true },\n  "theme": "user"\n}\n';
@@ -106,7 +107,7 @@ for (const [label, instructions] of [
 
     let result = run(['repair', workspace, '--dry-run']);
     assert.strictEqual(result.status, 0, result.stderr);
-    assert.match(result.stdout, /AMBIGUOUS-MARKERS \[adapters\]/);
+    assert.match(result.stdout, /INVALID-INSTRUCTIONS \[adapters\]/);
     assert.match(result.stdout, /BACKUP\s+opencode\.json/);
     assert.deepStrictEqual(snapshotTree(workspace), before);
 
@@ -116,12 +117,39 @@ for (const [label, instructions] of [
     const backup = result.stdout.match(/Backup retained: (.+)/)[1].trim();
     assert.strictEqual(read(path.join(backup, 'files', 'opencode.json')), raw);
     const repaired = readJson(configPath);
-    assert.deepStrictEqual(Object.keys(repaired), ['instructions']);
-    assert.strictEqual(typeof repaired.instructions, 'string');
-    assert.match(repaired.instructions, /niuma-harness:rules begin/);
+    assert.strictEqual(repaired.theme, 'user');
+    assert.ok(Array.isArray(repaired.instructions));
+    assert.ok(repaired.instructions.every((item) => typeof item === 'string'));
+    assert.ok(repaired.instructions.includes('harness/docs/rules/common/testing.md'));
+    assert.ok(repaired.instructions.includes('harness/docs/rules/opencode/automation.md'));
     assert.strictEqual(run(['doctor', workspace]).status, 0);
   });
 }
+
+test('repair preserves user ownership for a canonical-looking OpenCode path', () => {
+  const workspace = tempDir();
+  const configPath = path.join(workspace, 'opencode.json');
+  const userPath = 'harness/docs/rules/common/testing.md';
+  fs.writeFileSync(configPath, `${JSON.stringify({ instructions: [userPath, 'docs/team.md'] }, null, 2)}\n`);
+
+  let result = run(['init', workspace, '--agent', 'opencode']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
+  const manifest = readJson(manifestPath);
+  delete manifest.createdBy;
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+  result = run([
+    'repair', workspace, '-y', '--agent', 'opencode',
+    '--rules', 'common', '--skills', 'none',
+  ]);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.ok(!readJson(manifestPath).openCodeInstructions.includes(userPath));
+
+  result = run(['init', workspace, '--agent', 'opencode', '--rules', 'none', '--skills', 'none']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.ok(readJson(configPath).instructions.includes(userPath));
+});
 
 test('repair preserves local config and unknown skill files', () => {
   const workspace = initWorkspace('claude');
@@ -226,8 +254,32 @@ test('repair stores permanent backup under a custom parent', () => {
   assert.strictEqual(result.status, 0, result.stderr);
   const match = result.stdout.match(/Backup retained: (.+)/);
   assert.ok(match);
-  assert.ok(match[1].trim().startsWith(path.join(fs.realpathSync(workspace), 'my-repairs')));
-  assert.ok(fs.existsSync(match[1].trim()));
+  const backup = match[1].trim();
+  const canonicalBackup = canonicalizeWorkspacePath(backup);
+  const canonicalParent = canonicalizeWorkspacePath(path.join(workspace, 'my-repairs'));
+  assert.strictEqual(path.dirname(canonicalBackup), canonicalParent);
+  assert.ok(fs.existsSync(backup));
+});
+
+test('repair rejects an explicit harness directory with different case without mutation', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'claude', '--harness-dir', 'Harness']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  fs.appendFileSync(path.join(workspace, '.claude', 'commands', allCommandFiles[0]), 'drift');
+  const before = snapshotTree(workspace);
+
+  result = run(['repair', workspace, '-y', '--harness-dir', 'harness']);
+  assert.notStrictEqual(result.status, 0);
+  if (process.platform === 'win32') {
+    assert.match(result.stderr, /Requested --harness-dir "harness"/);
+    assert.match(result.stderr, /existing harness directory "Harness"/);
+    assert.match(result.stderr, /name exactly/);
+  } else {
+    assert.match(result.stderr, /No Niuma harness found/);
+  }
+  assert.doesNotMatch(result.stdout, /Found \d+ issues|BACKUP|WRITE|Repair completed/);
+  assert.deepStrictEqual(snapshotTree(workspace), before);
+  assertNoPath(path.join(workspace, '.niuma-harness'));
 });
 
 test('repair rejects a backup directory through a symlink parent', (t) => {

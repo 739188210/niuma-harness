@@ -2,11 +2,12 @@
 const fs = require('fs');
 const path = require('path');
 
-const { getRuleAdapterTargetsForAgent } = require('../rules');
+const { renderRuleArtifacts } = require('../rule-artifacts');
+const { getAvailableRuleDirs, getRuleAdapterTargetsForAgent } = require('../rules');
 const { safeResolveInside } = require('../fs-safe');
 const { CONTRACT_BEGIN, sliceContractBlock } = require('../contract');
+const { createTemplateVariables } = require('../template-variables');
 const { addError, addOk } = require('./result');
-const { MANAGED_RULES_BEGIN, MANAGED_RULES_END } = require('../scaffold/rules-adapters-writer');
 
 function checkRuleAdapterFiles(context) {
   const { agent, rules } = context;
@@ -65,8 +66,9 @@ function checkClaudeRulePointers(context, target) {
 }
 
 function checkOpenCodeRulesInstruction(context, target) {
-  const { result, rules, workspaceRoot } = context;
-  if (rules.length === 0) {
+  const { result, workspaceRoot } = context;
+  const expected = getOpenCodeRulePaths(context, context.rules);
+  if (expected.length === 0) {
     checkNoStaleOpenCodeRulesInstruction(context);
     return;
   }
@@ -82,25 +84,15 @@ function checkOpenCodeRulesInstruction(context, target) {
     return;
   }
 
-  const instructions = readInstructionText(config.instructions, result);
-  if (instructions === null) {
+  const instructions = readInstructionPaths(config.instructions, result);
+  if (!instructions) {
     return;
   }
 
-  if (!hasManagedRulesBlock(instructions)) {
-    addError(result, 'missing opencode.json niuma rules instructions');
-    return;
-  }
-
-  const expectedRoot = `${path.basename(context.harnessRoot)}/docs/rules/`;
-  if (!instructions.includes(expectedRoot)) {
-    addError(result, `opencode.json rules instructions must point to ${expectedRoot}`);
-    return;
-  }
-
-  for (const ruleName of rules) {
-    if (!instructions.includes(ruleName)) {
-      addError(result, `opencode.json rules instructions missing rule ${ruleName}`);
+  for (const expectedPath of expected) {
+    const count = instructions.filter((item) => item === expectedPath).length;
+    if (count !== 1) {
+      addError(result, `opencode.json rules instructions must contain ${expectedPath} exactly once`);
       return;
     }
   }
@@ -115,20 +107,41 @@ function checkNoStaleOpenCodeRulesInstruction(context) {
     return;
   }
 
-  const content = fs.readFileSync(configPath, 'utf8');
-  if (!hasManagedRulesBlock(content)) {
-    return;
-  }
-
-  const config = readOpenCodeConfig(configPath, result);
+  const config = readOpenCodeConfig(configPath, result, { ignoreInvalid: true });
   if (!config) {
     return;
   }
-
-  const instructions = readInstructionText(config.instructions, result, { allowMissing: true });
-  if (instructions !== null && hasManagedRulesBlock(instructions)) {
-    addError(result, 'stale opencode.json niuma rules instructions');
+  if (!Array.isArray(config.instructions)) {
+    return;
   }
+  const manifest = context.status;
+  const owned = manifest && Array.isArray(manifest.openCodeInstructions)
+    ? manifest.openCodeInstructions
+    : [];
+  const stale = config.instructions.find((item) => owned.includes(item));
+  if (stale) {
+    addError(result, `stale opencode.json niuma rules instruction ${stale}`);
+  }
+}
+
+function getOpenCodeRulePaths(context, rules) {
+  const variables = createTemplateVariables(
+    { agent: context.agent, harnessDir: path.basename(context.harnessRoot) },
+    context.templateManifest.workDirectory || 'agent-work'
+  );
+  return renderRuleArtifacts(
+    rules,
+    path.basename(context.harnessRoot),
+    context.templateManifest.rulesRoot,
+    variables
+  ).map((artifact) => artifact.target);
+}
+
+function getKnownOpenCodeRulePaths(context) {
+  return getOpenCodeRulePaths(
+    context,
+    getAvailableRuleDirs(context.templateManifest.rulesRoot)
+  );
 }
 
 function checkCodexEntryRulesPointer(context, target) {
@@ -156,45 +169,37 @@ function checkCodexEntryRulesPointer(context, target) {
   addOk(result, `${target.file} rules pointer`);
 }
 
-function readOpenCodeConfig(configPath, result) {
+function readOpenCodeConfig(configPath, result, options = {}) {
   let config;
   try {
     config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
   } catch (error) {
-    addError(result, `invalid opencode.json: ${error.message}`);
+    if (!options.ignoreInvalid) {
+      addError(result, `invalid opencode.json: ${error.message}`);
+    }
     return null;
   }
 
   if (!config || Array.isArray(config) || typeof config !== 'object') {
-    addError(result, 'opencode.json must contain a JSON object');
+    if (!options.ignoreInvalid) {
+      addError(result, 'opencode.json must contain a JSON object');
+    }
     return null;
   }
 
   return config;
 }
 
-function readInstructionText(instructions, result, options = {}) {
+function readInstructionPaths(instructions, result) {
   if (instructions === undefined) {
-    if (!options.allowMissing) {
-      addError(result, 'opencode.json missing instructions');
-    }
+    addError(result, 'opencode.json missing instructions');
     return null;
   }
-
-  if (typeof instructions === 'string') {
-    return instructions;
+  if (!Array.isArray(instructions) || instructions.some((instruction) => typeof instruction !== 'string')) {
+    addError(result, 'opencode.json instructions must be an array of strings');
+    return null;
   }
-
-  if (Array.isArray(instructions) && instructions.every((instruction) => typeof instruction === 'string')) {
-    return instructions.join('\n');
-  }
-
-  addError(result, 'opencode.json instructions must be a string or an array of strings');
-  return null;
-}
-
-function hasManagedRulesBlock(instructions) {
-  return instructions.includes(MANAGED_RULES_BEGIN) && instructions.includes(MANAGED_RULES_END);
+  return instructions;
 }
 
 module.exports = {

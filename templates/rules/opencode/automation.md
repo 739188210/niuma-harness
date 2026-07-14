@@ -6,7 +6,9 @@ These rules define OpenCode-specific automation guidance. They supplement the se
 
 ## Configuration
 
-OpenCode configuration may include provider, agent, shell, MCP, LSP, and permission settings. Keep project-specific automation explicit, reviewable, and reversible.
+OpenCode configuration may include provider, agent, shell, MCP, LSP, permission, and additional instruction-file settings. Keep project-specific automation explicit, reviewable, and reversible.
+
+The `opencode.json.instructions` field is an array of file paths, glob patterns, or URLs, not inline instruction text. Niuma adds exact paths for selected canonical files under `{{HARNESS_DIR}}/docs/rules/`; OpenCode loads them alongside the project `AGENTS.md`. Preserve user instruction sources and unrelated configuration fields.
 
 Do not store credentials or private endpoints in generated harness docs or task notes. Use the runtime's supported secret management pattern.
 

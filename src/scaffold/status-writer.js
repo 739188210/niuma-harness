@@ -7,7 +7,12 @@ function prepareStatusPlan(context) {
   const exists = inspectFileTarget(statusPath);
   return {
     action: exists ? 'overwrite' : 'create',
-    content: `${JSON.stringify(createStatus({ ...context.options, artifacts: context.artifacts, commands: context.commands }, { workDirectory: context.workDirectory }), null, 2)}\n`,
+    content: `${JSON.stringify(createStatus({
+      ...context.options,
+      artifacts: context.artifacts,
+      commands: context.commands,
+      openCodeInstructions: context.ruleAdapterPlan.expectedOpenCodePaths,
+    }, { workDirectory: context.workDirectory }), null, 2)}\n`,
     targetPath: statusPath,
   };
 }

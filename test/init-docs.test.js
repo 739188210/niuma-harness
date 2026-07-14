@@ -53,8 +53,17 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
 
   const guide = read(path.join(h, 'HARNESS_GUIDE.md'));
   assert.match(guide, /### Tool-managed scaffold files/);
+  assert.match(guide, /## Assurance boundary/);
+  assert.match(guide, /does not copy the `niuma-harness` CLI implementation/);
+  assert.match(guide, /agent-facing operating contract, not a runtime enforcement layer/);
+  assert.match(guide, /Preventing tool actions at runtime depends on controls provided by the host/);
   assert.match(guide, /`docs\/policy\/action-boundary\.md`: core action permission boundary/);
   assert.doesNotMatch(guide, /team-maintained action permission boundaries/);
+
+  const entry = read(path.join(workspace, 'CLAUDE.md'));
+  assert.match(entry, /## Red lines \(apply to every task\)/);
+  assert.doesNotMatch(entry, /always enforced/);
+  assert.doesNotMatch(entry, /## Assurance boundary/);
 
   const actionBoundary = read(path.join(h, 'docs', 'policy', 'action-boundary.md'));
   assert.match(actionBoundary, /## Autonomous actions/);

@@ -29,54 +29,30 @@ test('invalid opencode config on fresh init leaves workspace unchanged', () => {
   assert.match(result.stderr, /not valid JSON/);
 });
 
-for (const scenario of [
-  {
-    name: 'missing managed end marker',
-    mutate: (instructions) => instructions.replace('<!-- niuma-harness:rules end -->', ''),
-  },
-  {
-    name: 'duplicate managed block',
-    mutate: (instructions) => `${instructions}\n${instructions}`,
-  },
-  {
-    name: 'managed markers split across instructions',
-    mutate: () => [
-      '<!-- niuma-harness:rules begin -->',
-      '<!-- niuma-harness:rules end -->',
-    ],
-  },
-]) {
-  test(`opencode re-init rejects ${scenario.name} without mutation`, () => {
-    const workspace = tempDir();
-    let result = run(['init', workspace, '--agent', 'opencode']);
-    assert.strictEqual(result.status, 0, result.stderr);
-    const configPath = path.join(workspace, 'opencode.json');
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    config.instructions = scenario.mutate(config.instructions);
-    fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
-    const before = snapshotTree(workspace);
-
-    result = run(['init', workspace, '--agent', 'opencode']);
-    assert.notStrictEqual(result.status, 0);
-    assert.match(result.stderr, /invalid niuma rules markers/);
-    assertTreeUnchanged(workspace, before);
+test('scalar opencode instructions on fresh init leave workspace unchanged', () => {
+  const result = assertFreshFailureLeavesNoChanges('opencode', (workspace) => {
+    fs.writeFileSync(path.join(workspace, 'opencode.json'), '{"instructions":"docs/rules.md"}\n', 'utf8');
   });
-}
+  assert.match(result.stderr, /instructions must be an array of strings/);
+});
 
-test('agent switch rejects incomplete opencode managed markers without mutation', () => {
+test('mixed opencode instructions on fresh init leave workspace unchanged', () => {
+  const result = assertFreshFailureLeavesNoChanges('opencode', (workspace) => {
+    fs.writeFileSync(path.join(workspace, 'opencode.json'), '{"instructions":["docs/rules.md",7]}\n', 'utf8');
+  });
+  assert.match(result.stderr, /instructions must be an array of strings/);
+});
+
+test('agent switch preserves scalar OpenCode instructions after managed paths are absent', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'opencode']);
   assert.strictEqual(result.status, 0, result.stderr);
   const configPath = path.join(workspace, 'opencode.json');
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  config.instructions = config.instructions.replace('<!-- niuma-harness:rules end -->', '');
-  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
-  const before = snapshotTree(workspace);
+  fs.writeFileSync(configPath, '{"instructions":"docs/rules.md"}\n', 'utf8');
 
   result = run(['init', workspace, '--agent', 'claude']);
-  assert.notStrictEqual(result.status, 0);
-  assert.match(result.stderr, /invalid niuma rules markers/);
-  assertTreeUnchanged(workspace, before);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.strictEqual(fs.readFileSync(configPath, 'utf8'), '{"instructions":"docs/rules.md"}\n');
 });
 
 test('invalid entry leaves workspace unchanged', () => {

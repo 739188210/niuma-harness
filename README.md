@@ -19,6 +19,12 @@ Interactive mode is available when `--agent` is omitted in a TTY:
 npx niuma-harness init
 ```
 
+## Assurance boundary
+
+`init` copies generated harness artifacts into the target workspace; it does not copy the `niuma-harness` CLI implementation there. Later `doctor`, `repair`, or `audit` commands therefore require the CLI to remain available through an installed package or another configured command path.
+
+The generated Markdown is an agent-facing behavioral contract. `doctor` checks installed managed state, and `audit` checks the internal consistency of self-reported task evidence; neither enforces or proves runtime tool behavior. Preventing tool actions depends on controls supplied by the agent host, such as permissions, hooks, or a sandbox.
+
 ## CLI
 
 ```bash
@@ -91,7 +97,7 @@ npx niuma-harness audit ./workspace --all --strict
 |---|---|---|---|
 | `claude` | `CLAUDE.md` | `common`, `claude` | `.claude/rules/niuma-<rule>.md` pointers |
 | `codex` | `AGENTS.md` | `common`, `codex` | `AGENTS.md` pointer; no `.codex/rules` |
-| `opencode` | `AGENTS.md` | `common`, `opencode` | `opencode.json` instructions |
+| `opencode` | `AGENTS.md` | `common`, `opencode` | exact selected rule-file paths in `opencode.json.instructions` |
 | `multi` | `CLAUDE.md` and `AGENTS.md` | `common`, `claude`, `codex`, `opencode` | all applicable adapters |
 
 ## Generated structure
@@ -220,7 +226,7 @@ Schema version 1 is intentionally unsupported because this version has not been 
 | **Tool-managed** (layers, process playbooks, policy, index, HARNESS_GUIDE, `agent-work/README.md`) | Refreshed from the template. |
 | **User-maintained** (`project-context.md`, `automation/automation-intent.md`) | Preserved if they exist; created from the template only when absent. |
 | `docs/rules/` | Template-known selected rule files are Niuma-managed. On re-init, clean ledger-owned files refresh from the package; exact-current legacy files are safely adopted. Drifted or unowned occupied template-known targets stop before mutation and direct you to `repair --dry-run`. Deselect removes only unchanged ledger-owned files; unknown local files survive and nonempty directories remain. |
-| Native rules adapters (`.claude/rules/niuma-*.md`, `opencode.json` managed instructions, entry contract pointer) | Refreshed from the current rule selection. User-created `.claude/rules` files and unrelated `opencode.json` fields are preserved. Codex uses the `AGENTS.md` pointer; `.codex/rules` is not generated for coding standards. |
+| Native rules adapters (`.claude/rules/niuma-*.md`, exact selected rule-file paths in `opencode.json.instructions`, entry contract pointer) | Refreshed from the current rule selection. User-created `.claude/rules` files, user instruction paths/globs/URLs, and unrelated `opencode.json` fields are preserved. Codex uses the `AGENTS.md` pointer; `.codex/rules` is not generated for coding standards. |
 | Native command artifacts (`.claude/commands/`, `.agents/skills/<command-id>/`, `.opencode/commands/`) | Refreshed only when the schema-2 ledger proves ownership and the current exact-byte digest has not drifted. Occupied unowned or locally modified targets stop `init` before scaffold writes. Unknown user-created files are left untouched. |
 | `manifest.json` | Regenerated every time. |
 
@@ -269,7 +275,7 @@ Before the first source mutation, every affected existing target is copied and v
 
 Regular files are byte-verified, directories preserve their complete contents, and symlink nodes are backed up without following or modifying their targets. Repair then regenerates canonical managed content, rebuilds the schema-2 command-and-rule ledger and manifest, and runs Doctor. Doctor exact-validates package descriptors, ledger records, and disk bytes for selected managed rules. Exit code `0` means Doctor passed; backups are retained permanently for manual recovery.
 
-For ambiguous active entry or `opencode.json` markers, the whole original file is backed up and a clean canonical file is generated. For an ambiguous inactive entry, repair backs up the whole file and neutralizes only the Niuma marker text so recoverable free content remains. Repair does not guess how to reconstruct ambiguous managed/free boundaries; the complete original remains in the backup.
+For ambiguous active entry markers, the whole original file is backed up and a clean canonical file is generated. Invalid active `opencode.json.instructions` values are backed up before Repair replaces only that field with the selected canonical rule-file path array while preserving other parseable configuration fields. For an ambiguous inactive entry, repair backs up the whole file and neutralizes only the Niuma marker text so recoverable free content remains. Repair does not guess how to reconstruct ambiguous managed/free entry boundaries; the complete original remains in the backup.
 
 If a valid generated manifest exists, its agent/rules/skills selections are retained. If the manifest is unusable, interactive repair asks for the agent when needed; non-interactive `-y` requires `--agent`. `--rules`, `--rules-out`, and `--skills` may provide recovery selections in that damaged-state case. With multiple harness roots, select one explicitly using `--harness-dir`; repair does not migrate or merge competing harnesses.
 
@@ -313,7 +319,7 @@ templates/rules/*  ->  harness/docs/rules/*  ->  agent-native pointers
 
 - `claude` writes `.claude/rules/niuma-<rule>.md` pointer files.
 - `codex` uses the `AGENTS.md` contract pointer and does not generate `.codex/rules` for coding standards.
-- `opencode` writes a managed `opencode.json` instructions entry.
+- `opencode` writes exact selected canonical rule-file paths into the `opencode.json.instructions` string array. OpenCode treats these entries as additional instruction files and loads them alongside `AGENTS.md`; user paths, globs, URLs, and unrelated config fields remain outside Niuma ownership.
 
 Rule directories have two roles:
 
@@ -379,7 +385,7 @@ Re-running `init` converges known skills in the current agent's target roots: fi
 
 ## Doctor integrity boundary
 
-`doctor` does not treat generated `harness/manifest.json` as an unrestricted source of truth. It binds `createdBy`, the actual harness directory, package-defined `workDir`, agent-derived entry files, and package-and-agent-derived command selection. It then exact-compares tool-managed core/work templates, selected skill package files, Claude rule pointers, the Niuma-managed OpenCode instruction block, and current package-rendered command artifacts.
+`doctor` does not treat generated `harness/manifest.json` as an unrestricted source of truth. It binds `createdBy`, the actual harness directory, package-defined `workDir`, agent-derived entry files, and package-and-agent-derived command selection. It then exact-compares tool-managed core/work templates, selected skill package files, Claude rule pointers, expected Niuma-managed OpenCode rule-file path entries, and current package-rendered command artifacts.
 
 The integrity boundary intentionally excludes user-maintained `project-context.md` and `automation-intent.md`, entry content outside the managed contract, local runtime files such as `zentao.config.json`, unknown files, and OpenCode fields or instructions outside the Niuma-managed block. Selected generated rule artifacts are included: Doctor exact-validates their package descriptor, ledger record, and disk bytes. `rules` and `skills` remain manifest selections, so explicit `--rules none` and `--rules-out` exclusions retain their existing semantics.
 

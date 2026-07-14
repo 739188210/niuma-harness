@@ -4,15 +4,17 @@ const path = require('path');
 
 const { getAvailableRuleDirs, getRuleAdapterTargetsForAgent } = require('../rules');
 const {
+  assertNoLossyJsonNumbers,
+  reconcileOpenCodeInstructions,
+  sameJsonValue,
+} = require('../opencode-instructions');
+const {
   inspectFileTarget,
   removeEmptyDirsUntil,
   removeFile,
   safeResolveInside,
   writeFile,
 } = require('../fs-safe');
-
-const MANAGED_RULES_BEGIN = '<!-- niuma-harness:rules begin -->';
-const MANAGED_RULES_END = '<!-- niuma-harness:rules end -->';
 
 function prepareRuleAdapterPlan(context) {
   const targets = getRuleAdapterTargetsForAgent(context.options.agent);
@@ -41,40 +43,43 @@ function prepareRuleAdapterPlan(context) {
 
   const openCodeTarget = targets.find((target) => target.kind === 'opencode-instructions');
   const configPath = getOpenCodeConfigPath(context, openCodeTarget || { file: 'opencode.json' });
+  const expectedPaths = openCodeTarget
+    ? context.rulePlan.filter((item) => item.operation === 'write').map((item) => item.target)
+    : [];
+  const ownedPaths = context.previousStatus ? context.previousStatus.openCodeInstructions : [];
+  let nextOwnedPaths = [];
   let openCodeContent = null;
   if (inspectFileTarget(configPath)) {
     const existing = fs.readFileSync(configPath, 'utf8');
-    const needsManagedWrite = openCodeTarget && context.options.rules.length > 0;
-    if (needsManagedWrite || existing.includes(MANAGED_RULES_BEGIN) || existing.includes(MANAGED_RULES_END)) {
+    const hasOwnedPath = ownedPaths.some((item) => existing.includes(item));
+    if (expectedPaths.length > 0 || hasOwnedPath) {
+      assertNoLossyJsonNumbers(existing);
       const config = readOpenCodeConfig(configPath);
-      const markerState = analyzeManagedRulesInstructions(config.instructions);
-      if (!markerState.valid) {
-        throw new Error('Cannot update opencode.json because it contains invalid niuma rules markers.');
-      }
-      if (needsManagedWrite || markerState.hasBlock) {
-        const next = openCodeTarget
-          ? mergeOpenCodeRulesInstruction(config, context.options.rules, context.options.harnessDir)
-          : removeOpenCodeRulesInstruction(config);
-        openCodeContent = `${JSON.stringify(next, null, 2)}\n`;
+      const reconciled = reconcileOpenCodeInstructions(config, expectedPaths, ownedPaths);
+      nextOwnedPaths = reconciled.ownedPaths;
+      if (!sameJsonValue(reconciled.config, config)) {
+        openCodeContent = `${JSON.stringify(reconciled.config, null, 2)}\n`;
       }
     }
-  } else if (openCodeTarget && context.options.rules.length > 0) {
-    const next = mergeOpenCodeRulesInstruction({}, context.options.rules, context.options.harnessDir);
-    openCodeContent = `${JSON.stringify(next, null, 2)}\n`;
+  } else if (expectedPaths.length > 0) {
+    const reconciled = reconcileOpenCodeInstructions({}, expectedPaths, ownedPaths);
+    nextOwnedPaths = reconciled.ownedPaths;
+    openCodeContent = `${JSON.stringify(reconciled.config, null, 2)}\n`;
   }
-  return { configPath, openCodeContent, pointerActions, targets, targetKinds };
+  return {
+    configPath,
+    expectedOpenCodePaths: nextOwnedPaths,
+    ownedOpenCodePaths: ownedPaths,
+    openCodeContent,
+    pointerActions,
+    targets,
+    targetKinds,
+  };
 }
 
 function writeRuleAdapterFiles(context) {
-  const { targets, targetKinds } = context.ruleAdapterPlan;
-
   writeClaudeRulePointers(context);
-
-  if (targetKinds.has('opencode-instructions')) {
-    writeOpenCodeRulesInstruction(context, targets.find((target) => target.kind === 'opencode-instructions'));
-  } else {
-    cleanupOpenCodeRulesInstruction(context);
-  }
+  writeOpenCodeRulesInstruction(context);
 }
 
 function writeClaudeRulePointers(context) {
@@ -107,19 +112,11 @@ function writeOpenCodeRulesInstruction(context) {
   }
 }
 
-function cleanupOpenCodeRulesInstruction(context) {
-  writeOpenCodeRulesInstruction(context);
-}
-
 function getOpenCodeConfigPath(context, target) {
   return safeResolveInside(context.workspaceDir, target.file, 'opencode config');
 }
 
 function readOpenCodeConfig(configPath) {
-  if (!fs.existsSync(configPath)) {
-    return {};
-  }
-
   const content = fs.readFileSync(configPath, 'utf8');
   let config;
   try {
@@ -135,153 +132,8 @@ function readOpenCodeConfig(configPath) {
   return config;
 }
 
-function mergeOpenCodeRulesInstruction(config, rules, harnessDir) {
-  if (rules.length === 0) {
-    return removeOpenCodeRulesInstruction(config);
-  }
-
-  const nextConfig = { ...config };
-  const block = renderOpenCodeRulesInstruction(rules, harnessDir);
-  nextConfig.instructions = mergeManagedInstruction(nextConfig.instructions, block);
-  return nextConfig;
-}
-
-function removeOpenCodeRulesInstruction(config) {
-  const nextConfig = { ...config };
-  if (!Object.prototype.hasOwnProperty.call(nextConfig, 'instructions')) {
-    return nextConfig;
-  }
-
-  const cleaned = removeManagedInstruction(nextConfig.instructions);
-  if (cleaned === undefined) {
-    delete nextConfig.instructions;
-  } else {
-    nextConfig.instructions = cleaned;
-  }
-  return nextConfig;
-}
-
-function mergeManagedInstruction(instructions, block) {
-  if (instructions === undefined) {
-    return block;
-  }
-
-  if (typeof instructions === 'string') {
-    return replaceManagedBlock(instructions, block);
-  }
-
-  if (Array.isArray(instructions)) {
-    const next = [];
-    let replaced = false;
-    for (const instruction of instructions) {
-      if (typeof instruction !== 'string') {
-        throw new Error('Cannot update opencode.json because instructions must be a string or an array of strings.');
-      }
-
-      if (hasManagedBlock(instruction)) {
-        if (!replaced) {
-          next.push(block);
-          replaced = true;
-        }
-        continue;
-      }
-      next.push(instruction);
-    }
-
-    if (!replaced) {
-      next.push(block);
-    }
-    return next;
-  }
-
-  throw new Error('Cannot update opencode.json because instructions must be a string or an array of strings.');
-}
-
-function removeManagedInstruction(instructions) {
-  if (typeof instructions === 'string') {
-    const cleaned = removeManagedBlock(instructions).trim();
-    return cleaned || undefined;
-  }
-
-  if (Array.isArray(instructions)) {
-    const next = instructions.filter((instruction) => {
-      if (typeof instruction !== 'string') {
-        throw new Error('Cannot update opencode.json because instructions must be a string or an array of strings.');
-      }
-      return !hasManagedBlock(instruction);
-    });
-    return next.length > 0 ? next : undefined;
-  }
-
-  if (instructions === undefined) {
-    return undefined;
-  }
-
-  throw new Error('Cannot update opencode.json because instructions must be a string or an array of strings.');
-}
-
-function renderOpenCodeRulesInstruction(rules, harnessDir) {
-  return `${MANAGED_RULES_BEGIN}\nNiuma Harness rules live under \`${harnessDir}/docs/rules/\`.\nSelected rule directories: ${rules.join(', ')}.\nLoad all selected rule directories relevant to the task. For example, a browser UI task in .ts or .tsx may need both web/ and typescript/.\nDo not duplicate rule text in OpenCode config.\n${MANAGED_RULES_END}`;
-}
-
-function replaceManagedBlock(text, block) {
-  if (!hasManagedBlock(text)) {
-    return text ? `${text}\n\n${block}` : block;
-  }
-
-  return text.replace(new RegExp(`${escapeRegExp(MANAGED_RULES_BEGIN)}[\\s\\S]*?${escapeRegExp(MANAGED_RULES_END)}`), block);
-}
-
-function removeManagedBlock(text) {
-  return text.replace(new RegExp(`\\n?${escapeRegExp(MANAGED_RULES_BEGIN)}[\\s\\S]*?${escapeRegExp(MANAGED_RULES_END)}\\n?`), '\n');
-}
-
-function hasManagedBlock(text) {
-  return text.includes(MANAGED_RULES_BEGIN) && text.includes(MANAGED_RULES_END);
-}
-
-function analyzeManagedRulesInstructions(instructions) {
-  if (instructions === undefined) {
-    return { hasBlock: false, valid: true };
-  }
-
-  const values = typeof instructions === 'string' ? [instructions] : instructions;
-  if (!Array.isArray(values) || values.some((value) => typeof value !== 'string')) {
-    return { hasBlock: false, valid: true }; // existing type validation owns this error
-  }
-
-  let blockCount = 0;
-  for (const value of values) {
-    const beginCount = countOccurrences(value, MANAGED_RULES_BEGIN);
-    const endCount = countOccurrences(value, MANAGED_RULES_END);
-    if (beginCount !== endCount || beginCount > 1) {
-      return { hasBlock: false, valid: false };
-    }
-    if (beginCount === 1) {
-      const begin = value.indexOf(MANAGED_RULES_BEGIN);
-      const end = value.indexOf(MANAGED_RULES_END);
-      if (begin > end) {
-        return { hasBlock: false, valid: false };
-      }
-      blockCount += 1;
-    }
-  }
-  return { hasBlock: blockCount === 1, valid: blockCount <= 1 };
-}
-
-function countOccurrences(value, marker) {
-  return value.split(marker).length - 1;
-}
-
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 module.exports = {
-  MANAGED_RULES_BEGIN,
-  MANAGED_RULES_END,
   prepareRuleAdapterPlan,
   renderClaudeRulePointer,
-  renderOpenCodeRulesInstruction,
   writeRuleAdapterFiles,
 };

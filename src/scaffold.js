@@ -142,12 +142,31 @@ function readPreviousStatus(targetDir, harnessDir, availableCommands, availableS
     throw new Error(`invalid previous ${STATUS_FILE}: skills must be canonical`);
   }
 
+  const artifacts = validateArtifactRecords(status.artifacts);
+  const openCodeInstructions = status.openCodeInstructions === undefined
+    ? []
+    : validateOpenCodeInstructionOwnership(status.openCodeInstructions, artifacts);
+
   return {
     agent,
-    artifacts: validateArtifactRecords(status.artifacts),
+    artifacts,
     commands,
+    openCodeInstructions,
     skills,
   };
+}
+
+function validateOpenCodeInstructionOwnership(value, artifacts) {
+  if (!Array.isArray(value) || value.some((item) => typeof item !== 'string')) {
+    throw new Error(`invalid previous ${STATUS_FILE}: openCodeInstructions must be an array of strings`);
+  }
+  const ruleTargets = new Set(artifacts.filter((item) => item.kind === 'rule').map((item) => item.target));
+  for (const item of value) {
+    if (!ruleTargets.has(item)) {
+      throw new Error(`invalid previous ${STATUS_FILE}: openCodeInstructions contains unowned path ${item}`);
+    }
+  }
+  return [...value];
 }
 
 function assertNoCompetingHarnesses(workspaceDir, harnessDir) {

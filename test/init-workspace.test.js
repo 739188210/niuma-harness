@@ -35,7 +35,7 @@ test('multi --rules none installs no agent adapters', () => {
   });
 });
 
-test('opencode --rules none leaves config without a managed block byte-identical', () => {
+test('opencode --rules none leaves config without managed rule paths byte-identical', () => {
   const workspace = tempDir();
   const configPath = path.join(workspace, 'opencode.json');
   const original = '{\n  "large": 9007199254740993,\n  "instructions": "keep"\n}\n';
@@ -59,28 +59,76 @@ test('opencode rules instructions merge with existing config', () => {
   const workspace = tempDir();
   fs.writeFileSync(path.join(workspace, 'opencode.json'), JSON.stringify({
     provider: 'local',
-    instructions: ['keep this instruction'],
+    instructions: ['docs/team-rules.md'],
   }, null, 2), 'utf8');
 
   const result = run(['init', workspace, '--agent', 'opencode']);
   assert.strictEqual(result.status, 0, result.stderr);
   const config = readJson(path.join(workspace, 'opencode.json'));
   assert.strictEqual(config.provider, 'local');
-  assert.deepStrictEqual(config.instructions.filter((instruction) => instruction === 'keep this instruction'), ['keep this instruction']);
+  assert.deepStrictEqual(config.instructions.filter((instruction) => instruction === 'docs/team-rules.md'), ['docs/team-rules.md']);
   assertOpenCodeRulesInstruction(workspace, 'harness', expectedDefaultRules('opencode'));
+
+  const before = read(path.join(workspace, 'opencode.json'));
+  const second = run(['init', workspace, '--agent', 'opencode']);
+  assert.strictEqual(second.status, 0, second.stderr);
+  assert.strictEqual(read(path.join(workspace, 'opencode.json')), before, 'OpenCode rules re-init must be byte-identical');
 });
 
-test('opencode rules instructions support string instructions', () => {
+test('opencode rejects scalar instructions without modifying the workspace', () => {
   const workspace = tempDir();
-  fs.writeFileSync(path.join(workspace, 'opencode.json'), JSON.stringify({
-    instructions: 'keep this instruction',
+  const configPath = path.join(workspace, 'opencode.json');
+  fs.writeFileSync(configPath, JSON.stringify({
+    instructions: 'docs/team-rules.md',
   }, null, 2), 'utf8');
 
+  const before = read(configPath);
   const result = run(['init', workspace, '--agent', 'opencode']);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stderr, /instructions must be an array of strings/);
+  assert.strictEqual(read(configPath), before);
+  assertNoPath(path.join(workspace, 'harness'));
+});
+
+test('opencode preserves a user path that matches a canonical rule target before first init', () => {
+  const workspace = tempDir();
+  const userPath = 'harness/docs/rules/common/testing.md';
+  fs.writeFileSync(path.join(workspace, 'opencode.json'), JSON.stringify({
+    instructions: [userPath, 'docs/team-rules.md'],
+  }, null, 2), 'utf8');
+
+  let result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
-  const config = readJson(path.join(workspace, 'opencode.json'));
-  assert.match(config.instructions, /keep this instruction/);
-  assertOpenCodeRulesInstruction(workspace, 'harness', expectedDefaultRules('opencode'));
+  let config = readJson(path.join(workspace, 'opencode.json'));
+  assert.deepStrictEqual(config.instructions, [userPath, 'docs/team-rules.md']);
+
+  result = run(['init', workspace, '--agent', 'opencode']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  config = readJson(path.join(workspace, 'opencode.json'));
+  assert.strictEqual(config.instructions.filter((item) => item === userPath).length, 1);
+});
+
+test('opencode rejects unsafe integer config without overwriting it', () => {
+  const workspace = tempDir();
+  const configPath = path.join(workspace, 'opencode.json');
+  const original = '{"large":9007199254740993,"instructions":["docs/team.md"]}\n';
+  fs.writeFileSync(configPath, original, 'utf8');
+  const result = run(['init', workspace, '--agent', 'opencode']);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stderr, /without changing number 9007199254740993/);
+  assert.strictEqual(read(configPath), original);
+  assertNoPath(path.join(workspace, 'harness'));
+});
+
+test('opencode rejects lossy decimal integer config without overwriting it', () => {
+  const workspace = tempDir();
+  const configPath = path.join(workspace, 'opencode.json');
+  const original = '{"large":9007199254740993.0,"instructions":["docs/team.md"]}\n';
+  fs.writeFileSync(configPath, original, 'utf8');
+  const result = run(['init', workspace, '--agent', 'opencode']);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stderr, /without changing number 9007199254740993\.0/);
+  assert.strictEqual(read(configPath), original);
 });
 
 test('opencode invalid json fails without overwriting config', () => {

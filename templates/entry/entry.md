@@ -35,7 +35,7 @@ Task-local notes → `agent-work/`. Verified durable facts → candidate for `{{
 **7. Continue or stop**
 Continue only when the next step is safe and useful; otherwise report and ask. For multi-step, risky, parallel, or interruptible work, keep `agent-work/tasks/<task>/status.md` current enough to resume. Non-trivial tasks must maintain the structured execution record defined in `{{HARNESS_DIR}}/docs/experiments/task-execution-record.md` at `agent-work/tasks/<task>/harness-feedback.md`, reference stable IDs from `verification.md`, and may finish by running `niuma-harness audit --task <task>`; audit checks self-reported consistency, not objective correctness.
 
-## Red lines (always enforced)
+## Red lines (apply to every task)
 
 - No "done" without evidence — state what ran, the result, what failed, what was skipped.
 - Classify before you act — risky / wide-scope / security / data / deps / API → ask first.

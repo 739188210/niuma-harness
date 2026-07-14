@@ -7,7 +7,7 @@ const { getAvailableRuleDirs, getRuleAdapterTargetsForAgent } = require('../rule
 const { getAvailableSkillDirs, getSkillFiles, getSkillTargetRootsForAgent } = require('../skills');
 const { createStatus } = require('../harness-status');
 const { createTemplateVariables } = require('../template-variables');
-const { renderClaudeRulePointer, renderOpenCodeRulesInstruction } = require('./rules-adapters-writer');
+const { renderClaudeRulePointer } = require('./rules-adapters-writer');
 const { TEMPLATE_DIR } = require('./manifest');
 const { renderTemplate } = require('./templates');
 
@@ -88,6 +88,7 @@ function createDesiredState(input) {
     artifacts: records,
     commands,
     harnessDir,
+    openCodeInstructions: createOpenCodeDesired(adapterTargets, ruleArtifacts).paths,
     rules,
     skills,
   }, { workDirectory });
@@ -110,7 +111,7 @@ function createDesiredState(input) {
     availableSkills: getAvailableSkillDirs(manifest.skillsRoot),
     directories: [...new Set(directories)].sort((left, right) => left.length - right.length || left.localeCompare(right)),
     files: files.sort((left, right) => left.relativePath.localeCompare(right.relativePath)),
-    openCode: createOpenCodeDesired(adapterTargets, rules, harnessDir),
+    openCode: createOpenCodeDesired(adapterTargets, ruleArtifacts),
     status,
     statusPath: path.join(targetDir, 'manifest.json'),
     targetDir,
@@ -119,11 +120,11 @@ function createDesiredState(input) {
   };
 }
 
-function createOpenCodeDesired(targets, rules, harnessDir) {
+function createOpenCodeDesired(targets, ruleArtifacts) {
   const active = targets.some((item) => item.kind === 'opencode-instructions');
   return {
     active,
-    block: active && rules.length > 0 ? renderOpenCodeRulesInstruction(rules, harnessDir) : null,
+    paths: active ? ruleArtifacts.map((artifact) => artifact.target) : [],
     target: 'opencode.json',
   };
 }

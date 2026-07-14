@@ -80,7 +80,7 @@ CLAUDE.md / AGENTS.md
 | `<harness-dir>/docs/process/` | Concrete task playbooks selected by the Process layer. |
 | `<harness-dir>/docs/rules/` | Canonical engineering preferences and agent-specific notes for coding, testing, security, and tool behavior. |
 | `.claude/rules/niuma-*.md` | Claude Code native rule pointers generated from the selected rule set; they point back to `<harness-dir>/docs/rules/` and do not duplicate rule content. |
-| `opencode.json` managed `instructions` block | OpenCode native rule pointer generated from the selected rule set; unrelated user config is preserved. |
+| `opencode.json.instructions` managed rule paths | OpenCode-native array of exact selected canonical rule-file paths; user paths, globs, URLs, and unrelated config fields are preserved. |
 | `AGENTS.md` rules pointer | Codex/OpenCode entry-level navigation to `<harness-dir>/docs/rules/`; Codex does not use `.codex/rules` for coding standards. |
 | `<harness-dir>/docs/automation/` | Verified automation intent, hooks, and CI notes. |
 | `agent-work/` | Workspace-level task-local memory, plans, status ledgers, verification evidence, and handoff notes. |
@@ -102,7 +102,7 @@ Implemented behavior:
 - `templates/rules/*` is the package canonical source; template-known generated `<harness-dir>/docs/rules/*` files are Niuma-managed artifacts tracked in the shared command-and-rule ledger (`kind`, `source`, `target`, exact-byte `digest`).
 - `common` rules are intentionally lightweight engineering preferences; they do not replace Policy, Process, or Observation evidence requirements.
 - Claude receives tool-managed `.claude/rules/niuma-<rule>.md` pointer files for selected rule directories.
-- OpenCode receives a tool-managed `opencode.json.instructions` block pointing to selected rule directories while preserving unrelated user config.
+- OpenCode receives exact selected canonical rule-file paths in its `opencode.json.instructions` array while preserving user paths, globs, URLs, and unrelated config fields.
 - Codex receives rules navigation through `AGENTS.md`; `.codex/rules` is not generated for coding standards.
 - Clean ledger-owned rule files refresh on re-init and package upgrades; exact-current legacy files are safely adopted. Drifted or unowned occupied template-known rule targets fail before mutation and direct recovery through `repair --dry-run`.
 - Deselect removes only unchanged ledger-owned rule files. Unknown local files survive, and nonempty rule directories remain.

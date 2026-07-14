@@ -2,12 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { renderCommandArtifacts } = require('../command-artifacts');
 const { assertNoSymlinkInPath, safeResolveInside } = require('../fs-safe');
-const {
-  renderClaudeRulePointer,
-  renderOpenCodeRulesInstruction,
-  MANAGED_RULES_BEGIN,
-  MANAGED_RULES_END,
-} = require('../scaffold/rules-adapters-writer');
+const { renderClaudeRulePointer } = require('../scaffold/rules-adapters-writer');
 const { TEMPLATE_DIR } = require('../scaffold/manifest');
 const { renderTemplate } = require('../scaffold/templates');
 const { getAvailableRuleDirs, getRuleAdapterTargetsForAgent } = require('../rules');
@@ -124,59 +119,6 @@ function checkRuleAdapters(context) {
     }
   }
 
-  const openCodeTarget = targets.find((target) => target.kind === 'opencode-instructions');
-  if (openCodeTarget) {
-    checkOpenCodeManagedBlock(context, openCodeTarget.file);
-  }
-}
-
-function checkOpenCodeManagedBlock(context, target) {
-  const targetPath = safeManagedPath(context, context.workspaceRoot, target);
-  if (!targetPath || !isRegularFile(targetPath)) {
-    return;
-  }
-  let config;
-  try {
-    config = JSON.parse(fs.readFileSync(targetPath, 'utf8'));
-  } catch (error) {
-    return; // structural adapter check reports invalid JSON
-  }
-  const instructions = config && config.instructions;
-  if (instructions !== undefined
-      && typeof instructions !== 'string'
-      && !(Array.isArray(instructions) && instructions.every((value) => typeof value === 'string'))) {
-    return; // structural adapter check reports the invalid type
-  }
-  const markers = analyzeManagedMarkers(instructions);
-  if (context.rules.length === 0) {
-    if (markers.beginCount !== 0 || markers.endCount !== 0) {
-      addError(context.result, `managed content drifted ${target} rules instructions`);
-    }
-    return;
-  }
-
-  const expected = renderOpenCodeRulesInstruction(context.rules, path.basename(context.harnessRoot));
-  if (markers.beginCount !== 1 || markers.endCount !== 1 || markers.blocks.length !== 1 || markers.blocks[0] !== expected) {
-    addError(context.result, `managed content drifted ${target} rules instructions`);
-    return;
-  }
-  addOk(context.result, `managed content intact ${target} rules instructions`);
-}
-
-function analyzeManagedMarkers(instructions) {
-  const values = typeof instructions === 'string'
-    ? [instructions]
-    : (Array.isArray(instructions) ? instructions.filter((value) => typeof value === 'string') : []);
-  const pattern = new RegExp(`${escapeRegExp(MANAGED_RULES_BEGIN)}[\\s\\S]*?${escapeRegExp(MANAGED_RULES_END)}`, 'g');
-  return {
-    beginCount: countOccurrences(values, MANAGED_RULES_BEGIN),
-    blocks: values.flatMap((value) => value.match(pattern) || []),
-    endCount: countOccurrences(values, MANAGED_RULES_END),
-  };
-}
-
-function countOccurrences(values, marker) {
-  return values.reduce((count, value) => count + value.split(marker).length - 1, 0);
 }
 
 function checkCurrentCommandArtifacts(context, variables) {
@@ -249,9 +191,6 @@ function isRegularFile(filePath) {
   return fs.existsSync(filePath) && fs.lstatSync(filePath).isFile();
 }
 
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
 
 module.exports = {
   checkManagedContentIntegrity,

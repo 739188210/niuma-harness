@@ -97,7 +97,9 @@ for (const scenario of [
       const instructions = JSON.stringify(JSON.parse(read(path.join(workspace, 'opencode.json'))).instructions);
       assert.doesNotMatch(instructions, new RegExp(`Selected rule directories:[^\\n]*\\b${scenario.toRulesOut}\\b`));
     } else if (fs.existsSync(path.join(workspace, 'opencode.json'))) {
-      assert.doesNotMatch(read(path.join(workspace, 'opencode.json')), /niuma-harness:rules begin/);
+      const config = JSON.parse(read(path.join(workspace, 'opencode.json')));
+      const instructions = Array.isArray(config.instructions) ? config.instructions : [];
+      assert.ok(instructions.every((item) => !item.startsWith('harness/docs/rules/')));
     }
     assertNoCodexRulesDir(workspace);
     assertManifest(path.join(harnessRoot, 'manifest.json'), {

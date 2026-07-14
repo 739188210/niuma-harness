@@ -66,6 +66,7 @@ async function resolveRepairState(options, chooseAgent) {
       agentSource,
       commands: getDefaultCommandsForAgent(agent, availableCommands),
       commandsSource: 'package-default',
+      openCodeInstructions: parsed.openCodeInstructions,
       rules: rules.value,
       rulesSource: rules.source,
       skills: skills.value,
@@ -91,6 +92,15 @@ function resolveHarnessLocation(target, options) {
   const candidates = scanWorkspaceHarnesses(target, { includeMissingManifest: true });
   if (options.harnessDirProvided) {
     const selected = candidates.find((candidate) => sameName(candidate.directoryName, options.harnessDir));
+    if (
+      process.platform === 'win32'
+      && selected
+      && selected.directoryName !== options.harnessDir
+    ) {
+      throw new Error(
+        `Requested --harness-dir "${options.harnessDir}" does not exactly match existing harness directory "${selected.directoryName}". Use the existing directory name exactly.`
+      );
+    }
     const harnessRoot = selected ? selected.directoryPath : path.join(target, options.harnessDir);
     return {
       harnessDir: options.harnessDir,
@@ -159,8 +169,21 @@ function parseManifestSelections(value, harnessDir, manifest, commands, rules, s
   if (!agent) errors.push('agent is missing');
   let normalizedRules = null;
   let normalizedSkills = null;
+  let openCodeInstructions = [];
   try { normalizedRules = normalizeConcreteRules(value.rules, rules, 'rules'); } catch (error) { errors.push(error.message); }
   try { normalizedSkills = normalizeConcreteSkills(value.skills, skills, 'skills'); } catch (error) { errors.push(error.message); }
+  try {
+    if (value.openCodeInstructions !== undefined) {
+      if (!Array.isArray(value.openCodeInstructions)
+          || value.openCodeInstructions.some((item) => typeof item !== 'string')) {
+        throw new Error('openCodeInstructions must be an array of strings');
+      }
+      openCodeInstructions = [...value.openCodeInstructions];
+      if (!['opencode', 'multi'].includes(agent) && openCodeInstructions.length > 0) {
+        throw new Error('openCodeInstructions must be empty for the active agent');
+      }
+    }
+  } catch (error) { errors.push(error.message); }
   if (!agent || !Array.isArray(value.commands)) {
     errors.push('commands must match package commands');
   } else {
@@ -200,7 +223,14 @@ function parseManifestSelections(value, harnessDir, manifest, commands, rules, s
       if (JSON.stringify(actual) !== JSON.stringify(expected)) errors.push('artifacts must match package commands and selected rules');
     }
   } catch (error) { errors.push(error.message); }
-  return { agent, errors, rules: normalizedRules, skills: normalizedSkills, usable: errors.length === 0 };
+  return {
+    agent,
+    errors,
+    openCodeInstructions,
+    rules: normalizedRules,
+    skills: normalizedSkills,
+    usable: errors.length === 0,
+  };
 }
 
 function resolveRules(options, parsed, agent, available) {
