@@ -1,14 +1,14 @@
 # Task Execution Feedback Record
 
-This experiment is enabled by the current Niuma Harness package. It is not workspace-disableable: deleting this document does not disable the requirement, and re-init restores package-managed documentation. A future package release may retire the experiment after audit evidence shows it is no longer useful.
+This experiment is enabled by the current Niuma Harness package. It is not workspace-disableable: deleting this document does not disable the requirement, and re-init restores package-managed documentation. A future package release may retire the experiment when it is no longer useful.
 
-For every non-trivial task, create or update `agent-work/tasks/<task-name>/harness-feedback.md`. The marker-delimited JSON is the audit source of truth; prose outside the markers is optional. Runtime records are user/agent-owned and are never overwritten by init, repair, doctor, or audit.
+For every non-trivial task, create or update `agent-work/tasks/<task-name>/harness-feedback.md`. The marker-delimited JSON is the structured task execution record; prose outside the markers is optional. Runtime records are user/agent-owned and are never overwritten by init, repair, or doctor.
 
-## Purpose and limits
+## Purpose
 
-The record lets `niuma-harness audit` evaluate the internal consistency of self-reported execution evidence across Bootstrap, Task rating, Context, Action boundary, Execution, Verification, Recovery, and Outcome.
+The record captures the agent's task-level account of Bootstrap, Task rating, Context, Action boundary, Execution, Verification, Recovery, and Outcome. It connects success criteria and recovery steps to stable evidence IDs in task-local `verification.md`.
 
-Audit can check the record against safe local paths and task-local verification evidence. A self-report cannot prove that an agent actually read a file, executed a command, or produced an objectively correct implementation. Legacy Markdown-only records remain readable and unchanged but provide insufficient evidence, so audit reports them as `PARTIAL` rather than inventing a conversion.
+Legacy Markdown-only records remain readable and unchanged, but do not provide the structured fields required for a complete execution record.
 
 ## When to record
 
@@ -93,12 +93,12 @@ Copy this into `agent-work/tasks/example-task/harness-feedback.md`, then replace
       }
     ],
     "performedSteps": [
-      "Inspected the current parser, evaluator, and tests.",
+      "Inspected the current record contract and tests.",
       "Updated the package-managed templates.",
       "Ran focused and full verification."
     ],
     "skippedSteps": [],
-    "decisionImpact": "Evaluator field and enum checks determined the documented JSON shapes.",
+    "decisionImpact": "The record fields and workflow requirements determined the documented JSON shapes.",
     "alignment": "aligned",
     "deviations": []
   },
@@ -168,7 +168,7 @@ Copy this into `agent-work/tasks/example-task/harness-feedback.md`, then replace
 - `verification.declaredConclusion`: `passed`, `partial`, `failed`, `skipped`, or `unknown`. Its criterion IDs must exactly match `execution.successCriteria` and resolve to IDs in the task's `verification.md`.
 - If recovery did not apply, use only `{ "applicable": false }`. Otherwise `declaredResult` is `success`, `partial`, `failed`, or `stopped`, and attempts/rechecks reference verification evidence IDs.
 - Outcome criterion status is `passed`, `failed`, or `unknown`; `reviewResult` is `accepted`, `changes-requested`, `rejected`, or `failed`. Completion or acceptance cannot coexist with failed/unknown criteria, material gaps, failed recovery, or material unknown evidence.
-- `evidenceSources` currently supports `{ "kind": "self-report" }`. A future hook envelope may use `kind`, `provider`, `recordedAt`, `path`, and optional digest/reference fields, but current audit does not collect or verify hook evidence; unknown sources make the result `PARTIAL`.
+- `evidenceSources` currently supports `{ "kind": "self-report" }`. A future hook envelope may use `kind`, `provider`, `recordedAt`, `path`, and optional digest/reference fields.
 
 ## Authorization example
 
@@ -192,4 +192,4 @@ The performed action sets `"authorizationReference": "auth-1"`, and its ID and s
 - Do not store secrets, credentials, private data, or long logs.
 - Keep detailed checks in `verification.md`; reference evidence IDs here instead of duplicating output.
 - Do not put task feedback in `docs/project-context.md`; that file stores verified durable project facts.
-- `niuma-harness audit` is read-only. It does not modify, migrate, repair, or validate objective implementation correctness.
+- The record supports task handoff and review; keep claims tied to the recorded evidence and any remaining gaps.

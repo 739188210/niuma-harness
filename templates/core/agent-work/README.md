@@ -20,7 +20,7 @@ agent-work/tasks/<task-name>/
 - `context.md`: task-local context gathered during execution.
 - `plan.md`: current plan, scope decisions, and implementation sequence.
 - `verification.md`: exact checks, expected signals, actual results, skipped checks with reasons, and remaining unknowns.
-- `harness-feedback.md`: required for non-trivial tasks in this package release; records structured execution evidence for `niuma-harness audit`.
+- `harness-feedback.md`: required structured execution record for non-trivial tasks in this package release.
 - `notes.md`: temporary investigation notes, findings, fix decisions, and handoff notes.
 
 ## What belongs here

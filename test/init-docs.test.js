@@ -123,22 +123,30 @@ test('generated docs expose experimental task execution feedback guidance', () =
   assert.match(feedbackDoc, /"authorizationReferences": \[\]/);
   assert.match(feedbackDoc, /"declaredResult": "success"/);
   assert.match(feedbackDoc, /"evidenceSources"/);
-  assert.match(feedbackDoc, /self-report cannot prove/);
+  assert.match(feedbackDoc, /structured task execution record/);
+  assert.doesNotMatch(feedbackDoc, /niuma-harness audit/);
+  assert.doesNotMatch(feedbackDoc, /audit source of truth/);
   assert.doesNotMatch(feedbackDoc, /can be removed or disabled/i);
 
   const entry = read(path.join(workspace, 'CLAUDE.md'));
   assert.match(entry, /Non-trivial tasks must maintain the structured execution record/);
-  assert.match(entry, /niuma-harness audit --task <task>/);
+  assert.doesNotMatch(entry, /niuma-harness audit/);
 
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
   assert.match(workReadme, /harness-feedback\.md/);
-  assert.match(workReadme, /required for non-trivial tasks in this package release/);
+  assert.match(workReadme, /required structured execution record for non-trivial tasks/);
+  assert.doesNotMatch(workReadme, /niuma-harness audit/);
   assert.match(workReadme, /Package-enabled experimental Harness execution records/);
   assert.doesNotMatch(workReadme, /while .*task-execution-record\.md.*exists/i);
   assert.match(workReadme, /niuma-verification-record:begin/);
   assert.match(workReadme, /"kind": "command"/);
   assert.match(workReadme, /"exitCode": 0/);
   assert.match(workReadme, /"remainingUnknowns": \[\]/);
+
+  const guide = read(path.join(h, 'HARNESS_GUIDE.md'));
+  assert.match(guide, /manual Harness evaluation/);
+  assert.match(guide, /do not prove that actions occurred, commands ran, or the implementation is objectively correct/);
+  assert.doesNotMatch(guide, /niuma-harness audit/);
 
   const index = read(path.join(h, 'docs', 'index.md'));
   assert.match(index, /docs\/experiments\//);

@@ -68,8 +68,7 @@ Important for this source repository: it intentionally does not contain a genera
 - `node bin/niuma-harness.js init <tmp> --agent Codex --dry-run` — preview generation without writing.
 - `node bin/niuma-harness.js repair <tmp> --dry-run` — inspect backup-first recovery without mutation.
 - `node bin/niuma-harness.js doctor <tmp>` — validate a harness.
-- `node bin/niuma-harness.js audit <tmp> --task <task-name>` — read-only consistency audit of structured task evidence.
-- Focused tests run directly: `node test/init.test.js`, `node test/doctor.test.js`, `node test/audit.test.js`, `node test/audit-cli.test.js`, `node test/help.test.js`; `test/cli.test.js` is the aggregator.
+- Focused tests run directly: `node test/init.test.js`, `node test/doctor.test.js`, `node test/help.test.js`; `test/cli.test.js` is the aggregator.
 
 Do not run `init .` in this repo root to test — use a temp dir. The repo has no `harness/` instance by design (see `harness-roadmap.md`, P7).
 
@@ -83,7 +82,6 @@ Core modules:
 - `src/prompts.js` — fills a missing `--agent` interactively in a TTY; non-TTY `init` without `--agent` fails.
 - `src/scaffold.js` — `init` orchestration; writers under `src/scaffold/` (directories, entries, manifest, rules-writer, status-writer, templates) plus `src/fs-safe.js`, `src/artifact-ledger.js`, and `src/rule-artifacts.js`.
 - `src/doctor.js` — `doctor`/`check` orchestration; checks under `src/doctor/`.
-- `src/audit.js` and `src/audit/` — read-only marker-record loading, eight-dimensional self-report consistency evaluation, and stable reports; audit does not prove objective behavior or modify task records.
 - `src/contract.js` — shared contract-block markers + slice/replace helpers, used by scaffold (entry merge) and doctor (integrity check).
 - `src/rules.js` — discovers canonical package rule directories under `templates/rules/`, normalizes `--rules` / `--rules-out`.
 

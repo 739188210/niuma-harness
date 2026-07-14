@@ -33,7 +33,7 @@ Find the first root cause, not downstream symptoms. Smallest safe fix, then re-r
 Task-local notes → `agent-work/`. Verified durable facts → candidate for `{{HARNESS_DIR}}/docs/project-context.md`, written back only after verification. No secrets, no guesses. (depth: `{{HARNESS_DIR}}/docs/layers/06-memory.md`)
 
 **7. Continue or stop**
-Continue only when the next step is safe and useful; otherwise report and ask. For multi-step, risky, parallel, or interruptible work, keep `agent-work/tasks/<task>/status.md` current enough to resume. Non-trivial tasks must maintain the structured execution record defined in `{{HARNESS_DIR}}/docs/experiments/task-execution-record.md` at `agent-work/tasks/<task>/harness-feedback.md`, reference stable IDs from `verification.md`, and may finish by running `niuma-harness audit --task <task>`; audit checks self-reported consistency, not objective correctness.
+Continue only when the next step is safe and useful; otherwise report and ask. For multi-step, risky, parallel, or interruptible work, keep `agent-work/tasks/<task>/status.md` current enough to resume. Non-trivial tasks must maintain the structured execution record defined in `{{HARNESS_DIR}}/docs/experiments/task-execution-record.md` at `agent-work/tasks/<task>/harness-feedback.md` and reference stable IDs from `verification.md`.
 
 ## Red lines (apply to every task)
 

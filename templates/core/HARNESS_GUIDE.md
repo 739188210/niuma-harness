@@ -28,7 +28,7 @@ If project-specific facts are incomplete, agents should inspect the current work
 
 ## Assurance boundary
 
-The generated Markdown is an agent-facing operating contract, not a runtime enforcement layer. `init` copies generated harness artifacts into the workspace; it does not copy the `niuma-harness` CLI implementation. `doctor` and `audit` are available only while the CLI can still be invoked through an installed package or another configured command path. `doctor` checks installed managed state, while `audit` checks the internal consistency of self-reported task evidence. Preventing tool actions at runtime depends on controls provided by the host, such as permissions, hooks, or a sandbox.
+The generated Markdown is an agent-facing operating contract, not a runtime enforcement layer. `init` copies generated harness artifacts into the workspace; it does not copy the `niuma-harness` CLI implementation. `doctor` is available only while the CLI can still be invoked through an installed package or another configured command path, and it checks installed managed state. Preventing tool actions at runtime depends on controls provided by the host, such as permissions, hooks, or a sandbox.
 
 ## Directory map
 
@@ -87,7 +87,7 @@ agent-work/tasks/<task-name>/
 
 `harness-feedback.md` stores the structured record used for non-trivial tasks, and `verification.md` stores the evidence referenced by that record. The other files support explicit status and progress, context, planning, notes, or handoff state when a task needs them.
 
-`niuma-harness audit` performs a read-only consistency check over these self-reported records. It does not prove that recorded actions occurred or that the implementation is objectively correct. See `docs/experiments/task-execution-record.md` for the complete record contract. Durable project facts should move through the Memory layer before being recorded in `docs/project-context.md`.
+These records support manual Harness evaluation. They are agent-authored self-reports and do not prove that actions occurred, commands ran, or the implementation is objectively correct. See `docs/experiments/task-execution-record.md` for the complete record contract. Durable project facts should move through the Memory layer before being recorded in `docs/project-context.md`.
 
 ## Maintenance rule
 
