@@ -38,7 +38,6 @@ The generated Markdown is an agent-facing operating contract, not a runtime enfo
 - `docs/policy/`: concrete action permission boundaries for agents.
 - `docs/process/`: concrete task playbooks selected by the Process layer.
 - `docs/rules/`: selected canonical engineering standards; agent-native rule adapters point back here.
-- `docs/automation/`: automation and hook intent notes.
 - `docs/experiments/task-execution-record.md`: package-enabled structured execution-record contract for non-trivial tasks.
 - `agent-work/`: workspace-level task-local records and verification evidence.
 
@@ -68,7 +67,6 @@ On re-init, clean ledger-owned rule files refresh from the package; exact-curren
 These files may evolve as the project, team, and tool environment become clearer:
 
 - `docs/project-context.md`: verified stable project facts.
-- `docs/automation/automation-intent.md`: verified automation intent.
 - `CLAUDE.md` / `AGENTS.md`: entry files carrying the always-loaded operating contract (the 7-step Loop). The contract zone is tool-managed; only the project-notes zone is free to edit.
 
 Do not use these files for temporary task notes or one-off debugging logs.

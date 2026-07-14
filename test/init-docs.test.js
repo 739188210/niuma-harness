@@ -5,6 +5,7 @@ const {
   assertAgentEntryShape,
   assertCommonHarnessShape,
   assertNoPath,
+  fs,
   initWorkspace,
   path,
   read,
@@ -16,6 +17,18 @@ test('init claude: entry at workspace root, harness content under harness/', () 
   const workspace = initWorkspace('claude');
   assertCommonHarnessShape(workspace);
   assertAgentEntryShape(workspace, agentCases[0]);
+});
+
+test('re-init preserves a legacy automation document as user content', () => {
+  const workspace = initWorkspace('claude');
+  const legacyPath = path.join(workspace, 'harness', 'docs', 'automation', 'automation-intent.md');
+  const legacyContent = '# Legacy automation notes\n';
+  fs.mkdirSync(path.dirname(legacyPath), { recursive: true });
+  fs.writeFileSync(legacyPath, legacyContent, 'utf8');
+
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.strictEqual(read(legacyPath), legacyContent);
 });
 
 test('generated memos/playbooks/policy contain required structure anchors', () => {
@@ -90,13 +103,7 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
   assert.match(index, /task-local pointers in `agent-work\/`/);
   assert.doesNotMatch(index, /Agents may add short runtime pointers/);
 
-  assertNoPath(path.join(h, 'docs', 'automation', 'hooks.md'));
-  const automationIntent = read(path.join(h, 'docs', 'automation', 'automation-intent.md'));
-  assert.match(automationIntent, /# Automation Intent/);
-  assert.match(automationIntent, /## Ownership/);
-  assert.match(automationIntent, /Agents maintain this file during normal work/);
-  assert.match(automationIntent, /Human maintainers retain final policy control/);
-  assert.match(automationIntent, /human participation is not required for routine evidence-based updates/);
+  assertNoPath(path.join(h, 'docs', 'automation'));
 });
 
 test('generated docs expose experimental task execution feedback guidance', () => {

@@ -128,8 +128,6 @@ workspace/
         05-recovery.md
         06-memory.md
         07-loop.md
-      automation/
-        automation-intent.md
       policy/
         action-boundary.md
         secret-leak.md
@@ -169,7 +167,7 @@ The generated `docs/layers/` directory is the AI agent operating model:
 | Memory | `docs/layers/06-memory.md` | What should be preserved and what should stay task-local |
 | Loop | `docs/layers/07-loop.md` | How the agent continues, pauses, recovers, or stops |
 
-The layer files describe what each layer must do. The existing `docs/process/`, optional `docs/rules/`, and `docs/automation/` directories remain the starter execution materials referenced by those layers. Runtime task records live in the workspace-level `agent-work/` directory.
+The layer files describe what each layer must do. The existing `docs/process/` and optional `docs/rules/` directories remain the starter execution materials referenced by those layers. Runtime task records live in the workspace-level `agent-work/` directory.
 
 ## Manifest
 
@@ -221,7 +219,7 @@ Schema version 1 is intentionally unsupported because this version has not been 
 |---|---|
 | **Entry** (`CLAUDE.md` / `AGENTS.md`) | Merged: if the contract block is present it is refreshed; otherwise the block is inserted at the top. Your existing content is always preserved. |
 | **Tool-managed** (layers, process playbooks, policy, index, HARNESS_GUIDE, `agent-work/README.md`) | Refreshed from the template. |
-| **User-maintained** (`project-context.md`, `automation/automation-intent.md`) | Preserved if they exist; created from the template only when absent. |
+| **User-maintained** (`project-context.md`) | Preserved if it exists; created from the template only when absent. |
 | `docs/rules/` | Template-known selected rule files are Niuma-managed. On re-init, clean ledger-owned files refresh from the package; exact-current legacy files are safely adopted. Drifted or unowned occupied template-known targets stop before mutation and direct you to `repair --dry-run`. Deselect removes only unchanged ledger-owned files; unknown local files survive and nonempty directories remain. |
 | Native rules adapters (`.claude/rules/niuma-*.md`, exact selected rule-file paths in `opencode.json.instructions`, entry contract pointer) | Refreshed from the current rule selection. User-created `.claude/rules` files, user instruction paths/globs/URLs, and unrelated `opencode.json` fields are preserved. Codex uses the `AGENTS.md` pointer; `.codex/rules` is not generated for coding standards. |
 | Native command artifacts (`.claude/commands/`, `.agents/skills/<command-id>/`, `.opencode/commands/`) | Refreshed only when the schema-2 ledger proves ownership and the current exact-byte digest has not drifted. Occupied unowned or locally modified targets stop `init` before scaffold writes. Unknown user-created files are left untouched. |
@@ -381,7 +379,7 @@ Re-running `init` converges known skills in the current agent's target roots: fi
 
 `doctor` does not treat generated `harness/manifest.json` as an unrestricted source of truth. It binds `createdBy`, the actual harness directory, package-defined `workDir`, agent-derived entry files, and package-and-agent-derived command selection. It then exact-compares tool-managed core/work templates, selected skill package files, Claude rule pointers, expected Niuma-managed OpenCode rule-file path entries, and current package-rendered command artifacts.
 
-The integrity boundary intentionally excludes user-maintained `project-context.md` and `automation-intent.md`, entry content outside the managed contract, local runtime files such as `zentao.config.json`, unknown files, and OpenCode fields or instructions outside the Niuma-managed block. Selected generated rule artifacts are included: Doctor exact-validates their package descriptor, ledger record, and disk bytes. `rules` and `skills` remain manifest selections, so explicit `--rules none` and `--rules-out` exclusions retain their existing semantics.
+The integrity boundary intentionally excludes user-maintained `project-context.md`, entry content outside the managed contract, local runtime files such as `zentao.config.json`, unknown files, and OpenCode fields or instructions outside the Niuma-managed block. Selected generated rule artifacts are included: Doctor exact-validates their package descriptor, ledger record, and disk bytes. `rules` and `skills` remain manifest selections, so explicit `--rules none` and `--rules-out` exclusions retain their existing semantics.
 
 ## Development
 

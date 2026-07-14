@@ -268,10 +268,10 @@ test('doctor checks templateFiles declared in package manifest', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(init.status, 0, init.stderr);
-  fs.unlinkSync(path.join(workspace, 'harness', 'docs', 'automation', 'automation-intent.md'));
+  fs.unlinkSync(path.join(workspace, 'harness', 'docs', 'index.md'));
   const result = run(['doctor', workspace]);
   assert.notStrictEqual(result.status, 0, 'doctor should fail when a manifest template file is missing');
-  assert.match(result.stdout, /missing docs\/automation\/automation-intent\.md/);
+  assert.match(result.stdout, /missing docs\/index\.md/);
 });
 
 test('doctor fails when agent-work is missing', () => {

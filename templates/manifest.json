@@ -6,7 +6,6 @@
   ],
   "directories": [
     "docs",
-    "docs/automation",
     "docs/experiments",
     "docs/layers",
     "docs/policy",
@@ -102,11 +101,6 @@
     {
       "target": "docs/process/subagent-development.md",
       "template": "core/docs/process/subagent-development.md"
-    },
-    {
-      "target": "docs/automation/automation-intent.md",
-      "template": "core/docs/automation/automation-intent.md",
-      "managed": "user"
     }
   ],
   "workTemplateFiles": [

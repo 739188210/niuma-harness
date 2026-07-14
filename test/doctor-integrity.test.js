@@ -136,10 +136,9 @@ test('doctor compares current command artifacts against package rendering even w
   expectDoctorError(workspace, new RegExp(`managed content drifted \\.claude/commands/${command.replace('.', '\\.')}`));
 });
 
-test('doctor excludes user-maintained docs entry free content local config and unknown files', () => {
+test('doctor excludes user-maintained project context entry free content local config and unknown files', () => {
   const workspace = initWorkspace('claude', ['--skills', 'zentao-bug-workflow']);
   append(path.join(workspace, 'harness', 'docs', 'project-context.md'));
-  append(path.join(workspace, 'harness', 'docs', 'automation', 'automation-intent.md'));
   append(path.join(workspace, 'CLAUDE.md'), '\nUser free content\n');
   fs.writeFileSync(path.join(workspace, '.claude', 'skills', 'zentao-bug-workflow', 'zentao.config.json'), '{"local":true}\n', 'utf8');
   fs.writeFileSync(path.join(workspace, 'unknown.txt'), 'unknown\n', 'utf8');
