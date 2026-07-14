@@ -2,7 +2,7 @@
 const { parseArgs } = require('./args');
 const { getHelpText } = require('./help');
 const { chooseAgent } = require('./prompts');
-const { addAgentRules, getDefaultRulesForAgent } = require('./rules');
+const { normalizeSelectedRules, getDefaultRulesForAgent } = require('./rules');
 const { runDoctor } = require('./doctor');
 const { runInit } = require('./scaffold');
 const { runRepair } = require('./repair');
@@ -14,7 +14,7 @@ function finalizeRules(options) {
   }
 
   if (options.rulesProvided) {
-    options.rules = addAgentRules(options.rules, options.agent);
+    options.rules = normalizeSelectedRules(options.rules);
     return;
   }
 

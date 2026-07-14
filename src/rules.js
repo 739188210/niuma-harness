@@ -7,12 +7,6 @@ const TEMPLATE_DIR = path.join(ROOT_DIR, 'templates');
 const DEFAULT_RULES_ROOT = 'rules';
 const DEFAULT_RULES_SELECTION = 'common';
 const DEFAULT_ENGINEERING_RULES = ['common'];
-const AGENT_RULES = {
-  claude: ['claude'],
-  codex: ['codex'],
-  opencode: ['opencode'],
-  multi: ['claude', 'codex', 'opencode'],
-};
 const RULE_ADAPTER_TARGETS = {
   claude: [{ kind: 'claude-rule-pointer', root: '.claude/rules' }],
   codex: [{ kind: 'codex-entry-pointer', file: 'AGENTS.md' }],
@@ -23,7 +17,7 @@ const RULE_ADAPTER_TARGETS = {
     { kind: 'opencode-instructions', file: 'opencode.json' },
   ],
 };
-const PREFERRED_RULE_ORDER = ['common', 'web', 'typescript', 'java', 'python', 'fastapi', 'claude', 'codex', 'opencode'];
+const PREFERRED_RULE_ORDER = ['common', 'web', 'typescript', 'java', 'python', 'fastapi'];
 const SPECIAL_RULES = new Set(['all', 'none']);
 
 function getRulesRootPath(rulesRoot = DEFAULT_RULES_ROOT) {
@@ -78,17 +72,8 @@ function normalizeRules(rules, availableRules = getAvailableRuleDirs()) {
   return normalizeConcreteRules(tokens, availableRules, 'rules');
 }
 
-function getAgentRuleDirs(agent, availableRules = getAvailableRuleDirs()) {
-  const agentRules = AGENT_RULES[agent];
-  if (!agentRules) {
-    throw new Error(`unknown agent for default rules: ${agent}`);
-  }
-
-  return normalizeConcreteRules(agentRules, availableRules, 'agent rules');
-}
-
 function getDefaultRulesForAgent(agent, availableRules = getAvailableRuleDirs()) {
-  return mergeRules([...DEFAULT_ENGINEERING_RULES, ...getAgentRuleDirs(agent, availableRules)], availableRules);
+  return mergeRules(DEFAULT_ENGINEERING_RULES, availableRules);
 }
 
 function getRuleAdapterTargetsForAgent(agent) {
@@ -100,13 +85,9 @@ function getRuleAdapterTargetsForAgent(agent) {
   return targets.map((target) => ({ ...target }));
 }
 
-function addAgentRules(rules, agent, availableRules = getAvailableRuleDirs()) {
+function normalizeSelectedRules(rules, availableRules = getAvailableRuleDirs()) {
   const normalizedRules = normalizeConcreteRules(rules, availableRules, 'rules');
-  if (normalizedRules.length === 0) {
-    return [];
-  }
-
-  return mergeRules([...normalizedRules, ...getAgentRuleDirs(agent, availableRules)], availableRules);
+  return normalizedRules;
 }
 
 function mergeRules(rules, availableRules = getAvailableRuleDirs()) {
@@ -186,6 +167,6 @@ module.exports = {
   normalizeConcreteRules,
   getDefaultRulesForAgent,
   getRuleAdapterTargetsForAgent,
-  addAgentRules,
+  normalizeSelectedRules,
   formatRules,
 };

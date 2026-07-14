@@ -237,8 +237,8 @@ function resolveRules(options, parsed, agent, available) {
   if (parsed.usable) return { source: 'manifest', value: parsed.rules };
   if (options.rulesOutProvided) return { source: 'explicit', value: options.rules };
   if (options.rulesProvided) {
-    const { addAgentRules } = require('../rules');
-    return { source: 'explicit', value: addAgentRules(options.rules, agent, available) };
+    const { normalizeSelectedRules } = require('../rules');
+    return { source: 'explicit', value: normalizeSelectedRules(options.rules, available) };
   }
   if (parsed.rules) return { source: 'manifest', value: parsed.rules };
   return { source: 'agent-default', value: getDefaultRulesForAgent(agent, available) };

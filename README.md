@@ -42,7 +42,7 @@ niuma-harness audit [target] [--harness-dir <name>] [--task <name> | --all] [--s
 | `--agent <name>` | `claude`, `codex`, `opencode`, or `multi` |
 | `--tool <name>` | Alias for `--agent` |
 | `--harness-dir <name>` | Harness directory for first init or same-name re-init, default: `harness`; changing it is not migration |
-| `--rules <selection>` | `all`, `none`, or `<rule-dir>[,<rule-dir>...]`; agent adapter rules are added automatically |
+| `--rules <selection>` | `all`, `none`, or `<rule-dir>[,<rule-dir>...]` |
 | `--rules-out <selection>` | Exclude selected rule directories from `all` |
 | `--skills <selection>` | `all`, `none`, or `<skill>[,<skill>...]`, default: `all` |
 | `--dry-run` | Print planned actions without writing files |
@@ -82,7 +82,7 @@ npx niuma-harness init ./workspace --agent claude --rules all
 npx niuma-harness init ./workspace --agent claude --rules web,typescript
 npx niuma-harness init ./workspace --agent claude --rules java
 npx niuma-harness init ./workspace --agent claude --rules python,fastapi
-npx niuma-harness init ./workspace --agent claude --rules-out opencode
+npx niuma-harness init ./workspace --agent claude --rules-out web
 npx niuma-harness init ./workspace --agent opencode --dry-run
 npx niuma-harness init ./workspace --agent multi --harness-dir ai-harness
 npx niuma-harness doctor ./workspace
@@ -95,10 +95,10 @@ npx niuma-harness audit ./workspace --all --strict
 
 | Agent | Generated entry file | Default rules | Native rules adapter |
 |---|---|---|---|
-| `claude` | `CLAUDE.md` | `common`, `claude` | `.claude/rules/niuma-<rule>.md` pointers |
-| `codex` | `AGENTS.md` | `common`, `codex` | `AGENTS.md` pointer; no `.codex/rules` |
-| `opencode` | `AGENTS.md` | `common`, `opencode` | exact selected rule-file paths in `opencode.json.instructions` |
-| `multi` | `CLAUDE.md` and `AGENTS.md` | `common`, `claude`, `codex`, `opencode` | all applicable adapters |
+| `claude` | `CLAUDE.md` | `common` | `.claude/rules/niuma-<rule>.md` pointers |
+| `codex` | `AGENTS.md` | `common` | `AGENTS.md` pointer; no `.codex/rules` |
+| `opencode` | `AGENTS.md` | `common` | exact selected rule-file paths in `opencode.json.instructions` |
+| `multi` | `CLAUDE.md` and `AGENTS.md` | `common` | all applicable adapters |
 
 ## Generated structure
 
@@ -112,7 +112,6 @@ workspace/
       # Native commands installed when supported by the selected agent
     rules/
       niuma-common.md
-      niuma-claude.md
     skills/
       # Optional native skills selected by --skills
   harness/
@@ -149,8 +148,6 @@ workspace/
           coding-style.md
           security.md
           testing.md
-        claude/
-          hooks.md
   agent-work/
     README.md
     tasks/
@@ -182,7 +179,7 @@ The layer files describe what each layer must do. The existing `docs/process/`, 
 {
   "schemaVersion": 2,
   "agent": "claude",
-  "rules": ["common", "claude"],
+  "rules": ["common"],
   "skills": ["database-readonly", "zentao-bug-workflow"],
   "commands": ["dev-check.md", "dev-summary.md", "git-status.md", "git-sync.md", "glab-projects.md"],
   "artifacts": [
@@ -321,23 +318,20 @@ templates/rules/*  ->  harness/docs/rules/*  ->  agent-native pointers
 - `codex` uses the `AGENTS.md` contract pointer and does not generate `.codex/rules` for coding standards.
 - `opencode` writes exact selected canonical rule-file paths into the `opencode.json.instructions` string array. OpenCode treats these entries as additional instruction files and loads them alongside `AGENTS.md`; user paths, globs, URLs, and unrelated config fields remain outside Niuma ownership.
 
-Rule directories have two roles:
-
-- `common`, `web`, `typescript`, `java`, `python`, `fastapi`, and other non-agent rule directories are lightweight engineering preferences.
-- `claude`, `codex`, and `opencode` are agent-specific notes installed automatically for the selected `--agent`.
+All available rule directories are lightweight engineering preferences selected explicitly or through the `common` default.
 
 Multiple selected rule directories can apply to the same task. For example, `.ts` / `.tsx` browser UI work may need both `web/` and `typescript/`; FastAPI API work may need both `python/` and `fastapi/`; a mixed backend/frontend workspace may select `java`, `web`, and `typescript` together.
 
-When `--rules` is omitted, `init` installs `common` plus the selected agent adapter rules:
+When `--rules` is omitted, `init` installs `common`:
 
 | Agent | Installed rules |
 |---|---|
-| `claude` | `common`, `claude` |
-| `codex` | `common`, `codex` |
-| `opencode` | `common`, `opencode` |
-| `multi` | `common`, `claude`, `codex`, `opencode` |
+| `claude` | `common` |
+| `codex` | `common` |
+| `opencode` | `common` |
+| `multi` | `common` |
 
-Use `--rules <selection>` to choose engineering rule directories; the current agent adapter rules are still added automatically.
+Use `--rules <selection>` to choose engineering rule directories.
 
 ```bash
 npx niuma-harness init . --agent codex --rules common
@@ -346,7 +340,7 @@ npx niuma-harness init . --agent claude --rules java
 npx niuma-harness init . --agent claude --rules python,fastapi
 ```
 
-The first command installs `common` and `codex`. The second installs `web`, `typescript`, and `claude`. The third installs `java` and `claude`. The fourth installs `python`, `fastapi`, and `claude`.
+The first command installs `common`. The second installs `web` and `typescript`. The third installs `java`. The fourth installs `python` and `fastapi`.
 
 Use `all` to install every available rule directory, or `none` to install no rule files.
 
@@ -355,10 +349,10 @@ npx niuma-harness init . --agent claude --rules all
 npx niuma-harness init . --agent claude --rules none
 ```
 
-Use `--rules-out` to install all available rule directories except the listed ones. Explicit exclusions win, including exclusions for the current agent adapter rule.
+Use `--rules-out` to install all available rule directories except the listed ones. Explicit exclusions win.
 
 ```bash
-npx niuma-harness init . --agent claude --rules-out opencode
+npx niuma-harness init . --agent claude --rules-out web
 ```
 
 ## Skills selection

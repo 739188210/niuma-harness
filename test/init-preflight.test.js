@@ -144,14 +144,14 @@ test('drifted retired command leaves workspace unchanged', () => {
   assertTreeUnchanged(workspace, before);
 });
 
-test('drifted retired agent rule leaves workspace unchanged', () => {
+test('drifted retired engineering rule leaves workspace unchanged', () => {
   const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'multi']);
+  let result = run(['init', workspace, '--agent', 'multi', '--rules', 'all']);
   assert.strictEqual(result.status, 0, result.stderr);
-  const target = path.join(workspace, 'harness', 'docs', 'rules', 'opencode', 'automation.md');
+  const target = path.join(workspace, 'harness', 'docs', 'rules', 'web', 'testing.md');
   fs.appendFileSync(target, 'drift\n', 'utf8');
   const before = snapshotTree(workspace);
-  result = run(['init', workspace, '--agent', 'claude']);
+  result = run(['init', workspace, '--agent', 'claude', '--rules', 'common']);
   assert.notStrictEqual(result.status, 0);
   assert.match(result.stderr, /owned rule artifact drifted/);
   assertTreeUnchanged(workspace, before);

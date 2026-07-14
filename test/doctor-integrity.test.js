@@ -77,12 +77,12 @@ test('doctor preserves rules selection semantics and rejects stale excluded surf
   fs.writeFileSync(staleRule, 'stale\n', 'utf8');
   expectDoctorError(noneWorkspace, /unexpected managed content docs\/rules\/common\/testing\.md/);
 
-  const excludedWorkspace = initWorkspace('claude', ['--rules-out', 'claude']);
+  const excludedWorkspace = initWorkspace('claude', ['--rules-out', 'web']);
   const manifest = JSON.parse(read(path.join(excludedWorkspace, 'harness', 'manifest.json')));
-  assert.ok(!manifest.rules.includes('claude'));
-  const stalePointer = path.join(excludedWorkspace, '.claude', 'rules', 'niuma-claude.md');
+  assert.ok(!manifest.rules.includes('web'));
+  const stalePointer = path.join(excludedWorkspace, '.claude', 'rules', 'niuma-web.md');
   fs.writeFileSync(stalePointer, 'stale\n', 'utf8');
-  expectDoctorError(excludedWorkspace, /unexpected managed content \.claude\/rules\/niuma-claude\.md/);
+  expectDoctorError(excludedWorkspace, /unexpected managed content \.claude\/rules\/niuma-web\.md/);
 });
 
 test('doctor rejects known files from unselected skills but preserves local files', () => {

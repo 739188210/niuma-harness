@@ -72,8 +72,8 @@ for (const from of agents) {
 }
 
 for (const scenario of [
-  { from: 'multi', fromRulesOut: 'common', to: 'claude', toRulesOut: 'claude' },
-  { from: 'opencode', fromRulesOut: 'opencode', to: 'multi', toRulesOut: 'codex' },
+  { from: 'multi', fromRulesOut: 'common', to: 'claude', toRulesOut: 'web' },
+  { from: 'opencode', fromRulesOut: 'typescript', to: 'multi', toRulesOut: 'java' },
 ]) {
   test(`agent switch ${scenario.from} --rules-out ${scenario.fromRulesOut} -> ${scenario.to} --rules-out ${scenario.toRulesOut} converges rules surfaces`, () => {
     const workspace = tempDir();

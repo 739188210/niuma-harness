@@ -121,7 +121,6 @@ for (const [label, instructions] of [
     assert.ok(Array.isArray(repaired.instructions));
     assert.ok(repaired.instructions.every((item) => typeof item === 'string'));
     assert.ok(repaired.instructions.includes('harness/docs/rules/common/testing.md'));
-    assert.ok(repaired.instructions.includes('harness/docs/rules/opencode/automation.md'));
     assert.strictEqual(run(['doctor', workspace]).status, 0);
   });
 }
@@ -207,7 +206,7 @@ test('repair rebuilds an invalid manifest with explicit recovery selections', ()
   assert.strictEqual(result.status, 0, result.stderr);
   const manifest = readJson(manifestPath);
   assert.strictEqual(manifest.agent, 'claude');
-  assert.deepStrictEqual(manifest.rules, ['common', 'claude']);
+  assert.deepStrictEqual(manifest.rules, ['common']);
   assert.deepStrictEqual(manifest.skills, []);
   assert.strictEqual(run(['doctor', workspace]).status, 0);
 });

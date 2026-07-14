@@ -415,7 +415,7 @@ test('--skills dry-run writes nothing', () => {
   assert.match(result.stdout, new RegExp(primarySkill));
 });
 
-test('re-init with a different agent converges agent-specific rules', () => {
+test('re-init with a different agent converges rule adapters', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);

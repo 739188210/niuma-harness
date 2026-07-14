@@ -10,7 +10,7 @@ Init options:
   --agent <name>         claude | codex | opencode | multi
   --tool <name>          Alias for --agent
   --harness-dir <name>   Harness name for first init or same-name re-init; not migration
-  --rules <selection>    all | none | <rule-dir>[,<rule-dir>...]; agent adapter rules are added automatically
+  --rules <selection>    all | none | <rule-dir>[,<rule-dir>...]
   --rules-out <dirs>     Exclude rule dirs from all installed rules
   --skills <selection>   all | none | <skill>[,<skill>...], default: all
   --dry-run              Print planned actions without writing files
@@ -44,7 +44,7 @@ Examples:
   niuma-harness init . --agent multi --skills all
   niuma-harness init . --agent claude --rules none --skills none
   niuma-harness init . --agent claude --rules all
-  niuma-harness init . --agent claude --rules-out opencode
+  niuma-harness init . --agent claude --rules-out web
   niuma-harness init . --agent multi --harness-dir ai-harness
   niuma-harness init . --agent opencode --dry-run
   niuma-harness doctor .

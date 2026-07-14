@@ -638,16 +638,6 @@ test('doctor fails when a selected rule file is missing', () => {
   assert.match(result.stdout, /missing docs\/rules\/common\/testing\.md/);
 });
 
-test('doctor fails when a selected agent-specific rule file is missing', () => {
-  const workspace = tempDir();
-  const init = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(init.status, 0, init.stderr);
-  fs.unlinkSync(path.join(workspace, 'harness', 'docs', 'rules', 'claude', 'hooks.md'));
-  const result = run(['doctor', workspace]);
-  assert.notStrictEqual(result.status, 0, 'doctor should fail when a selected agent rule file is missing');
-  assert.match(result.stdout, /missing docs\/rules\/claude\/hooks\.md/);
-});
-
 test('doctor fails when a claude native rule pointer is missing', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);

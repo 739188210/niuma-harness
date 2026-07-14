@@ -2,7 +2,6 @@ const test = require('node:test');
 const { digestBytes } = require('../src/artifact-ledger');
 const { revalidateRulePlan } = require('../src/scaffold/rules-writer');
 const {
-  addAgentRules,
   agentCases,
   allRuleDirs,
   assert,
@@ -21,6 +20,7 @@ const {
   getDefaultRulesForAgent,
   normalizeRules,
   normalizeRulesOut,
+  normalizeSelectedRules,
   path,
   read,
   run,
@@ -29,7 +29,7 @@ const {
   tempDir,
 } = require('./init-fixtures');
 
-test('default rules include common and agent-specific adapters', () => {
+test('default rules include common engineering rules', () => {
   for (const scenario of agentCases) {
     const workspace = tempDir();
     const result = run(['init', workspace, '--agent', scenario.agent]);
@@ -171,7 +171,7 @@ if (allRuleDirs.length > 1) {
   test('--rules all then a specific rule converges on re-init', () => {
     const workspace = tempDir();
     const selectedRule = 'common';
-    const expectedRules = addAgentRules([selectedRule], 'claude', allRuleDirs);
+    const expectedRules = normalizeSelectedRules([selectedRule], allRuleDirs);
     let result = run(['init', workspace, '--agent', 'claude', '--rules', 'all']);
     assert.strictEqual(result.status, 0, result.stderr);
     const harnessRoot = path.join(workspace, 'harness');
@@ -191,16 +191,16 @@ if (allRuleDirs.length > 1) {
 }
 
 for (const scenario of [
-  { rules: 'common', expected: addAgentRules(['common'], 'claude', allRuleDirs) },
-  { rules: 'web', expected: addAgentRules(['web'], 'claude', allRuleDirs) },
-  { rules: 'typescript', expected: addAgentRules(['typescript'], 'claude', allRuleDirs) },
-  { rules: 'java', expected: addAgentRules(['java'], 'claude', allRuleDirs) },
-  { rules: 'python', expected: addAgentRules(['python'], 'claude', allRuleDirs) },
-  { rules: 'fastapi', expected: addAgentRules(['fastapi'], 'claude', allRuleDirs) },
-  { rules: 'web,typescript', expected: addAgentRules(['web', 'typescript'], 'claude', allRuleDirs) },
-  { rules: 'java,web', expected: addAgentRules(['java', 'web'], 'claude', allRuleDirs) },
-  { rules: 'java,typescript', expected: addAgentRules(['java', 'typescript'], 'claude', allRuleDirs) },
-  { rules: 'python,fastapi', expected: addAgentRules(['python', 'fastapi'], 'claude', allRuleDirs) },
+  { rules: 'common', expected: normalizeSelectedRules(['common'], allRuleDirs) },
+  { rules: 'web', expected: normalizeSelectedRules(['web'], allRuleDirs) },
+  { rules: 'typescript', expected: normalizeSelectedRules(['typescript'], allRuleDirs) },
+  { rules: 'java', expected: normalizeSelectedRules(['java'], allRuleDirs) },
+  { rules: 'python', expected: normalizeSelectedRules(['python'], allRuleDirs) },
+  { rules: 'fastapi', expected: normalizeSelectedRules(['fastapi'], allRuleDirs) },
+  { rules: 'web,typescript', expected: normalizeSelectedRules(['web', 'typescript'], allRuleDirs) },
+  { rules: 'java,web', expected: normalizeSelectedRules(['java', 'web'], allRuleDirs) },
+  { rules: 'java,typescript', expected: normalizeSelectedRules(['java', 'typescript'], allRuleDirs) },
+  { rules: 'python,fastapi', expected: normalizeSelectedRules(['python', 'fastapi'], allRuleDirs) },
   { rules: 'all', expected: allRuleDirs },
 ]) {
   test(`--rules ${scenario.rules} installs expected dirs`, () => {
@@ -246,19 +246,19 @@ for (const scenario of [
   });
 }
 
-test('rule normalization sorts, excludes, and adds agent adapters', () => {
-  const availableRules = ['common', 'claude', 'codex', 'opencode', 'extra'];
+test('rule normalization sorts and excludes selected rules', () => {
+  const availableRules = ['common', 'web', 'extra'];
   assert.deepStrictEqual(normalizeRules('extra,common', availableRules), ['common', 'extra']);
-  assert.deepStrictEqual(normalizeRulesOut('common', availableRules), ['claude', 'codex', 'opencode', 'extra']);
-  assert.deepStrictEqual(getDefaultRulesForAgent('claude', availableRules), ['common', 'claude']);
-  assert.deepStrictEqual(getDefaultRulesForAgent('multi', availableRules), ['common', 'claude', 'codex', 'opencode']);
-  assert.deepStrictEqual(addAgentRules(['common'], 'codex', availableRules), ['common', 'codex']);
-  assert.deepStrictEqual(addAgentRules([], 'codex', availableRules), []);
+  assert.deepStrictEqual(normalizeRulesOut('common', availableRules), ['web', 'extra']);
+  assert.deepStrictEqual(getDefaultRulesForAgent('claude', availableRules), ['common']);
+  assert.deepStrictEqual(getDefaultRulesForAgent('multi', availableRules), ['common']);
+  assert.deepStrictEqual(normalizeSelectedRules(['common'], availableRules), ['common']);
+  assert.deepStrictEqual(normalizeSelectedRules([], availableRules), []);
 });
 
 for (const scenario of [
   { agent: 'multi', rulesOut: 'common', expected: allRuleDirs.filter((rule) => rule !== 'common'), entryFiles: ['CLAUDE.md', 'AGENTS.md'] },
-  { agent: 'opencode', rulesOut: 'opencode', expected: allRuleDirs.filter((rule) => rule !== 'opencode'), entryFiles: ['AGENTS.md'] },
+  { agent: 'opencode', rulesOut: 'web', expected: allRuleDirs.filter((rule) => rule !== 'web'), entryFiles: ['AGENTS.md'] },
 ]) {
   test(`${scenario.agent} --rules-out ${scenario.rulesOut} excludes the selected dir from every managed surface`, () => {
     const workspace = tempDir();
@@ -299,4 +299,3 @@ for (const invalidRulesOut of ['none', 'all', 'unknown']) {
     assert.notStrictEqual(result.status, 0, `--rules-out ${invalidRulesOut} should fail`);
   });
 }
-

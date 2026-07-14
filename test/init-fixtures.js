@@ -29,7 +29,7 @@ const {
   snapshotTree,
   tempDir,
 } = require('./helpers');
-const { addAgentRules, getDefaultRulesForAgent, normalizeRules, normalizeRulesOut } = require('../src/rules');
+const { getDefaultRulesForAgent, normalizeRules, normalizeRulesOut, normalizeSelectedRules } = require('../src/rules');
 const { getSkillFiles, normalizeSkills } = require('../src/skills');
 
 const agentCases = [
@@ -122,7 +122,7 @@ function readTextTree(root, options = {}) {
 }
 
 module.exports = {
-  addAgentRules,
+  normalizeSelectedRules,
   agentCases,
   allCommandFiles,
   allRuleDirs,
