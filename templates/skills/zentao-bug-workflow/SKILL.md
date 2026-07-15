@@ -15,13 +15,14 @@ Read runtime configuration from `zentao.config.json` in this skill directory. Ni
 
 Before first use:
 
-1. Check whether `zentao.config.json` exists beside the example.
-2. If it is missing, copy `zentao.config.example.json` to `zentao.config.json` in the same directory. Do not make the helper fall back to the example.
-3. Ask the user to fill the address, account, and password locally. Never ask them to paste passwords, tokens, session cookies, or the populated config into chat.
-4. Run `scripts/zentao_bug.py ping` only after those local connection values are configured.
-5. Guide the user through the non-sensitive scope and writeback choices below.
+1. From the skill directory, run `python scripts/zentao_bug.py init-config` on Windows or `python3 scripts/zentao_bug.py init-config` on Linux/macOS. It creates `zentao.config.json` from the example only when the local config is missing; it never overwrites an existing local config.
+2. Ask the user to fill `api.baseUrl`, `auth.account`, and `auth.password` locally. Never ask them to paste passwords, tokens, session cookies, or the populated config into chat.
+3. Run `python scripts/zentao_bug.py ping` on Windows or `python3 scripts/zentao_bug.py ping` on Linux/macOS only after those local connection values are configured.
+4. Guide the user through the non-sensitive scope and writeback choices below before running bug commands.
 
-The local `zentao.config.json` is not managed by Niuma and should not be committed.
+If the helper is unavailable, manually copy `zentao.config.example.json` to `zentao.config.json` in the same directory. Do not make the helper fall back to the example.
+
+The local `zentao.config.json` is not managed by Niuma, is not synchronized between agent roots, and should not be committed.
 
 Required top-level sections:
 
@@ -66,6 +67,25 @@ Example:
 
 If an existing `zentao.config.json` still contains placeholders such as `zentao.example.com` or `change-me`, stop before network access and ask the user to update those values locally.
 
+### Scope Examples
+
+Keep the distributed `scopes.read` and `scopes.write` arrays empty until the user explicitly confirms the product, project, read range, and writeback level. After confirmation, a project-limited read scope plus comment-only write scope looks like:
+
+```json
+{
+  "scopes": {
+    "read": [
+      { "product": 12, "projects": [91] }
+    ],
+    "write": [
+      { "product": 12, "projects": [91], "actions": ["comment"] }
+    ]
+  }
+}
+```
+
+Use `{ "product": 12, "projects": [] }` only when the user approves product-wide read access. The example IDs are not authorization defaults. A write scope must list `actions` from `comment` and `resolve`; it remains inactive until `writePolicy.enabled=true` is also explicitly approved.
+
 ### First-Use Scope Setup
 
 The distributed example starts with empty read and write scopes. If the connection values are configured but `scopes.read` is missing or empty, start a guided setup instead of continuing to a normal bug command. An empty `scopes.write` is a valid read-only choice.
@@ -109,6 +129,11 @@ Use `zentao.config.json` as the effective authorization boundary. Do not use the
 From this skill directory, prefer the Python entrypoint because it works on Windows, Linux, and macOS:
 
 ```bash
+# Windows
+python scripts/zentao_bug.py init-config
+# Linux/macOS
+python3 scripts/zentao_bug.py init-config
+
 python scripts/zentao_bug.py list-active
 python scripts/zentao_bug.py list-unclosed
 python scripts/zentao_bug.py get 12345

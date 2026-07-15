@@ -1,6 +1,6 @@
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("get", "list-active", "list-unclosed", "prepare", "cleanup", "ping", "comment", "resolve", "validated")]
+    [ValidateSet("get", "list-active", "list-unclosed", "prepare", "cleanup", "init-config", "ping", "comment", "resolve", "validated")]
     [string]$Command = "list-unclosed",
 
     [Parameter(Position = 1)]

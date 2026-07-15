@@ -1,4 +1,5 @@
 const test = require('node:test');
+const { spawnSync } = require('node:child_process');
 const {
   allCommandFiles,
   allSkillDirs,
@@ -220,6 +221,36 @@ if (allSkillDirs.includes('zentao-bug-workflow')) {
     assert.strictEqual(example.writePolicy.autoResolveAfterValidation, false);
   });
 
+  test('zentao init-config creates a local config once without overwriting it', (t) => {
+    const workspace = tempDir();
+    const result = run(['init', workspace, '--agent', 'claude', '--skills', 'zentao-bug-workflow']);
+    assert.strictEqual(result.status, 0, result.stderr);
+    const skillRoot = path.join(workspace, '.claude', 'skills', 'zentao-bug-workflow');
+    const helperPath = path.join(skillRoot, 'scripts', 'zentao_bug.py');
+    const examplePath = path.join(skillRoot, 'zentao.config.example.json');
+    const configPath = path.join(skillRoot, 'zentao.config.json');
+    const python = process.platform === 'win32' ? 'python' : 'python3';
+
+    const first = spawnSync(python, [helperPath, 'init-config'], { cwd: skillRoot, encoding: 'utf8' });
+    if (first.error && first.error.code === 'ENOENT') {
+      t.skip('Python 3 is unavailable for helper behavior coverage');
+      return;
+    }
+    assert.strictEqual(first.status, 0, first.stderr);
+    assert.strictEqual(read(configPath), read(examplePath));
+    if (process.platform !== 'win32') {
+      assert.strictEqual(fs.statSync(configPath).mode & 0o777, 0o600);
+    }
+    assert.match(first.stdout, /"created": true/);
+    assert.doesNotMatch(first.stdout, /change-me|zentao\.example\.com/);
+
+    fs.writeFileSync(configPath, '{"local": true}\n', 'utf8');
+    const second = spawnSync(python, [helperPath, 'init-config'], { cwd: skillRoot, encoding: 'utf8' });
+    assert.strictEqual(second.status, 0, second.stderr);
+    assert.strictEqual(read(configPath), '{"local": true}\n');
+    assert.match(second.stdout, /"created": false/);
+  });
+
   test('zentao helper refuses placeholder config values before network requests', () => {
     const workspace = tempDir();
     const result = run(['init', workspace, '--agent', 'claude', '--skills', 'zentao-bug-workflow']);
@@ -232,7 +263,10 @@ if (allSkillDirs.includes('zentao-bug-workflow')) {
     assert.match(helper, /host\.endswith\("\.example\.com"\)/);
     assert.match(helper, /assert_not_placeholder_config\(section, key, value\)/);
     assert.match(helper, /zentao\.config\.example\.json/);
-    assert.match(helper, /Copy \{example\.name\} to \{path\.name\}/);
+    assert.match(helper, /Run init-config or copy \{example\.name\} to \{path\.name\}/);
+    assert.match(helper, /def command_init_config\(root: Path\) -> dict\[str, Any\]:/);
+    assert.match(helper, /config_path\.open\("xb"\)/);
+    assert.match(helper, /"init-config"/);
     assert.match(helper, /Do not paste passwords, tokens, cookies, or the populated config into chat/);
     assert.match(helper, /Edit the local config file before running ZenTao network requests/);
     assert.match(helper, /scopes\.read is empty/);
@@ -241,6 +275,14 @@ if (allSkillDirs.includes('zentao-bug-workflow')) {
     assert.match(helper, /scopes must be an object/);
     assert.match(helper, /\.projects must be an array/);
     assert.match(helper, /\.actions must be an array containing only comment or resolve/);
+    const powershell = read(path.join(workspace, '.claude', 'skills', 'zentao-bug-workflow', 'scripts', 'zentao_bug.ps1'));
+    const skill = read(path.join(workspace, '.claude', 'skills', 'zentao-bug-workflow', 'SKILL.md'));
+    const readme = read(path.join(workspace, '.claude', 'skills', 'zentao-bug-workflow', 'README.md'));
+    assert.match(powershell, /"init-config"/);
+    assert.match(skill, /python scripts\/zentao_bug\.py init-config/);
+    assert.match(readme, /python scripts\/zentao_bug\.py init-config/);
+    assert.match(skill, /"actions": \["comment"\]/);
+    assert.match(readme, /"actions": \["comment"\]/);
   });
 
   test('zentao local config is preserved while managed skill files refresh on re-init', () => {

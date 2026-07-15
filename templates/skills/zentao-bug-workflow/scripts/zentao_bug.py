@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import os
 import re
 import shutil
 import sys
@@ -39,12 +40,59 @@ def skill_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
+def command_init_config(root: Path) -> dict[str, Any]:
+    example = root / "zentao.config.example.json"
+    config_path = root / "zentao.config.json"
+
+    if config_path.is_symlink():
+        raise RuntimeError(f"Refusing to initialize local config through symlink: {config_path.name}")
+    if config_path.exists():
+        if not config_path.is_file():
+            raise RuntimeError(f"Local config path is not a regular file: {config_path.name}")
+        return {
+            "created": False,
+            "config": config_path.name,
+            "nextStep": "Local config already exists and was not modified.",
+        }
+
+    if example.is_symlink() or not example.is_file():
+        raise RuntimeError(f"Config example must be a regular file: {example.name}")
+
+    contents = example.read_bytes()
+    try:
+        with config_path.open("xb") as fh:
+            fh.write(contents)
+        if os.name != "nt":
+            config_path.chmod(0o600)
+    except FileExistsError:
+        return {
+            "created": False,
+            "config": config_path.name,
+            "nextStep": "Local config already exists and was not modified.",
+        }
+    except Exception:
+        try:
+            config_path.unlink()
+        except FileNotFoundError:
+            pass
+        raise
+
+    return {
+        "created": True,
+        "config": config_path.name,
+        "nextStep": (
+            "Fill api.baseUrl, auth.account, and auth.password locally, then run ping. "
+            "Do not paste passwords, tokens, cookies, or the populated config into chat."
+        ),
+    }
+
+
 def load_config(root: Path) -> dict[str, Any]:
     path = root / "zentao.config.json"
     if not path.exists():
         example = root / "zentao.config.example.json"
         raise RuntimeError(
-            f"Missing local config at {path}. Copy {example.name} to {path.name}, then fill sensitive values locally. "
+            f"Missing local config at {path}. Run init-config or copy {example.name} to {path.name}, then fill sensitive values locally. "
             "Do not paste passwords, tokens, cookies, or the populated config into chat."
         )
     with path.open("r", encoding="utf-8-sig") as fh:
@@ -741,7 +789,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "command",
         nargs="?",
         default="list-unclosed",
-        choices=["get", "list-active", "list-unclosed", "prepare", "cleanup", "ping", "comment", "resolve", "validated"],
+        choices=["get", "list-active", "list-unclosed", "prepare", "cleanup", "init-config", "ping", "comment", "resolve", "validated"],
     )
     parser.add_argument("bug_id", nargs="?", type=int, default=0)
     parser.add_argument("--limit", "-Limit", type=int, default=20)
@@ -761,6 +809,9 @@ def main(argv: list[str]) -> int:
     try:
         if args.command == "cleanup":
             print_json(cleanup_tasks(root, args.bug_id, args.task_dir or None))
+            return 0
+        if args.command == "init-config":
+            print_json(command_init_config(root))
             return 0
 
         config = load_config(root)

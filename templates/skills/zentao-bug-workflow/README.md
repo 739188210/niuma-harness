@@ -30,13 +30,24 @@ zentao-bug-workflow/
 
 首次使用时：
 
-1. 在 skill 目录中将 `zentao.config.example.json` 复制为 `zentao.config.json`。
-2. 只在本地填写 `api.baseUrl`、账号和密码；不要把密码、Token、Cookie 或完整配置粘贴到聊天中。
+1. 在实际使用的 skill 目录运行：
+
+   ```bash
+   # Windows
+   python scripts/zentao_bug.py init-config
+   # Linux/macOS
+   python3 scripts/zentao_bug.py init-config
+   ```
+
+   它只会在 `zentao.config.json` 不存在时，从 `zentao.config.example.json` 创建本地配置；已存在的本地配置不会被读取、覆盖或删除。
+2. 只在本地填写 `api.baseUrl`、`auth.account` 和 `auth.password`；不要把密码、Token、Cookie 或完整配置粘贴到聊天中。
 3. 不要直接把 example 当作运行配置，也不要在 example 中保存真实凭据；re-init 会刷新它。
-4. 本地配置完成后运行 `python scripts/zentao_bug.py ping`。
+4. 本地配置完成后，在 Windows 运行 `python scripts/zentao_bug.py ping`，在 Linux/macOS 运行 `python3 scripts/zentao_bug.py ping`。
 5. 再根据产品、项目、读取范围和写回策略配置 scope；扩大 scope 或启用写回前需要用户明确确认。
 
-`zentao.config.json` 不由 Niuma 管理，也不应提交到代码仓库。其结构如下：
+如果 helper 不可用，才手动将 `zentao.config.example.json` 复制为 `zentao.config.json`。
+
+`zentao.config.json` 不由 Niuma 管理、不会在不同 agent root 之间同步，也不应提交到代码仓库。其结构如下：
 
 ```json
 {
@@ -77,6 +88,28 @@ zentao-bug-workflow/
 - 分发的 `zentao.config.example.json` 使用占位值和空 scope，仅用于创建本地配置。
 - `scopes.read=[]` 表示读取范围尚未授权；`scopes.write=[]` 可以作为长期只读配置。
 - 不要把填入真实账号密码的 `zentao.config.json` 提交到代码仓库。
+
+### scope 配置示例
+
+分发模板保持空 scope。只有用户明确确认产品、项目、读取范围和写回级别后，才填写下列示例中的 ID；`12` 和 `91` 仅为示例，不代表默认授权：
+
+```json
+{
+  "scopes": {
+    "read": [
+      { "product": 12, "projects": [91] }
+    ],
+    "write": [
+      { "product": 12, "projects": [91], "actions": ["comment"] }
+    ]
+  }
+}
+```
+
+- `{ "product": 12, "projects": [] }` 表示该产品下所有项目的产品级读取范围。
+- `{ "product": 12, "projects": [91] }` 表示只允许项目 `91`。
+- 写入 scope 必须配置 `actions`，可选值仅为 `comment` 和 `resolve`。
+- 即使已配置写入 scope，仍必须经用户明确确认后才将 `writePolicy.enabled` 改为 `true`；默认不允许写回。
 
 ## api 评论配置
 
@@ -229,6 +262,15 @@ zentao-bug-workflow/
 禅道里很多 Bug 只绑定产品，不绑定项目，所以日常建议保持 `true`。如果你们要求所有 Bug 必须绑定项目，可以改成 `false`。
 
 ## 常用命令
+
+初始化本地配置（只在不存在时创建，绝不覆盖已有配置）：
+
+```bash
+# Windows
+python scripts/zentao_bug.py init-config
+# Linux/macOS
+python3 scripts/zentao_bug.py init-config
+```
 
 列出配置了产品级只读白名单的产品下未关闭 Bug：
 
