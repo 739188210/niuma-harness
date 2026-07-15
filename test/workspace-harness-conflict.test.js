@@ -86,7 +86,11 @@ test('discovery ignores unrelated manifests and recognizes damaged harness struc
   const damaged = writeManifestCandidate(workspace, 'damaged', '{}\n');
   fs.mkdirSync(path.join(damaged, 'docs', 'layers'), { recursive: true });
   fs.mkdirSync(path.join(damaged, 'docs', 'policy'), { recursive: true });
-  fs.writeFileSync(path.join(damaged, 'HARNESS_GUIDE.md'), '# Niuma Harness Guide\n\nstable 7-layer operating context\n', 'utf8');
+  fs.writeFileSync(
+    path.join(damaged, 'README.md'),
+    '# Niuma Harness\n\nThis directory contains the generated Niuma Harness\n',
+    'utf8',
+  );
   fs.writeFileSync(path.join(damaged, 'docs', 'index.md'), '# Harness Runtime Index\n\n## 7-layer harness model\n', 'utf8');
   fs.writeFileSync(path.join(damaged, 'docs', 'layers', '07-loop.md'), '# Loop Runtime Layer Memo\n\nagent-work/tasks/<task-name>/status.md\n', 'utf8');
   fs.writeFileSync(path.join(damaged, 'docs', 'policy', 'action-boundary.md'), '# Action Boundary Policy\n\n## Autonomous actions\n', 'utf8');
@@ -114,15 +118,23 @@ test('damaged structure does not follow internal symlinks', () => {
   const workspace = tempDir();
   const outside = tempDir();
   const root = writeManifestCandidate(workspace, 'damaged', '{invalid');
-  fs.writeFileSync(path.join(root, 'HARNESS_GUIDE.md'), 'guide\n', 'utf8');
-  fs.mkdirSync(path.join(outside, 'layers'));
-  fs.writeFileSync(path.join(outside, 'layers', '07-loop.md'), 'loop\n', 'utf8');
+  fs.writeFileSync(
+    path.join(root, 'README.md'),
+    '# Niuma Harness\n\nThis directory contains the generated Niuma Harness\n',
+    'utf8',
+  );
+  fs.mkdirSync(path.join(outside, 'layers'), { recursive: true });
+  fs.mkdirSync(path.join(outside, 'policy'), { recursive: true });
+  fs.writeFileSync(path.join(outside, 'index.md'), '# Harness Runtime Index\n\n## 7-layer harness model\n', 'utf8');
+  fs.writeFileSync(path.join(outside, 'layers', '07-loop.md'), '# Loop Runtime Layer Memo\n\nagent-work/tasks/<task-name>/status.md\n', 'utf8');
+  fs.writeFileSync(path.join(outside, 'policy', 'action-boundary.md'), '# Action Boundary Policy\n\n## Autonomous actions\n', 'utf8');
   let linked = false;
   try {
     fs.symlinkSync(outside, path.join(root, 'docs'), process.platform === 'win32' ? 'junction' : 'dir');
     linked = true;
   } catch {}
   if (linked) {
+    assert.ok(fs.lstatSync(path.join(root, 'docs')).isSymbolicLink());
     assert.deepStrictEqual(scanWorkspaceHarnesses(workspace), []);
   }
 });

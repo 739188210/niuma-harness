@@ -13,8 +13,8 @@
   ],
   "templateFiles": [
     {
-      "target": "HARNESS_GUIDE.md",
-      "template": "core/HARNESS_GUIDE.md"
+      "target": "README.md",
+      "template": "README.md"
     },
     {
       "target": "docs/index.md",

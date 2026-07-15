@@ -460,10 +460,10 @@ test('repair rejects a direct directory with an unrelated invalid manifest', () 
   assert.match(result.stderr, /No Niuma harness found/);
 });
 
-test('repair rejects arbitrary content in the former damaged-harness marker files', () => {
+test('repair rejects arbitrary content in damaged-harness marker files', () => {
   const target = tempDir();
   fs.mkdirSync(path.join(target, 'docs', 'layers'), { recursive: true });
-  fs.writeFileSync(path.join(target, 'HARNESS_GUIDE.md'), 'unrelated guide\n');
+  fs.writeFileSync(path.join(target, 'README.md'), 'unrelated readme\n');
   fs.writeFileSync(path.join(target, 'docs', 'layers', '07-loop.md'), 'unrelated loop\n');
   const result = run(['repair', target, '--dry-run', '--agent', 'claude']);
   assert.notStrictEqual(result.status, 0);

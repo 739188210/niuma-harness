@@ -13,7 +13,7 @@ This is the navigation map for the harness. The entry file (`CLAUDE.md` / `AGENT
 - Optional engineering standards selected during init are installed in the selected agent's native rule surface.
 - `docs/experiments/` stores active experimental harness feedback mechanisms.
 - `agent-work/` stores task-local notes, plans, verification evidence, and handoff state.
-- `HARNESS_GUIDE.md` explains the harness structure for people maintaining it.
+- `../README.md` explains the harness structure and how to use it.
 
 ## Runtime reading order
 
