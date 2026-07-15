@@ -84,7 +84,7 @@ CLAUDE.md / AGENTS.md
 | `AGENTS.md` rules pointer | Codex/OpenCode entry-level navigation to `<harness-dir>/docs/rules/`; Codex does not use `.codex/rules` for coding standards. |
 | `<harness-dir>/docs/automation/` | Verified automation intent, hooks, and CI notes. |
 | `agent-work/` | Workspace-level task-local memory, plans, status ledgers, verification evidence, and handoff notes. |
-| `<harness-dir>/HARNESS_GUIDE.md` | Human-facing structure and maintenance guide. |
+| `<harness-dir>/README.md` | General harness entry: purpose, start points, structure, ownership, and maintenance guidance. |
 | `<harness-dir>/manifest.json` | Generated harness status and authoritative project ownership/history state used by `doctor/check` and backup-first `repair`. |
 
 ### Rules distribution model

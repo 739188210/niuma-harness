@@ -45,7 +45,8 @@ function assertCommonHarnessShape(workspace, options = {}) {
   const harnessDir = options.harnessDir || 'harness';
   const harnessRoot = path.join(workspace, harnessDir);
 
-  assertFile(path.join(harnessRoot, 'HARNESS_GUIDE.md'));
+  assertFile(path.join(harnessRoot, 'README.md'));
+  assertNoPath(path.join(harnessRoot, 'HARNESS_GUIDE.md'));
   assertFile(path.join(harnessRoot, 'docs', 'index.md'));
   assertFile(path.join(harnessRoot, 'docs', 'policy', 'action-boundary.md'));
   assertFile(path.join(harnessRoot, 'docs', 'policy', 'secret-leak.md'));

@@ -119,7 +119,7 @@ workspace/
       # Optional native skills selected by --skills
   harness/
     manifest.json
-    HARNESS_GUIDE.md
+    README.md
     docs/
       index.md
       project-context.md
@@ -216,7 +216,7 @@ Schema version 1 is intentionally unsupported because this version has not been 
 | File | On re-init |
 |---|---|
 | **Entry** (`CLAUDE.md` / `AGENTS.md`) | Merged: if the contract block is present it is refreshed; otherwise the block is inserted at the top. Your existing content is always preserved. |
-| **Tool-managed** (layers, process playbooks, policy, index, HARNESS_GUIDE, `agent-work/README.md`) | Refreshed from the template. |
+| **Tool-managed** (layers, process playbooks, policy, index, README.md, `agent-work/README.md`) | Refreshed from the template. |
 | **User-maintained** (`project-context.md`) | Preserved if it exists; created from the template only when absent. |
 | Native Markdown rules | Claude files under `.claude/rules/` and OpenCode files under `.opencode/rules/` are Niuma-managed. On re-init, clean ledger-owned files refresh from the package; drifted or unowned occupied targets stop before mutation and direct you to `repair --dry-run`. Deselect removes only unchanged ledger-owned files; unknown local files survive. Codex receives the selected Markdown content through the managed `AGENTS.md` contract. |
 | Native command artifacts (`.claude/commands/`, `.agents/skills/<command-id>/`, `.opencode/commands/`) | Refreshed only when the schema-2 ledger proves ownership and the current exact-byte digest has not drifted. Occupied unowned or locally modified targets stop `init` before scaffold writes. Unknown user-created files are left untouched. |

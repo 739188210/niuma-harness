@@ -4,8 +4,8 @@ const path = require('path');
 
 const DAMAGED_HARNESS_MARKERS = [
   {
-    fragments: ['# Niuma Harness Guide', 'stable 7-layer operating context'],
-    relativePath: 'HARNESS_GUIDE.md',
+    fragments: ['# Niuma Harness', 'This directory contains the generated Niuma Harness'],
+    relativePath: 'README.md',
   },
   {
     fragments: ['# Harness Runtime Index', '## 7-layer harness model'],

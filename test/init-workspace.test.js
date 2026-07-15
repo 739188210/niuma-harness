@@ -227,7 +227,8 @@ test('--harness-dir uses a custom directory name', () => {
   assert.strictEqual(result.status, 0, result.stderr);
   assertFile(path.join(workspace, 'CLAUDE.md'));
   assertNoPath(path.join(workspace, 'ai-harness', 'CLAUDE.md'));
-  assertFile(path.join(workspace, 'ai-harness', 'HARNESS_GUIDE.md'));
+  assertFile(path.join(workspace, 'ai-harness', 'README.md'));
+  assertNoPath(path.join(workspace, 'ai-harness', 'HARNESS_GUIDE.md'));
   assertDir(path.join(workspace, 'agent-work'));
   assertFile(path.join(workspace, 'agent-work', 'README.md'));
   assertDir(path.join(workspace, 'agent-work', 'tasks'));
@@ -244,6 +245,9 @@ test('--harness-dir uses a custom directory name', () => {
   assert.match(entry, /ai-harness\/docs\/layers\/01-context\.md/);
   assert.match(entry, /ai-harness\/docs\/experiments\/task-execution-record\.md/);
   assert.doesNotMatch(entry, /\(depth: `docs\//);
+
+  const index = read(path.join(workspace, 'ai-harness', 'docs', 'index.md'));
+  assert.match(index, /`\.\.\/README\.md`/);
 
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
   assert.match(workReadme, /ai-harness\/docs\/experiments\/task-execution-record\.md/);

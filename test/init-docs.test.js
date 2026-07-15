@@ -4,6 +4,7 @@ const {
   assert,
   assertAgentEntryShape,
   assertCommonHarnessShape,
+  assertFile,
   assertNoPath,
   fs,
   initWorkspace,
@@ -64,14 +65,15 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
     assert.match(body, /## Recovery/, `${pb} must contain Recovery`);
   }
 
-  const guide = read(path.join(h, 'HARNESS_GUIDE.md'));
-  assert.match(guide, /### Tool-managed scaffold files/);
-  assert.match(guide, /## Assurance boundary/);
-  assert.match(guide, /does not copy the `niuma-harness` CLI implementation/);
-  assert.match(guide, /agent-facing operating contract, not a runtime enforcement layer/);
-  assert.match(guide, /Preventing tool actions at runtime depends on controls provided by the host/);
-  assert.match(guide, /`docs\/policy\/action-boundary\.md`: core action permission boundary/);
-  assert.doesNotMatch(guide, /team-maintained action permission boundaries/);
+  assertFile(path.join(h, 'README.md'));
+  const readme = read(path.join(h, 'README.md'));
+  assert.match(readme, /^# Niuma Harness$/m);
+  assert.match(readme, /general entry/);
+  assert.match(readme, /CLAUDE\.md/);
+  assert.match(readme, /AGENTS\.md/);
+  assert.match(readme, /docs\/index\.md/);
+  assert.match(readme, /agent-work\//);
+  assertNoPath(path.join(h, 'HARNESS_GUIDE.md'));
 
   const entry = read(path.join(workspace, 'CLAUDE.md'));
   assert.match(entry, /## Red lines \(apply to every task\)/);
@@ -107,6 +109,7 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
   assert.match(index, /tool-managed navigation map/);
   assert.match(index, /stable project facts in `docs\/project-context\.md`/);
   assert.match(index, /task-local pointers in `agent-work\/`/);
+  assert.match(index, /`\.\.\/README\.md` explains the harness structure and how to use it\./);
   assert.doesNotMatch(index, /Agents may add short runtime pointers/);
 
   assertNoPath(path.join(h, 'docs', 'automation'));
@@ -152,10 +155,6 @@ test('generated docs expose experimental task execution feedback guidance', () =
   assert.match(workReadme, /"exitCode": 0/);
   assert.match(workReadme, /"remainingUnknowns": \[\]/);
 
-  const guide = read(path.join(h, 'HARNESS_GUIDE.md'));
-  assert.match(guide, /manual Harness evaluation/);
-  assert.match(guide, /do not prove that actions occurred, commands ran, or the implementation is objectively correct/);
-  assert.doesNotMatch(guide, /niuma-harness audit/);
 
   const index = read(path.join(h, 'docs', 'index.md'));
   assert.match(index, /docs\/experiments\//);
@@ -218,10 +217,6 @@ test('generated docs define task status ledger protocol and guide task record sh
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
   assert.match(workReadme, /status\.md/);
 
-  const guide = read(path.join(h, 'HARNESS_GUIDE.md'));
-  assert.match(guide, /agent-work\/tasks\/<task-name>\//);
-  assert.match(guide, /status\.md/);
-  assert.match(guide, /explicit status/);
 });
 
 test('generated loop memo defines rationalization red flags', () => {
