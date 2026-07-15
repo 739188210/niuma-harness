@@ -79,6 +79,12 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
   assert.doesNotMatch(entry, /## Assurance boundary/);
 
   const actionBoundary = read(path.join(h, 'docs', 'policy', 'action-boundary.md'));
+  assert.match(actionBoundary, /## Runtime ownership boundary/);
+  assert.match(actionBoundary, /`harness\/` contains the managed operating framework and is not a task workspace/);
+  assert.match(actionBoundary, /Ownership-specific boundaries narrow generic action permissions/);
+  assert.match(actionBoundary, /use the more specific and less permissive classification/);
+  assert.match(actionBoundary, /Keep task-local status, evidence, notes, plans, and handoff state under `agent-work\/`/);
+  assert.match(actionBoundary, /do not use the Harness framework documents for task-local work/);
   assert.match(actionBoundary, /## Autonomous actions/);
   assert.match(actionBoundary, /project-local verification commands that do not create external side effects/);
   assert.match(actionBoundary, /docs\/policy\/untrusted-content\.md/);
@@ -124,6 +130,9 @@ test('generated docs expose experimental task execution feedback guidance', () =
   assert.match(feedbackDoc, /"declaredResult": "success"/);
   assert.match(feedbackDoc, /"evidenceSources"/);
   assert.match(feedbackDoc, /structured task execution record/);
+  assert.match(feedbackDoc, /Use a record for every non-trivial task/);
+  assert.match(feedbackDoc, /For a trivial task, state in the final response that no separate record was needed/);
+  assert.doesNotMatch(feedbackDoc, /For a trivial read-only task/);
   assert.doesNotMatch(feedbackDoc, /niuma-harness audit/);
   assert.doesNotMatch(feedbackDoc, /audit source of truth/);
   assert.doesNotMatch(feedbackDoc, /can be removed or disabled/i);
@@ -424,6 +433,15 @@ test('generated subagent playbook defines parent integration gate', () => {
   assert.doesNotMatch(isolation, /task-scoped commits in the shared tree/);
 
   const subagent = read(path.join(h, 'docs', 'process', 'subagent-development.md'));
+  assert.match(subagent, /## Default review/);
+  assert.match(subagent, /one read-only review covering specification compliance and code quality/);
+  assert.match(subagent, /large, high-risk, or cross-cutting work/);
+  assert.match(subagent, /two focused passes/);
+  assert.match(subagent, /independent reviewer is available/);
+  assert.match(subagent, /did not write the code it reviews/);
+  assert.match(subagent, /no suitable reviewer capability exists/);
+  assert.match(subagent, /clearly labeled self-review/);
+  assert.match(subagent, /Do not claim independent review occurred/);
   assert.match(subagent, /## Parent integration gate/);
   assert.match(subagent, /parent `status\.md` updates/);
   assert.match(subagent, /active task owner owns the final integrated result/);

@@ -25,17 +25,21 @@ Do not dispatch for trivial single-step tasks. Dispatch has coordination cost.
 - Task-scoped mandate: give the subagent one bounded goal, a success check, and the relevant process playbook (`feature-development.md` / `refactor.md` / `bugfix.md`).
 - Keep state in `agent-work/`: record current stage, next action, completed steps, and parent `status.md` updates under `agent-work/tasks/<task>/` so any subagent can resume.
 
-## Two-stage review
+## Default review
 
-After a task part is implemented, review it in two focused passes. Each pass can be a separate read-only subagent, or the same agent switching roles:
+After a task part is implemented, default to one read-only review covering specification compliance and code quality: stated goal and acceptance criteria, correctness, security, maintainability, coverage, and evidence. Use `docs/process/review.md` steps 3-6 and its severity rules.
 
-1. Spec compliance — does the change meet the stated goal and acceptance criteria? (use `docs/process/review.md` step 3, severity from `review.md`)
-2. Code quality — correctness, security, maintainability, coverage, evidence. (use `docs/process/review.md` steps 4-6)
+For large, high-risk, or cross-cutting work, split the review into two focused passes:
+
+1. Spec compliance — does the change meet the stated goal and acceptance criteria?
+2. Code quality — correctness, security, maintainability, coverage, and evidence.
 
 Reviewer rules:
 
-- The reviewer did not write the code it reviews (isolate reviewer context).
+- When an independent reviewer is available, it did not write the code it reviews and uses isolated context.
+- If no suitable reviewer capability exists, perform a clearly labeled self-review instead. Preserve the review checklist and, when using two passes, separate them by focus rather than claiming agent-identity separation.
 - The reviewer is read-only: it classifies findings, it does not implement fixes.
+- Do not claim independent review occurred when it did not.
 - Fix only on explicit user approval (`review.md` step 8); route fixes through the relevant bugfix/refactor/feature playbook.
 - Do not pre-judge severity to game the review gate.
 
@@ -61,7 +65,7 @@ After accepting delegated parts, run or record a final Observation over the inte
 
 This playbook uses action semantics: "dispatch a subagent with isolated context", "hand the subagent file paths and a bounded goal". It does not name a specific tool. Map it to whatever subagent or task mechanism the current runtime provides (or none).
 
-If the current environment has no subagent capability, degrade gracefully: perform the two-stage review as two sequential self-review passes with the same separation (first spec compliance only, then code quality only), using the checklist above, and keep notes in `agent-work/tasks/<task>/`.
+If the current environment has no subagent capability, degrade gracefully: use the default review as a clearly labeled self-review, keep notes in `agent-work/tasks/<task>/`, and do not claim an independent reviewer was used. Split it into the two focused passes above only when the work warrants the additional review effort.
 
 ## Boundaries
 

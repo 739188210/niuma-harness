@@ -18,6 +18,12 @@ Use `docs/layers/02-policy.md` for the Policy protocol. Use this file for concre
 6. For multi-step tasks, record blockers and approval needs in `agent-work/`.
 7. Before reporting completion, follow the Observation layer and the selected process playbook for verification evidence.
 
+## Runtime ownership boundary
+
+`harness/` contains the managed operating framework and is not a task workspace. Keep task-local status, evidence, notes, plans, and handoff state under `agent-work/`; do not use the Harness framework documents for task-local work.
+
+Ownership-specific boundaries narrow generic action permissions. A generic autonomous permission, such as editing files related to the current task, does not authorize changing files that a more specific ownership, generated-artifact, protected-path, task-local, or user-owned-content rule says to preserve, avoid, ask about, or treat as out of scope. When both apply, use the more specific and less permissive classification.
+
 ## Autonomous actions
 
 Agents may do these without asking when they are task-scoped and reversible:

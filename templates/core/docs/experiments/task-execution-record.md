@@ -12,7 +12,9 @@ Legacy Markdown-only records remain readable and unchanged, but do not provide t
 
 ## When to record
 
-Use a record for tasks that change files, run verification, require multiple steps, use delegated work, or touch release, security, data, dependency, API, or policy boundaries. For a trivial read-only task, state in the final response that no separate record was needed.
+Use a record for every non-trivial task. Common indicators include changing files, running verification, requiring multiple steps, using delegated work, or touching release, security, data, dependency, API, or policy boundaries.
+
+For a trivial task, state in the final response that no separate record was needed.
 
 ## Complete schema 1 example
 
