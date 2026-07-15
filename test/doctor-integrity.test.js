@@ -72,17 +72,18 @@ test('doctor rejects non-object manifests and malformed entryFiles without uncau
 test('doctor preserves rules selection semantics and rejects stale excluded surfaces', () => {
   const noneWorkspace = initWorkspace('claude', ['--rules', 'none']);
   assert.strictEqual(doctor(noneWorkspace).status, 0);
-  const staleRule = path.join(noneWorkspace, 'harness', 'docs', 'rules', 'common', 'testing.md');
+  const staleRule = path.join(noneWorkspace, '.claude', 'rules', 'common', 'testing.md');
   fs.mkdirSync(path.dirname(staleRule), { recursive: true });
   fs.writeFileSync(staleRule, 'stale\n', 'utf8');
-  expectDoctorError(noneWorkspace, /unexpected managed content docs\/rules\/common\/testing\.md/);
+  expectDoctorError(noneWorkspace, /unexpected managed content \.claude\/rules\/common\/testing\.md/);
 
   const excludedWorkspace = initWorkspace('claude', ['--rules-out', 'web']);
   const manifest = JSON.parse(read(path.join(excludedWorkspace, 'harness', 'manifest.json')));
   assert.ok(!manifest.rules.includes('web'));
-  const stalePointer = path.join(excludedWorkspace, '.claude', 'rules', 'niuma-web.md');
+  const stalePointer = path.join(excludedWorkspace, '.claude', 'rules', 'web', 'testing.md');
+  fs.mkdirSync(path.dirname(stalePointer), { recursive: true });
   fs.writeFileSync(stalePointer, 'stale\n', 'utf8');
-  expectDoctorError(excludedWorkspace, /unexpected managed content \.claude\/rules\/niuma-web\.md/);
+  expectDoctorError(excludedWorkspace, /unexpected managed content \.claude\/rules\/web\/testing\.md/);
 });
 
 test('doctor rejects known files from unselected skills but preserves local files', () => {
@@ -110,17 +111,17 @@ test('doctor detects exact drift in selected skill package files', () => {
   expectDoctorError(workspace, new RegExp(`managed content drifted \\.claude/skills/${skill}/SKILL\\.md`));
 });
 
-test('doctor detects exact drift in Claude pointers and OpenCode managed paths', () => {
+test('doctor detects exact drift in native Claude rules and OpenCode managed paths', () => {
   const claudeWorkspace = initWorkspace();
-  append(path.join(claudeWorkspace, '.claude', 'rules', 'niuma-common.md'));
-  expectDoctorError(claudeWorkspace, /managed content drifted \.claude\/rules\/niuma-common\.md/);
+  append(path.join(claudeWorkspace, '.claude', 'rules', 'common', 'testing.md'));
+  expectDoctorError(claudeWorkspace, /artifact drifted \.claude\/rules\/common\/testing\.md/);
 
   const openCodeWorkspace = initWorkspace('opencode');
   const configPath = path.join(openCodeWorkspace, 'opencode.json');
   const config = JSON.parse(read(configPath));
   config.instructions = config.instructions.filter((item) => !item.endsWith('/common/testing.md'));
   fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
-  expectDoctorError(openCodeWorkspace, /must contain harness\/docs\/rules\/common\/testing\.md exactly once/);
+  expectDoctorError(openCodeWorkspace, /must contain \.opencode\/rules\/common\/testing\.md exactly once/);
 });
 
 test('doctor compares current command artifacts against package rendering even with a forged ledger', () => {
@@ -207,27 +208,27 @@ test('doctor validates selected rule records against canonical package descripto
       mutate({ manifest, record }) {
         manifest.artifacts = manifest.artifacts.filter((item) => item !== record);
       },
-      expected: /missing rule artifact record harness\/docs\/rules\/common\/testing\.md/,
+      expected: /missing rule artifact record \.claude\/rules\/common\/testing\.md/,
     },
     {
       name: 'wrong kind',
       mutate({ record }) { record.kind = 'command'; },
-      expected: /invalid rule artifact record harness\/docs\/rules\/common\/testing\.md/,
+      expected: /invalid rule artifact record \.claude\/rules\/common\/testing\.md/,
     },
     {
       name: 'unknown source',
       mutate({ record }) { record.source = 'rules/common/unknown.md'; },
-      expected: /invalid rule artifact record harness\/docs\/rules\/common\/testing\.md/,
+      expected: /invalid rule artifact record \.claude\/rules\/common\/testing\.md/,
     },
     {
       name: 'wrong target',
-      mutate({ record }) { record.target = 'harness/docs/rules/common/wrong.md'; },
-      expected: /missing rule artifact record harness\/docs\/rules\/common\/testing\.md/,
+      mutate({ record }) { record.target = '.claude/rules/common/wrong.md'; },
+      expected: /missing rule artifact record \.claude\/rules\/common\/testing\.md/,
     },
     {
       name: 'package digest mismatch',
       mutate({ record }) { record.digest = `sha256:${'0'.repeat(64)}`; },
-      expected: /rule artifact package mismatch harness\/docs\/rules\/common\/testing\.md/,
+      expected: /rule artifact package mismatch \.claude\/rules\/common\/testing\.md/,
     },
     {
       name: 'forged digest and forged file',
@@ -236,14 +237,14 @@ test('doctor validates selected rule records against canonical package descripto
         fs.writeFileSync(path.join(workspace, ...record.target.split('/')), forged);
         record.digest = `sha256:${require('crypto').createHash('sha256').update(forged).digest('hex')}`;
       },
-      expected: /rule artifact package mismatch harness\/docs\/rules\/common\/testing\.md/,
+      expected: /rule artifact package mismatch \.claude\/rules\/common\/testing\.md/,
     },
     {
       name: 'disk drift',
       mutate({ workspace, record }) {
         fs.appendFileSync(path.join(workspace, ...record.target.split('/')), 'drift\n');
       },
-      expected: /artifact drifted harness\/docs\/rules\/common\/testing\.md/,
+      expected: /artifact drifted \.claude\/rules\/common\/testing\.md/,
     },
   ];
 
@@ -251,7 +252,7 @@ test('doctor validates selected rule records against canonical package descripto
     await t.test(scenario.name, () => {
       const workspace = initWorkspace();
       updateManifest(workspace, (manifest) => {
-        const record = manifest.artifacts.find((item) => item.target === 'harness/docs/rules/common/testing.md');
+        const record = manifest.artifacts.find((item) => item.target === '.claude/rules/common/testing.md');
         scenario.mutate({ manifest, record, workspace });
       });
       expectDoctorError(workspace, scenario.expected);
@@ -274,22 +275,22 @@ test('doctor rejects duplicate and stale unselected rule records', async (t) => 
     updateManifest(workspace, (manifest) => {
       manifest.rules = manifest.rules.filter((rule) => rule !== 'common');
     });
-    expectDoctorError(workspace, /inactive rule artifact record harness\/docs\/rules\/common\/testing\.md/);
+    expectDoctorError(workspace, /inactive rule artifact record \.claude\/rules\/common\/testing\.md/);
   });
 });
 
 test('doctor rejects non-regular and linked selected rule targets', async (t) => {
   await t.test('directory target', () => {
     const workspace = initWorkspace();
-    const target = path.join(workspace, 'harness', 'docs', 'rules', 'common', 'testing.md');
+    const target = path.join(workspace, '.claude', 'rules', 'common', 'testing.md');
     fs.rmSync(target);
     fs.mkdirSync(target);
-    expectDoctorError(workspace, /not a regular artifact file harness\/docs\/rules\/common\/testing\.md/);
+    expectDoctorError(workspace, /not a regular artifact file \.claude\/rules\/common\/testing\.md/);
   });
 
   await t.test('symlink target', () => {
     const workspace = initWorkspace();
-    const target = path.join(workspace, 'harness', 'docs', 'rules', 'common', 'testing.md');
+    const target = path.join(workspace, '.claude', 'rules', 'common', 'testing.md');
     const outside = path.join(tempDir(), 'testing.md');
     fs.writeFileSync(outside, read(target));
     fs.rmSync(target);
@@ -300,7 +301,7 @@ test('doctor rejects non-regular and linked selected rule targets', async (t) =>
 
 test('doctor accepts unknown local files beside selected and unselected known rules', () => {
   const workspace = initWorkspace('claude', ['--rules-out', 'python']);
-  const rulesRoot = path.join(workspace, 'harness', 'docs', 'rules');
+  const rulesRoot = path.join(workspace, '.claude', 'rules');
   fs.writeFileSync(path.join(rulesRoot, 'common', 'local.md'), 'selected local file\n');
   fs.mkdirSync(path.join(rulesRoot, 'python'), { recursive: true });
   fs.writeFileSync(path.join(rulesRoot, 'python', 'local.md'), 'unselected local file\n');
@@ -316,10 +317,10 @@ test('doctor uses the actual custom harness directory for rule descriptors in wo
   assert.strictEqual(result.status, 0, result.stdout);
 
   updateManifest(workspace, (manifest) => {
-    const record = manifest.artifacts.find((item) => item.target === 'ai-harness/docs/rules/common/testing.md');
-    record.target = 'harness/docs/rules/common/testing.md';
+    const record = manifest.artifacts.find((item) => item.target === '.claude/rules/common/testing.md');
+    record.target = '.claude/rules/common/wrong.md';
   }, 'ai-harness');
-  expectDoctorError(path.join(workspace, 'ai-harness'), /missing rule artifact record ai-harness\/docs\/rules\/common\/testing\.md/);
+  expectDoctorError(path.join(workspace, 'ai-harness'), /missing rule artifact record \.claude\/rules\/common\/testing\.md/);
 });
 
 test('doctor rejects inactive command artifact records', () => {

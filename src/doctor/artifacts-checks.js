@@ -43,8 +43,8 @@ function checkArtifactFiles(context) {
       context.templateManifest.workDirectory || 'agent-work'
     );
     const expectedRules = renderRuleArtifacts(
+      agent,
       context.rules,
-      path.basename(context.harnessRoot),
       context.templateManifest.rulesRoot,
       variables
     );

@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { renderCommandArtifacts } = require('../command-artifacts');
 const { assertNoSymlinkInPath, safeResolveInside } = require('../fs-safe');
-const { renderClaudeRulePointer } = require('../scaffold/rules-adapters-writer');
+const { renderRuleArtifacts } = require('../rule-artifacts');
 const { TEMPLATE_DIR } = require('../scaffold/manifest');
 const { renderTemplate } = require('../scaffold/templates');
 const { getAvailableRuleDirs, getRuleAdapterTargetsForAgent } = require('../rules');
@@ -52,22 +52,21 @@ function checkManagedTemplates(context, variables) {
 
 function checkRuleSelection(context) {
   const selected = new Set(context.rules);
-  for (const ruleName of getAvailableRuleDirs(context.templateManifest.rulesRoot)) {
-    if (selected.has(ruleName)) {
-      continue;
+  const variables = createTemplateVariables(
+    { agent: context.agent, harnessDir: path.basename(context.harnessRoot) },
+    context.templateManifest.workDirectory || 'agent-work'
+  );
+  const known = renderRuleArtifacts(
+    context.agent,
+    getAvailableRuleDirs(context.templateManifest.rulesRoot),
+    context.templateManifest.rulesRoot,
+    variables
+  );
+  for (const artifact of known) {
+    if (!selected.has(artifact.rule)) {
+      checkPathAbsent(context, context.workspaceRoot, artifact.target);
     }
-    checkKnownFilesAbsent(
-      context,
-      context.harnessRoot,
-      `docs/rules/${ruleName}`,
-      getRuleFiles(ruleName, context.templateManifest.rulesRoot)
-    );
   }
-}
-
-function getRuleFiles(ruleName, rulesRoot) {
-  const ruleRoot = path.join(TEMPLATE_DIR, ...rulesRoot.split('/'), ruleName);
-  return listRelativeFiles(ruleRoot);
 }
 
 function checkSelectedSkills(context, variables) {
@@ -100,25 +99,6 @@ function checkUnselectedSkills(context) {
 }
 
 function checkRuleAdapters(context) {
-  const targets = getRuleAdapterTargetsForAgent(context.agent);
-  const claudeTarget = targets.find((target) => target.kind === 'claude-rule-pointer');
-  if (claudeTarget) {
-    const selected = new Set(context.rules);
-    for (const ruleName of getAvailableRuleDirs(context.templateManifest.rulesRoot)) {
-      const target = path.posix.join(claudeTarget.root, `niuma-${ruleName}.md`);
-      if (!selected.has(ruleName)) {
-        checkPathAbsent(context, context.workspaceRoot, target);
-        continue;
-      }
-      checkExactContent(
-        context,
-        context.workspaceRoot,
-        target,
-        renderClaudeRulePointer(path.basename(context.harnessRoot), ruleName)
-      );
-    }
-  }
-
 }
 
 function checkCurrentCommandArtifacts(context, variables) {

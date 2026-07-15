@@ -58,7 +58,7 @@ test('same-agent re-init preserves command and rule records in the mixed ledger'
   assert.deepStrictEqual([...kinds].sort(), ['command', 'rule']);
 });
 
-test('agent-switch re-init preserves command and current rule records in the mixed ledger', () => {
+test('agent-switch to Codex removes Markdown rule records from the mixed ledger', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
@@ -66,7 +66,8 @@ test('agent-switch re-init preserves command and current rule records in the mix
   result = run(['init', workspace, '--agent', 'codex']);
   assert.strictEqual(result.status, 0, result.stderr);
   const kinds = new Set(readJson(path.join(workspace, 'harness', 'manifest.json')).artifacts.map((record) => record.kind));
-  assert.deepStrictEqual([...kinds].sort(), ['command', 'rule']);
+  assert.deepStrictEqual([...kinds].sort(), ['command']);
+  assert.match(read(path.join(workspace, 'AGENTS.md')), /Selected engineering rules/);
 });
 
 test('re-init rejects drifted known command files and preserves unknown user commands', () => {

@@ -37,7 +37,7 @@ The generated Markdown is an agent-facing operating contract, not a runtime enfo
 - `docs/layers/`: 7-layer harness protocols and agent operating model.
 - `docs/policy/`: concrete action permission boundaries for agents.
 - `docs/process/`: concrete task playbooks selected by the Process layer.
-- `docs/rules/`: selected canonical engineering standards; agent-native rule adapters point back here.
+- Selected engineering standards are installed in each agent's native rule surface.
 - `docs/experiments/task-execution-record.md`: package-enabled structured execution-record contract for non-trivial tasks.
 - `agent-work/`: workspace-level task-local records and verification evidence.
 
@@ -54,8 +54,7 @@ These files define how the harness works and are refreshed from templates on re-
 - `docs/policy/secret-leak.md`: emergency secret-leak response.
 - `docs/policy/untrusted-content.md`: untrusted-content handling protocol.
 - `docs/process/`
-- `docs/rules/` template-known selected files: Niuma-managed canonical artifacts; direct edits are unsupported.
-- native rule adapters (`.claude/rules/niuma-*.md`, exact selected rule-file paths in `opencode.json.instructions`, and entry contract pointers) load selected `docs/rules/` content through each agent's supported surface. OpenCode loads these paths as additional instruction files alongside `AGENTS.md`; user paths, globs, URLs, and unrelated config fields remain outside Niuma ownership.
+- Native Markdown rule files are Niuma-managed: Claude uses `.claude/rules/`; OpenCode uses `.opencode/rules/` and lists those exact paths in `opencode.json.instructions`. Codex receives the selected Markdown content in the managed `AGENTS.md` contract section. User paths, globs, URLs, and unrelated `opencode.json` fields remain outside Niuma ownership.
 - `manifest.json`
 
 `manifest.json` is tool-managed state for `doctor/check`; do not edit it by hand. It records command and rule ownership as source, target, and digest, and is the authoritative ownership/history state for this installed harness. Coordinated edits to both an artifact and its recorded digest are treated as an explicit project-state change and are outside Niuma's integrity guarantees.

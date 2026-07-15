@@ -95,9 +95,9 @@ npx niuma-harness audit ./workspace --all --strict
 
 | Agent | Generated entry file | Default rules | Native rules adapter |
 |---|---|---|---|
-| `claude` | `CLAUDE.md` | `common` | `.claude/rules/niuma-<rule>.md` pointers |
-| `codex` | `AGENTS.md` | `common` | `AGENTS.md` pointer; no `.codex/rules` |
-| `opencode` | `AGENTS.md` | `common` | exact selected rule-file paths in `opencode.json.instructions` |
+| `claude` | `CLAUDE.md` | `common` | Markdown files under `.claude/rules/` |
+| `codex` | `AGENTS.md` | `common` | selected Markdown content in the managed `AGENTS.md` contract |
+| `opencode` | `AGENTS.md` | `common` | Markdown files under `.opencode/rules/`, listed in `opencode.json.instructions` |
 | `multi` | `CLAUDE.md` and `AGENTS.md` | `common` | all applicable adapters |
 
 ## Generated structure
@@ -111,7 +111,10 @@ workspace/
     commands/
       # Native commands installed when supported by the selected agent
     rules/
-      niuma-common.md
+      common/
+        coding-style.md
+        security.md
+        testing.md
     skills/
       # Optional native skills selected by --skills
   harness/
@@ -141,11 +144,6 @@ workspace/
         release.md
         isolation.md
         subagent-development.md
-      rules/
-        common/
-          coding-style.md
-          security.md
-          testing.md
   agent-work/
     README.md
     tasks/
@@ -167,7 +165,7 @@ The generated `docs/layers/` directory is the AI agent operating model:
 | Memory | `docs/layers/06-memory.md` | What should be preserved and what should stay task-local |
 | Loop | `docs/layers/07-loop.md` | How the agent continues, pauses, recovers, or stops |
 
-The layer files describe what each layer must do. The existing `docs/process/` and optional `docs/rules/` directories remain the starter execution materials referenced by those layers. Runtime task records live in the workspace-level `agent-work/` directory.
+The layer files describe what each layer must do. Engineering standards are installed in each selected agent's native rule surface. Runtime task records live in the workspace-level `agent-work/` directory.
 
 ## Manifest
 
@@ -202,7 +200,7 @@ This project-level `manifest.json` is generated inside the harness root and is *
 {
   "kind": "rule",
   "source": "rules/common/testing.md",
-  "target": "harness/docs/rules/common/testing.md",
+  "target": ".claude/rules/common/testing.md",
   "digest": "sha256:<exact-byte digest>"
 }
 ```
@@ -220,12 +218,11 @@ Schema version 1 is intentionally unsupported because this version has not been 
 | **Entry** (`CLAUDE.md` / `AGENTS.md`) | Merged: if the contract block is present it is refreshed; otherwise the block is inserted at the top. Your existing content is always preserved. |
 | **Tool-managed** (layers, process playbooks, policy, index, HARNESS_GUIDE, `agent-work/README.md`) | Refreshed from the template. |
 | **User-maintained** (`project-context.md`) | Preserved if it exists; created from the template only when absent. |
-| `docs/rules/` | Template-known selected rule files are Niuma-managed. On re-init, clean ledger-owned files refresh from the package; exact-current legacy files are safely adopted. Drifted or unowned occupied template-known targets stop before mutation and direct you to `repair --dry-run`. Deselect removes only unchanged ledger-owned files; unknown local files survive and nonempty directories remain. |
-| Native rules adapters (`.claude/rules/niuma-*.md`, exact selected rule-file paths in `opencode.json.instructions`, entry contract pointer) | Refreshed from the current rule selection. User-created `.claude/rules` files, user instruction paths/globs/URLs, and unrelated `opencode.json` fields are preserved. Codex uses the `AGENTS.md` pointer; `.codex/rules` is not generated for coding standards. |
+| Native Markdown rules | Claude files under `.claude/rules/` and OpenCode files under `.opencode/rules/` are Niuma-managed. On re-init, clean ledger-owned files refresh from the package; drifted or unowned occupied targets stop before mutation and direct you to `repair --dry-run`. Deselect removes only unchanged ledger-owned files; unknown local files survive. Codex receives the selected Markdown content through the managed `AGENTS.md` contract. |
 | Native command artifacts (`.claude/commands/`, `.agents/skills/<command-id>/`, `.opencode/commands/`) | Refreshed only when the schema-2 ledger proves ownership and the current exact-byte digest has not drifted. Occupied unowned or locally modified targets stop `init` before scaffold writes. Unknown user-created files are left untouched. |
 | `manifest.json` | Regenerated every time. |
 
-Rules follow the current init parameters: re-running with a new `--agent`, `--rules`, or `--rules-out` selection converges selected template-known rule files to the new final set. Direct edits to generated rule files are unsupported in this release; use `repair --dry-run` to inspect recovery before `repair` backs up and restores canonical content. There is no rule override layer.
+Rules follow the current init parameters: re-running with a new `--agent`, `--rules`, or `--rules-out` selection converges native rule files and the Codex entry contract to the new final set. Direct edits to generated rule files are unsupported in this release; use `repair --dry-run` to inspect recovery before `repair` backs up and restores canonical content. There is no rule override layer.
 
 Built-in command workflows are single-sourced from `templates/commands/*.md`. `init` wraps that same workflow content for each supported agent surface:
 
@@ -307,14 +304,14 @@ Harnesses generated before the 7-layer structure may fail `doctor` until they ar
 Rules have two layers:
 
 ```text
-templates/rules/*  ->  harness/docs/rules/*  ->  agent-native pointers
+templates/rules/*  ->  agent-native Markdown rule surfaces
 ```
 
-`templates/rules/*` is the package canonical source. Generated template-known files under `harness/docs/rules/*` are Niuma-managed artifacts; agent-native artifacts only point tools to those canonical files:
+`templates/rules/*` is the package canonical source. Its rendered files are Niuma-managed artifacts in native tool surfaces:
 
-- `claude` writes `.claude/rules/niuma-<rule>.md` pointer files.
-- `codex` uses the `AGENTS.md` contract pointer and does not generate `.codex/rules` for coding standards.
-- `opencode` writes exact selected canonical rule-file paths into the `opencode.json.instructions` string array. OpenCode treats these entries as additional instruction files and loads them alongside `AGENTS.md`; user paths, globs, URLs, and unrelated config fields remain outside Niuma ownership.
+- `claude` writes Markdown files under `.claude/rules/<rule>/`.
+- `codex` embeds the selected Markdown rule content in the managed `AGENTS.md` contract; it does not generate `.codex/rules` engineering rules.
+- `opencode` writes Markdown files under `.opencode/rules/<rule>/` and places those exact paths in the `opencode.json.instructions` string array. OpenCode treats them as additional instruction files alongside `AGENTS.md`; user paths, globs, URLs, and unrelated config fields remain outside Niuma ownership.
 
 All available rule directories are lightweight engineering preferences selected explicitly or through the `common` default.
 

@@ -92,7 +92,7 @@ test('opencode rejects scalar instructions without modifying the workspace', () 
 
 test('opencode preserves a user path that matches a canonical rule target before first init', () => {
   const workspace = tempDir();
-  const userPath = 'harness/docs/rules/common/testing.md';
+  const userPath = '.opencode/rules/common/testing.md';
   fs.writeFileSync(path.join(workspace, 'opencode.json'), JSON.stringify({
     instructions: [userPath, 'docs/team-rules.md'],
   }, null, 2), 'utf8');

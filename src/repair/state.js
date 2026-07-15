@@ -211,7 +211,7 @@ function parseManifestSelections(value, harnessDir, manifest, commands, rules, s
           target: artifact.target,
         }));
       const ruleRecords = normalizedRules
-        ? renderRuleArtifacts(normalizedRules, harnessDir, manifest.rulesRoot, variables)
+        ? renderRuleArtifacts(agent, normalizedRules, manifest.rulesRoot, variables)
           .map((artifact) => ({
             digest: artifact.digest,
             kind: artifact.kind,

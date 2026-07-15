@@ -14,7 +14,7 @@ Identify blocking issues before work is considered ready, without turning review
 2. Check Policy: classify the review as read-only reporting before acting. Recommendations may be reported as review findings; re-classify before performing risky, destructive, external, security-sensitive, scope-expanding, or test-changing follow-up actions.
 3. Confirm the intended task goal and compare it with the actual changes.
 4. Review correctness, security, maintainability, test coverage, and verification evidence.
-5. Apply relevant engineering standards from `docs/rules/` when rule files are installed.
+5. Apply relevant installed engineering standards.
 6. Classify findings by severity.
 7. Mark work as not ready while blocking findings remain unresolved.
 8. Only implement fixes when the user explicitly approved implementation changes; otherwise route fixes through the relevant bugfix, refactor, or feature playbook.

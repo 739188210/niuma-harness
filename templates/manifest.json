@@ -9,8 +9,7 @@
     "docs/experiments",
     "docs/layers",
     "docs/policy",
-    "docs/process",
-    "docs/rules"
+    "docs/process"
   ],
   "templateFiles": [
     {

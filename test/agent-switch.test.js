@@ -86,11 +86,11 @@ for (const scenario of [
     const expectedRules = allRuleDirs.filter((rule) => rule !== scenario.toRulesOut);
     const harnessRoot = path.join(workspace, 'harness');
     assertRuleDirs(harnessRoot, expectedRules);
-    assertNoPath(path.join(harnessRoot, 'docs', 'rules', scenario.toRulesOut));
+    assertNoPath(path.join(harnessRoot, 'docs', 'rules'));
     if (scenario.to === 'claude' || scenario.to === 'multi') {
       assertClaudeRulePointers(workspace, 'harness', expectedRules);
     } else {
-      for (const rule of allRuleDirs) assertNoPath(path.join(workspace, '.claude', 'rules', `niuma-${rule}.md`));
+      assertNoPath(path.join(workspace, '.claude', 'rules'));
     }
     if (scenario.to === 'opencode' || scenario.to === 'multi') {
       assertOpenCodeRulesInstruction(workspace, 'harness', expectedRules);
@@ -99,7 +99,7 @@ for (const scenario of [
     } else if (fs.existsSync(path.join(workspace, 'opencode.json'))) {
       const config = JSON.parse(read(path.join(workspace, 'opencode.json')));
       const instructions = Array.isArray(config.instructions) ? config.instructions : [];
-      assert.ok(instructions.every((item) => !item.startsWith('harness/docs/rules/')));
+      assert.ok(instructions.every((item) => !item.startsWith('.opencode/rules/')));
     }
     assertNoCodexRulesDir(workspace);
     assertManifest(path.join(harnessRoot, 'manifest.json'), {

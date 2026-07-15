@@ -11,7 +11,7 @@ const {
   getDefaultCommandsForAgent,
   normalizeConcreteCommands,
 } = require('./commands');
-const { formatRules } = require('./rules');
+const { formatRules, getAvailableRuleDirs, normalizeConcreteRules } = require('./rules');
 const {
   formatSkills,
   getAvailableSkillDirs,
@@ -64,7 +64,8 @@ function createInitContext(options) {
     targetDir,
     options.harnessDir,
     availableCommands,
-    getAvailableSkillDirs(manifest.skillsRoot)
+    getAvailableSkillDirs(manifest.skillsRoot),
+    getAvailableRuleDirs(manifest.rulesRoot)
   );
   const context = {
     commands,
@@ -93,7 +94,7 @@ function createInitContext(options) {
   return context;
 }
 
-function readPreviousStatus(targetDir, harnessDir, availableCommands, availableSkills) {
+function readPreviousStatus(targetDir, harnessDir, availableCommands, availableSkills, availableRules) {
   const statusPath = path.join(targetDir, STATUS_FILE);
   if (!fs.existsSync(statusPath)) {
     return null;
@@ -143,6 +144,7 @@ function readPreviousStatus(targetDir, harnessDir, availableCommands, availableS
   }
 
   const artifacts = validateArtifactRecords(status.artifacts);
+  const rules = normalizeConcreteRules(status.rules, availableRules, 'previous rules');
   const openCodeInstructions = status.openCodeInstructions === undefined
     ? []
     : validateOpenCodeInstructionOwnership(status.openCodeInstructions, artifacts);
@@ -152,6 +154,7 @@ function readPreviousStatus(targetDir, harnessDir, availableCommands, availableS
     artifacts,
     commands,
     openCodeInstructions,
+    rules,
     skills,
   };
 }

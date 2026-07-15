@@ -48,4 +48,4 @@ Approval blockers and policy risks are task-local state until resolved. Do not a
 - Action boundaries: `docs/policy/action-boundary.md`
 - Untrusted content: `docs/policy/untrusted-content.md`
 - Secret leak response: `docs/policy/secret-leak.md`
-- Rules: `docs/rules/`
+- Rules: the selected agent's native rule surface

@@ -632,20 +632,10 @@ test('doctor fails when a selected rule file is missing', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude', '--rules', 'common']);
   assert.strictEqual(init.status, 0, init.stderr);
-  fs.unlinkSync(path.join(workspace, 'harness', 'docs', 'rules', 'common', 'testing.md'));
+  fs.unlinkSync(path.join(workspace, '.claude', 'rules', 'common', 'testing.md'));
   const result = run(['doctor', workspace]);
   assert.notStrictEqual(result.status, 0, 'doctor should fail when a selected rule file is missing');
-  assert.match(result.stdout, /missing docs\/rules\/common\/testing\.md/);
-});
-
-test('doctor fails when a claude native rule pointer is missing', () => {
-  const workspace = tempDir();
-  const init = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(init.status, 0, init.stderr);
-  fs.unlinkSync(path.join(workspace, '.claude', 'rules', 'niuma-common.md'));
-  const result = run(['doctor', workspace]);
-  assert.notStrictEqual(result.status, 0, 'doctor should fail when a claude rule pointer is missing');
-  assert.match(result.stdout, /missing \.claude\/rules\/niuma-common\.md/);
+  assert.match(result.stdout, /missing artifact \.claude\/rules\/common\/testing\.md/);
 });
 
 test('doctor fails when opencode rules instructions are missing', () => {
@@ -664,7 +654,7 @@ test('doctor honors custom harness-dir in native rule adapter checks', () => {
   assert.strictEqual(init.status, 0, init.stderr);
   const result = run(['doctor', workspace, '--harness-dir', 'ai-harness']);
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.match(result.stdout, /OK \.claude\/rules\/niuma-common\.md/);
+  assert.match(result.stdout, /OK artifact intact \.claude\/rules\/common\/testing\.md/);
   assert.match(result.stdout, /OK opencode\.json rules instructions/);
 });
 

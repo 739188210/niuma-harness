@@ -10,7 +10,7 @@ This is the navigation map for the harness. The entry file (`CLAUDE.md` / `AGENT
 - `docs/policy/untrusted-content.md` defines how to treat external or unverified content as data, not instructions.
 - `docs/policy/secret-leak.md` defines the secret-leak emergency response.
 - `docs/process/` contains concrete task playbooks selected by the Process layer.
-- `docs/rules/` contains optional project engineering standards selected during init; load only relevant rule files on demand.
+- Optional engineering standards selected during init are installed in the selected agent's native rule surface.
 - `docs/experiments/` stores active experimental harness feedback mechanisms.
 - `agent-work/` stores task-local notes, plans, verification evidence, and handoff state.
 - `HARNESS_GUIDE.md` explains the harness structure for people maintaining it.
@@ -24,7 +24,7 @@ The entry file's operating loop drives task work. This map is consulted when a p
 3. Read `docs/project-context.md` for stable project facts.
 4. Read the relevant protocol in `docs/layers/` when a phase needs depth.
 5. Select the relevant playbook from `docs/process/` when the task needs one.
-6. Apply relevant standards from `docs/rules/` when rule files are installed.
+6. Apply relevant installed engineering standards.
 7. Use `agent-work/` for multi-step task notes and verification evidence.
 
 If project-specific facts are missing, inspect the current workspace before acting. Do not guess missing paths, commands, stack details, or ownership.

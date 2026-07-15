@@ -7,7 +7,6 @@ const { getAvailableRuleDirs, getRuleAdapterTargetsForAgent } = require('../rule
 const { getAvailableSkillDirs, getSkillFiles, getSkillTargetRootsForAgent } = require('../skills');
 const { createStatus } = require('../harness-status');
 const { createTemplateVariables } = require('../template-variables');
-const { renderClaudeRulePointer } = require('./rules-adapters-writer');
 const { TEMPLATE_DIR } = require('./manifest');
 const { renderTemplate } = require('./templates');
 
@@ -36,14 +35,14 @@ function createDesiredState(input) {
     files.push(descriptor(workspaceDir, path.join(workspaceDir, ...file.target.split('/')), renderTemplate(file.template, variables), 'tool', 'work'));
   }
 
-  const entryContent = renderTemplate('entry/entry.md', variables);
   const activeEntries = getEntryFilesForAgent(agent);
+  const { renderEntry } = require('../entry-renderer');
   for (const entry of activeEntries) {
-    files.push(descriptor(workspaceDir, path.join(workspaceDir, entry), entryContent, 'entry', 'entry'));
+    files.push(descriptor(workspaceDir, path.join(workspaceDir, entry), renderEntry(agent, entry, rules, harnessDir, workDirectory, manifest.rulesRoot), 'entry', 'entry'));
   }
 
   const availableRules = getAvailableRuleDirs(manifest.rulesRoot);
-  const ruleArtifacts = renderRuleArtifacts(rules, harnessDir, manifest.rulesRoot, variables)
+  const ruleArtifacts = renderRuleArtifacts(agent, rules, manifest.rulesRoot, variables)
     .map((item) => ({
       ...item,
       targetPath: path.join(workspaceDir, ...item.target.split('/')),
@@ -53,13 +52,6 @@ function createDesiredState(input) {
   }
 
   const adapterTargets = getRuleAdapterTargetsForAgent(agent);
-  const claude = adapterTargets.find((item) => item.kind === 'claude-rule-pointer');
-  if (claude) {
-    for (const rule of rules) {
-      files.push(descriptor(workspaceDir, path.join(workspaceDir, ...claude.root.split('/'), `niuma-${rule}.md`), renderClaudeRulePointer(harnessDir, rule), 'tool', 'adapters'));
-    }
-  }
-
   for (const root of getSkillTargetRootsForAgent(agent)) {
     for (const skill of skills) {
       for (const file of getSkillFiles(skill, manifest.skillsRoot)) {
@@ -124,7 +116,9 @@ function createOpenCodeDesired(targets, ruleArtifacts) {
   const active = targets.some((item) => item.kind === 'opencode-instructions');
   return {
     active,
-    paths: active ? ruleArtifacts.map((artifact) => artifact.target) : [],
+    paths: active ? ruleArtifacts
+      .filter((artifact) => artifact.target.startsWith('.opencode/rules/'))
+      .map((artifact) => artifact.target) : [],
     target: 'opencode.json',
   };
 }

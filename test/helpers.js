@@ -138,7 +138,7 @@ function assertManifest(filePath, expected) {
   assert.strictEqual(manifest.workDir, expected.workDir || 'agent-work');
   assert.deepStrictEqual(manifest.entryFiles, expected.entryFiles);
   const expectedOpenCode = (expected.agent === 'opencode' || expected.agent === 'multi')
-    ? getExpectedRuleArtifactTargets(manifest.rules, manifest.harnessDir)
+    ? getExpectedRuleArtifactTargets('opencode', manifest.rules, manifest.harnessDir)
     : [];
   assert.deepStrictEqual(manifest.openCodeInstructions, expectedOpenCode);
   assertArtifactRecords(filePath, manifest, expected.agent, manifest.commands, expected.artifactTargets);
@@ -188,7 +188,7 @@ function getExpectedArtifactRecords(agent, commandFiles, rules, harnessDir = 'ha
   const expectedCommands = explicitCommandTargets
     ? commandArtifacts.filter((artifact) => explicitCommandTargets.includes(artifact.target))
     : commandArtifacts;
-  const ruleArtifacts = renderRuleArtifacts(rules, harnessDir, undefined, variables);
+  const ruleArtifacts = renderRuleArtifacts(agent, rules, undefined, variables);
   return [...expectedCommands, ...ruleArtifacts]
     .map(({ kind, source, target, digest, content }) => ({
       kind,
@@ -199,31 +199,22 @@ function getExpectedArtifactRecords(agent, commandFiles, rules, harnessDir = 'ha
     .sort((left, right) => left.target.localeCompare(right.target));
 }
 
-function getExpectedRuleArtifactTargets(rules, harnessDir = 'harness') {
-  const variables = createTemplateVariables({ agent: 'claude', harnessDir }, 'agent-work');
-  return renderRuleArtifacts(rules, harnessDir, undefined, variables).map((artifact) => artifact.target);
+function getExpectedRuleArtifactTargets(agent, rules, harnessDir = 'harness') {
+  const variables = createTemplateVariables({ agent, harnessDir }, 'agent-work');
+  return renderRuleArtifacts(agent, rules, undefined, variables).map((artifact) => artifact.target);
 }
 
 function assertRuleDirs(harnessRoot, expected) {
-  for (const ruleDir of allRuleDirs) {
-    const ruleDirPath = path.join(harnessRoot, 'docs', 'rules', ruleDir);
-    if (expected.includes(ruleDir)) {
-      assertDir(ruleDirPath);
-    } else {
-      assertNoPath(ruleDirPath);
-    }
-  }
+  assertNoPath(path.join(harnessRoot, 'docs', 'rules'));
 }
 
 function assertClaudeRulePointers(workspaceRoot, harnessDir, expected) {
-  for (const ruleDir of allRuleDirs) {
-    const pointerPath = path.join(workspaceRoot, '.claude', 'rules', `niuma-${ruleDir}.md`);
-    if (expected.includes(ruleDir)) {
-      assertFile(pointerPath);
-      assert.match(read(pointerPath), new RegExp(`${escapeRegExp(harnessDir)}/docs/rules/${escapeRegExp(ruleDir)}/`));
-    } else {
-      assertNoPath(pointerPath);
-    }
+  const variables = createTemplateVariables({ agent: 'claude', harnessDir }, 'agent-work');
+  const expectedTargets = new Set(getExpectedRuleArtifactTargets('claude', expected, harnessDir));
+  for (const artifact of renderRuleArtifacts('claude', allRuleDirs, undefined, variables)) {
+    const targetPath = path.join(workspaceRoot, ...artifact.target.split('/'));
+    if (expectedTargets.has(artifact.target)) assertFile(targetPath);
+    else assertNoPath(targetPath);
   }
 }
 
@@ -231,7 +222,7 @@ function assertOpenCodeRulesInstruction(workspaceRoot, harnessDir, expected) {
   const config = readJson(path.join(workspaceRoot, 'opencode.json'));
   assert.ok(Array.isArray(config.instructions), 'OpenCode instructions must be an array');
   assert.ok(config.instructions.every((instruction) => typeof instruction === 'string'));
-  const managed = getExpectedRuleArtifactTargets(expected, harnessDir);
+  const managed = getExpectedRuleArtifactTargets('opencode', expected, harnessDir);
   for (const target of managed) {
     assert.strictEqual(
       config.instructions.filter((instruction) => instruction === target).length,
@@ -252,7 +243,7 @@ function assertNoOpenCodeManagedRulesInstruction(workspaceRoot, harnessDir = 'ha
   if (!Array.isArray(config.instructions)) {
     return;
   }
-  const known = new Set(getExpectedRuleArtifactTargets(allRuleDirs, harnessDir));
+  const known = new Set(getExpectedRuleArtifactTargets('opencode', allRuleDirs, harnessDir));
   assert.ok(config.instructions.every((instruction) => !known.has(instruction)));
 }
 

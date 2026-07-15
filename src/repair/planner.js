@@ -10,7 +10,11 @@ const {
   replaceContractBlock,
 } = require('../contract');
 const { getCommandArtifactDescriptors } = require('../commands');
-const { getAvailableRuleDirs } = require('../rules');
+const {
+  getAvailableRuleDirs,
+  getLegacyRuleTargetRootsForAgent,
+  getRuleTargetRootsForAgent,
+} = require('../rules');
 const { getAvailableSkillDirs, getSkillFiles, getSkillTargetRootsForAgent } = require('../skills');
 const {
   assertNoLossyJsonNumbers,
@@ -128,9 +132,9 @@ function planDesiredFile(collector, file, options = {}) {
 }
 
 function planEntries(collector, desired, state) {
-  const canonical = desired.files.find((item) => item.domain === 'entry')?.content;
-  const block = canonical ? sliceContractBlock(canonical) : null;
   for (const entry of desired.activeEntries) {
+    const canonical = desired.files.find((item) => item.domain === 'entry' && item.relativePath === entry)?.content;
+    const block = canonical ? sliceContractBlock(canonical) : null;
     const targetPath = path.join(state.workspaceDir, entry);
     const observed = inspectNode(targetPath);
     if (observed.type === 'missing') {
@@ -169,7 +173,7 @@ function planEntries(collector, desired, state) {
     let content;
     if (analysis.status === 'valid') {
       content = removeContractBlock(existing);
-      if (canonical && normalizeEol(existing) === normalizeEol(canonical)) {
+      if (isGeneratedInactiveEntry(existing, entry, desired, state)) {
         action = 'remove-node';
       }
     } else {
@@ -183,6 +187,23 @@ function planEntries(collector, desired, state) {
       requiresBackup: true,
     });
   }
+}
+
+function isGeneratedInactiveEntry(existing, entry, desired, state) {
+  const { renderEntry } = require('../entry-renderer');
+  const { getEntryFilesForAgent } = require('../agents');
+  return ['claude', 'codex', 'opencode', 'multi'].some((agent) => {
+    if (!getEntryFilesForAgent(agent).includes(entry)) return false;
+    const canonical = renderEntry(
+      agent,
+      entry,
+      state.selections.rules,
+      state.harnessDir,
+      state.manifest.workDirectory || 'agent-work',
+      state.manifest.rulesRoot
+    );
+    return normalizeEol(existing) === normalizeEol(canonical);
+  });
 }
 
 function planRules(collector, desired, state) {
@@ -236,11 +257,15 @@ function planRules(collector, desired, state) {
 
 function isCanonicalPriorRuleRecord(record, state) {
   const sourcePrefix = 'rules/';
-  const targetPrefix = `${state.harnessDir}/docs/rules/`;
-  if (!record.source.startsWith(sourcePrefix) || !record.target.startsWith(targetPrefix)) return false;
+  const targetPrefixes = [
+    `${state.harnessDir}/docs/rules/`,
+    ...getRuleTargetRootsForAgent(state.selections.agent).map((root) => `${root}/`),
+    ...getLegacyRuleTargetRootsForAgent(state.selections.agent).map((root) => `${root}/`),
+  ];
+  if (!record.source.startsWith(sourcePrefix)) return false;
   const sourceSuffix = record.source.slice(sourcePrefix.length);
-  const targetSuffix = record.target.slice(targetPrefix.length);
-  if (sourceSuffix !== targetSuffix) return false;
+  const targetPrefix = targetPrefixes.find((prefix) => record.target.startsWith(prefix));
+  if (!targetPrefix || sourceSuffix !== record.target.slice(targetPrefix.length)) return false;
   const rule = sourceSuffix.split('/')[0];
   return Boolean(rule) && state.manifestInfo.value && Array.isArray(state.manifestInfo.value.rules)
     && state.manifestInfo.value.rules.includes(rule);
@@ -248,7 +273,7 @@ function isCanonicalPriorRuleRecord(record, state) {
 
 function renderAllRuleArtifacts(desired, state) {
   const { renderRuleArtifacts } = require('../rule-artifacts');
-  return renderRuleArtifacts(desired.availableRules, state.harnessDir, state.manifest.rulesRoot, desired.variables);
+  return renderRuleArtifacts(state.selections.agent, desired.availableRules, state.manifest.rulesRoot, desired.variables);
 }
 
 function readArtifactRecords(manifest) {

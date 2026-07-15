@@ -8,7 +8,7 @@ const {
   safeResolveInside,
   writeFile,
 } = require('../fs-safe');
-const { createTemplateVariables } = require('../template-variables');
+const { renderEntry } = require('../entry-renderer');
 const { renderTemplate } = require('./templates');
 const {
   analyzeContractBlock,
@@ -26,28 +26,39 @@ function prepareFilePlan(context) {
 }
 
 function prepareEntryPlan(context) {
-  const freshFull = renderTemplate('entry/entry.md', context.variables);
-  const freshBlock = sliceContractBlock(freshFull);
-  if (!freshBlock) {
-    throw new Error('entry template is missing a valid contract zone');
-  }
-
   const currentEntries = getEntryFilesForAgent(context.options.agent);
-  const current = currentEntries
-    .map((entryFile) => prepareEntryWrite(context.workspaceDir, entryFile, freshFull, freshBlock));
+  const current = currentEntries.map((entryFile) => {
+    const freshFull = renderEntry(
+      context.options.agent,
+      entryFile,
+      context.options.rules,
+      context.options.harnessDir,
+      context.workDirectory,
+      context.manifest.rulesRoot
+    );
+    const freshBlock = sliceContractBlock(freshFull);
+    if (!freshBlock) throw new Error('entry template is missing a valid contract zone');
+    return prepareEntryWrite(context.workspaceDir, entryFile, freshFull, freshBlock);
+  });
   if (!context.previousStatus) {
     return current;
   }
 
-  const previousVariables = createTemplateVariables(
-    { agent: context.previousStatus.agent, harnessDir: context.options.harnessDir },
-    context.workDirectory
-  );
-  const previousFull = renderTemplate('entry/entry.md', previousVariables);
   const active = new Set(currentEntries);
   const retired = getEntryFilesForAgent(context.previousStatus.agent)
     .filter((entryFile) => !active.has(entryFile))
-    .map((entryFile) => prepareEntryRetirement(context.workspaceDir, entryFile, previousFull));
+    .map((entryFile) => prepareEntryRetirement(
+      context.workspaceDir,
+      entryFile,
+      renderEntry(
+        context.previousStatus.agent,
+        entryFile,
+        context.previousStatus.rules || [],
+        context.options.harnessDir,
+        context.workDirectory,
+        context.manifest.rulesRoot
+      )
+    ));
   return [...retired, ...current];
 }
 

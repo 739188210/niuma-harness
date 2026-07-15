@@ -78,7 +78,7 @@ test('work template directory conflict leaves workspace unchanged', () => {
 
 test('unowned differing rule target leaves workspace unchanged and points to repair', () => {
   const result = assertFreshFailureLeavesNoChanges('claude', (workspace) => {
-    const target = path.join(workspace, 'harness', 'docs', 'rules', 'common', 'testing.md');
+    const target = path.join(workspace, '.claude', 'rules', 'common', 'testing.md');
     fs.mkdirSync(path.dirname(target), { recursive: true });
     fs.writeFileSync(target, 'user rule\n', 'utf8');
   }, ['--rules', 'common']);
@@ -86,10 +86,10 @@ test('unowned differing rule target leaves workspace unchanged and points to rep
   assert.match(result.stderr, /repair --dry-run/);
 });
 
-test('late rule pointer conflict leaves workspace unchanged', () => {
+test('native rule target conflict leaves workspace unchanged', () => {
   const rule = allRuleDirs[0];
   const result = assertFreshFailureLeavesNoChanges('claude', (workspace) => {
-    fs.mkdirSync(path.join(workspace, '.claude', 'rules', `niuma-${rule}.md`), { recursive: true });
+    fs.mkdirSync(path.join(workspace, '.claude', 'rules', rule, 'testing.md'), { recursive: true });
   }, ['--rules', rule]);
   assert.match(result.stderr, /not a regular file/);
 });
@@ -148,7 +148,7 @@ test('drifted retired engineering rule leaves workspace unchanged', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'multi', '--rules', 'all']);
   assert.strictEqual(result.status, 0, result.stderr);
-  const target = path.join(workspace, 'harness', 'docs', 'rules', 'web', 'testing.md');
+  const target = path.join(workspace, '.claude', 'rules', 'web', 'testing.md');
   fs.appendFileSync(target, 'drift\n', 'utf8');
   const before = snapshotTree(workspace);
   result = run(['init', workspace, '--agent', 'claude', '--rules', 'common']);

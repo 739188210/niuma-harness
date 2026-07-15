@@ -14,32 +14,47 @@ const {
   safeResolveInside,
   writeFile,
 } = require('../fs-safe');
-const { getAvailableRuleDirs } = require('../rules');
+const { getAvailableRuleDirs, getLegacyRuleTargetRootsForAgent } = require('../rules');
 
 function prepareRulePlan(context) {
   const current = renderRuleArtifacts(
+    context.options.agent,
     context.options.rules,
-    context.options.harnessDir,
     context.manifest.rulesRoot,
     context.variables
   ).map((artifact) => prepareArtifact(context, artifact, 'write'));
-  const allKnown = renderRuleArtifacts(
-    getAvailableRuleDirs(context.manifest.rulesRoot),
-    context.options.harnessDir,
-    context.manifest.rulesRoot,
-    context.variables
-  );
+  const allKnown = ['claude', 'opencode', 'multi']
+    .flatMap((agent) => [
+      ...renderRuleArtifacts(agent, getAvailableRuleDirs(context.manifest.rulesRoot), context.manifest.rulesRoot, context.variables),
+      ...renderRuleArtifacts(agent, getAvailableRuleDirs(context.manifest.rulesRoot), context.manifest.rulesRoot, context.variables, {
+        getRuleTargetRootsForAgent: getLegacyRuleTargetRootsForAgent,
+      }),
+    ])
+    .filter((artifact, index, artifacts) => artifacts.findIndex((item) => item.target === artifact.target) === index);
   const knownByTarget = new Map(allKnown.map((artifact) => [artifact.target, artifact]));
   const activeTargets = new Set(current.map((artifact) => artifact.target));
   const previous = context.previousStatus
     ? context.previousStatus.artifacts.filter((record) => record.kind === 'rule')
     : [];
 
-  validatePreviousRecords(previous, knownByTarget);
+  validatePreviousRecords(previous, knownByTarget, context);
   const removals = [];
-  for (const artifact of allKnown) {
-    if (!activeTargets.has(artifact.target)) {
-      removals.push(prepareArtifact(context, artifact, 'remove'));
+  // Remove only targets proven by the previous ledger. This covers deselection,
+  // agent switches, and the old harness/docs/rules one-way migration.
+  for (const record of previous) {
+    if (!activeTargets.has(record.target)) {
+      const canonical = knownByTarget.get(record.target);
+      if (canonical) {
+        removals.push(prepareArtifact(context, canonical, 'remove'));
+      } else if (isLegacyHarnessRuleRecord(record, context)) {
+      removals.push(prepareArtifact(context, {
+        content: '',
+        digest: record.digest,
+        kind: record.kind,
+        source: record.source,
+        target: record.target,
+      }, 'remove'));
+      }
     }
   }
 
@@ -64,21 +79,27 @@ function prepareArtifact(context, artifact, operation) {
       digest: artifact.digest,
     },
     targetPath: safeResolveInside(context.workspaceDir, artifact.target, 'rule target'),
-    targetRoot: safeResolveInside(
-      context.workspaceDir,
-      path.posix.join(context.options.harnessDir, 'docs', 'rules'),
-      'rule root'
-    ),
+    targetRoot: safeResolveInside(context.workspaceDir, path.posix.dirname(artifact.target), 'rule root'),
   };
 }
 
-function validatePreviousRecords(previous, knownByTarget) {
+function validatePreviousRecords(previous, knownByTarget, context) {
   for (const record of previous) {
     const canonical = knownByTarget.get(record.target);
-    if (!canonical || canonical.source !== record.source || canonical.kind !== record.kind) {
+    if ((!canonical || canonical.source !== record.source || canonical.kind !== record.kind)
+      && !isLegacyHarnessRuleRecord(record, context)) {
       throw rulePreflightError([`rule artifact record is not canonical: ${record.target}`]);
     }
   }
+}
+
+function isLegacyHarnessRuleRecord(record, context = null) {
+  const harnessDir = context ? context.options.harnessDir : 'harness';
+  const targetPrefix = `${harnessDir}/docs/rules/`;
+  if (record.kind !== 'rule' || !record.source.startsWith('rules/') || !record.target.startsWith(targetPrefix)) {
+    return false;
+  }
+  return record.source.slice('rules/'.length) === record.target.slice(targetPrefix.length);
 }
 
 function preflightRulePlan(workspaceDir, plan, previous) {

@@ -125,5 +125,5 @@ Stop and ask when:
 - Secret leak response: `docs/policy/secret-leak.md`
 - Completion evidence: `docs/layers/04-observation.md`
 - Task workflows: `docs/process/`
-- Engineering standards: `docs/rules/`
+- Engineering standards: the selected agent's native rule surface
 - Task-local notes: `agent-work/`

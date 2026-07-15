@@ -37,8 +37,13 @@ test('default rules include common engineering rules', () => {
     const harnessRoot = path.join(workspace, 'harness');
     const expectedRules = expectedDefaultRules(scenario.agent);
 
-    assertFile(path.join(harnessRoot, 'docs', 'rules', 'common', 'testing.md'));
-    assertNoPath(path.join(harnessRoot, 'docs', 'rules', 'common', 'hooks.md'));
+    if (scenario.agent === 'claude' || scenario.agent === 'multi') {
+      assertFile(path.join(workspace, '.claude', 'rules', 'common', 'testing.md'));
+      assertNoPath(path.join(workspace, '.claude', 'rules', 'common', 'hooks.md'));
+    }
+    if (scenario.agent === 'opencode') {
+      assertFile(path.join(workspace, '.opencode', 'rules', 'common', 'testing.md'));
+    }
     assertRuleDirs(harnessRoot, expectedRules);
     if (scenario.agent === 'claude' || scenario.agent === 'multi') {
       assertClaudeRulePointers(workspace, 'harness', expectedRules);
@@ -47,7 +52,7 @@ test('default rules include common engineering rules', () => {
       assertOpenCodeRulesInstruction(workspace, 'harness', expectedRules);
     }
     if (scenario.agent === 'codex' || scenario.agent === 'multi') {
-      assert.match(read(path.join(workspace, 'AGENTS.md')), /harness\/docs\/rules\//);
+      assert.match(read(path.join(workspace, 'AGENTS.md')), /Selected engineering rules/);
       assertNoCodexRulesDir(workspace);
     }
     assertManifest(path.join(harnessRoot, 'manifest.json'), {
@@ -60,12 +65,12 @@ test('default rules include common engineering rules', () => {
 
 test('revalidates a canonical rule plan using item target paths', () => {
   const workspace = fs.realpathSync(tempDir());
-  const targetPath = path.join(workspace, 'harness', 'docs', 'rules', 'common', 'testing.md');
+  const targetPath = path.join(workspace, '.claude', 'rules', 'common', 'testing.md');
   fs.mkdirSync(path.dirname(targetPath), { recursive: true });
   fs.writeFileSync(targetPath, 'canonical rule\n', 'utf8');
 
   assert.doesNotThrow(() => revalidateRulePlan([{
-    target: 'harness/docs/rules/common/testing.md',
+    target: '.claude/rules/common/testing.md',
     targetPath,
     observedDigest: digestBytes(fs.readFileSync(targetPath)),
   }]));
@@ -79,13 +84,13 @@ test('re-init refreshes managed rules from a copied package upgrade', () => {
   assert.strictEqual(result.status, 0, result.stderr);
 
   const harnessRoot = path.join(workspace, 'harness');
-  const generatedRule = path.join(harnessRoot, 'docs', 'rules', 'common', 'testing.md');
+  const generatedRule = path.join(workspace, '.claude', 'rules', 'common', 'testing.md');
   const manifestPath = path.join(harnessRoot, 'manifest.json');
   const commandRoot = path.join(workspace, '.claude', 'commands');
   const commandTree = snapshotTree(commandRoot);
   const previousRule = read(generatedRule);
   const previousManifest = JSON.parse(read(manifestPath));
-  const previousRecord = previousManifest.artifacts.find((record) => record.target === 'harness/docs/rules/common/testing.md');
+  const previousRecord = previousManifest.artifacts.find((record) => record.target === '.claude/rules/common/testing.md');
   const previousCommandRecords = previousManifest.artifacts.filter((record) => record.kind === 'command');
   assert.ok(previousRule.length > 0, 'generated common testing rule should have content');
   assert.ok(previousRecord, 'generated common testing rule should have an artifact record');
@@ -100,7 +105,7 @@ test('re-init refreshes managed rules from a copied package upgrade', () => {
   assertTreeUnchanged(commandRoot, commandTree);
 
   const upgradedManifest = JSON.parse(read(manifestPath));
-  const upgradedRecord = upgradedManifest.artifacts.find((record) => record.target === 'harness/docs/rules/common/testing.md');
+  const upgradedRecord = upgradedManifest.artifacts.find((record) => record.target === '.claude/rules/common/testing.md');
   const upgradedCommandRecords = upgradedManifest.artifacts.filter((record) => record.kind === 'command');
   assert.ok(upgradedRecord, 'upgraded common testing rule should have an artifact record');
   assert.notStrictEqual(upgradedRecord.digest, previousRecord.digest);
@@ -117,7 +122,7 @@ test('--rules none installs no rule files', () => {
   assert.strictEqual(result.status, 0, result.stderr);
   const harnessRoot = path.join(workspace, 'harness');
   const contextMemo = path.join(harnessRoot, 'docs', 'layers', '01-context.md');
-  assertDir(path.join(harnessRoot, 'docs', 'rules'));
+  assertNoPath(path.join(harnessRoot, 'docs', 'rules'));
   assertRuleDirs(harnessRoot, []);
   assertClaudeRulePointers(workspace, 'harness', []);
   assert.ok(read(contextMemo).length > 0, 'layer memos should not be affected by --rules none');
@@ -134,7 +139,7 @@ test('re-init rejects drifted selected rule files and leaves the workspace uncha
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
-  const ruleFile = path.join(workspace, 'harness', 'docs', 'rules', 'common', 'testing.md');
+  const ruleFile = path.join(workspace, '.claude', 'rules', 'common', 'testing.md');
   fs.writeFileSync(ruleFile, 'custom rule\n', 'utf8');
   const before = snapshotTree(workspace);
 
@@ -151,12 +156,13 @@ test('re-init converges rules from common to none', () => {
   assert.strictEqual(result.status, 0, result.stderr);
   const harnessRoot = path.join(workspace, 'harness');
   assertRuleDirs(harnessRoot, expectedDefaultRules('claude'));
-  fs.writeFileSync(path.join(harnessRoot, 'docs', 'rules', 'common', 'local.md'), 'local rule\n', 'utf8');
+  const localRule = path.join(workspace, '.claude', 'rules', 'common', 'local.md');
+  fs.writeFileSync(localRule, 'local rule\n', 'utf8');
 
   result = run(['init', workspace, '--agent', 'claude', '--rules', 'none']);
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.strictEqual(read(path.join(harnessRoot, 'docs', 'rules', 'common', 'local.md')), 'local rule\n');
-  assertNoPath(path.join(harnessRoot, 'docs', 'rules', 'common', 'testing.md'));
+  assert.strictEqual(read(localRule), 'local rule\n');
+  assertNoPath(path.join(workspace, '.claude', 'rules', 'common', 'testing.md'));
   assertClaudeRulePointers(workspace, 'harness', []);
   assertManifest(path.join(harnessRoot, 'manifest.json'), {
     agent: 'claude',
@@ -210,32 +216,32 @@ for (const scenario of [
     const harnessRoot = path.join(workspace, 'harness');
     assertRuleDirs(harnessRoot, scenario.expected);
     if (scenario.expected.includes('typescript')) {
-      assertFile(path.join(harnessRoot, 'docs', 'rules', 'typescript', 'coding-style.md'));
-      assertFile(path.join(harnessRoot, 'docs', 'rules', 'typescript', 'testing.md'));
-      assertFile(path.join(harnessRoot, 'docs', 'rules', 'typescript', 'security.md'));
-      assertNoPath(path.join(harnessRoot, 'docs', 'rules', 'typescript', 'patterns.md'));
-      assertNoPath(path.join(harnessRoot, 'docs', 'rules', 'typescript', 'hooks.md'));
+      assertFile(path.join(workspace, '.claude', 'rules', 'typescript', 'coding-style.md'));
+      assertFile(path.join(workspace, '.claude', 'rules', 'typescript', 'testing.md'));
+      assertFile(path.join(workspace, '.claude', 'rules', 'typescript', 'security.md'));
+      assertNoPath(path.join(workspace, '.claude', 'rules', 'typescript', 'patterns.md'));
+      assertNoPath(path.join(workspace, '.claude', 'rules', 'typescript', 'hooks.md'));
     }
     if (scenario.expected.includes('java')) {
-      assertFile(path.join(harnessRoot, 'docs', 'rules', 'java', 'coding-style.md'));
-      assertFile(path.join(harnessRoot, 'docs', 'rules', 'java', 'patterns.md'));
-      assertFile(path.join(harnessRoot, 'docs', 'rules', 'java', 'testing.md'));
-      assertFile(path.join(harnessRoot, 'docs', 'rules', 'java', 'security.md'));
-      assertNoPath(path.join(harnessRoot, 'docs', 'rules', 'java', 'hooks.md'));
+      assertFile(path.join(workspace, '.claude', 'rules', 'java', 'coding-style.md'));
+      assertFile(path.join(workspace, '.claude', 'rules', 'java', 'patterns.md'));
+      assertFile(path.join(workspace, '.claude', 'rules', 'java', 'testing.md'));
+      assertFile(path.join(workspace, '.claude', 'rules', 'java', 'security.md'));
+      assertNoPath(path.join(workspace, '.claude', 'rules', 'java', 'hooks.md'));
     }
     if (scenario.expected.includes('python')) {
-      assertFile(path.join(harnessRoot, 'docs', 'rules', 'python', 'coding-style.md'));
-      assertFile(path.join(harnessRoot, 'docs', 'rules', 'python', 'testing.md'));
-      assertFile(path.join(harnessRoot, 'docs', 'rules', 'python', 'security.md'));
-      assertNoPath(path.join(harnessRoot, 'docs', 'rules', 'python', 'patterns.md'));
-      assertNoPath(path.join(harnessRoot, 'docs', 'rules', 'python', 'hooks.md'));
+      assertFile(path.join(workspace, '.claude', 'rules', 'python', 'coding-style.md'));
+      assertFile(path.join(workspace, '.claude', 'rules', 'python', 'testing.md'));
+      assertFile(path.join(workspace, '.claude', 'rules', 'python', 'security.md'));
+      assertNoPath(path.join(workspace, '.claude', 'rules', 'python', 'patterns.md'));
+      assertNoPath(path.join(workspace, '.claude', 'rules', 'python', 'hooks.md'));
     }
     if (scenario.expected.includes('fastapi')) {
-      assertFile(path.join(harnessRoot, 'docs', 'rules', 'fastapi', 'patterns.md'));
-      assertFile(path.join(harnessRoot, 'docs', 'rules', 'fastapi', 'testing.md'));
-      assertFile(path.join(harnessRoot, 'docs', 'rules', 'fastapi', 'security.md'));
-      assertNoPath(path.join(harnessRoot, 'docs', 'rules', 'fastapi', 'coding-style.md'));
-      assertNoPath(path.join(harnessRoot, 'docs', 'rules', 'fastapi', 'hooks.md'));
+      assertFile(path.join(workspace, '.claude', 'rules', 'fastapi', 'patterns.md'));
+      assertFile(path.join(workspace, '.claude', 'rules', 'fastapi', 'testing.md'));
+      assertFile(path.join(workspace, '.claude', 'rules', 'fastapi', 'security.md'));
+      assertNoPath(path.join(workspace, '.claude', 'rules', 'fastapi', 'coding-style.md'));
+      assertNoPath(path.join(workspace, '.claude', 'rules', 'fastapi', 'hooks.md'));
     }
     assertClaudeRulePointers(workspace, 'harness', scenario.expected);
     assertManifest(path.join(harnessRoot, 'manifest.json'), {
@@ -272,8 +278,8 @@ for (const scenario of [
     assertOpenCodeRulesInstruction(workspace, 'harness', scenario.expected);
     const instructions = JSON.stringify(JSON.parse(read(path.join(workspace, 'opencode.json'))).instructions);
     assert.doesNotMatch(instructions, new RegExp(`Selected rule directories:[^\\n]*\\b${scenario.rulesOut}\\b`));
-    assertNoPath(path.join(harnessRoot, 'docs', 'rules', scenario.rulesOut));
-    assertNoPath(path.join(workspace, '.claude', 'rules', `niuma-${scenario.rulesOut}.md`));
+    assertNoPath(path.join(harnessRoot, 'docs', 'rules'));
+    assertNoPath(path.join(workspace, '.claude', 'rules', scenario.rulesOut));
     assertManifest(path.join(harnessRoot, 'manifest.json'), {
       agent: scenario.agent,
       rules: scenario.expected,

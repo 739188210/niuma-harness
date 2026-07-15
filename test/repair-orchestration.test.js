@@ -380,7 +380,7 @@ test('repair Doctor failure restores the original rule and manifest while retain
   const workspace = initDamagedWorkspace();
   const manifestPath = path.join(workspace, 'harness', 'manifest.json');
   const manifestBytes = fs.readFileSync(manifestPath);
-  const rulePath = path.join(workspace, 'harness', 'docs', 'rules', 'common', 'testing.md');
+  const rulePath = path.join(workspace, '.claude', 'rules', 'common', 'testing.md');
   fs.writeFileSync(rulePath, 'damaged rule before repair\n');
   const ruleBytes = fs.readFileSync(rulePath);
   const repairId = '20260712T000000Z-rule-doctor';
@@ -403,7 +403,7 @@ test('repair Doctor failure restores the original rule and manifest while retain
   const backupRoot = path.join(fs.realpathSync(workspace), '.niuma-harness', 'repairs', repairId);
   assert.deepStrictEqual(fs.readFileSync(rulePath), ruleBytes);
   assert.deepStrictEqual(fs.readFileSync(manifestPath), manifestBytes);
-  assert.deepStrictEqual(fs.readFileSync(path.join(backupRoot, 'files', 'harness', 'docs', 'rules', 'common', 'testing.md')), ruleBytes);
+  assert.deepStrictEqual(fs.readFileSync(path.join(backupRoot, 'files', '.claude', 'rules', 'common', 'testing.md')), ruleBytes);
   assert.ok(fs.existsSync(path.join(backupRoot, 'repair-manifest.json')));
 });
 

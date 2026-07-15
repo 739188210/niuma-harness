@@ -52,11 +52,12 @@ test('entry file carries the operating contract zone', () => {
   assert.doesNotMatch(body, /\(depth: `docs\//, 'entry depth links must not use workspace-root docs paths');
 });
 
-test('multi mode shares one entry source so both files are identical', () => {
+test('multi mode adds Codex rules only to AGENTS.md', () => {
   const workspace = initWorkspace('multi');
   const claude = read(path.join(workspace, 'CLAUDE.md'));
   const agents = read(path.join(workspace, 'AGENTS.md'));
-  assert.strictEqual(claude, agents, 'CLAUDE.md and AGENTS.md must share one source');
+  assert.doesNotMatch(claude, /^## Selected engineering rules$/m);
+  assert.match(agents, /^## Selected engineering rules$/m);
 });
 
 test('init produces parity scaffold across supported agents', () => {
@@ -70,19 +71,18 @@ test('init produces parity scaffold across supported agents', () => {
   }
 });
 
-test('all agent entry files share the same generated contract source', () => {
-  const baselineWorkspace = initWorkspace('claude');
-  const baseline = read(path.join(baselineWorkspace, 'CLAUDE.md'));
-
+test('all agent entries retain the shared operating contract', () => {
   for (const scenario of agentCases) {
-    const workspace = scenario.agent === 'claude' ? baselineWorkspace : initWorkspace(scenario.agent);
+    const workspace = initWorkspace(scenario.agent);
 
     for (const entryFile of scenario.entryFiles) {
-      assert.strictEqual(
-        read(path.join(workspace, entryFile)),
-        baseline,
-        `${scenario.agent} ${entryFile} should match the claude entry contract`,
-      );
+      const entry = read(path.join(workspace, entryFile));
+      assert.match(entry, /Niuma Harness — Operating Loop/);
+      assert.match(entry, /<!-- niuma-harness:contract begin/);
+      assert.match(entry, /<!-- niuma-harness:contract end/);
+      if (entryFile === 'AGENTS.md' && (scenario.agent === 'codex' || scenario.agent === 'multi')) {
+        assert.match(entry, /^## Selected engineering rules$/m);
+      }
     }
   }
 });

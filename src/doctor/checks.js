@@ -16,7 +16,7 @@ const {
 const { checkArtifactFiles } = require('./artifacts-checks');
 const { checkCommandFiles, getAvailableCommands } = require('./commands-checks');
 const { checkRuleAdapterFiles } = require('./rules-adapters-checks');
-const { checkRuleFiles, getAvailableRules } = require('./rules-checks');
+const { getAvailableRules } = require('./rules-checks');
 const { checkSkillFiles, getAvailableSkills } = require('./skills-checks');
 
 // 保持检查顺序稳定：先 schema/字段，再文件结构，最后 workspace workDir。
@@ -35,7 +35,6 @@ function checkHarness(harnessRoot, status, result) {
   checkEntryFiles(context);
   checkEntryContractIntegrity(context);
   checkCoreDocs(context);
-  checkRuleFiles(context);
   checkRuleAdapterFiles(context);
   checkSkillFiles(context);
   checkCommandFiles(context);

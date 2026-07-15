@@ -4,6 +4,7 @@ const path = require('path');
 const { getAllEntryFiles, getEntryFilesForAgent } = require('../agents');
 const { assertNoSymlinkInPath, safeResolveInside } = require('../fs-safe');
 const { renderTemplate } = require('../scaffold/templates');
+const { renderEntry } = require('../entry-renderer');
 const { analyzeContractBlock, sliceContractBlock } = require('../contract');
 const { addError, addOk } = require('./result');
 
@@ -30,9 +31,7 @@ function checkEntryFiles(context) {
 function checkInactiveEntryContracts(context, activeEntries) {
   const { result, workspaceRoot } = context;
   const harnessDir = path.basename(context.harnessRoot);
-  const canonicalBlock = sliceContractBlock(
-    renderTemplate('entry/entry.md', { HARNESS_DIR: harnessDir })
-  );
+  const canonicalBlock = sliceContractBlock(renderTemplate('entry/entry.md', { HARNESS_DIR: harnessDir, CODEX_RULES: '' }));
   const normalize = (value) => value.replace(/\r\n/g, '\n');
   for (const entryFile of getAllEntryFiles()) {
     if (activeEntries.has(entryFile)) {
@@ -94,15 +93,19 @@ function checkEntryContractIntegrity(context) {
     return;
   }
   const harnessDir = path.basename(context.harnessRoot);
-  const canonicalBlock = sliceContractBlock(
-    renderTemplate('entry/entry.md', { HARNESS_DIR: harnessDir })
-  );
-  if (!canonicalBlock) {
-    addError(result, 'entry template source has no unique contract block');
-    return;
-  }
-
   for (const entryFile of getEntryFilesForAgent(agent)) {
+    const canonicalBlock = sliceContractBlock(renderEntry(
+      agent,
+      entryFile,
+      context.rules || [],
+      harnessDir,
+      context.templateManifest.workDirectory || 'agent-work',
+      context.templateManifest.rulesRoot
+    ));
+    if (!canonicalBlock) {
+      addError(result, 'entry template source has no unique contract block');
+      return;
+    }
     const content = readOptionalEntry(workspaceRoot, entryFile, result);
     if (content === null) {
       continue; // 缺失已由 checkEntryFiles 报告
