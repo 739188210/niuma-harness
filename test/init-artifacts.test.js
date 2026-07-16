@@ -137,6 +137,21 @@ test('codex command skills are generated from command templates', () => {
   assert.doesNotMatch(openAi, /只有用户明确确认后/);
 });
 
+test('git-submit-idea command preserves default Change List and fat_saas boundaries', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'codex']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const commandId = getCommandId('git-submit-idea.md');
+  const skill = read(path.join(workspace, '.agents', 'skills', commandId, 'SKILL.md'));
+  assert.match(skill, /default="true"/);
+  assert.match(skill, /fat_saas/);
+  assert.match(skill, /git add \./);
+  assert.match(skill, /暂存区不为空，停止/);
+  assert.match(skill, /不得退化为提交全部本地改动/);
+  assert.match(skill, /git push -u origin HEAD/);
+  assert.match(skill, /不重复创建/);
+});
+
 test('re-init rejects drifted codex command skills and preserves unknown user skills', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'codex']);

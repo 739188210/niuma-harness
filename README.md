@@ -177,7 +177,7 @@ The layer files describe what each layer must do. Engineering standards are inst
   "agent": "claude",
   "rules": ["common"],
   "skills": ["database-readonly", "zentao-bug-workflow"],
-  "commands": ["dev-check.md", "dev-summary.md", "git-status.md", "git-sync.md", "glab-projects.md"],
+  "commands": ["dev-check.md", "dev-summary.md", "git-status.md", "git-submit-idea.md", "git-sync.md", "glab-projects.md"],
   "artifacts": [
     {
       "kind": "command",
