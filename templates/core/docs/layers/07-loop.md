@@ -91,9 +91,9 @@ During Reflect or Continue, treat these thoughts as stop-and-classify signals. A
 
 ## Links to other layers
 
-- Context: `docs/layers/01-context.md`
-- Policy: `docs/layers/02-policy.md`
-- Process: `docs/layers/03-process.md`
-- Observation: `docs/layers/04-observation.md`
-- Recovery: `docs/layers/05-recovery.md`
-- Memory: `docs/layers/06-memory.md`
+- Context: `{{HARNESS_DIR}}/docs/layers/01-context.md`
+- Policy: `{{HARNESS_DIR}}/docs/layers/02-policy.md`
+- Process: `{{HARNESS_DIR}}/docs/layers/03-process.md`
+- Observation: `{{HARNESS_DIR}}/docs/layers/04-observation.md`
+- Recovery: `{{HARNESS_DIR}}/docs/layers/05-recovery.md`
+- Memory: `{{HARNESS_DIR}}/docs/layers/06-memory.md`

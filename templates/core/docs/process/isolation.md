@@ -2,7 +2,7 @@
 
 Use this playbook when working in the shared workspace would create avoidable risk or coordination cost. Isolation keeps one task's in-progress changes from polluting another's and makes rollback safe.
 
-This is a cross-cutting playbook selected by the Process layer, not a primary task workflow. Use `docs/layers/03-process.md` for routing and this file for isolation execution.
+This is a cross-cutting playbook selected by the Process layer, not a primary task workflow. Use `{{HARNESS_DIR}}/docs/layers/03-process.md` for routing and this file for isolation execution.
 
 ## Goal
 
@@ -24,7 +24,7 @@ Do not isolate merely because a task has more than one step. Isolation has setup
 ## Steps
 
 1. Confirm the target is a git repository. If not, ask the user before proceeding.
-2. Confirm the intended worktree action satisfies `docs/policy/action-boundary.md` local worktree isolation rules.
+2. Confirm the intended worktree action satisfies `{{HARNESS_DIR}}/docs/policy/action-boundary.md` local worktree isolation rules.
 3. If the host tool or higher-priority instructions require explicit user approval for worktree creation, stop and ask instead of running git worktree commands.
 4. Create a worktree on a newly created local task branch: `git worktree add <path> -b <branch>`.
 5. Work entirely inside the worktree for this task. Do not edit the shared tree while isolated.
@@ -40,7 +40,7 @@ Do not isolate merely because a task has more than one step. Isolation has setup
 
 ## Recovery
 
-If worktree setup fails (path conflict, branch exists, git metadata failure, or invalid isolation path), do not force it. Resolve the specific blocker or fall back to task-scoped work in the shared tree. Use `docs/layers/05-recovery.md` for general failure handling.
+If worktree setup fails (path conflict, branch exists, git metadata failure, or invalid isolation path), do not force it. Resolve the specific blocker or fall back to task-scoped work in the shared tree. Use `{{HARNESS_DIR}}/docs/layers/05-recovery.md` for general failure handling.
 
 ## Cleanup
 

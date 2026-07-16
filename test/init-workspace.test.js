@@ -247,11 +247,14 @@ test('--harness-dir uses a custom directory name', () => {
   assert.doesNotMatch(entry, /\(depth: `docs\//);
 
   const index = read(path.join(workspace, 'ai-harness', 'docs', 'index.md'));
-  assert.match(index, /`\.\.\/README\.md`/);
+  assert.match(index, /`ai-harness\/README\.md`/);
 
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
   assert.match(workReadme, /ai-harness\/docs\/experiments\/task-execution-record\.md/);
-  assert.doesNotMatch(workReadme, /`docs\/experiments\/task-execution-record\.md`/);
+  assert.match(workReadme, /ai-harness\/docs\/layers\/07-loop\.md/);
+  assert.match(workReadme, /ai-harness\/docs\/project-context\.md/);
+  assert.doesNotMatch(workReadme, /`docs\//);
+  assert.doesNotMatch(workReadme, /`harness\/docs\//);
   const doctor = run(['doctor', workspace, '--harness-dir', 'ai-harness']);
   assert.strictEqual(doctor.status, 0, doctor.stderr);
 });

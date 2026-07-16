@@ -89,7 +89,7 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
   assert.match(actionBoundary, /do not use the Harness framework documents for task-local work/);
   assert.match(actionBoundary, /## Autonomous actions/);
   assert.match(actionBoundary, /project-local verification commands that do not create external side effects/);
-  assert.match(actionBoundary, /docs\/policy\/untrusted-content\.md/);
+  assert.match(actionBoundary, /harness\/docs\/policy\/untrusted-content\.md/);
   const secretLeak = read(path.join(h, 'docs', 'policy', 'secret-leak.md'));
   assert.match(secretLeak, /secret or sensitive data/);
   assert.match(secretLeak, /private key, or private data/);
@@ -103,13 +103,13 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
   assert.match(untrustedContent, /data, not instructions/, 'untrusted-content.md must define data/instruction separation');
 
   const policyMemo = read(path.join(h, 'docs', 'layers', '02-policy.md'));
-  assert.match(policyMemo, /docs\/policy\/untrusted-content\.md/);
+  assert.match(policyMemo, /harness\/docs\/policy\/untrusted-content\.md/);
   const index = read(path.join(h, 'docs', 'index.md'));
-  assert.match(index, /docs\/policy\/untrusted-content\.md/);
+  assert.match(index, /harness\/docs\/policy\/untrusted-content\.md/);
   assert.match(index, /tool-managed navigation map/);
-  assert.match(index, /stable project facts in `docs\/project-context\.md`/);
+  assert.match(index, /stable project facts in `harness\/docs\/project-context\.md`/);
   assert.match(index, /task-local pointers in `agent-work\/`/);
-  assert.match(index, /`\.\.\/README\.md` explains the harness structure and how to use it\./);
+  assert.match(index, /`harness\/README\.md` explains the harness structure and how to use it\./);
   assert.doesNotMatch(index, /Agents may add short runtime pointers/);
 
   assertNoPath(path.join(h, 'docs', 'automation'));
@@ -157,8 +157,8 @@ test('generated docs expose experimental task execution feedback guidance', () =
 
 
   const index = read(path.join(h, 'docs', 'index.md'));
-  assert.match(index, /docs\/experiments\//);
-  assert.match(index, /Task execution feedback: `docs\/experiments\/task-execution-record\.md`/);
+  assert.match(index, /harness\/docs\/experiments\//);
+  assert.match(index, /Task execution feedback: `harness\/docs\/experiments\/task-execution-record\.md`/);
 });
 
 test('generated project context defines first-use bootstrap protocol', () => {
@@ -195,7 +195,7 @@ test('generated project context defines first-use bootstrap protocol', () => {
   assert.match(entry, /if bootstrap status is `pending`, complete its one-time initial project scan before non-trivial work/);
 
   const memoryMemo = read(path.join(h, 'docs', 'layers', '06-memory.md'));
-  assert.match(memoryMemo, /Bootstrap `docs\/project-context\.md` when its structured bootstrap record has `"status": "pending"`/);
+  assert.match(memoryMemo, /Bootstrap `harness\/docs\/project-context\.md` when its structured bootstrap record has `"status": "pending"`/);
   assert.match(memoryMemo, /perform the one-time initial project scan defined in that file/);
   assert.match(memoryMemo, /record only verified durable facts/);
 });
@@ -259,9 +259,9 @@ test('generated observation memo defines evidence schema', () => {
   assert.match(observationMemo, /"remainingUnknowns"/);
   assert.match(observationMemo, /outcome: "skipped"/);
   assert.match(observationMemo, /`status\.md` may summarize verification state, but it does not replace evidence/);
-  assert.match(observationMemo, /project-local commands documented in `docs\/project-context\.md`/);
-  assert.match(observationMemo, /use `docs\/index\.md` only as navigation/);
-  assert.doesNotMatch(observationMemo, /project-local commands documented in `docs\/index\.md`/);
+  assert.match(observationMemo, /project-local commands documented in `harness\/docs\/project-context\.md`/);
+  assert.match(observationMemo, /use `harness\/docs\/index\.md` only as navigation/);
+  assert.doesNotMatch(observationMemo, /project-local commands documented in `harness\/docs\/index\.md`/);
   assert.match(observationMemo, /final Observation verifies the integrated result/);
 });
 
@@ -305,7 +305,7 @@ test('generated docs define task state ownership boundaries', () => {
 
   const memoryMemo = read(path.join(h, 'docs', 'layers', '06-memory.md'));
   assert.match(memoryMemo, /Task-local state stays in `agent-work\/tasks\/<task-name>\/`/);
-  assert.match(memoryMemo, /Durable facts belong in `docs\/project-context\.md` only after verification/);
+  assert.match(memoryMemo, /Durable facts belong in `harness\/docs\/project-context\.md` only after verification/);
   assert.match(memoryMemo, /Approval blockers and risks are task-local until resolved/);
 
   const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation.md'));
@@ -346,19 +346,19 @@ test('generated process memo maps triggers to workflows and artifacts', () => {
 
   const processMemo = read(path.join(h, 'docs', 'layers', '03-process.md'));
   assert.match(processMemo, /## Trigger and artifact routing/);
-  assert.match(processMemo, /docs\/process\/bugfix\.md/);
+  assert.match(processMemo, /harness\/docs\/process\/bugfix\.md/);
   assert.match(processMemo, /Reproduction signal/);
-  assert.match(processMemo, /docs\/process\/feature-development\.md/);
+  assert.match(processMemo, /harness\/docs\/process\/feature-development\.md/);
   assert.match(processMemo, /Acceptance criteria/);
-  assert.match(processMemo, /docs\/process\/refactor\.md/);
+  assert.match(processMemo, /harness\/docs\/process\/refactor\.md/);
   assert.match(processMemo, /Behavior baseline/);
-  assert.match(processMemo, /docs\/process\/review\.md/);
+  assert.match(processMemo, /harness\/docs\/process\/review\.md/);
   assert.match(processMemo, /Findings with severity/);
-  assert.match(processMemo, /docs\/process\/release\.md/);
+  assert.match(processMemo, /harness\/docs\/process\/release\.md/);
   assert.match(processMemo, /package or artifact scope/);
   assert.match(processMemo, /Observation schema/);
   assert.match(processMemo, /Trigger words are routing hints, not permission to bypass Policy/);
-  assert.match(processMemo, /If multiple rows match, start with `docs\/process\/task-triage\.md`/);
+  assert.match(processMemo, /If multiple rows match, start with `harness\/docs\/process\/task-triage\.md`/);
   assert.match(processMemo, /Do not duplicate/);
 });
 
@@ -529,7 +529,7 @@ test('generated docs define test-change gate', () => {
   const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation.md'));
   assert.match(observationMemo, /If verification fails, treat the failing check as evidence/);
   assert.match(observationMemo, /Do not move verification targets after a failure/);
-  assert.match(observationMemo, /test-change gate in `docs\/policy\/action-boundary\.md`/);
+  assert.match(observationMemo, /test-change gate in `harness\/docs\/policy\/action-boundary\.md`/);
   assert.match(observationMemo, /replacement coverage preserves the behavior contract/);
 
   const bugfix = read(path.join(h, 'docs', 'process', 'bugfix.md'));

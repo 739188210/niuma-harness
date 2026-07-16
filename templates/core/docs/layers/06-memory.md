@@ -13,16 +13,16 @@ Use this layer after discovering verified stable facts, after finishing multi-st
 1. Separate stable project facts from temporary task observations.
 2. Verify facts against current files or user confirmation before preserving them.
 3. Keep task-local investigation details in the workspace-level `agent-work/` directory or the current task record.
-4. Bootstrap `docs/project-context.md` when its structured bootstrap record has `"status": "pending"`: perform the one-time initial project scan defined in that file, record only verified durable facts, and mark the result `complete` or `partial`.
-5. Treat `agent-work/tasks/<task-name>/status.md` as task-local operational state. Its minimum fields are defined by `docs/layers/07-loop.md`.
-6. Propose updates to `docs/project-context.md` only for durable, reusable facts. A fact is durable when it is reused across multiple tasks and does not change with a single task's outcome (for example build/test commands, architecture, module ownership, or external constraints); task-specific findings stay in `agent-work/`.
+4. Bootstrap `{{HARNESS_DIR}}/docs/project-context.md` when its structured bootstrap record has `"status": "pending"`: perform the one-time initial project scan defined in that file, record only verified durable facts, and mark the result `complete` or `partial`.
+5. Treat `agent-work/tasks/<task-name>/status.md` as task-local operational state. Its minimum fields are defined by `{{HARNESS_DIR}}/docs/layers/07-loop.md`.
+6. Propose updates to `{{HARNESS_DIR}}/docs/project-context.md` only for durable, reusable facts. A fact is durable when it is reused across multiple tasks and does not change with a single task's outcome (for example build/test commands, architecture, module ownership, or external constraints); task-specific findings stay in `agent-work/`.
 7. Do not store secrets, private data, or unverified guesses.
 
 ## Ownership boundaries
 
 Task-local state stays in `agent-work/tasks/<task-name>/`. This includes progress ledgers, task notes, temporary investigation details, unresolved approval blockers, risks, and verification summaries.
 
-Durable facts belong in `docs/project-context.md` only after verification against current files or user confirmation. A durable fact should be reusable across tasks and should not depend on one task's temporary outcome.
+Durable facts belong in `{{HARNESS_DIR}}/docs/project-context.md` only after verification against current files or user confirmation. A durable fact should be reusable across tasks and should not depend on one task's temporary outcome.
 
 Approval blockers and risks are task-local until resolved. Move them into durable project context only when they become verified recurring constraints.
 
@@ -44,15 +44,15 @@ Approval blockers and risks are task-local until resolved. Move them into durabl
 ## Outputs
 
 - Task-local notes and status ledgers for temporary findings and recovery state.
-- Candidate stable facts for `docs/project-context.md`.
+- Candidate stable facts for `{{HARNESS_DIR}}/docs/project-context.md`.
 - Open questions needing user confirmation.
 - Links between related context, process, and verification records.
 
 ## Links to other layers
 
-- Context: `docs/layers/01-context.md`
-- Observation: `docs/layers/04-observation.md`
-- Recovery: `docs/layers/05-recovery.md`
-- Loop: `docs/layers/07-loop.md`
-- Stable facts: `docs/project-context.md`
+- Context: `{{HARNESS_DIR}}/docs/layers/01-context.md`
+- Observation: `{{HARNESS_DIR}}/docs/layers/04-observation.md`
+- Recovery: `{{HARNESS_DIR}}/docs/layers/05-recovery.md`
+- Loop: `{{HARNESS_DIR}}/docs/layers/07-loop.md`
+- Stable facts: `{{HARNESS_DIR}}/docs/project-context.md`
 - Task work area: `agent-work/`

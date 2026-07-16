@@ -70,10 +70,10 @@ Use one schema 1 marker block in `verification.md`; `harness-feedback.md` refere
 
 ## Runtime protocol
 
-The Loop layer defines how agents keep task status current: `docs/layers/07-loop.md`.
+The Loop layer defines how agents keep task status current: `{{HARNESS_DIR}}/docs/layers/07-loop.md`.
 
 ## Durable facts
 
-Durable project facts should move through the Memory layer before being recorded in the active harness root's `docs/project-context.md`.
+Durable project facts should move through the Memory layer before being recorded in the active harness root's `{{HARNESS_DIR}}/docs/project-context.md`.
 
-Do not put task-local records under `harness/docs/`.
+Do not put task-local records under `{{HARNESS_DIR}}/docs/`.

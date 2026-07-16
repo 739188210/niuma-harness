@@ -11,7 +11,7 @@ Use this layer before declaring work complete, after any code or documentation c
 ## Agent protocol
 
 1. Identify the smallest checks that prove the task goal.
-2. Prefer project-local commands documented in `docs/project-context.md`; use `docs/index.md` only as navigation.
+2. Prefer project-local commands documented in `{{HARNESS_DIR}}/docs/project-context.md`; use `{{HARNESS_DIR}}/docs/index.md` only as navigation.
 3. Run focused checks first, then broader checks when justified.
 4. Record evidence using the schema below: check, expected signal, actual result, skipped checks, and remaining unknowns.
 5. Treat unrun checks as unknown, not as passing.
@@ -75,7 +75,7 @@ For parallel or delegated work, final Observation verifies the integrated result
 - Do not mark skipped checks as passing.
 - Do not broaden verification commands endlessly when a focused failure already identifies the issue.
 - Do not move verification targets after a failure to turn red into green.
-- Do not rebaseline snapshots, loosen assertions, skip tests, lower coverage, or change check configuration unless permitted by the test-change gate in `docs/policy/action-boundary.md`; then record why the previous target was invalid and what replacement coverage preserves the behavior contract.
+- Do not rebaseline snapshots, loosen assertions, skip tests, lower coverage, or change check configuration unless permitted by the test-change gate in `{{HARNESS_DIR}}/docs/policy/action-boundary.md`; then record why the previous target was invalid and what replacement coverage preserves the behavior contract.
 
 ## Outputs
 
@@ -88,8 +88,8 @@ For parallel or delegated work, final Observation verifies the integrated result
 
 ## Links to other layers
 
-- Context: `docs/layers/01-context.md`
-- Policy: `docs/layers/02-policy.md`
-- Process: `docs/layers/03-process.md`
-- Recovery: `docs/layers/05-recovery.md`
+- Context: `{{HARNESS_DIR}}/docs/layers/01-context.md`
+- Policy: `{{HARNESS_DIR}}/docs/layers/02-policy.md`
+- Process: `{{HARNESS_DIR}}/docs/layers/03-process.md`
+- Recovery: `{{HARNESS_DIR}}/docs/layers/05-recovery.md`
 - Task work area: `agent-work/`

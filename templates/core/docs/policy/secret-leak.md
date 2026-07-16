@@ -30,10 +30,10 @@ Use this document when the agent observes any of:
 
 ## Difference from normal Recovery
 
-Normal Recovery (`docs/layers/05-recovery.md`) targets the smallest safe fix and focused retry. A secret leak inverts that: the safe action is to stop and escalate, not to patch. Never apply "smallest fix" reasoning to a leak.
+Normal Recovery (`{{HARNESS_DIR}}/docs/layers/05-recovery.md`) targets the smallest safe fix and focused retry. A secret leak inverts that: the safe action is to stop and escalate, not to patch. Never apply "smallest fix" reasoning to a leak.
 
 ## Links
 
-- Policy: `docs/policy/action-boundary.md` (rotation and history rewrite are ask-first)
-- Recovery: `docs/layers/05-recovery.md`
-- Memory: `docs/layers/06-memory.md` (never persist a leaked secret; record only its type and location)
+- Policy: `{{HARNESS_DIR}}/docs/policy/action-boundary.md` (rotation and history rewrite are ask-first)
+- Recovery: `{{HARNESS_DIR}}/docs/layers/05-recovery.md`
+- Memory: `{{HARNESS_DIR}}/docs/layers/06-memory.md` (never persist a leaked secret; record only its type and location)

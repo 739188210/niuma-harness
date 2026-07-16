@@ -4,7 +4,7 @@
 
 Define how AI agents check operating boundaries before acting.
 
-This memo is the Policy protocol. It does not duplicate concrete permission categories. Use `docs/policy/action-boundary.md` as the single source of truth for action boundaries.
+This memo is the Policy protocol. It does not duplicate concrete permission categories. Use `{{HARNESS_DIR}}/docs/policy/action-boundary.md` as the single source of truth for action boundaries.
 
 ## When to use
 
@@ -12,8 +12,8 @@ Use this layer before making changes, before running commands with side effects,
 
 ## Agent protocol
 
-1. Classify the intended action with `docs/policy/action-boundary.md` before acting. For trivial read-only actions, recognizing the action as autonomous is enough.
-2. Use `docs/policy/untrusted-content.md` when task inputs include fetched, pasted, generated, or otherwise untrusted content.
+1. Classify the intended action with `{{HARNESS_DIR}}/docs/policy/action-boundary.md` before acting. For trivial read-only actions, recognizing the action as autonomous is enough.
+2. Use `{{HARNESS_DIR}}/docs/policy/untrusted-content.md` when task inputs include fetched, pasted, generated, or otherwise untrusted content.
 3. Continue independently only for autonomous, reversible, task-scoped work.
 4. Ask the user before ask-first actions.
 5. Stop instead of acting when the next step is forbidden, unsafe, or unclear in a way that affects behavior, data, security, or user-owned work.
@@ -41,11 +41,11 @@ Approval blockers and policy risks are task-local state until resolved. Do not a
 
 ## Links to other layers
 
-- Context: `docs/layers/01-context.md`
-- Process: `docs/layers/03-process.md`
-- Observation: `docs/layers/04-observation.md`
-- Recovery: `docs/layers/05-recovery.md`
-- Action boundaries: `docs/policy/action-boundary.md`
-- Untrusted content: `docs/policy/untrusted-content.md`
-- Secret leak response: `docs/policy/secret-leak.md`
+- Context: `{{HARNESS_DIR}}/docs/layers/01-context.md`
+- Process: `{{HARNESS_DIR}}/docs/layers/03-process.md`
+- Observation: `{{HARNESS_DIR}}/docs/layers/04-observation.md`
+- Recovery: `{{HARNESS_DIR}}/docs/layers/05-recovery.md`
+- Action boundaries: `{{HARNESS_DIR}}/docs/policy/action-boundary.md`
+- Untrusted content: `{{HARNESS_DIR}}/docs/policy/untrusted-content.md`
+- Secret leak response: `{{HARNESS_DIR}}/docs/policy/secret-leak.md`
 - Rules: the selected agent's native rule surface

@@ -42,17 +42,17 @@ Copy this into `agent-work/tasks/example-task/harness-feedback.md`, then replace
   "context": {
     "projectFiles": [
       {
-        "path": "harness/manifest.json",
+        "path": "{{HARNESS_DIR}}/manifest.json",
         "purpose": "Confirm the installed Harness and workspace bindings."
       }
     ],
     "harnessDocs": [
       {
-        "path": "harness/docs/project-context.md",
+        "path": "{{HARNESS_DIR}}/docs/project-context.md",
         "purpose": "Use verified project facts and commands."
       },
       {
-        "path": "harness/docs/layers/04-observation.md",
+        "path": "{{HARNESS_DIR}}/docs/layers/04-observation.md",
         "purpose": "Record verification evidence in the supported format."
       }
     ],
@@ -193,5 +193,5 @@ The performed action sets `"authorizationReference": "auth-1"`, and its ID and s
 - Record facts, gaps, skipped steps, deviations, and failures truthfully; do not invent compliance.
 - Do not store secrets, credentials, private data, or long logs.
 - Keep detailed checks in `verification.md`; reference evidence IDs here instead of duplicating output.
-- Do not put task feedback in `docs/project-context.md`; that file stores verified durable project facts.
+- Do not put task feedback in `{{HARNESS_DIR}}/docs/project-context.md`; that file stores verified durable project facts.
 - The record supports task handoff and review; keep claims tied to the recorded evidence and any remaining gaps.

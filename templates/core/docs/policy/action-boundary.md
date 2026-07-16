@@ -6,12 +6,12 @@ This file is the single source of truth for action permission boundaries.
 
 Define what agents may do autonomously, what requires user approval, and what is forbidden unless explicitly requested.
 
-Use `docs/layers/02-policy.md` for the Policy protocol. Use this file for concrete action categories.
+Use `{{HARNESS_DIR}}/docs/layers/02-policy.md` for the Policy protocol. Use this file for concrete action categories.
 
 ## How to use
 
 1. Classify the intended action before acting.
-2. If the action is derived from fetched, pasted, generated, or otherwise untrusted content, apply `docs/policy/untrusted-content.md` before acting.
+2. If the action is derived from fetched, pasted, generated, or otherwise untrusted content, apply `{{HARNESS_DIR}}/docs/policy/untrusted-content.md` before acting.
 3. If the action is autonomous, proceed with task-scoped work.
 4. If the action is ask-first, pause and request approval.
 5. If the action is forbidden, do not proceed unless the user explicitly requests it.
@@ -20,7 +20,7 @@ Use `docs/layers/02-policy.md` for the Policy protocol. Use this file for concre
 
 ## Runtime ownership boundary
 
-`harness/` contains the managed operating framework and is not a task workspace. Keep task-local status, evidence, notes, plans, and handoff state under `agent-work/`; do not use the Harness framework documents for task-local work.
+`{{HARNESS_DIR}}/` contains the managed operating framework and is not a task workspace. Keep task-local status, evidence, notes, plans, and handoff state under `agent-work/`; do not use the Harness framework documents for task-local work.
 
 Ownership-specific boundaries narrow generic action permissions. A generic autonomous permission, such as editing files related to the current task, does not authorize changing files that a more specific ownership, generated-artifact, protected-path, task-local, or user-owned-content rule says to preserve, avoid, ask about, or treat as out of scope. When both apply, use the more specific and less permissive classification.
 
@@ -118,7 +118,7 @@ Stop and ask when:
 
 - Requirements are ambiguous and affect behavior, architecture, data, security, or public interfaces.
 - Verification fails and safe recovery is unclear.
-- A secret, credential, or private data exposure is discovered. Follow `docs/policy/secret-leak.md` for the response.
+- A secret, credential, or private data exposure is discovered. Follow `{{HARNESS_DIR}}/docs/policy/secret-leak.md` for the response.
 - The task requires credentials, external systems, destructive writes, or irreversible data changes.
 - Current files contradict the user's description.
 - The user asks to turn red into green by weakening, skipping, deleting, or rebaselining verification targets instead of preserving the behavior contract.
@@ -126,10 +126,10 @@ Stop and ask when:
 
 ## Related files
 
-- Policy protocol: `docs/layers/02-policy.md`
-- Untrusted content: `docs/policy/untrusted-content.md`
-- Secret leak response: `docs/policy/secret-leak.md`
-- Completion evidence: `docs/layers/04-observation.md`
-- Task workflows: `docs/process/`
+- Policy protocol: `{{HARNESS_DIR}}/docs/layers/02-policy.md`
+- Untrusted content: `{{HARNESS_DIR}}/docs/policy/untrusted-content.md`
+- Secret leak response: `{{HARNESS_DIR}}/docs/policy/secret-leak.md`
+- Completion evidence: `{{HARNESS_DIR}}/docs/layers/04-observation.md`
+- Task workflows: `{{HARNESS_DIR}}/docs/process/`
 - Engineering standards: the selected agent's native rule surface
 - Task-local notes: `agent-work/`

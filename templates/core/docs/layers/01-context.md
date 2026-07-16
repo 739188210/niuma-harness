@@ -4,7 +4,7 @@
 
 Make the workspace understandable before an AI agent plans or edits. This layer defines how to find, verify, and use context.
 
-This memo is a context protocol. It does not store project facts. Stable project facts belong in `docs/project-context.md`.
+This memo is a context protocol. It does not store project facts. Stable project facts belong in `{{HARNESS_DIR}}/docs/project-context.md`.
 
 ## When to use
 
@@ -12,8 +12,8 @@ Use this layer at the start of every task, after a context reset, when entering 
 
 ## Agent protocol
 
-1. Read `docs/index.md` to locate code, docs, workflows, and verification commands.
-2. Read `docs/project-context.md` for stable project facts.
+1. Read `{{HARNESS_DIR}}/docs/index.md` to locate code, docs, workflows, and verification commands.
+2. Read `{{HARNESS_DIR}}/docs/project-context.md` for stable project facts.
 3. Inspect current project files when a fact affects the task; do not rely only on stale notes.
 4. Identify the task-relevant modules, commands, and constraints before proposing changes.
 5. If project notes conflict with current files, treat current files as the source of truth and record the conflict in task notes.
@@ -32,7 +32,7 @@ Use this layer at the start of every task, after a context reset, when entering 
 - Do not treat old notes as more authoritative than current source files.
 - Do not edit unrelated context files while still exploring.
 - Do not write unverified assumptions into long-lived project context.
-- Do not duplicate project facts in this memo; put them in `docs/project-context.md` instead.
+- Do not duplicate project facts in this memo; put them in `{{HARNESS_DIR}}/docs/project-context.md` instead.
 
 ## Outputs
 
@@ -43,8 +43,8 @@ Use this layer at the start of every task, after a context reset, when entering 
 
 ## Links to other layers
 
-- Policy: `docs/layers/02-policy.md`
-- Process: `docs/layers/03-process.md`
-- Memory: `docs/layers/06-memory.md`
-- Project map: `docs/index.md`
-- Stable facts: `docs/project-context.md`
+- Policy: `{{HARNESS_DIR}}/docs/layers/02-policy.md`
+- Process: `{{HARNESS_DIR}}/docs/layers/03-process.md`
+- Memory: `{{HARNESS_DIR}}/docs/layers/06-memory.md`
+- Project map: `{{HARNESS_DIR}}/docs/index.md`
+- Stable facts: `{{HARNESS_DIR}}/docs/project-context.md`

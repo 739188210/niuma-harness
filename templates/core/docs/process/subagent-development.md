@@ -2,7 +2,7 @@
 
 Use this playbook when coordinating large or risky work across isolated subagents with fresh-context dispatch and staged review.
 
-This is a cross-cutting playbook selected by the Process layer, like `docs/process/isolation.md`. Use `docs/layers/03-process.md` for routing. This is a recommended workflow, not a hard constraint; single-agent work does not require it.
+This is a cross-cutting playbook selected by the Process layer, like `{{HARNESS_DIR}}/docs/process/isolation.md`. Use `{{HARNESS_DIR}}/docs/layers/03-process.md` for routing. This is a recommended workflow, not a hard constraint; single-agent work does not require it.
 
 ## Goal
 
@@ -27,7 +27,7 @@ Do not dispatch for trivial single-step tasks. Dispatch has coordination cost.
 
 ## Default review
 
-After a task part is implemented, default to one read-only review covering specification compliance and code quality: stated goal and acceptance criteria, correctness, security, maintainability, coverage, and evidence. Use `docs/process/review.md` steps 3-6 and its severity rules.
+After a task part is implemented, default to one read-only review covering specification compliance and code quality: stated goal and acceptance criteria, correctness, security, maintainability, coverage, and evidence. Use `{{HARNESS_DIR}}/docs/process/review.md` steps 3-6 and its severity rules.
 
 For large, high-risk, or cross-cutting work, split the review into two focused passes:
 
@@ -69,13 +69,13 @@ If the current environment has no subagent capability, degrade gracefully: use t
 
 ## Boundaries
 
-- Dispatch is about context separation; workspace separation is `docs/process/isolation.md`. They compose (isolate the worktree, then dispatch subagents inside it) but are not the same thing.
-- This playbook does not push, merge, or delete. See `docs/policy/action-boundary.md`.
-- Two-stage review reuses `docs/process/review.md` severity and the "fix only on approval" rule; it does not redefine severity.
+- Dispatch is about context separation; workspace separation is `{{HARNESS_DIR}}/docs/process/isolation.md`. They compose (isolate the worktree, then dispatch subagents inside it) but are not the same thing.
+- This playbook does not push, merge, or delete. See `{{HARNESS_DIR}}/docs/policy/action-boundary.md`.
+- Two-stage review reuses `{{HARNESS_DIR}}/docs/process/review.md` severity and the "fix only on approval" rule; it does not redefine severity.
 
 ## Recovery
 
-Use `docs/layers/05-recovery.md` when a subagent's output fails its own verification, when review finds CRITICAL or HIGH findings, or when the staged flow itself stalls (a stage cannot complete).
+Use `{{HARNESS_DIR}}/docs/layers/05-recovery.md` when a subagent's output fails its own verification, when review finds CRITICAL or HIGH findings, or when the staged flow itself stalls (a stage cannot complete).
 
 ## Outputs
 

@@ -2,7 +2,7 @@
 
 Use this playbook when reviewing changed work.
 
-This is a concrete playbook selected by the Process layer. Use `docs/layers/03-process.md` for routing rules and this file for review execution.
+This is a concrete playbook selected by the Process layer. Use `{{HARNESS_DIR}}/docs/layers/03-process.md` for routing rules and this file for review execution.
 
 ## Goal
 
@@ -10,7 +10,7 @@ Identify blocking issues before work is considered ready, without turning review
 
 ## Steps
 
-1. Load task-relevant context through `docs/layers/01-context.md`; include the changed files or diff.
+1. Load task-relevant context through `{{HARNESS_DIR}}/docs/layers/01-context.md`; include the changed files or diff.
 2. Check Policy: classify the review as read-only reporting before acting. Recommendations may be reported as review findings; re-classify before performing risky, destructive, external, security-sensitive, scope-expanding, or test-changing follow-up actions.
 3. Confirm the intended task goal and compare it with the actual changes.
 4. Review correctness, security, maintainability, test coverage, and verification evidence.
@@ -33,13 +33,13 @@ A review reports findings. Fixing findings is a separate action unless the user 
 
 ## Recovery
 
-Use `docs/layers/05-recovery.md` when the diff does not match the stated goal, review evidence is missing, or a fix creates new failures.
+Use `{{HARNESS_DIR}}/docs/layers/05-recovery.md` when the diff does not match the stated goal, review evidence is missing, or a fix creates new failures.
 
 ## Memory and task notes
 
-For multi-step reviews, keep status, findings, fix decisions, and verification evidence under `agent-work/tasks/<task-name>/`. Move only verified durable lessons through the Memory layer before updating `docs/project-context.md`.
+For multi-step reviews, keep status, findings, fix decisions, and verification evidence under `agent-work/tasks/<task-name>/`. Move only verified durable lessons through the Memory layer before updating `{{HARNESS_DIR}}/docs/project-context.md`.
 
-For two-stage review across isolated subagents on large or risky work, see `docs/process/subagent-development.md`.
+For two-stage review across isolated subagents on large or risky work, see `{{HARNESS_DIR}}/docs/process/subagent-development.md`.
 
 ## Required artifact/checklist
 
