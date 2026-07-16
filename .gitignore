@@ -6,4 +6,5 @@ npm-debug.log*
 /harness/
 /agent-work/
 /.superpowers/
-/docs/superpowers/*
+/docs/
+/.claude/worktrees/
