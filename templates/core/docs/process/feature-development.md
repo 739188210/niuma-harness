@@ -39,12 +39,13 @@ Before reporting completion, make sure the task record or final response include
 1. Load Context: read `{{HARNESS_DIR}}/docs/index.md`, `{{HARNESS_DIR}}/docs/project-context.md`, and relevant existing implementation patterns.
 2. Check Policy: use `{{HARNESS_DIR}}/docs/policy/action-boundary.md` and pause when the next action is ask-first or forbidden. Isolate first (`{{HARNESS_DIR}}/docs/process/isolation.md`) only when shared-tree work would create avoidable risk or coordination cost, such as intermediate broken states, parallel edits, experimental work, high-risk behavior changes, or overlap with another active task. For large features, consider staged subagent dispatch (`{{HARNESS_DIR}}/docs/process/subagent-development.md`).
 3. Confirm understanding before planning when the feature has unclear scope, missing acceptance criteria, or meaningful design choices whose answer can change the implementation direction.
-4. Choose the smallest implementation path that fits the current architecture.
-5. Plan verification before implementation. Use `{{HARNESS_DIR}}/docs/layers/04-observation.md` for evidence expectations.
-6. Add or update focused tests for behavior changes. If automated testing is not available for the change, record the manual verification that replaces it and why.
-7. Implement the feature with task-scoped changes.
-8. Run relevant verification commands.
-9. Record changes, verification results, skipped checks, and remaining unknowns, including any material risks.
+4. Classify each acceptance criterion before implementation: test-first when it has a stable automated target, otherwise declare the automation-unsuitability reason and replacement evidence before implementation.
+5. For test-first criteria, follow `{{HARNESS_DIR}}/docs/process/test-driven-development.md`; do not implement before the focused RED evidence.
+6. Choose the smallest implementation path that fits the current architecture.
+7. Plan verification before implementation. Use `{{HARNESS_DIR}}/docs/layers/04-observation.md` for evidence expectations.
+8. Implement the feature with task-scoped changes.
+9. Run relevant verification commands.
+10. Record changes, verification results, skipped checks, and remaining unknowns, including any material risks.
 
 ## When to pause
 

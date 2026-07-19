@@ -24,12 +24,13 @@ Before reporting completion, make sure the task record or final response include
 1. Load Context: read `{{HARNESS_DIR}}/docs/index.md`, `{{HARNESS_DIR}}/docs/project-context.md`, and the affected source or test files.
 2. Check Policy: use `{{HARNESS_DIR}}/docs/policy/action-boundary.md` and pause when the next action is ask-first or forbidden.
 3. Understand the symptom, expected behavior, and current behavior.
-4. Reproduce the issue with a test, command, log, or manual steps. If reproduction is not achievable, record what was attempted; the fix stays unverified until the symptom can be shown to disappear. Do not report the bug as fixed when reproduction was not achieved; report the implemented mitigation and remaining unknown instead. The reproduction check is a verification target: keep it failing before the fix and passing after the fix.
-5. Identify the first root cause instead of chasing downstream symptoms.
-6. Implement the smallest safe fix.
-7. Observe: run the focused verification that proves the bug is fixed.
-8. Run broader checks when the touched area is shared or high risk.
-9. Record what changed, what passed, what failed, what was skipped, and remaining unknowns, including any material risks.
+4. When the symptom is stably automatable, capture it as a focused failing regression test before the fix. The reproduction check is a verification target: follow `{{HARNESS_DIR}}/docs/process/test-driven-development.md` and make that same target pass afterward.
+5. When reproduction is not achievable, record what was attempted and declare a valid alternative-verification plan before the fix. The fix stays unverified until the symptom can be shown to disappear; report the implemented mitigation and remaining unknown instead of claiming the bug is fixed.
+6. Identify the first root cause instead of chasing downstream symptoms.
+7. Implement the smallest safe fix.
+8. Observe: run the focused verification that proves the bug is fixed.
+9. Run broader checks when the touched area is shared or high risk.
+10. Record what changed, what passed, what failed, what was skipped, and remaining unknowns, including any material risks.
 
 ## Recovery
 

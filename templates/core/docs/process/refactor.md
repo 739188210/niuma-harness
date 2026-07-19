@@ -17,14 +17,14 @@ Make the smallest useful structural improvement without changing intended behavi
 5. Split the refactor into small reversible steps.
 6. Change only files needed for the refactor goal.
 7. Run focused verification after meaningful steps.
-8. Stop if behavior changes, verification fails, or the work expands into a feature.
+8. Stop if behavior changes, verification fails, or the work expands into a feature. Route behavior changes or behavior-changing tests through feature/bugfix plus `{{HARNESS_DIR}}/docs/process/test-driven-development.md`.
 9. Record changed structure, verification evidence, skipped checks, and remaining unknowns, including any behavior-specific material risks.
 
 ## Scope guard
 
 Do not mix refactor with new behavior unless the user explicitly asks. Do not clean up unrelated code just because it is nearby.
 
-Changing tests during a refactor is ask-first unless the change is purely mechanical and preserves the same assertions. Do not update snapshots, loosen assertions, skip tests, or change verification config to accommodate the refactor.
+Changing tests during a refactor is ask-first unless the change is purely mechanical and preserves the same assertions. Do not manufacture an artificial RED for a pure refactor. Do not update snapshots, loosen assertions, skip tests, or change verification config to accommodate the refactor.
 
 ## Recovery
 

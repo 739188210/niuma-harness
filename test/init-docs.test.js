@@ -541,3 +541,48 @@ test('generated docs define test-change gate', () => {
   assert.match(refactor, /Changing tests during a refactor is ask-first/);
   assert.match(refactor, /purely mechanical and preserves the same assertions/);
 });
+
+test('generated docs require practical TDD for eligible behavior work', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const protocol = read(path.join(h, 'docs', 'process', 'test-driven-development.md'));
+  assert.match(protocol, /stable automated test/);
+  assert.match(protocol, /## RED → same-target GREEN → optional REFACTOR/);
+  assert.match(protocol, /must genuinely fail/);
+  assert.match(protocol, /same target/);
+  assert.match(protocol, /time pressure, convenience, inability to find a test, and test complexity/i);
+  assert.match(protocol, /not trusted proof of the agent's chronological execution order/);
+
+  const index = read(path.join(h, 'docs', 'index.md'));
+  assert.match(index, /Test-driven development: `harness\/docs\/process\/test-driven-development\.md`/);
+
+  const process = read(path.join(h, 'docs', 'layers', '03-process.md'));
+  assert.match(process, /test-first versus alternative verification decision before implementation/);
+  assert.match(process, /harness\/docs\/process\/test-driven-development\.md/);
+
+  const feature = read(path.join(h, 'docs', 'process', 'feature-development.md'));
+  assert.match(feature, /Classify each acceptance criterion before implementation/);
+  assert.match(feature, /automation-unsuitability reason and replacement evidence before implementation/);
+
+  const bugfix = read(path.join(h, 'docs', 'process', 'bugfix.md'));
+  assert.match(bugfix, /focused failing regression test before the fix/);
+  assert.match(bugfix, /same target pass afterward/);
+  assert.match(bugfix, /valid alternative-verification plan/);
+
+  const refactor = read(path.join(h, 'docs', 'process', 'refactor.md'));
+  assert.match(refactor, /Do not manufacture an artificial RED for a pure refactor/);
+  assert.match(refactor, /Route behavior changes or behavior-changing tests through feature\/bugfix plus `harness\/docs\/process\/test-driven-development\.md`/);
+
+  const observation = read(path.join(h, 'docs', 'layers', '04-observation.md'));
+  assert.match(observation, /## Test-first evidence/);
+  assert.match(observation, /focused RED and GREEN as separate truthful evidence entries/);
+  assert.match(observation, /do not prove execution order/);
+  assert.match(observation, /record Recovery as applicable and link the GREEN recheck/);
+
+  const policy = read(path.join(h, 'docs', 'policy', 'action-boundary.md'));
+  assert.match(policy, /task-scoped test creation or updates needed to express approved changed behavior or regression coverage/);
+  assert.match(policy, /prior behavior contract is preserved or strengthened/);
+});
