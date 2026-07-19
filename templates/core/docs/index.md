@@ -49,6 +49,7 @@ Project-specific code locations, commands, and stable conventions are maintained
 - Bug fixes: `{{HARNESS_DIR}}/docs/process/bugfix.md`
 - Feature development: `{{HARNESS_DIR}}/docs/process/feature-development.md`
 - Refactoring: `{{HARNESS_DIR}}/docs/process/refactor.md`
+- Test-driven development: `{{HARNESS_DIR}}/docs/process/test-driven-development.md`
 - Reviews: `{{HARNESS_DIR}}/docs/process/review.md`
 - Release readiness: `{{HARNESS_DIR}}/docs/process/release.md`
 

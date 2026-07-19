@@ -86,6 +86,10 @@
       "template": "core/docs/process/refactor.md"
     },
     {
+      "target": "docs/process/test-driven-development.md",
+      "template": "core/docs/process/test-driven-development.md"
+    },
+    {
       "target": "docs/process/review.md",
       "template": "core/docs/process/review.md"
     },

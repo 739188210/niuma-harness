@@ -53,7 +53,7 @@ If any condition is not met, ask first. If the host tool or higher-priority inst
 
 Verification targets include tests, assertions, snapshots, fixtures, mocks, coverage thresholds, lint/typecheck/build configuration, and documented manual check steps.
 
-Agents may add new tests or strengthen existing checks when that is task-scoped.
+Agents may add new tests or strengthen existing checks when that is task-scoped. This includes autonomous task-scoped test creation or updates needed to express approved changed behavior or regression coverage, provided the prior behavior contract is preserved or strengthened.
 
 After a failure, do not edit, delete, skip, weaken, or rebaseline verification targets to make the workspace pass. First assume the implementation is wrong.
 

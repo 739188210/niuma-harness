@@ -63,6 +63,22 @@ test('default rules include common engineering rules', () => {
   }
 });
 
+test('generated common testing rules require the practical TDD protocol', () => {
+  for (const scenario of [
+    { agent: 'claude', rulePath: ['.claude', 'rules', 'common', 'testing.md'] },
+    { agent: 'opencode', rulePath: ['.opencode', 'rules', 'common', 'testing.md'] },
+  ]) {
+    const workspace = tempDir();
+    const result = run(['init', workspace, '--agent', scenario.agent, '--harness-dir', 'ai-harness']);
+    assert.strictEqual(result.status, 0, result.stderr);
+    const rule = read(path.join(workspace, ...scenario.rulePath));
+
+    assert.match(rule, /must follow generated `ai-harness\/docs\/process\/test-driven-development\.md`/);
+    assert.match(rule, /Valid alternatives must be declared before implementation/);
+    assert.doesNotMatch(rule, /testing preferences|lightweight preference layer/i);
+  }
+});
+
 test('revalidates a canonical rule plan using item target paths', () => {
   const workspace = fs.realpathSync(tempDir());
   const targetPath = path.join(workspace, '.claude', 'rules', 'common', 'testing.md');

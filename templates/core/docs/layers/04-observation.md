@@ -17,6 +17,10 @@ Use this layer before declaring work complete, after any code or documentation c
 5. Treat unrun checks as unknown, not as passing.
 6. If verification fails, treat the failing check as evidence. Do not change the verification target unless the selected process permits it and the reason is recorded.
 
+## Test-first evidence
+
+For eligible test-first work, record focused RED and GREEN as separate truthful evidence entries, and record a refactor recheck when applicable. These records show observed results; they do not prove execution order. Because a RED entry has outcome `failed`, record Recovery as applicable and link the GREEN recheck even when that failure was the expected test-first signal.
+
 ## Evidence schema
 
 In `agent-work/tasks/<task-name>/verification.md`, keep exactly one marker-delimited schema 1 JSON block. Copy this shape and replace the example evidence truthfully:

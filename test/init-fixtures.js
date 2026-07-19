@@ -54,6 +54,7 @@ function assertCommonHarnessShape(workspace, options = {}) {
   assertDir(path.join(harnessRoot, 'docs', 'experiments'));
   assertFile(path.join(harnessRoot, 'docs', 'experiments', 'task-execution-record.md'));
   assertFile(path.join(harnessRoot, 'docs', 'process', 'refactor.md'));
+  assertFile(path.join(harnessRoot, 'docs', 'process', 'test-driven-development.md'));
   assertFile(path.join(harnessRoot, 'docs', 'process', 'review.md'));
   assertFile(path.join(harnessRoot, 'docs', 'process', 'release.md'));
   assertLayerMemos(harnessRoot);

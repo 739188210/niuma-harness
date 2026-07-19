@@ -14,12 +14,13 @@ Use this layer after loading context and policy, before implementation, and when
 
 1. If the task type or risk is unclear, use `{{HARNESS_DIR}}/docs/process/task-triage.md` first to classify it. Triage is a routing step, not the final execution playbook.
 2. Select the final execution playbook from bugfix, feature, refactor, review, or release. Documentation, cleanup, investigation, and verification are task intents that should route to the closest existing playbook; use `none` only when no execution playbook applies.
-3. Follow any confirmation gate defined by the selected workflow before writing detailed plans or implementation docs.
-4. If working in the shared tree would create avoidable risk or coordination cost, isolate the workspace first (`{{HARNESS_DIR}}/docs/process/isolation.md`) before acting. Do not isolate merely because a task has more than one step. For large or risky work, consider staged subagent dispatch (`{{HARNESS_DIR}}/docs/process/subagent-development.md`).
-5. Define the smallest useful goal and success criteria.
-6. Break work into observable steps.
-7. Escalate to the user if the task scope expands beyond the selected workflow.
-8. For non-trivial tasks, record the classification, tier and rationale, risk factors, selected playbook, canonical success criteria, performed/skipped steps, decision impact, deviations, and any scope-triggered reclassification in `harness-feedback.md`.
+3. For feature or bugfix behavior work, make a test-first versus alternative verification decision before implementation. Follow `{{HARNESS_DIR}}/docs/process/test-driven-development.md` for eligible stable automatable behavior and declare valid alternative evidence before implementation when automation is unsuitable.
+4. Follow any confirmation gate defined by the selected workflow before writing detailed plans or implementation docs.
+5. If working in the shared tree would create avoidable risk or coordination cost, isolate the workspace first (`{{HARNESS_DIR}}/docs/process/isolation.md`) before acting. Do not isolate merely because a task has more than one step. For large or risky work, consider staged subagent dispatch (`{{HARNESS_DIR}}/docs/process/subagent-development.md`).
+6. Define the smallest useful goal and success criteria.
+7. Break work into observable steps.
+8. Escalate to the user if the task scope expands beyond the selected workflow.
+9. For non-trivial tasks, record the classification, tier and rationale, risk factors, selected playbook, canonical success criteria, performed/skipped steps, decision impact, deviations, and any scope-triggered reclassification in `harness-feedback.md`.
 
 ## Task state ownership
 
@@ -51,6 +52,7 @@ Trigger words are routing hints, not permission to bypass Policy. If multiple ro
 - Use `{{HARNESS_DIR}}/docs/process/bugfix.md` for defect reproduction and repair.
 - Use `{{HARNESS_DIR}}/docs/process/feature-development.md` for new or changed behavior.
 - Use `{{HARNESS_DIR}}/docs/process/refactor.md` for behavior-preserving structural changes.
+- Use `{{HARNESS_DIR}}/docs/process/test-driven-development.md` for eligible behavior changes and automatable bug regressions.
 - Use `{{HARNESS_DIR}}/docs/process/review.md` for reviewing changed work.
 - Use `{{HARNESS_DIR}}/docs/process/release.md` for release readiness or approved release work.
 - Use `{{HARNESS_DIR}}/docs/process/isolation.md` when shared-tree work would create avoidable risk or coordination cost.
