@@ -12,6 +12,8 @@ This directory contains the generated Niuma Harness: a task-execution framework 
 
 - `docs/index.md`: agent runtime navigation and reading order.
 - `docs/project-context.md`: verified stable project facts.
+- `docs/decisions/`: project-maintained long-lived decision records and rationale.
+- `docs/experience/`: project-maintained reusable lessons, known traps, and verified approaches.
 - `docs/layers/`: the 7-layer operating protocols.
 - `docs/policy/`: concrete action permission boundaries.
 - `docs/process/`: task playbooks selected by the Process layer.
@@ -21,6 +23,6 @@ This directory contains the generated Niuma Harness: a task-execution framework 
 
 ## Ownership and maintenance
 
-`README.md`, `docs/index.md`, layer, policy, process, experiment documents, and `manifest.json` are tool-managed scaffold artifacts. Re-run `niuma-harness init` to refresh them; update the package templates when changing their generated behavior. `docs/project-context.md` is project-maintained and is created only when missing.
+`README.md`, `docs/index.md`, layer, policy, process, experiment documents, `docs/decisions/README.md`, `docs/experience/README.md`, and `manifest.json` are tool-managed scaffold artifacts. Re-run `niuma-harness init` to refresh them; update the package templates when changing their generated behavior. `docs/project-context.md` is project-maintained and is created only when missing. Only `docs/decisions/README.md` is tool-managed; individual decision records are project-maintained. Only `docs/experience/README.md` is tool-managed; individual experience records are project-maintained.
 
 The generated Markdown is guidance for agents, not runtime enforcement. Use the host tool's permissions, hooks, or sandbox for runtime controls. Run `niuma-harness doctor .` to validate the installed harness shape and managed content.

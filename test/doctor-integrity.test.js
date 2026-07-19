@@ -104,6 +104,34 @@ test('doctor detects exact drift in tool-managed core and work templates', () =>
   assert.match(result.stdout, /managed content drifted agent-work\/README\.md/);
 });
 
+test('doctor detects decision-guide drift but ignores project-maintained ADRs', () => {
+  const workspace = initWorkspace();
+  const decisions = path.join(workspace, 'harness', 'docs', 'decisions');
+  const projectAdr = path.join(decisions, '0001-example.md');
+  fs.writeFileSync(projectAdr, '# Project ADR\n\nInitial project decision.\n', 'utf8');
+  fs.appendFileSync(projectAdr, 'Updated project rationale.\n', 'utf8');
+  let result = doctor(workspace);
+  assert.strictEqual(result.status, 0, result.stdout);
+
+  append(path.join(decisions, 'README.md'));
+  result = expectDoctorError(workspace, /managed content drifted docs\/decisions\/README\.md/);
+  assert.doesNotMatch(result.stdout, /0001-example\.md/);
+});
+
+test('doctor detects experience-guide drift but ignores project-maintained experience records', () => {
+  const workspace = initWorkspace();
+  const experience = path.join(workspace, 'harness', 'docs', 'experience');
+  const projectRecord = path.join(experience, 'pagination.md');
+  fs.writeFileSync(projectRecord, '# Pagination lesson\n\nInitial project experience.\n', 'utf8');
+  fs.appendFileSync(projectRecord, 'Updated project experience.\n', 'utf8');
+  let result = doctor(workspace);
+  assert.strictEqual(result.status, 0, result.stdout);
+
+  append(path.join(experience, 'README.md'));
+  result = expectDoctorError(workspace, /managed content drifted docs\/experience\/README\.md/);
+  assert.doesNotMatch(result.stdout, /pagination\.md/);
+});
+
 test('doctor detects exact drift in selected skill package files', () => {
   const skill = allSkillDirs[0];
   const workspace = initWorkspace('claude', ['--skills', skill]);

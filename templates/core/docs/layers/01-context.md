@@ -4,7 +4,7 @@
 
 Make the workspace understandable before an AI agent plans or edits. This layer defines how to find, verify, and use context.
 
-This memo is a context protocol. It does not store project facts. Stable project facts belong in `{{HARNESS_DIR}}/docs/project-context.md`.
+This memo is a context protocol. It does not store project facts. Stable project facts belong in `{{HARNESS_DIR}}/docs/project-context.md`. Follow the fact priority in `{{HARNESS_DIR}}/docs/index.md`: project context helps locate verified durable facts, while current files determine task-specific facts.
 
 ## When to use
 
@@ -12,11 +12,11 @@ Use this layer at the start of every task, after a context reset, when entering 
 
 ## Agent protocol
 
-1. Read `{{HARNESS_DIR}}/docs/index.md` to locate code, docs, workflows, and verification commands.
-2. Read `{{HARNESS_DIR}}/docs/project-context.md` for stable project facts.
-3. Inspect current project files when a fact affects the task; do not rely only on stale notes.
+1. Read `{{HARNESS_DIR}}/docs/index.md` to locate code, docs, workflows, verification commands, and fact priority.
+2. Read only the task-relevant parts of `{{HARNESS_DIR}}/docs/project-context.md` to find stable facts that may apply.
+3. Inspect current project files when a fact affects the task; do not rely only on stale notes. Current files determine task-specific facts.
 4. Identify the task-relevant modules, commands, and constraints before proposing changes.
-5. If project notes conflict with current files, treat current files as the source of truth and record the conflict in task notes.
+5. If project notes conflict with current files, treat current files as the source of truth, record the conflict in task-local notes, and update or flag durable context only after verification.
 6. For non-trivial tasks, record the task-relevant project files and Harness docs with their purpose, reused implementations, known gaps, and a context-sufficiency claim in `harness-feedback.md`; this is self-reported evidence, not proof of a read event.
 
 ## Allowed actions

@@ -652,6 +652,66 @@ templates/rules/common/testing.md
 - 保持现有 `unknown` 与未验证风险语义；
 - 不绑定具体语言、框架或命令。
 
+#### 6.4 已确认的 P0 实施边界
+
+本阶段只完善初始化项目的通用知识治理，不实现 Profile，也不加入任何 Jiezhen/组织专属技术规范。
+
+**事实优先级：**
+
+```text
+1. 当前代码、构建定义、部署配置、测试与运行结果
+2. 当前项目 README、project-context.md、项目维护的 runbook
+3. Rules、已接受 ADR、active experience
+4. 历史/已废弃材料、迁移说明、计划与任务记录
+```
+
+来源冲突时，Agent 必须核验更高优先级来源、在任务本地记录判断依据与未解决冲突；只有核验后才能修正或标记 stale/historical 文档。
+
+**新增生成目录与归属：**
+
+```text
+<harness-dir>/docs/decisions/README.md   # tool-managed：ADR 分类、模板与使用边界
+<harness-dir>/docs/experience/README.md  # tool-managed：经验格式、核验与失效边界
+```
+
+- `docs/decisions/*.md`：项目维护的长期、重要决策理由；不等同任务记录，也不证明当前实现。
+- `docs/experience/*.md`：项目维护的可复用经验；必须包含适用范围、最后核验时间、事实来源和失效条件；不能覆盖当前代码、配置、测试或运行事实。
+- `project-context.md`：已核验、稳定的当前项目事实。
+- `agent-work/tasks/<task>/`：当前任务计划、状态、证据、阻塞、恢复与交接；不得整体提升为 ADR 或经验。
+
+**验证矩阵与 TDD 的关系：**
+
+验证矩阵只帮助按文档、后端、前端、数据库/迁移、配置/部署、API 契约选择补充证据方向；它不能替代既有的强制实用 TDD。可稳定自动化的业务行为变化和 bug 回归仍必须执行：
+
+```text
+RED → 同一目标 GREEN → 可选 REFACTOR
+```
+
+**旧内容保护：**
+
+若首次 `init` 前已经存在以下路径，不能静默覆盖：
+
+```text
+<harness-dir>/docs/decisions/README.md
+<harness-dir>/docs/experience/README.md
+```
+
+应在任何写入前失败，列出全部冲突路径并保持工作区不变；由用户自行移动、合并或重命名旧内容。生成 Harness 后，受管 README 正常由 init / Doctor / Repair 管理，但用户创建的具体 ADR 与经验文件必须保留。
+
+#### P0.1–P0.4 完成状态
+
+- P0.1：已完成。生成文档提供事实优先级与按任务读取的导航，并要求以代码、配置、构建、测试和运行结果核验当前事实。
+- P0.2：已完成。生成 `docs/decisions/README.md`，定义长期 ADR 的归属、模板和使用边界。
+- P0.3：已完成。生成 `docs/experience/README.md`，定义可复用经验与任务记录、项目事实的分层及核验/失效要求。
+- P0.4：已完成。`common/testing.md` 提供文档、后端、前端、数据库/迁移、配置/部署和 API 契约的最小验证方向；它补充而不替代既有强制实用 TDD，并保留 unknown、替代验证和剩余风险记录要求。
+
+**P0 明确不做：**
+
+- 不加 `--profile`，不改 CLI、生成状态 schema、Audit 或反馈记录；
+- 不生成应用地图、runbook、计划、归档或中文企业编号目录；
+- 不加入 Java 企业、动态权限后台、分页 POST、Spring/Vue/SQL、端口、基础设施或任何 shop-trade 专属规则；
+- Doctor 只检查受管文件、目录与完整性，不判断 ADR、经验或项目文档的业务真实性。
+
 ---
 
 ### P1：引入 Profile 能力

@@ -21,7 +21,7 @@ agent-work/tasks/<task-name>/
 - `plan.md`: current plan, scope decisions, and implementation sequence.
 - `verification.md`: exact checks, expected signals, actual results, skipped checks with reasons, and remaining unknowns.
 - `harness-feedback.md`: required structured execution record for non-trivial tasks in this package release.
-- `notes.md`: temporary investigation notes, findings, fix decisions, and handoff notes.
+- `notes.md`: temporary investigation notes, findings, candidate reusable experience, fix decisions, and handoff notes.
 
 ## What belongs here
 
@@ -41,6 +41,7 @@ agent-work/tasks/<task-name>/
 - Secrets, credentials, tokens, or private data.
 - Unverified guesses presented as truth.
 - One-off logs that do not help future task work.
+- Promoted experience records; keep raw notes and evidence here, then use the Memory layer to create a condensed project-maintained record under `{{HARNESS_DIR}}/docs/experience/` when warranted.
 
 ## Copyable verification record
 
@@ -74,6 +75,6 @@ The Loop layer defines how agents keep task status current: `{{HARNESS_DIR}}/doc
 
 ## Durable facts
 
-Durable project facts should move through the Memory layer before being recorded in the active harness root's `{{HARNESS_DIR}}/docs/project-context.md`.
+Durable project facts should move through the Memory layer before being recorded in the active harness root's `{{HARNESS_DIR}}/docs/project-context.md`. Candidate reusable experience stays task-local until verified and condensed through the Memory layer into a project-maintained record under `{{HARNESS_DIR}}/docs/experience/`; raw task evidence remains here.
 
 Do not put task-local records under `{{HARNESS_DIR}}/docs/`.

@@ -40,7 +40,7 @@ After bootstrap, keep this file focused on durable facts that future tasks shoul
 
 ## Maintenance standard
 
-Update this file after bootstrap only when a task verifies a durable fact that future tasks should reuse.
+Update this file after bootstrap only when a task verifies a durable fact that future tasks should reuse. This file is verified durable context, not an active-task override. Current user instructions and current workspace files take precedence; when they conflict with a durable fact, verify the current state, use the current facts for the task, and then update or mark the durable fact as stale.
 
 A durable fact is eligible when it is:
 

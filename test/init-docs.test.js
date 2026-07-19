@@ -115,6 +115,154 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
   assertNoPath(path.join(h, 'docs', 'automation'));
 });
 
+test('generated docs prioritize task facts and route context reading by need', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const index = read(path.join(h, 'docs', 'index.md'));
+  assert.match(index, /## Fact priority/);
+  assert.match(index, /1\. Current user instructions for this task\./);
+  assert.match(index, /2\. Current workspace files and actual command output\./);
+  assert.match(index, /3\. Verified stable facts in `harness\/docs\/project-context\.md`\./);
+  assert.match(index, /4\. Generated Harness protocols and process documents under `harness\/docs\/`\./);
+  assert.match(index, /5\. Task-local notes under `agent-work\/`\./);
+  assert.match(index, /Older notes never override current files/);
+  assert.match(index, /Read only the task-relevant stable facts/);
+  assert.match(index, /Before relying on a project-context fact, inspect task-relevant current README, build files, configuration, source, tests, or command output/);
+
+  const context = read(path.join(h, 'docs', 'layers', '01-context.md'));
+  assert.match(context, /fact priority in `harness\/docs\/index\.md`/);
+  assert.match(context, /Current files determine task-specific facts/);
+  assert.match(context, /Read only the task-relevant parts of `harness\/docs\/project-context\.md`/);
+  assert.match(context, /record the conflict in task-local notes/);
+
+  const projectContext = read(path.join(h, 'docs', 'project-context.md'));
+  assert.match(projectContext, /verified durable context, not an active-task override/);
+  assert.match(projectContext, /Current user instructions and current workspace files take precedence/);
+  assert.match(projectContext, /verify the current state, use the current facts for the task, and then update or mark the durable fact as stale/);
+
+  const customWorkspace = tempDir();
+  const customResult = run(['init', customWorkspace, '--agent', 'claude', '--harness-dir', 'ai-harness']);
+  assert.strictEqual(customResult.status, 0, customResult.stderr);
+  const customIndex = read(path.join(customWorkspace, 'ai-harness', 'docs', 'index.md'));
+  const customContext = read(path.join(customWorkspace, 'ai-harness', 'docs', 'layers', '01-context.md'));
+
+  assert.match(customIndex, /`ai-harness\/docs\/project-context\.md`/);
+  assert.match(customIndex, /under `ai-harness\/docs\/`/);
+  assert.match(customContext, /`ai-harness\/docs\/index\.md`/);
+  assert.match(customContext, /`ai-harness\/docs\/project-context\.md`/);
+  assert.doesNotMatch(customIndex, /{{HARNESS_DIR}}|`harness\/docs\//);
+  assert.doesNotMatch(customContext, /{{HARNESS_DIR}}|`harness\/docs\//);
+});
+
+test('generated docs route durable decisions without taking ownership of project ADRs', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+  const decisionReadme = path.join(h, 'docs', 'decisions', 'README.md');
+
+  const guide = read(decisionReadme);
+  assert.match(guide, /^# Decision Records$/m);
+  assert.match(guide, /long-lived decision and its rationale/);
+  assert.match(guide, /Do not create a record for every task/);
+  assert.match(guide, /Current user instructions and current workspace files take precedence/);
+  assert.match(guide, /verify the current state, use the higher-priority source for the task, and then update, supersede, or retire the record/);
+  assert.match(guide, /Individual decision records are project-maintained/);
+  for (const field of ['Status', 'Date', 'Scope', 'Context', 'Decision', 'Consequences', 'Alternatives considered', 'Verification or migration notes']) {
+    assert.match(guide, new RegExp(`## ${field}`));
+  }
+
+  const index = read(path.join(h, 'docs', 'index.md'));
+  assert.match(index, /`harness\/docs\/decisions\/` stores project-maintained long-lived decision rationale/);
+  assert.match(index, /Decision records explain durable rationale but never override current user instructions or current workspace files/);
+
+  const harnessReadme = read(path.join(h, 'README.md'));
+  assert.match(harnessReadme, /`docs\/decisions\/`: project-maintained long-lived decision records and rationale/);
+  assert.match(harnessReadme, /Only `docs\/decisions\/README\.md` is tool-managed; individual decision records are project-maintained/);
+
+  const memory = read(path.join(h, 'docs', 'layers', '06-memory.md'));
+  assert.match(memory, /Put important long-lived decision rationale in project-maintained records under `harness\/docs\/decisions\//);
+  assert.match(memory, /Do not promote every task decision, one-off log, unverified guess, or sensitive detail into a decision record/);
+
+  const projectAdr = path.join(h, 'docs', 'decisions', '0001-example.md');
+  const projectAdrContent = '# Project decision\n\nKeep this exact content.\n';
+  fs.writeFileSync(projectAdr, projectAdrContent, 'utf8');
+  const reinit = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(reinit.status, 0, reinit.stderr);
+  assert.strictEqual(read(projectAdr), projectAdrContent);
+
+  const customWorkspace = tempDir();
+  const customResult = run(['init', customWorkspace, '--agent', 'claude', '--harness-dir', 'ai-harness']);
+  assert.strictEqual(customResult.status, 0, customResult.stderr);
+  const customGuide = read(path.join(customWorkspace, 'ai-harness', 'docs', 'decisions', 'README.md'));
+  const customIndex = read(path.join(customWorkspace, 'ai-harness', 'docs', 'index.md'));
+  const customMemory = read(path.join(customWorkspace, 'ai-harness', 'docs', 'layers', '06-memory.md'));
+  assert.match(customGuide, /`ai-harness\/docs\/decisions\//);
+  assert.match(customIndex, /`ai-harness\/docs\/decisions\//);
+  assert.match(customMemory, /`ai-harness\/docs\/decisions\//);
+  for (const body of [customGuide, customIndex, customMemory]) {
+    assert.doesNotMatch(body, /{{HARNESS_DIR}}|`harness\/docs\//);
+  }
+});
+
+test('generated docs route reusable experience without taking ownership of project experience records', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+  const experienceReadme = path.join(h, 'docs', 'experience', 'README.md');
+
+  const guide = read(experienceReadme);
+  assert.match(guide, /^# Experience Library$/m);
+  assert.match(guide, /reusable project-maintained experience/);
+  assert.match(guide, /not a current-state source of truth, project fact index, ADR, or task execution record/);
+  assert.match(guide, /Do not create a record for every task/);
+  assert.match(guide, /Do not promote raw task notes, one-off failures, temporary logs, unverified guesses, or sensitive data/);
+  assert.match(guide, /Current user instructions and current workspace files take precedence/);
+  assert.match(guide, /Individual experience records are project-maintained/);
+  for (const field of ['Status', 'Last verified', 'Scope', 'Source of truth', 'Applicable when', 'Scenario or symptoms', 'Verified approach', 'What not to assume', 'Invalidation conditions', 'Promotion notes']) {
+    assert.match(guide, new RegExp(`## ${field}`));
+  }
+
+  const index = read(path.join(h, 'docs', 'index.md'));
+  assert.match(index, /`harness\/docs\/experience\/` stores project-maintained reusable experience/);
+  assert.match(index, /Experience records provide reusable guidance but never override current user instructions or current workspace files/);
+
+  const harnessReadme = read(path.join(h, 'README.md'));
+  assert.match(harnessReadme, /`docs\/experience\/`: project-maintained reusable lessons/);
+  assert.match(harnessReadme, /Only `docs\/experience\/README\.md` is tool-managed; individual experience records are project-maintained/);
+
+  const memory = read(path.join(h, 'docs', 'layers', '06-memory.md'));
+  assert.match(memory, /Put verified reusable experience with clear applicability and invalidation conditions in project-maintained records under `harness\/docs\/experience\//);
+  assert.match(memory, /Do not promote raw task notes, one-off failures, temporary logs, unverified guesses, or sensitive details into experience records/);
+
+  const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
+  assert.match(workReadme, /candidate reusable experience/);
+  assert.match(workReadme, /`harness\/docs\/experience\//);
+
+  const projectExperience = path.join(h, 'docs', 'experience', 'pagination.md');
+  const projectExperienceContent = '# Pagination lesson\n\nKeep this exact content.\n';
+  fs.writeFileSync(projectExperience, projectExperienceContent, 'utf8');
+  const reinit = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(reinit.status, 0, reinit.stderr);
+  assert.strictEqual(read(projectExperience), projectExperienceContent);
+
+  const customWorkspace = tempDir();
+  const customResult = run(['init', customWorkspace, '--agent', 'claude', '--harness-dir', 'ai-harness']);
+  assert.strictEqual(customResult.status, 0, customResult.stderr);
+  const customGuide = read(path.join(customWorkspace, 'ai-harness', 'docs', 'experience', 'README.md'));
+  const customIndex = read(path.join(customWorkspace, 'ai-harness', 'docs', 'index.md'));
+  const customMemory = read(path.join(customWorkspace, 'ai-harness', 'docs', 'layers', '06-memory.md'));
+  const customWorkReadme = read(path.join(customWorkspace, 'agent-work', 'README.md'));
+  for (const body of [customGuide, customIndex, customMemory, customWorkReadme]) {
+    assert.match(body, /`ai-harness\/docs\/experience\//);
+    assert.doesNotMatch(body, /{{HARNESS_DIR}}|`harness\/docs\//);
+  }
+});
+
 test('generated docs expose experimental task execution feedback guidance', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);

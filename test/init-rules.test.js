@@ -79,6 +79,25 @@ test('generated common testing rules require the practical TDD protocol', () => 
   }
 });
 
+test('default common rule routes minimum verification by change type', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+
+  const generatedRule = read(path.join(workspace, '.claude', 'rules', 'common', 'testing.md'));
+  assert.match(generatedRule, /## Minimum verification direction by change type/);
+  assert.match(generatedRule, /Use the strongest relevant row\. If multiple rows apply, collect evidence that covers each changed risk and report required evidence that could not be collected\./);
+  assert.match(generatedRule, /not a universal toolchain or heavyweight gate/);
+  assert.match(generatedRule, /Select the smallest checks that prove the changed risks using project-local guidance\./);
+  assert.match(generatedRule, /\| Documentation \/ rules \| Links, paths, example commands, factual sources, and index completeness\. \|/);
+  assert.match(generatedRule, /\| Backend code \| Available formatting or static checks, affected focused tests, and compile or module checks\. \|/);
+  assert.match(generatedRule, /\| Frontend code \| Type checks, build, page or interaction verification, and network-request verification\. \|/);
+  assert.match(generatedRule, /\| Database \/ migration \| Forward migration, rollback, data impact, and permission or tenant impact\. \|/);
+  assert.match(generatedRule, /\| Configuration \/ deployment \| Configuration parsing, startup or dry-run, and dependency connectivity\. \|/);
+  assert.match(generatedRule, /\| API contract \| Server and caller compatibility, representative examples, and error paths\. \|/);
+  assert.match(generatedRule, /evidence that could not be collected, skipped checks and reasons, substitute verification, and remaining unknowns or material risks/);
+});
+
 test('revalidates a canonical rule plan using item target paths', () => {
   const workspace = fs.realpathSync(tempDir());
   const targetPath = path.join(workspace, '.claude', 'rules', 'common', 'testing.md');
