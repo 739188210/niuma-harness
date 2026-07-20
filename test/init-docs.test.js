@@ -123,20 +123,26 @@ test('generated docs prioritize task facts and route context reading by need', (
 
   const index = read(path.join(h, 'docs', 'index.md'));
   assert.match(index, /## Fact priority/);
-  assert.match(index, /1\. Current user instructions for this task\./);
-  assert.match(index, /2\. Current workspace files and actual command output\./);
-  assert.match(index, /3\. Verified stable facts in `harness\/docs\/project-context\.md`\./);
-  assert.match(index, /4\. Generated Harness protocols and process documents under `harness\/docs\/`\./);
-  assert.match(index, /5\. Task-local notes under `agent-work\/`\./);
-  assert.match(index, /Older notes never override current files/);
+  assert.match(index, /1\. Current user instructions for this task decide the task objective, scope, and explicit constraints\./);
+  assert.match(index, /2\. Current verifiable facts: current source, configuration, build definitions, tests, and actual command output\./);
+  assert.match(index, /3\. Current project navigation and runtime material: current README, `harness\/docs\/project-context\.md`, and verified runbooks\./);
+  assert.match(index, /4\. Governance and reusable knowledge: applicable Rules, accepted and unsuperseded ADRs, and active experience records\./);
+  assert.match(index, /5\. Historical and task material: historical notes, migration material, old proposals, plans, task records, and superseded or expired experience\./);
+  assert.match(index, /A file existing in the repository does not by itself make it a current fact/);
+  assert.match(index, /## Policy exception/);
+  assert.match(index, /Action permission, security boundaries, and ownership conflicts are not decided by ordinary fact priority/);
+  assert.match(index, /more specific and stricter Policy rule decides/);
   assert.match(index, /Read only the task-relevant stable facts/);
   assert.match(index, /Before relying on a project-context fact, inspect task-relevant current README, build files, configuration, source, tests, or command output/);
 
   const context = read(path.join(h, 'docs', 'layers', '01-context.md'));
-  assert.match(context, /fact priority in `harness\/docs\/index\.md`/);
-  assert.match(context, /Current files determine task-specific facts/);
-  assert.match(context, /Read only the task-relevant parts of `harness\/docs\/project-context\.md`/);
-  assert.match(context, /record the conflict in task-local notes/);
+  assert.match(context, /fact priority, and the Policy exception/);
+  assert.match(context, /Classify each task-relevant source as current verifiable fact/);
+  assert.match(context, /A file existing in the repository is not automatically a current fact/);
+  assert.match(context, /Current verifiable evidence determines task-specific facts/);
+  assert.match(context, /Use Rules, accepted and unsuperseded ADRs, and active experience/);
+  assert.match(context, /historical materials only as background, search terms, or hypotheses/);
+  assert.match(context, /more specific, stricter Policy rule/);
 
   const projectContext = read(path.join(h, 'docs', 'project-context.md'));
   assert.match(projectContext, /verified durable context, not an active-task override/);
@@ -150,7 +156,6 @@ test('generated docs prioritize task facts and route context reading by need', (
   const customContext = read(path.join(customWorkspace, 'ai-harness', 'docs', 'layers', '01-context.md'));
 
   assert.match(customIndex, /`ai-harness\/docs\/project-context\.md`/);
-  assert.match(customIndex, /under `ai-harness\/docs\/`/);
   assert.match(customContext, /`ai-harness\/docs\/index\.md`/);
   assert.match(customContext, /`ai-harness\/docs\/project-context\.md`/);
   assert.doesNotMatch(customIndex, /{{HARNESS_DIR}}|`harness\/docs\//);
@@ -206,13 +211,15 @@ test('generated docs route durable decisions without taking ownership of project
   assert.match(guide, /Current user instructions and current workspace files take precedence/);
   assert.match(guide, /verify the current state, use the higher-priority source for the task, and then update, supersede, or retire the record/);
   assert.match(guide, /Individual decision records are project-maintained/);
-  for (const field of ['Status', 'Date', 'Scope', 'Context', 'Decision', 'Consequences', 'Alternatives considered', 'Verification or migration notes']) {
+  for (const field of ['Status', 'Date', 'Scope', 'Source of truth', 'Context', 'Decision', 'Consequences', 'Alternatives considered', 'Verification or migration notes']) {
     assert.match(guide, new RegExp(`## ${field}`));
   }
+  assert.match(guide, /Current source files, configuration, tests, verified runbooks, or command\/output evidence to re-check/);
+  assert.match(guide, /This ADR records decision rationale; it is not the current-state authority/);
 
   const index = read(path.join(h, 'docs', 'index.md'));
-  assert.match(index, /`harness\/docs\/decisions\/` stores project-maintained long-lived decision rationale/);
-  assert.match(index, /Decision records explain durable rationale but never override current user instructions or current workspace files/);
+  assert.match(index, /Governance and reusable knowledge: applicable Rules, accepted and unsuperseded ADRs, and active experience records/);
+  assert.match(index, /Historical and task material: historical notes, migration material, old proposals, plans, task records/);
 
   const harnessReadme = read(path.join(h, 'README.md'));
   assert.match(harnessReadme, /`docs\/decisions\/`: project-maintained long-lived decision records and rationale/);
@@ -263,8 +270,8 @@ test('generated docs route reusable experience without taking ownership of proje
   }
 
   const index = read(path.join(h, 'docs', 'index.md'));
-  assert.match(index, /`harness\/docs\/experience\/` stores project-maintained reusable experience/);
-  assert.match(index, /Experience records provide reusable guidance but never override current user instructions or current workspace files/);
+  assert.match(index, /Governance and reusable knowledge: applicable Rules, accepted and unsuperseded ADRs, and active experience records/);
+  assert.match(index, /superseded or expired experience/);
 
   const harnessReadme = read(path.join(h, 'README.md'));
   assert.match(harnessReadme, /`docs\/experience\/`: project-maintained reusable lessons/);

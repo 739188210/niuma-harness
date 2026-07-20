@@ -12,12 +12,14 @@ Use this layer at the start of every task, after a context reset, when entering 
 
 ## Agent protocol
 
-1. Read `{{HARNESS_DIR}}/docs/index.md` to locate code, docs, workflows, verification commands, and fact priority.
-2. Read only the task-relevant parts of `{{HARNESS_DIR}}/docs/project-context.md` to find stable facts that may apply.
-3. Inspect current project files when a fact affects the task; do not rely only on stale notes. Current files determine task-specific facts.
-4. Identify whether the task is module-local, cross-module, or workspace-level. For declared modules, use `{{HARNESS_DIR}}/docs/module-topology.md`, then inspect only affected local supplements, including their marker-external module knowledge area, and current module files before proposing changes. Treat module knowledge as a locator for durable facts; current module files determine task-specific facts.
-5. If project notes conflict with current files, treat current files as the source of truth, record the conflict in task-local notes, and update or flag durable context only after verification.
-6. For non-trivial tasks, record the task-relevant project files and Harness docs with their purpose, reused implementations, known gaps, and a context-sufficiency claim in `harness-feedback.md`; this is self-reported evidence, not proof of a read event.
+1. Read `{{HARNESS_DIR}}/docs/index.md` to locate code, docs, workflows, verification commands, fact priority, and the Policy exception.
+2. Classify each task-relevant source as current verifiable fact, current navigation/runtime material, governance or reusable knowledge, or historical/task material. A file existing in the repository is not automatically a current fact.
+3. Read only the task-relevant parts of `{{HARNESS_DIR}}/docs/project-context.md`, current README files, and verified runbooks to find stable facts and current operating guidance that may apply.
+4. Inspect current source, configuration, build definitions, tests, and command output when a fact affects the task; do not rely only on stale notes, plans, migration material, ADRs, or experience. Current verifiable evidence determines task-specific facts.
+5. Identify whether the task is module-local, cross-module, or workspace-level. For declared modules, use `{{HARNESS_DIR}}/docs/module-topology.md`, then inspect only affected local supplements, including their marker-external module knowledge area, and current module files before proposing changes. Treat module knowledge as a locator for durable facts; current module files determine task-specific facts.
+6. Use Rules, accepted and unsuperseded ADRs, and active experience as governance or reusable guidance. Use historical materials only as background, search terms, or hypotheses until verified against higher-priority current sources.
+7. If project materials conflict, record the conflict in task-local notes and update or flag durable context only after verification. For action permission, security boundaries, or ownership conflicts, stop applying ordinary fact priority and follow the more specific, stricter Policy rule.
+8. For non-trivial tasks, record the task-relevant project files and Harness docs with their purpose, reused implementations, known gaps, and a context-sufficiency claim in `harness-feedback.md`; this is self-reported evidence, not proof of a read event.
 
 ## Allowed actions
 

@@ -10,7 +10,7 @@ Valid alternatives must be declared before implementation. Record commands, outc
 
 Use the strongest relevant row. If multiple rows apply, collect evidence that covers each changed risk and report required evidence that could not be collected.
 
-This matrix gives proportional verification directions, not a universal toolchain or heavyweight gate. Select the smallest checks that prove the changed risks using project-local guidance. Stack-specific rules and selected process playbooks may add more focused expectations.
+This matrix gives proportional verification directions, not a universal toolchain or heavyweight gate. It supplements the mandatory RED → same-target GREEN → optional REFACTOR protocol; it does not replace test-first work when that protocol applies. Select the smallest checks that prove the changed risks using project-local guidance. Stack-specific rules and selected process playbooks may add more focused expectations.
 
 | Change type | Minimum verification direction |
 |---|---|

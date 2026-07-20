@@ -123,6 +123,54 @@ test('re-init preserves user-managed module knowledge and Doctor ignores it', ()
   assert.strictEqual(doctor.status, 0, doctor.stdout || doctor.stderr);
 });
 
+test('explicit single topology cannot replace an existing module registry', () => {
+  const workspace = seedWorkspace();
+  let result = run(['init', workspace, '--agent', 'claude', '--modules', 'apps/admin']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const before = snapshotTree(workspace);
+
+  result = run(['init', workspace, '--agent', 'claude', '--topology', 'single']);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stderr, /explicit topology differs from the existing module registry/);
+  assertTreeUnchanged(workspace, before);
+});
+
+test('retiring a merged module supplement preserves project entry content', () => {
+  const workspace = seedWorkspace();
+  const entryPath = path.join(workspace, 'apps', 'admin', 'CLAUDE.md');
+  const projectEntry = '# Project module notes\n\nKeep this content.\n';
+  fs.writeFileSync(entryPath, projectEntry, 'utf8');
+
+  let result = run(['init', workspace, '--agent', 'claude', '--modules', 'apps/admin']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(read(entryPath), /niuma-harness:module-supplement begin/);
+
+  const registryPath = path.join(workspace, 'harness', 'modules.json');
+  fs.writeFileSync(registryPath, `${JSON.stringify({ schemaVersion: 1, modules: [] }, null, 2)}\n`, 'utf8');
+  result = run(['init', workspace, '--agent', 'claude']);
+
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.strictEqual(read(entryPath), projectEntry);
+  assert.doesNotMatch(read(entryPath), /niuma-harness:module-supplement/);
+  assert.strictEqual(run(['doctor', workspace]).status, 0);
+});
+
+test('retiring an unchanged Niuma-created module entry removes it', () => {
+  const workspace = seedWorkspace();
+  const entryPath = path.join(workspace, 'apps', 'admin', 'CLAUDE.md');
+  let result = run(['init', workspace, '--agent', 'claude', '--modules', 'apps/admin']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertFile(entryPath);
+
+  const registryPath = path.join(workspace, 'harness', 'modules.json');
+  fs.writeFileSync(registryPath, `${JSON.stringify({ schemaVersion: 1, modules: [] }, null, 2)}\n`, 'utf8');
+  result = run(['init', workspace, '--agent', 'claude']);
+
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertNoPath(entryPath);
+  assert.strictEqual(run(['doctor', workspace]).status, 0);
+});
+
 test('existing registry requires explicit topology selection on first init', () => {
   const workspace = seedWorkspace();
   const registryPath = path.join(workspace, 'harness', 'modules.json');
@@ -221,20 +269,36 @@ test('doctor reports a drifted module supplement without rewriting it', () => {
   assert.strictEqual(read(entry), drifted);
 });
 
-test('module supplement merges user content and re-init preserves the registry', () => {
+test('implicit re-init adopts project-managed registry updates without overwriting them', () => {
   const workspace = seedWorkspace();
-  const entry = path.join(workspace, 'apps', 'admin', 'CLAUDE.md');
-  fs.writeFileSync(entry, 'local notes\r\n', 'utf8');
   let result = run(['init', workspace, '--agent', 'claude', '--modules', 'apps/admin']);
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.ok(read(entry).endsWith('local notes\r\n'));
-  assert.doesNotMatch(read(entry), /# Module knowledge/);
 
-  const registryPath = path.join(workspace, 'harness', 'modules.json');
-  const registry = read(registryPath);
-  result = run(['init', workspace, '--agent', 'claude', '--modules', 'apps/admin']);
+  const harness = path.join(workspace, 'harness');
+  const registryPath = path.join(harness, 'modules.json');
+  const updatedRegistry = `${JSON.stringify({
+    projectNote: 'maintained by the workspace',
+    schemaVersion: 1,
+    modules: [
+      { id: 'apps-admin', root: 'apps/admin' },
+      { id: 'services-orders', root: 'services/orders' },
+    ],
+  }, null, 4)}\n`;
+  fs.writeFileSync(registryPath, updatedRegistry, 'utf8');
+  fs.writeFileSync(path.join(harness, 'docs', 'module-topology.md'), 'stale route\n', 'utf8');
+
+  result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.strictEqual(read(registryPath), registry);
+  assert.strictEqual(read(registryPath), updatedRegistry);
+  assert.match(result.stdout, /SKIP\s+.*modules\.json/);
+  assert.match(result.stdout, /OVERWRITE\s+.*module-topology\.md/);
+  const route = read(path.join(harness, 'docs', 'module-topology.md'));
+  assert.doesNotMatch(route, /stale route/);
+  assert.match(route, /apps\/admin/);
+  assert.match(route, /services\/orders/);
+  assertFile(path.join(workspace, 'services', 'orders', 'CLAUDE.md'));
+  assert.deepStrictEqual(readJson(path.join(harness, 'manifest.json')).topology.modules.map((module) => module.root), ['apps/admin', 'services/orders']);
+  assert.strictEqual(run(['doctor', workspace]).status, 0);
 });
 
 test('discovery reads every Gradle include argument', () => {

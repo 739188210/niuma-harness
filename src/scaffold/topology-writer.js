@@ -9,13 +9,17 @@ function prepareTopologyPlan(context) {
   if (registryExists) {
     const registered = parseRegistry(fs.readFileSync(registryPath, 'utf8'), context.workspaceDir);
     if (context.topology.modules.length === 0) {
-      if (context.previousStatus && context.previousStatus.topology && context.previousStatus.topology.modules.length > 0) {
-        modules = context.previousStatus.topology.modules;
+      if (!context.options.topologyProvided && context.previousStatus && context.previousStatus.topology && context.previousStatus.topology.modules.length > 0) {
+        modules = registered;
+      } else if (context.options.topologyProvided) {
+        throw new Error('explicit topology differs from the existing module registry; update the registry first or select matching modules');
       } else {
         throw new Error('existing module registry requires --modules or --topology discover before Niuma can manage module supplements');
       }
     } else if (JSON.stringify(registered.map(minimalModule)) !== JSON.stringify(context.topology.modules.map(minimalModule))) {
       throw new Error('explicit topology differs from the existing module registry; update the registry first or select matching modules');
+    } else {
+      modules = registered;
     }
   }
   context.topology = { ...context.topology, modules };
@@ -54,7 +58,15 @@ function minimalModule(module) { return { id: module.id, root: module.root, ...(
 
 function writeTopologyPlan(context) {
   for (const item of [context.topologyPlan.registry, context.topologyPlan.route].filter(Boolean)) {
-    context.printAction(writeFile(item.targetPath, item.content, { dryRun: context.options.dryRun, overwrite: item.action !== 'create' }), item.targetPath);
+    if (item.action === 'skip') {
+      inspectFileTarget(item.targetPath);
+      context.printAction('skip', item.targetPath);
+      continue;
+    }
+    context.printAction(writeFile(item.targetPath, item.content, {
+      dryRun: context.options.dryRun,
+      overwrite: item.action === 'overwrite',
+    }), item.targetPath);
   }
 }
 

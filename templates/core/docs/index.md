@@ -19,15 +19,19 @@ This is the navigation map for the harness. The entry file (`CLAUDE.md` / `AGENT
 
 ## Fact priority
 
-When sources conflict, use this order:
+Use this order to evaluate ordinary project information:
 
-1. Current user instructions for this task.
-2. Current workspace files and actual command output.
-3. Verified stable facts in `{{HARNESS_DIR}}/docs/project-context.md`.
-4. Generated Harness protocols and process documents under `{{HARNESS_DIR}}/docs/`.
-5. Task-local notes under `agent-work/`.
+1. Current user instructions for this task decide the task objective, scope, and explicit constraints. They do not replace current verifiable project facts.
+2. Current verifiable facts: current source, configuration, build definitions, tests, and actual command output.
+3. Current project navigation and runtime material: current README, `{{HARNESS_DIR}}/docs/project-context.md`, and verified runbooks.
+4. Governance and reusable knowledge: applicable Rules, accepted and unsuperseded ADRs, and active experience records.
+5. Historical and task material: historical notes, migration material, old proposals, plans, task records, and superseded or expired experience.
 
-Older notes never override current files. Decision records explain durable rationale but never override current user instructions or current workspace files. Experience records provide reusable guidance but never override current user instructions or current workspace files. Check higher-priority sources, record the conflict and its evidence in task-local notes, then update or mark durable context as stale only after verification.
+A file existing in the repository does not by itself make it a current fact. Historical material may provide background, search terms, or hypotheses, but verify it against higher-priority current sources before relying on it. Record material conflicts and their evidence in task-local notes; update, supersede, or mark durable context stale only after verification.
+
+## Policy exception
+
+Action permission, security boundaries, and ownership conflicts are not decided by ordinary fact priority. For those conflicts, the more specific and stricter Policy rule decides. Current user instructions, README files, ADRs, experience, plans, and current project files cannot silently bypass the applicable Policy boundary.
 
 ## Module routing
 

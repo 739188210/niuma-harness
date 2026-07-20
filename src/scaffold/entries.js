@@ -18,11 +18,30 @@ const {
 } = require('../contract');
 
 function prepareFilePlan(context) {
+  assertFreshGuideTargetsAvailable(context);
   return [
     ...prepareEntryPlan(context),
     ...prepareTemplatePlan(context, context.manifest.templateFiles, context.targetDir, 'template target'),
     ...prepareTemplatePlan(context, context.manifest.workTemplateFiles || [], context.workspaceDir, 'work template target', true),
   ];
+}
+
+function assertFreshGuideTargetsAvailable(context) {
+  if (context.previousStatus) return;
+  const conflicts = context.manifest.templateFiles
+    .filter((file) => file.initialCollision === 'error')
+    .map((file) => ({
+      target: file.target,
+      targetPath: safeResolveInside(context.targetDir, file.target, 'template target'),
+    }))
+    .filter((item) => inspectFileTarget(item.targetPath));
+  if (conflicts.length === 0) return;
+
+  throw new Error([
+    'first init cannot overwrite pre-existing knowledge guide files:',
+    ...conflicts.map((item) => `- ${context.options.harnessDir}/${item.target}`),
+    'Move, merge, rename, or remove the conflicting guide files, then retry.',
+  ].join('\n'));
 }
 
 function prepareEntryPlan(context) {

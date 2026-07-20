@@ -37,6 +37,10 @@ Copy this structure into a project-maintained Markdown file when a decision warr
 
 <What project area this affects>
 
+## Source of truth
+
+<Current source files, configuration, tests, verified runbooks, or command/output evidence to re-check. This ADR records decision rationale; it is not the current-state authority.>
+
 ## Context
 
 <Why this decision is needed and the constraints that matter>

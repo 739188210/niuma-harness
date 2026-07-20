@@ -63,9 +63,10 @@ test('default rules include common engineering rules', () => {
   }
 });
 
-test('generated common testing rules require the practical TDD protocol', () => {
+test('generated common testing rules require practical TDD across agent surfaces', () => {
   for (const scenario of [
     { agent: 'claude', rulePath: ['.claude', 'rules', 'common', 'testing.md'] },
+    { agent: 'codex', rulePath: ['AGENTS.md'] },
     { agent: 'opencode', rulePath: ['.opencode', 'rules', 'common', 'testing.md'] },
   ]) {
     const workspace = tempDir();
@@ -74,8 +75,15 @@ test('generated common testing rules require the practical TDD protocol', () => 
     const rule = read(path.join(workspace, ...scenario.rulePath));
 
     assert.match(rule, /must follow generated `ai-harness\/docs\/process\/test-driven-development\.md`/);
+    assert.match(rule, /RED → same-target GREEN → optional REFACTOR/);
+    assert.match(rule, /does not replace test-first work when that protocol applies/);
     assert.match(rule, /Valid alternatives must be declared before implementation/);
-    assert.doesNotMatch(rule, /testing preferences|lightweight preference layer/i);
+    if (scenario.agent !== 'codex') {
+      assert.doesNotMatch(rule, /testing preferences|lightweight preference layer/i);
+    }
+    if (scenario.agent === 'opencode') {
+      assertOpenCodeRulesInstruction(workspace, 'ai-harness', ['common']);
+    }
   }
 });
 

@@ -33,11 +33,13 @@
     },
     {
       "target": "docs/decisions/README.md",
-      "template": "core/docs/decisions/README.md"
+      "template": "core/docs/decisions/README.md",
+      "initialCollision": "error"
     },
     {
       "target": "docs/experience/README.md",
-      "template": "core/docs/experience/README.md"
+      "template": "core/docs/experience/README.md",
+      "initialCollision": "error"
     },
     {
       "target": "docs/project-context.md",

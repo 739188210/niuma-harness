@@ -62,6 +62,44 @@ test('invalid entry leaves workspace unchanged', () => {
   assert.match(result.stderr, /contract zone end marker missing/);
 });
 
+test('first init preserves pre-existing knowledge guides without mutation', () => {
+  for (const guideTargets of [
+    ['docs/decisions/README.md'],
+    ['docs/experience/README.md'],
+    ['docs/decisions/README.md', 'docs/experience/README.md'],
+  ]) {
+    const workspace = tempDir();
+    for (const target of guideTargets) {
+      const guidePath = path.join(workspace, 'ai-harness', ...target.split('/'));
+      fs.mkdirSync(path.dirname(guidePath), { recursive: true });
+      fs.writeFileSync(guidePath, `project ${target}\n`, 'utf8');
+    }
+    const before = snapshotTree(workspace);
+    const result = run(['init', workspace, '--agent', 'claude', '--harness-dir', 'ai-harness']);
+
+    assert.notStrictEqual(result.status, 0, result.stdout);
+    for (const target of guideTargets) assert.match(result.stderr, new RegExp(`ai-harness/${target}`));
+    if (guideTargets.length === 2) {
+      assert.ok(
+        result.stderr.indexOf('ai-harness/docs/decisions/README.md') < result.stderr.indexOf('ai-harness/docs/experience/README.md'),
+        'conflicts should follow manifest order'
+      );
+    }
+    assertNoPath(path.join(workspace, 'CLAUDE.md'));
+    assertNoPath(path.join(workspace, 'ai-harness', 'manifest.json'));
+    assertTreeUnchanged(workspace, before);
+  }
+});
+
+test('dry-run preserves pre-existing knowledge guides without mutation', () => {
+  const result = assertFreshFailureLeavesNoChanges('claude', (workspace) => {
+    const guidePath = path.join(workspace, 'ai-harness', 'docs', 'decisions', 'README.md');
+    fs.mkdirSync(path.dirname(guidePath), { recursive: true });
+    fs.writeFileSync(guidePath, 'project decision guide\n', 'utf8');
+  }, ['--harness-dir', 'ai-harness', '--dry-run']);
+  assert.match(result.stderr, /ai-harness\/docs\/decisions\/README\.md/);
+});
+
 test('user-maintained target directory conflict leaves workspace unchanged', () => {
   const result = assertFreshFailureLeavesNoChanges('claude', (workspace) => {
     fs.mkdirSync(path.join(workspace, 'harness', 'docs', 'project-context.md'), { recursive: true });
