@@ -83,14 +83,25 @@ test('fresh module entries include an empty user-managed knowledge skeleton', ()
     assert.ok(markerEnd >= 0);
     for (const heading of [
       '# Module knowledge',
-      '## Module role and boundaries',
-      '## Code and test map',
-      '## Local commands and verification',
-      '## Dependencies and integration impact',
-      '## Change risks and verification',
+      '## Module responsibilities and boundaries',
+      '## Dependencies and dependents',
+      '## Build, test, and startup commands',
+      '## Source and test entry points',
+      '## Configuration locations',
+      '## Module constraints, risks, and known issues',
+      '## Cross-module verification triggers',
     ]) {
       assert.ok(entry.indexOf(heading) > markerEnd, `${entryFile} must place ${heading} after the managed marker`);
     }
+    for (const prompt of [
+      /public responsibility.*does not own/i,
+      /dependencies.*consume/i,
+      /building, testing, and starting/i,
+      /source, runtime, and test entry points/i,
+      /configuration files, environment-variable/i,
+      /limits.*risks.*known issues/i,
+      /cross-module verification.*integration checks/i,
+    ]) assert.match(entry, prompt);
     assert.doesNotMatch(entry, /npm test|pnpm test|yarn test/i);
   }
 });

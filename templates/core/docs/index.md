@@ -31,7 +31,7 @@ Older notes never override current files. Decision records explain durable ratio
 
 ## Module routing
 
-For a declared multi-module workspace, read `{{HARNESS_DIR}}/docs/module-topology.md` after root context to identify affected modules. Then read only their local `CLAUDE.md` or `AGENTS.md` supplements, including marker-external module knowledge maintained by the project and Agents. That knowledge does not replace root policy, root context, or current workspace facts. Cross-module work keeps root policy and integration verification requirements in force.
+For a declared multi-module workspace, read `{{HARNESS_DIR}}/docs/module-topology.md` after root context to identify affected modules. Then read only their local `CLAUDE.md` or `AGENTS.md` supplements, including marker-external module knowledge maintained by the project and Agents. That knowledge covers verified module boundaries, dependencies and dependents, source/test/configuration locations, local commands, constraints, and Cross-module verification triggers; `init` supplies only an empty skeleton. Current module files remain authoritative. For cross-module work, read every affected module's Cross-module verification triggers; module-local checks alone are insufficient when broader validation is required. Root policy and integration verification requirements remain in force.
 
 ## Runtime reading order
 

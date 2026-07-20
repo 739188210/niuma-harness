@@ -14,24 +14,32 @@
 
 # Module knowledge
 
-> Project- and Agent-maintained. Record only reusable facts verified from current code, configuration, executed checks, or user confirmation. Keep temporary investigation, task status, and raw evidence in `agent-work/`; put root or cross-module durable facts in the root `project-context.md`. When both `CLAUDE.md` and `AGENTS.md` exist, keep their important module facts consistent.
+> User- and Agent-managed; this knowledge area is intentionally outside the Niuma-managed marker. Record only reusable facts verified from current code, configuration, executed checks, or user confirmation. Keep temporary investigation, task status, and raw evidence in `agent-work/`; put root or cross-module durable facts in the root `project-context.md`. When both `CLAUDE.md` and `AGENTS.md` exist, keep their important module facts consistent.
 
-## Module role and boundaries
+## Module responsibilities and boundaries
 
-<!-- What this module owns and intentionally does not own. Add verified facts only. -->
+<!-- Verified public responsibility, owned interfaces or data, and what this module intentionally does not own. -->
 
-## Code and test map
+## Dependencies and dependents
 
-<!-- Verified source, runtime, configuration, and test entry points. -->
+<!-- Verified external and internal dependencies, plus modules or applications that consume this module's contracts. -->
 
-## Local commands and verification
+## Build, test, and startup commands
 
-<!-- Commands and checks that were executed and verified for this module. -->
+<!-- Commands verified for building, testing, and starting this module. Record prerequisites and command scope when relevant. -->
 
-## Dependencies and integration impact
+## Source and test entry points
 
-<!-- Verified internal/external dependencies, consumers, contracts, and integration checks. -->
+<!-- Verified source, runtime, and test entry points; keep only locations that help future module work. -->
 
-## Change risks and verification
+## Configuration locations
 
-<!-- Verified compatibility, data, security, concurrency, or regression risks and required checks. -->
+<!-- Verified configuration files, environment-variable definitions, and configuration ownership boundaries. Do not record secrets or sensitive values. -->
+
+## Module constraints, risks, and known issues
+
+<!-- Verified module limits, compatibility, security, data, concurrency, or operational risks and known issues. -->
+
+## Cross-module verification triggers
+
+<!-- Verified change categories that require cross-module verification, affected consumers or contracts, and required integration checks. -->

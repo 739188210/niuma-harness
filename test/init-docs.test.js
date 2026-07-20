@@ -176,6 +176,8 @@ test('generated docs route module knowledge by scope', () => {
   assert.match(memory, /root or cross-module durable facts/);
   assert.match(memory, /`agent-work\//);
   assert.match(index, /marker-external module knowledge/);
+  assert.match(index, /Cross-module verification triggers/);
+  assert.match(index, /module-local checks alone are insufficient/);
 
   const customWorkspace = tempDir();
   const customResult = run(['init', customWorkspace, '--agent', 'claude', '--harness-dir', 'ai-harness']);
