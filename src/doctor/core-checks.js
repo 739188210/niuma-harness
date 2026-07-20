@@ -179,6 +179,7 @@ function checkTemplateDirectories(context) {
 function checkTemplateFiles(context) {
   const { harnessRoot, result, templateManifest } = context;
   for (const file of templateManifest.templateFiles || []) {
+    if (file.dynamic) continue;
     checkRegularFile(path.join(harnessRoot, ...file.target.split('/')), file.target, result);
   }
 }

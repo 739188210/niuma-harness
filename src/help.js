@@ -13,6 +13,8 @@ Init options:
   --rules <selection>    all | none | <rule-dir>[,<rule-dir>...]
   --rules-out <dirs>     Exclude rule dirs from all installed rules
   --skills <selection>   all | none | <skill>[,<skill>...], default: all
+  --topology <mode>      single | discover; discover only reads root workspace declarations
+  --modules <paths>      Explicit comma-separated existing module roots
   --dry-run              Print planned actions without writing files
 
 Doctor/check options:
@@ -47,6 +49,8 @@ Examples:
   niuma-harness init . --agent claude --rules-out web
   niuma-harness init . --agent multi --harness-dir ai-harness
   niuma-harness init . --agent opencode --dry-run
+  niuma-harness init . --agent multi --topology discover --dry-run
+  niuma-harness init . --agent multi --modules apps/admin,services/orders
   niuma-harness doctor .
   niuma-harness check . --harness-dir ai-harness
   niuma-harness repair . --dry-run

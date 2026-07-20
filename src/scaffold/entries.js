@@ -110,7 +110,7 @@ function prepareEntryRetirement(workspaceDir, entryFile, previousFull) {
 }
 
 function prepareTemplatePlan(context, files, baseDir, label, forceOverwrite = false) {
-  return files.map((file) => {
+  return files.filter((file) => !file.dynamic).map((file) => {
     const targetPath = safeResolveInside(baseDir, file.target, label);
     const exists = inspectFileTarget(targetPath);
     const overwrite = forceOverwrite || file.managed !== 'user';

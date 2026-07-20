@@ -29,9 +29,13 @@ async function runRepair(options, dependencies = {}) {
   if (plan.issues.length === 0 || options.dryRun) {
     return;
   }
-  const unresolved = plan.issues.filter((issue) => issue.code === 'stale-rule-drift');
+  const unresolved = plan.issues.filter((issue) => issue.code === 'stale-rule-drift'
+    || issue.code === 'invalid-topology-state'
+    || issue.code === 'module-registry-missing'
+    || issue.code === 'module-supplement-missing'
+    || issue.code === 'module-supplement-drift');
   if (unresolved.length > 0) {
-    throw new Error(`Repair cannot safely resolve drifted obsolete managed rules: ${unresolved.map((issue) => issue.path).join(', ')}`);
+    throw new Error(`Repair cannot safely resolve user-owned module or drifted obsolete artifacts: ${unresolved.map((issue) => issue.path).join(', ')}`);
   }
   const confirmed = options.yes || await (dependencies.confirmRepair || confirmRepair)();
   if (!confirmed) {

@@ -30,7 +30,7 @@ function checkManagedContentIntegrity(context) {
 
 function checkManagedTemplates(context, variables) {
   for (const file of context.templateManifest.templateFiles || []) {
-    if (file.managed === 'user') {
+    if (file.managed === 'user' || file.dynamic) {
       continue;
     }
     checkExactContent(

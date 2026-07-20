@@ -157,6 +157,39 @@ test('generated docs prioritize task facts and route context reading by need', (
   assert.doesNotMatch(customContext, /{{HARNESS_DIR}}|`harness\/docs\//);
 });
 
+test('generated docs route module knowledge by scope', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const entry = read(path.join(workspace, 'CLAUDE.md'));
+  const context = read(path.join(h, 'docs', 'layers', '01-context.md'));
+  const memory = read(path.join(h, 'docs', 'layers', '06-memory.md'));
+  const index = read(path.join(h, 'docs', 'index.md'));
+
+  assert.match(entry, /module-local durable facts/);
+  assert.match(entry, /root or cross-module durable facts/);
+  assert.match(context, /module knowledge area/);
+  assert.match(context, /current module files/);
+  assert.match(memory, /module-local durable facts/);
+  assert.match(memory, /root or cross-module durable facts/);
+  assert.match(memory, /`agent-work\//);
+  assert.match(index, /marker-external module knowledge/);
+
+  const customWorkspace = tempDir();
+  const customResult = run(['init', customWorkspace, '--agent', 'claude', '--harness-dir', 'ai-harness']);
+  assert.strictEqual(customResult.status, 0, customResult.stderr);
+  for (const body of [
+    read(path.join(customWorkspace, 'CLAUDE.md')),
+    read(path.join(customWorkspace, 'ai-harness', 'docs', 'layers', '01-context.md')),
+    read(path.join(customWorkspace, 'ai-harness', 'docs', 'layers', '06-memory.md')),
+    read(path.join(customWorkspace, 'ai-harness', 'docs', 'index.md')),
+  ]) {
+    assert.doesNotMatch(body, /{{HARNESS_DIR}}|`harness\//);
+  }
+});
+
 test('generated docs route durable decisions without taking ownership of project ADRs', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);
@@ -453,7 +486,8 @@ test('generated docs define task state ownership boundaries', () => {
 
   const memoryMemo = read(path.join(h, 'docs', 'layers', '06-memory.md'));
   assert.match(memoryMemo, /Task-local state stays in `agent-work\/tasks\/<task-name>\/`/);
-  assert.match(memoryMemo, /Durable facts belong in `harness\/docs\/project-context\.md` only after verification/);
+  assert.match(memoryMemo, /Module-local durable facts belong in the affected module entry's marker-external knowledge area/);
+  assert.match(memoryMemo, /Root or cross-module durable facts belong in `harness\/docs\/project-context\.md`/);
   assert.match(memoryMemo, /Approval blockers and risks are task-local until resolved/);
 
   const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation.md'));

@@ -10,7 +10,7 @@ const { addError, addOk } = require('./result');
 
 function checkArtifactFiles(context) {
   const { agent, commands, result, status, workspaceRoot } = context;
-  if (status.schemaVersion !== 2) {
+  if (![2, 3].includes(status.schemaVersion)) {
     return;
   }
 

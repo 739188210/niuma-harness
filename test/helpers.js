@@ -129,7 +129,7 @@ function expectedDefaultCommands(agent) {
 function assertManifest(filePath, expected) {
   assertFile(filePath);
   const manifest = readJson(filePath);
-  assert.strictEqual(manifest.schemaVersion, 2);
+  assert.ok([2, 3].includes(manifest.schemaVersion), 'manifest schemaVersion should be supported');
   assert.strictEqual(manifest.agent, expected.agent);
   assert.deepStrictEqual(manifest.rules, expected.rules || expectedDefaultRules(expected.agent));
   assert.deepStrictEqual(manifest.skills, expected.skills || allSkillDirs);

@@ -23,6 +23,11 @@
       "template": "core/docs/index.md"
     },
     {
+      "target": "docs/module-topology.md",
+      "template": "core/docs/module-topology.md",
+      "dynamic": true
+    },
+    {
       "target": "docs/experiments/task-execution-record.md",
       "template": "core/docs/experiments/task-execution-record.md"
     },

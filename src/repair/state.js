@@ -11,6 +11,7 @@ const { getAvailableSkillDirs, normalizeConcreteSkills } = require('../skills');
 const { loadManifest, validateManifest } = require('../scaffold/manifest');
 const { createTemplateVariables } = require('../template-variables');
 const { hasDamagedHarnessStructure, scanWorkspaceHarnesses } = require('../workspace-harnesses');
+const { validateTopologyShape } = require('../topology');
 
 async function resolveRepairState(options, chooseAgent) {
   const target = canonicalizeWorkspacePath(options.targetDir || '.');
@@ -71,6 +72,9 @@ async function resolveRepairState(options, chooseAgent) {
       rulesSource: rules.source,
       skills: skills.value,
       skillsSource: skills.source,
+      topology: parsed.topology,
+      moduleSupplements: parsed.moduleSupplements,
+      topologyInvalid: parsed.topologyInvalid,
     },
     targetDir: location.harnessRoot,
     workspaceDir: location.workspaceDir,
@@ -160,7 +164,7 @@ function parseManifestSelections(value, harnessDir, manifest, commands, rules, s
   if (!value || Array.isArray(value) || typeof value !== 'object') {
     return { agent: null, errors: ['manifest must be an object'], rules: null, skills: null, usable: false };
   }
-  if (value.schemaVersion !== 2) errors.push('schemaVersion must be 2');
+  if (![2, 3].includes(value.schemaVersion)) errors.push('schemaVersion must be 2 or 3');
   if (value.createdBy !== 'niuma-harness') errors.push('createdBy must be niuma-harness');
   if (value.harnessDir !== harnessDir) errors.push(`harnessDir must be ${harnessDir}`);
   if (value.workDir !== 'agent-work') errors.push('workDir must match package manifest: agent-work');
@@ -169,6 +173,19 @@ function parseManifestSelections(value, harnessDir, manifest, commands, rules, s
   if (!agent) errors.push('agent is missing');
   let normalizedRules = null;
   let normalizedSkills = null;
+  let topology = { mode: 'single', modules: [] };
+  let moduleSupplements = [];
+  let topologyInvalid = false;
+  if (value.schemaVersion === 3) {
+    try {
+      validateTopologyShape(value.topology, value.moduleSupplements);
+      topology = value.topology;
+      moduleSupplements = value.moduleSupplements;
+    } catch (error) {
+      topologyInvalid = true;
+      errors.push(error.message);
+    }
+  }
   let openCodeInstructions = [];
   try { normalizedRules = normalizeConcreteRules(value.rules, rules, 'rules'); } catch (error) { errors.push(error.message); }
   try { normalizedSkills = normalizeConcreteSkills(value.skills, skills, 'skills'); } catch (error) { errors.push(error.message); }
@@ -226,8 +243,11 @@ function parseManifestSelections(value, harnessDir, manifest, commands, rules, s
   return {
     agent,
     errors,
+    moduleSupplements,
     openCodeInstructions,
+    topologyInvalid,
     rules: normalizedRules,
+    topology,
     skills: normalizedSkills,
     usable: errors.length === 0,
   };

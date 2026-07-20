@@ -17,7 +17,7 @@ agent-work/tasks/<task-name>/
 ## Suggested file roles
 
 - `status.md`: goal, current stage, completed steps, next action, blockers or risks, verification summary, and resume instructions.
-- `context.md`: task-local context gathered during execution.
+- `context.md`: task-local context gathered during execution, including `affectedModules` when the task is module-local or cross-module.
 - `plan.md`: current plan, scope decisions, and implementation sequence.
 - `verification.md`: exact checks, expected signals, actual results, skipped checks with reasons, and remaining unknowns.
 - `harness-feedback.md`: required structured execution record for non-trivial tasks in this package release.

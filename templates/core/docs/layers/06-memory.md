@@ -15,7 +15,7 @@ Use this layer after discovering verified stable facts, after finishing multi-st
 3. Keep task-local investigation details in the workspace-level `agent-work/` directory or the current task record.
 4. Bootstrap `{{HARNESS_DIR}}/docs/project-context.md` when its structured bootstrap record has `"status": "pending"`: perform the one-time initial project scan defined in that file, record only verified durable facts, and mark the result `complete` or `partial`.
 5. Treat `agent-work/tasks/<task-name>/status.md` as task-local operational state. Its minimum fields are defined by `{{HARNESS_DIR}}/docs/layers/07-loop.md`.
-6. Propose updates to `{{HARNESS_DIR}}/docs/project-context.md` only for durable, reusable facts. A fact is durable when it is reused across multiple tasks and does not change with a single task's outcome (for example build/test commands, architecture, module ownership, or external constraints); task-specific findings stay in `agent-work/`.
+6. Route durable, reusable facts by scope: module-local durable facts belong in the affected module entry's marker-external knowledge area; root or cross-module durable facts belong in `{{HARNESS_DIR}}/docs/project-context.md`. A fact is durable when it is reused across multiple tasks and does not change with a single task's outcome (for example build/test commands, architecture, module ownership, or external constraints); task-specific findings stay in `agent-work/`.
 7. Put important long-lived decision rationale in project-maintained records under `{{HARNESS_DIR}}/docs/decisions/` when future work must understand why a durable direction was chosen.
 8. Put verified reusable experience with clear applicability and invalidation conditions in project-maintained records under `{{HARNESS_DIR}}/docs/experience/`; it is neither a stable fact nor a decision rationale.
 9. Do not store secrets, private data, or unverified guesses.
@@ -24,7 +24,7 @@ Use this layer after discovering verified stable facts, after finishing multi-st
 
 Task-local state stays in `agent-work/tasks/<task-name>/`. This includes progress ledgers, task notes, temporary investigation details, unresolved approval blockers, risks, and verification summaries.
 
-Durable facts belong in `{{HARNESS_DIR}}/docs/project-context.md` only after verification against current files or user confirmation. A durable fact should be reusable across tasks and should not depend on one task's temporary outcome.
+Module-local durable facts belong in the affected module entry's marker-external knowledge area only after verification against current files or user confirmation. Root or cross-module durable facts belong in `{{HARNESS_DIR}}/docs/project-context.md` under the same standard. A durable fact should be reusable across tasks and should not depend on one task's temporary outcome.
 
 Long-lived decision rationale belongs in project-maintained records under `{{HARNESS_DIR}}/docs/decisions/`. A decision record explains why a direction was chosen; it does not replace verified facts, current files, or task evidence.
 

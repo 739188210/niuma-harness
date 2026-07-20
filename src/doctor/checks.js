@@ -14,6 +14,7 @@ const {
   checkWorkDir,
 } = require('./core-checks');
 const { checkArtifactFiles } = require('./artifacts-checks');
+const { checkTopology } = require('./topology-checks');
 const { checkCommandFiles, getAvailableCommands } = require('./commands-checks');
 const { checkRuleAdapterFiles } = require('./rules-adapters-checks');
 const { getAvailableRules } = require('./rules-checks');
@@ -35,6 +36,7 @@ function checkHarness(harnessRoot, status, result) {
   checkEntryFiles(context);
   checkEntryContractIntegrity(context);
   checkCoreDocs(context);
+  checkTopology(context);
   checkRuleAdapterFiles(context);
   checkSkillFiles(context);
   checkCommandFiles(context);
@@ -63,12 +65,12 @@ function createCheckContext(harnessRoot, status, result) {
 
 function checkSchemaVersion(context) {
   const { result, status } = context;
-  if (status.schemaVersion !== 2) {
+  if (![2, 3].includes(status.schemaVersion)) {
     addError(result, `unsupported schemaVersion: ${status.schemaVersion}`);
     return;
   }
 
-  addOk(result, 'schemaVersion 2');
+  addOk(result, `schemaVersion ${status.schemaVersion}`);
 }
 
 function checkCreatedBy(context) {

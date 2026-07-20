@@ -21,6 +21,7 @@ const {
   reconcileOpenCodeInstructions,
 } = require('../opencode-instructions');
 const { createDesiredState } = require('../scaffold/desired-state');
+const { analyzeModuleBlock, MODULE_BEGIN, MODULE_END } = require('../contract');
 
 function createRepairPlan(state, backupRoot) {
   const desired = createDesiredState({
@@ -30,6 +31,8 @@ function createRepairPlan(state, backupRoot) {
     manifest: state.manifest,
     rules: state.selections.rules,
     skills: state.selections.skills,
+    topology: state.selections.topologyInvalid ? { mode: 'single', modules: [] } : state.selections.topology,
+    moduleSupplements: state.selections.topologyInvalid ? [] : state.selections.moduleSupplements,
     workspaceDir: state.workspaceDir,
   });
   if (state.manifestInfo.value && typeof state.manifestInfo.value.createdAt === 'string') {
@@ -40,7 +43,7 @@ function createRepairPlan(state, backupRoot) {
   for (const directory of desired.directories) {
     planDirectory(collector, directory, 'directories');
   }
-  for (const file of desired.files.filter((item) => item.domain === 'core' || item.domain === 'work')) {
+  for (const file of desired.files.filter((item) => item.domain === 'core' || item.domain === 'work' || item.domain === 'topology')) {
     planDesiredFile(collector, file, { preserveRegular: file.ownership === 'user' });
   }
   planEntries(collector, desired, state);
@@ -55,6 +58,8 @@ function createRepairPlan(state, backupRoot) {
   planStaleCommands(collector, desired, state);
   planManifest(collector, desired, state);
 
+  addTopologyDiagnostics(collector, state);
+
   return {
     backupRoot,
     desired,
@@ -63,6 +68,48 @@ function createRepairPlan(state, backupRoot) {
     selections: state.selections,
     state,
   };
+}
+
+function addTopologyDiagnostics(collector, state) {
+  const status = state.manifestInfo.value;
+  if (state.selections.topologyInvalid) {
+    collector.add('topology', 'invalid-topology-state', state.manifestPath, 'installed topology ownership state is invalid and cannot be safely rebuilt');
+    return;
+  }
+  if (!status || status.schemaVersion !== 3 || !Array.isArray(status.moduleSupplements)
+      || !status.topology || !Array.isArray(status.topology.modules)
+      || (status.topology.modules.length === 0 && status.moduleSupplements.length === 0)) return;
+  const registryPath = path.join(state.targetDir, 'modules.json');
+  const registry = inspectNode(registryPath);
+  if (registry.type !== 'file') {
+    collector.add('topology', 'module-registry-missing', registryPath, 'module registry is missing or unsafe; Repair does not own project-maintained topology');
+  }
+  for (const record of status.moduleSupplements) {
+    let targetPath;
+    try {
+      const { safeResolveInside, assertNoSymlinkInPath } = require('../fs-safe');
+      targetPath = safeResolveInside(state.workspaceDir, record.target, 'module supplement target');
+      assertNoSymlinkInPath(targetPath);
+    } catch (error) {
+      collector.add('topology', 'invalid-topology-state', state.manifestPath, error.message);
+      continue;
+    }
+    const observed = inspectNode(targetPath);
+    if (observed.type === 'missing') {
+      collector.add('topology', 'module-supplement-missing', targetPath, 'module supplement is missing; Repair does not own module-local files');
+      continue;
+    }
+    if (observed.type !== 'file') {
+      collector.add('topology', 'module-supplement-drift', targetPath, 'module supplement is not a regular file; Repair does not own module-local files');
+      continue;
+    }
+    const content = fs.readFileSync(targetPath, 'utf8');
+    const analysis = analyzeModuleBlock(content);
+    if (analysis.status !== 'valid' || !analysis.block.includes(`module=${record.moduleId} root=${record.moduleRoot}`)
+        || (record.blockDigest && digestBytes(analysis.block) !== record.blockDigest)) {
+      collector.add('topology', 'module-supplement-drift', targetPath, 'module supplement managed block differs; Repair does not own module-local files');
+    }
+  }
 }
 
 function createCollector(workspaceDir) {
@@ -478,7 +525,7 @@ function normalizeOperations(operations) {
 }
 
 function compareIssue(a, b) {
-  const domains = ['manifest', 'directories', 'core', 'entry', 'rules', 'adapters', 'skills', 'commands', 'work'];
+  const domains = ['manifest', 'directories', 'core', 'topology', 'entry', 'rules', 'adapters', 'skills', 'commands', 'work'];
   return domains.indexOf(a.domain) - domains.indexOf(b.domain) || a.path.localeCompare(b.path) || a.code.localeCompare(b.code);
 }
 

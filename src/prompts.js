@@ -55,6 +55,16 @@ function normalizeAgentAlias(value) {
   return normalizeAgent(aliases[normalized] || normalized);
 }
 
+async function chooseDiscoveredModules(modules) {
+  if (!process.stdin.isTTY) {
+    throw new Error('Topology discovery is preview-only without a TTY. Re-run with --dry-run or --modules <path,...>.');
+  }
+  console.log('Discovered module candidates:');
+  for (const module of modules) console.log(`  - ${module.root} (${module.source || 'root descriptor'})`);
+  const answer = String(await ask('Initialize supplements for all listed modules? [y/N] ')).trim().toLowerCase();
+  return answer === 'y' || answer === 'yes';
+}
+
 async function confirmRepair() {
   if (!process.stdin.isTTY) {
     throw new Error('Repair confirmation requires a TTY. Re-run with -y or --yes.');
@@ -67,5 +77,6 @@ async function confirmRepair() {
 
 module.exports = {
   chooseAgent,
+  chooseDiscoveredModules,
   confirmRepair,
 };

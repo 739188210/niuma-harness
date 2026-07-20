@@ -9,9 +9,10 @@ const { createStatus } = require('../harness-status');
 const { createTemplateVariables } = require('../template-variables');
 const { TEMPLATE_DIR } = require('./manifest');
 const { renderTemplate } = require('./templates');
+const { renderTopologyRoute } = require('./topology-writer');
 
 function createDesiredState(input) {
-  const { agent, commands, harnessDir, manifest, rules, skills, workspaceDir } = input;
+  const { agent, commands, harnessDir, manifest, rules, skills, topology = { mode: 'single', modules: [] }, moduleSupplements = [], workspaceDir } = input;
   const targetDir = path.join(workspaceDir, harnessDir);
   const workDirectory = manifest.workDirectory || 'agent-work';
   const variables = createTemplateVariables({ agent, harnessDir }, workDirectory);
@@ -23,6 +24,7 @@ function createDesiredState(input) {
   const files = [];
 
   for (const file of manifest.templateFiles) {
+    if (file.dynamic) continue;
     files.push(descriptor(
       workspaceDir,
       path.join(targetDir, ...file.target.split('/')),
@@ -33,6 +35,15 @@ function createDesiredState(input) {
   }
   for (const file of manifest.workTemplateFiles || []) {
     files.push(descriptor(workspaceDir, path.join(workspaceDir, ...file.target.split('/')), renderTemplate(file.template, variables), 'tool', 'work'));
+  }
+  if (topology.modules.length > 0) {
+    files.push(descriptor(
+      workspaceDir,
+      path.join(targetDir, 'docs', 'module-topology.md'),
+      renderTopologyRoute(harnessDir, topology.modules, agent),
+      'tool',
+      'topology'
+    ));
   }
 
   const activeEntries = getEntryFilesForAgent(agent);
@@ -83,6 +94,8 @@ function createDesiredState(input) {
     openCodeInstructions: createOpenCodeDesired(adapterTargets, ruleArtifacts).paths,
     rules,
     skills,
+    topology,
+    moduleSupplements,
   }, { workDirectory });
 
   for (const file of files) {

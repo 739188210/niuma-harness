@@ -26,6 +26,10 @@ function parseArgs(argv) {
     taskProvided: false,
     all: false,
     strict: false,
+    topology: 'single',
+    topologyProvided: false,
+    modules: null,
+    modulesProvided: false,
     help: false,
   };
 
@@ -57,7 +61,7 @@ function parseArgs(argv) {
       continue;
     }
 
-    if (arg === '--agent' || arg === '--tool' || arg === '--rules' || arg === '--rules-out' || arg === '--skills' || arg === '--harness-dir' || arg === '--backup-dir' || arg === '--task') {
+    if (arg === '--agent' || arg === '--tool' || arg === '--rules' || arg === '--rules-out' || arg === '--skills' || arg === '--harness-dir' || arg === '--backup-dir' || arg === '--task' || arg === '--topology' || arg === '--modules') {
       const value = argv[index + 1];
       if (!value || value.startsWith('-')) {
         throw new Error(`${arg} requires a value.`);
@@ -67,7 +71,7 @@ function parseArgs(argv) {
       continue;
     }
 
-    if (arg.startsWith('--agent=') || arg.startsWith('--tool=') || arg.startsWith('--rules=') || arg.startsWith('--rules-out=') || arg.startsWith('--skills=') || arg.startsWith('--harness-dir=') || arg.startsWith('--backup-dir=') || arg.startsWith('--task=')) {
+    if (arg.startsWith('--agent=') || arg.startsWith('--tool=') || arg.startsWith('--rules=') || arg.startsWith('--rules-out=') || arg.startsWith('--skills=') || arg.startsWith('--harness-dir=') || arg.startsWith('--backup-dir=') || arg.startsWith('--task=') || arg.startsWith('--topology=') || arg.startsWith('--modules=')) {
       const [name, value] = splitLongOption(arg);
       assignOption(options, name, value);
       continue;
@@ -152,6 +156,30 @@ function assignOption(options, name, value) {
     return;
   }
 
+  if (name === 'topology') {
+    if (options.topologyProvided) {
+      throw new Error('--topology may only be provided once.');
+    }
+    if (value !== 'single' && value !== 'discover') {
+      throw new Error('--topology must be single or discover.');
+    }
+    options.topology = value;
+    options.topologyProvided = true;
+    return;
+  }
+
+  if (name === 'modules') {
+    if (options.modulesProvided) {
+      throw new Error('--modules may only be provided once.');
+    }
+    if (!String(value).split(',').every((item) => item.trim())) {
+      throw new Error('--modules must be a comma-separated list of module roots.');
+    }
+    options.modules = value;
+    options.modulesProvided = true;
+    return;
+  }
+
   throw new Error(`Unknown option: --${name}`);
 }
 
@@ -171,10 +199,16 @@ function validateCommandOptions(options) {
   if (options.command !== 'audit' && (options.taskProvided || options.all || options.strict)) {
     throw new Error('--task, --all, and --strict are only available for audit.');
   }
+  if (options.command !== 'init' && (options.topologyProvided || options.modulesProvided)) {
+    throw new Error('--topology and --modules are only available for init.');
+  }
 
   if (options.command === 'init') {
     if (options.yes || options.backupDirProvided) {
       throw new Error('--yes and --backup-dir are only available for repair.');
+    }
+    if (options.modulesProvided && options.topologyProvided) {
+      throw new Error('--modules and --topology cannot be used together.');
     }
     return;
   }

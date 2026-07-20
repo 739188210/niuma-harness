@@ -2,6 +2,36 @@
 
 const CONTRACT_BEGIN = '<!-- niuma-harness:contract begin';
 const CONTRACT_END = '<!-- niuma-harness:contract end -->';
+const MODULE_BEGIN = '<!-- niuma-harness:module-supplement begin';
+const MODULE_END = '<!-- niuma-harness:module-supplement end -->';
+
+function analyzeMarkedBlock(content, beginMarker, endMarker) {
+  const begins = findAll(content, beginMarker);
+  const ends = findAll(content, endMarker);
+
+  if (begins.length === 0 && ends.length === 0) return { status: 'missing' };
+  if (begins.length === 0) return { status: 'missing-begin' };
+  if (ends.length === 0) return { status: 'missing-end' };
+  if (begins.length > 1 || ends.length > 1) return { status: 'multiple' };
+  if (begins[0] > ends[0]) return { status: 'out-of-order' };
+  const end = ends[0] + endMarker.length;
+  return { begin: begins[0], block: content.slice(begins[0], end), end, status: 'valid' };
+}
+
+function sliceMarkedBlock(content, beginMarker, endMarker) {
+  const analysis = analyzeMarkedBlock(content, beginMarker, endMarker);
+  return analysis.status === 'valid' ? analysis.block : null;
+}
+
+function replaceMarkedBlock(content, newBlock, beginMarker, endMarker) {
+  const analysis = analyzeMarkedBlock(content, beginMarker, endMarker);
+  return analysis.status === 'valid' ? content.slice(0, analysis.begin) + newBlock + content.slice(analysis.end) : null;
+}
+
+function removeMarkedBlock(content, beginMarker, endMarker) {
+  const analysis = analyzeMarkedBlock(content, beginMarker, endMarker);
+  return analysis.status === 'valid' ? content.slice(0, analysis.begin) + content.slice(analysis.end) : null;
+}
 
 function findAll(content, marker) {
   const indexes = [];
@@ -19,32 +49,11 @@ function findAll(content, marker) {
 
 // 严格分析契约标记，避免把缺失、残缺、乱序或重复块误当成正常的用户入口。
 function analyzeContractBlock(content) {
-  const begins = findAll(content, CONTRACT_BEGIN);
-  const ends = findAll(content, CONTRACT_END);
+  return analyzeMarkedBlock(content, CONTRACT_BEGIN, CONTRACT_END);
+}
 
-  if (begins.length === 0 && ends.length === 0) {
-    return { status: 'missing' };
-  }
-  if (begins.length === 0) {
-    return { status: 'missing-begin' };
-  }
-  if (ends.length === 0) {
-    return { status: 'missing-end' };
-  }
-  if (begins.length > 1 || ends.length > 1) {
-    return { status: 'multiple' };
-  }
-  if (begins[0] > ends[0]) {
-    return { status: 'out-of-order' };
-  }
-
-  const end = ends[0] + CONTRACT_END.length;
-  return {
-    begin: begins[0],
-    block: content.slice(begins[0], end),
-    end,
-    status: 'valid',
-  };
+function analyzeModuleBlock(content) {
+  return analyzeMarkedBlock(content, MODULE_BEGIN, MODULE_END);
 }
 
 // 提取唯一且完整的契约块；其他状态返回 null。
@@ -73,8 +82,15 @@ function removeContractBlock(content) {
 
 module.exports = {
   CONTRACT_BEGIN,
+  MODULE_BEGIN,
+  MODULE_END,
   analyzeContractBlock,
+  analyzeMarkedBlock,
+  analyzeModuleBlock,
   sliceContractBlock,
+  sliceMarkedBlock,
   replaceContractBlock,
+  replaceMarkedBlock,
   removeContractBlock,
+  removeMarkedBlock,
 };

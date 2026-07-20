@@ -13,3 +13,4 @@ require('./audit-records.test');
 require('./audit.test');
 require('./audit-regression.test');
 require('./help.test');
+require('./topology.test');

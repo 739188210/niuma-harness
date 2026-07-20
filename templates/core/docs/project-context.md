@@ -29,7 +29,7 @@ Minimum bootstrap scan:
 
 1. Inspect package manifests, lockfiles, workspace or monorepo config, README files, and project docs.
 2. Inspect source roots, test roots, framework config, build/lint/typecheck/test config, and existing harness docs.
-3. Identify the project summary, technology stack, code map, engineering conventions, verified build and verification commands, reference implementations, and open questions or known gaps.
+3. Identify the project summary, technology stack, code map, engineering conventions, verified build and verification commands, reference implementations, and open questions or known gaps. For a declared multi-module workspace, also verify module boundaries, dependencies, local manifests, source/test roots, and module versus integration checks.
 4. Record only facts verified from current files or explicit user confirmation.
 5. Do not record secrets, credentials, private data, one-off logs, temporary task state, or guesses.
 6. Set `status` to `complete` only when the basic project map, stack, commands, and known gaps are usefully initialized.

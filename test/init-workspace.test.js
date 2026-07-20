@@ -387,7 +387,7 @@ test('init rejects an unsupported existing manifest before modifying the workspa
   fs.writeFileSync(manifestPath, '{"schemaVersion":1}\n', 'utf8');
   const result = run(['init', workspace, '--agent', 'claude']);
   assert.notStrictEqual(result.status, 0, 'schemaVersion 1 should not be adopted');
-  assert.match(result.stderr, /schemaVersion 2 ownership data is required/);
+  assert.match(result.stderr, /schemaVersion 2 or 3 ownership data is required/);
   assert.strictEqual(read(manifestPath), '{"schemaVersion":1}\n');
   assertNoPath(path.join(workspace, 'CLAUDE.md'));
 });

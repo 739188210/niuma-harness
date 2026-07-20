@@ -20,6 +20,9 @@ const {
 const { loadManifest, validateManifest } = require('./scaffold/manifest');
 const { createDirectories, prepareDirectoryPlan } = require('./scaffold/directories');
 const { prepareFilePlan, writeFilePlan } = require('./scaffold/entries');
+const { getModuleSupplementRecords, prepareModuleEntryPlan, writeModuleEntryPlan } = require('./scaffold/module-entries');
+const { prepareTopologyPlan, writeTopologyPlan } = require('./scaffold/topology-writer');
+const { resolveTopology } = require('./topology');
 const { prepareCommandPlan, writeCommandFiles } = require('./scaffold/commands-writer');
 const { STATUS_FILE } = require('./harness-status');
 const { validateArtifactRecords } = require('./artifact-ledger');
@@ -39,6 +42,8 @@ function runInit(options) {
   printInitSummary(context);
   createDirectories(context);
   writeFilePlan(context);
+  writeTopologyPlan(context);
+  writeModuleEntryPlan(context);
   writeRuleFiles(context);
   writeRuleAdapterFiles(context);
   writeSkillFiles(context);
@@ -67,6 +72,7 @@ function createInitContext(options) {
     getAvailableSkillDirs(manifest.skillsRoot),
     getAvailableRuleDirs(manifest.rulesRoot)
   );
+  const topology = options.resolvedTopology || resolveTopology(workspaceDir, options);
   const context = {
     commands,
     manifest,
@@ -74,6 +80,7 @@ function createInitContext(options) {
     previousStatus,
     printAction,
     targetDir,
+    topology,
     variables: createTemplateVariables(options, workDirectory),
     workDirectory,
     workspaceDir,
@@ -88,6 +95,9 @@ function createInitContext(options) {
   ]);
   context.directoryPlan = prepareDirectoryPlan(context);
   context.filePlan = prepareFilePlan(context);
+  context.topologyPlan = prepareTopologyPlan(context);
+  context.moduleEntryPlan = prepareModuleEntryPlan(context);
+  context.moduleSupplements = getModuleSupplementRecords(context.moduleEntryPlan);
   context.ruleAdapterPlan = prepareRuleAdapterPlan(context);
   context.skillPlan = prepareSkillPlan(context);
   context.statusPlan = prepareStatusPlan(context);
@@ -113,8 +123,8 @@ function readPreviousStatus(targetDir, harnessDir, availableCommands, availableS
   if (!status || Array.isArray(status) || typeof status !== 'object') {
     throw new Error(`invalid previous ${STATUS_FILE}: expected a JSON object`);
   }
-  if (status.schemaVersion !== 2 || status.createdBy !== 'niuma-harness') {
-    throw new Error(`unsupported previous ${STATUS_FILE}; schemaVersion 2 ownership data is required`);
+  if (![2, 3].includes(status.schemaVersion) || status.createdBy !== 'niuma-harness') {
+    throw new Error(`unsupported previous ${STATUS_FILE}; schemaVersion 2 or 3 ownership data is required`);
   }
   if (status.harnessDir !== harnessDir) {
     throw new Error(`invalid previous ${STATUS_FILE}: harnessDir must be ${harnessDir}`);
@@ -142,6 +152,14 @@ function readPreviousStatus(targetDir, harnessDir, availableCommands, availableS
   if (!sameStringArray(status.skills, skills)) {
     throw new Error(`invalid previous ${STATUS_FILE}: skills must be canonical`);
   }
+  if (status.schemaVersion === 3) {
+    const { validateTopologyShape } = require('./topology');
+    try {
+      validateTopologyShape(status.topology, status.moduleSupplements);
+    } catch (error) {
+      throw new Error(`invalid previous ${STATUS_FILE}: ${error.message}`);
+    }
+  }
 
   const artifacts = validateArtifactRecords(status.artifacts);
   const rules = normalizeConcreteRules(status.rules, availableRules, 'previous rules');
@@ -153,6 +171,8 @@ function readPreviousStatus(targetDir, harnessDir, availableCommands, availableS
     agent,
     artifacts,
     commands,
+    moduleSupplements: status.schemaVersion === 3 && Array.isArray(status.moduleSupplements) ? status.moduleSupplements : [],
+    topology: status.schemaVersion === 3 ? status.topology : { mode: 'single', modules: [] },
     openCodeInstructions,
     rules,
     skills,
@@ -205,6 +225,7 @@ function printInitSummary(context) {
   console.log(`Rules: ${formatRules(options.rules)}`);
   console.log(`Skills: ${formatSkills(options.skills)}`);
   console.log(`Commands: ${formatCommands(context.commands)}`);
+  console.log(`Topology: ${context.topology.modules.length === 0 ? 'root-only' : context.topology.modules.map((module) => module.root).join(', ')}`);
 }
 
 function printDone() {

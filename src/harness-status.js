@@ -5,7 +5,7 @@ const STATUS_FILE = 'manifest.json';
 
 function createStatus(options, manifest = {}) {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     agent: options.agent,
     rules: options.rules,
     skills: options.skills,
@@ -15,6 +15,8 @@ function createStatus(options, manifest = {}) {
     harnessDir: options.harnessDir,
     workDir: manifest.workDirectory || 'agent-work',
     entryFiles: getEntryFilesForAgent(options.agent),
+    topology: options.topology || { mode: 'single', modules: [] },
+    moduleSupplements: options.moduleSupplements || [],
     createdBy: 'niuma-harness',
     createdAt: new Date().toISOString(),
   };

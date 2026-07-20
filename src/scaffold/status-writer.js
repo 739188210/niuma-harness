@@ -12,6 +12,8 @@ function prepareStatusPlan(context) {
       artifacts: context.artifacts,
       commands: context.commands,
       openCodeInstructions: context.ruleAdapterPlan.expectedOpenCodePaths,
+      topology: context.topology,
+      moduleSupplements: context.moduleSupplements,
     }, { workDirectory: context.workDirectory }), null, 2)}\n`,
     targetPath: statusPath,
   };

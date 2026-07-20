@@ -13,7 +13,7 @@ This workspace runs a Niuma Harness. The loop below is your operating contract f
 ## The loop
 
 **1. Plan — before any change**
-- Context: use `{{HARNESS_DIR}}/docs/index.md` to locate harness docs, then read `{{HARNESS_DIR}}/docs/project-context.md` for stable facts when needed; if bootstrap status is `pending`, complete its one-time initial project scan before non-trivial work. Inspect current files for anything task-relevant. Never guess what files can show you. (depth: `{{HARNESS_DIR}}/docs/layers/01-context.md`)
+- Context: use `{{HARNESS_DIR}}/docs/index.md` to locate harness docs, then read `{{HARNESS_DIR}}/docs/project-context.md` for stable facts when needed; if bootstrap status is `pending`, complete its one-time initial project scan before non-trivial work. For declared multi-module workspaces, identify affected modules through `{{HARNESS_DIR}}/docs/module-topology.md` and read their local supplements. Inspect current files for anything task-relevant. Never guess what files can show you. (depth: `{{HARNESS_DIR}}/docs/layers/01-context.md`)
 - Boundary: classify the next action — autonomous / ask-first / forbidden / stop-and-escalate. Proceed only if autonomous, reversible, and task-scoped. Ask before ask-first; stop at forbidden or unclear risk. (depth: `{{HARNESS_DIR}}/docs/policy/action-boundary.md`)
 - Route: pick a process — bugfix / feature / refactor / review / release. Skip only for trivial single-step tasks. Decide whether multi-step, risky, parallel, or interruptible work needs `agent-work/tasks/<task>/status.md`. (depth: `{{HARNESS_DIR}}/docs/process/`)
 
@@ -30,7 +30,7 @@ Compare evidence to success criteria. If using `status.md`, update current stage
 Find the first root cause, not downstream symptoms. Smallest safe fix, then re-run the focused check. Bounded retries only — after a few focused attempts fail, stop and report. Never delete or weaken tests, assertions, or checks to force green. (depth: `{{HARNESS_DIR}}/docs/layers/05-recovery.md`)
 
 **6. Remember**
-Task-local notes → `agent-work/`. Verified durable facts → candidate for `{{HARNESS_DIR}}/docs/project-context.md`, written back only after verification. No secrets, no guesses. (depth: `{{HARNESS_DIR}}/docs/layers/06-memory.md`)
+Task-local notes → `agent-work/`. Verified module-local durable facts → the affected module entry's marker-external knowledge area. Verified root or cross-module durable facts → `{{HARNESS_DIR}}/docs/project-context.md`. Write both only after verification. No secrets, no guesses. (depth: `{{HARNESS_DIR}}/docs/layers/06-memory.md`)
 
 **7. Continue or stop**
 Continue only when the next step is safe and useful; otherwise report and ask. For multi-step, risky, parallel, or interruptible work, keep `agent-work/tasks/<task>/status.md` current enough to resume. Non-trivial tasks must maintain the structured execution record defined in `{{HARNESS_DIR}}/docs/experiments/task-execution-record.md` at `agent-work/tasks/<task>/harness-feedback.md` and reference stable IDs from `verification.md`.

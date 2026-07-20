@@ -29,6 +29,10 @@ When sources conflict, use this order:
 
 Older notes never override current files. Decision records explain durable rationale but never override current user instructions or current workspace files. Experience records provide reusable guidance but never override current user instructions or current workspace files. Check higher-priority sources, record the conflict and its evidence in task-local notes, then update or mark durable context as stale only after verification.
 
+## Module routing
+
+For a declared multi-module workspace, read `{{HARNESS_DIR}}/docs/module-topology.md` after root context to identify affected modules. Then read only their local `CLAUDE.md` or `AGENTS.md` supplements, including marker-external module knowledge maintained by the project and Agents. That knowledge does not replace root policy, root context, or current workspace facts. Cross-module work keeps root policy and integration verification requirements in force.
+
 ## Runtime reading order
 
 The entry file's operating loop drives task work. This map is consulted by need when a phase needs navigation:

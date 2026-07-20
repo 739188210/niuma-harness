@@ -15,7 +15,7 @@ Use this layer at the start of every task, after a context reset, when entering 
 1. Read `{{HARNESS_DIR}}/docs/index.md` to locate code, docs, workflows, verification commands, and fact priority.
 2. Read only the task-relevant parts of `{{HARNESS_DIR}}/docs/project-context.md` to find stable facts that may apply.
 3. Inspect current project files when a fact affects the task; do not rely only on stale notes. Current files determine task-specific facts.
-4. Identify the task-relevant modules, commands, and constraints before proposing changes.
+4. Identify whether the task is module-local, cross-module, or workspace-level. For declared modules, use `{{HARNESS_DIR}}/docs/module-topology.md`, then inspect only affected local supplements, including their marker-external module knowledge area, and current module files before proposing changes. Treat module knowledge as a locator for durable facts; current module files determine task-specific facts.
 5. If project notes conflict with current files, treat current files as the source of truth, record the conflict in task-local notes, and update or flag durable context only after verification.
 6. For non-trivial tasks, record the task-relevant project files and Harness docs with their purpose, reused implementations, known gaps, and a context-sufficiency claim in `harness-feedback.md`; this is self-reported evidence, not proof of a read event.
 
