@@ -45,6 +45,19 @@ test('discovery requires a TTY before adopting module candidates', () => {
   assertTreeUnchanged(workspace, before);
 });
 
+test('single topology root entry omits module routing guidance', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'multi']);
+  assert.strictEqual(result.status, 0, result.stderr);
+
+  for (const entryFile of ['CLAUDE.md', 'AGENTS.md']) {
+    const entry = read(path.join(workspace, entryFile));
+    assert.doesNotMatch(entry, /module-topology|module-local|module entry|local supplements/i);
+  }
+  const doctor = run(['doctor', workspace]);
+  assert.strictEqual(doctor.status, 0, doctor.stdout || doctor.stderr);
+});
+
 test('explicit modules initialize root routing and local supplements', () => {
   const workspace = seedWorkspace();
   const result = run([
@@ -63,7 +76,13 @@ test('explicit modules initialize root routing and local supplements', () => {
   assert.match(route, /`apps\/admin\/AGENTS\.md`/);
   assert.match(read(path.join(workspace, 'apps', 'admin', 'CLAUDE.md')), /niuma-harness:module-supplement begin/);
   assert.match(read(path.join(workspace, 'apps', 'admin', 'AGENTS.md')), /niuma-harness:module-supplement begin/);
-  assert.match(read(path.join(workspace, 'CLAUDE.md')), /module-topology/);
+  const rootEntry = read(path.join(workspace, 'CLAUDE.md'));
+  assert.match(rootEntry, /module-topology/);
+  assert.match(rootEntry, /read their local supplements/);
+  assert.match(rootEntry, /Root or cross-module durable facts belong only in `harness\/docs\/project-context\.md`/);
+  assert.match(rootEntry, /module-local durable facts belong in the applicable module entry/i);
+  const moduleEntry = read(path.join(workspace, 'apps', 'admin', 'CLAUDE.md'));
+  assert.match(moduleEntry, /put root or cross-module durable facts in the root `project-context\.md`/);
   assert.strictEqual(readJson(path.join(harness, 'manifest.json')).schemaVersion, 3);
   const doctor = run(['doctor', workspace]);
   assert.strictEqual(doctor.status, 0, doctor.stdout || doctor.stderr);
@@ -150,6 +169,8 @@ test('retiring a merged module supplement preserves project entry content', () =
   result = run(['init', workspace, '--agent', 'claude']);
 
   assert.strictEqual(result.status, 0, result.stderr);
+  const rootContract = read(path.join(workspace, 'CLAUDE.md')).match(/<!-- niuma-harness:contract begin[\s\S]*<!-- niuma-harness:contract end -->/)[0];
+  assert.doesNotMatch(rootContract, /module-topology|module-local|module entry|local supplements/i);
   assert.strictEqual(read(entryPath), projectEntry);
   assert.doesNotMatch(read(entryPath), /niuma-harness:module-supplement/);
   assert.strictEqual(run(['doctor', workspace]).status, 0);

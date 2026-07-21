@@ -222,6 +222,25 @@ test('direct doctor ignores an inactive entry contract owned by another harness 
   assert.strictEqual(result.status, 0, result.stdout);
 });
 
+test('direct single-topology doctor ignores a multi-module inactive entry owned by another harness directory', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'claude', '--harness-dir', 'ai-harness', '--rules', 'none', '--skills', 'none']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const { renderEntry } = require('../src/entry-renderer');
+  const otherHarnessEntry = renderEntry(
+    'claude',
+    'CLAUDE.md',
+    [],
+    'foreign-harness',
+    'agent-work',
+    'rules',
+    { mode: 'explicit', modules: [{ id: 'module', root: 'module' }] }
+  );
+  fs.writeFileSync(path.join(workspace, 'AGENTS.md'), otherHarnessEntry, 'utf8');
+  result = doctor(path.join(workspace, 'ai-harness'));
+  assert.strictEqual(result.status, 0, result.stdout);
+});
+
 test('doctor reports a non-file inactive entry without crashing', () => {
   const workspace = initWorkspace();
   fs.mkdirSync(path.join(workspace, 'AGENTS.md'));

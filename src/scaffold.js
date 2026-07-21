@@ -41,8 +41,8 @@ function runInit(options) {
   const context = createInitContext(options);
   printInitSummary(context);
   createDirectories(context);
-  writeFilePlan(context);
   writeTopologyPlan(context);
+  writeFilePlan(context);
   writeModuleEntryPlan(context);
   writeRuleFiles(context);
   writeRuleAdapterFiles(context);
@@ -94,8 +94,8 @@ function createInitContext(options) {
     ...preparedRules.artifacts,
   ]);
   context.directoryPlan = prepareDirectoryPlan(context);
-  context.filePlan = prepareFilePlan(context);
   context.topologyPlan = prepareTopologyPlan(context);
+  context.filePlan = prepareFilePlan(context);
   context.moduleEntryPlan = prepareModuleEntryPlan(context);
   context.moduleSupplements = getModuleSupplementRecords(context.moduleEntryPlan);
   context.ruleAdapterPlan = prepareRuleAdapterPlan(context);

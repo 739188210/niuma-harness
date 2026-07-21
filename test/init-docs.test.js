@@ -157,6 +157,9 @@ test('generated docs prioritize task facts and route context reading by need', (
 
   assert.match(customIndex, /`ai-harness\/docs\/project-context\.md`/);
   assert.match(customContext, /`ai-harness\/docs\/index\.md`/);
+  const customEntry = read(path.join(customWorkspace, 'CLAUDE.md'));
+  assert.match(customEntry, /Root or cross-module durable facts belong only in `ai-harness\/docs\/project-context\.md`/);
+  assert.match(customEntry, /Their single source of truth is[\s\S]*ai-harness\/docs\/project-context\.md/);
   assert.match(customContext, /`ai-harness\/docs\/project-context\.md`/);
   assert.doesNotMatch(customIndex, /{{HARNESS_DIR}}|`harness\/docs\//);
   assert.doesNotMatch(customContext, /{{HARNESS_DIR}}|`harness\/docs\//);
@@ -173,7 +176,7 @@ test('generated docs route module knowledge by scope', () => {
   const memory = read(path.join(h, 'docs', 'layers', '06-memory.md'));
   const index = read(path.join(h, 'docs', 'index.md'));
 
-  assert.match(entry, /module-local durable facts/);
+  assert.doesNotMatch(entry, /module-topology|module-local|module entry|local supplements/i);
   assert.match(entry, /root or cross-module durable facts/);
   assert.match(context, /module knowledge area/);
   assert.match(context, /current module files/);
@@ -383,6 +386,12 @@ test('generated project context defines first-use bootstrap protocol', () => {
 
   const entry = read(path.join(workspace, 'CLAUDE.md'));
   assert.match(entry, /if bootstrap status is `pending`, complete its one-time initial project scan before non-trivial work/);
+  assert.match(entry, /# Project overrides/);
+  assert.match(entry, /Root or cross-module durable facts belong only in `harness\/docs\/project-context\.md`/);
+  assert.match(entry, /Do not duplicate root project structure, code maps, commands, dependency or tooling state/);
+  assert.match(entry, /Their single source of truth is[\s\S]*harness\/docs\/project-context\.md/);
+  assert.match(projectContext, /is the single source of truth for durable root or cross-module project facts/);
+  assert.match(projectContext, /Do not copy its project summary, code map, commands, dependency or tooling state, known gaps, or architecture facts into the root entry file's Project overrides area/);
 
   const memoryMemo = read(path.join(h, 'docs', 'layers', '06-memory.md'));
   assert.match(memoryMemo, /Bootstrap `harness\/docs\/project-context\.md` when its structured bootstrap record has `"status": "pending"`/);

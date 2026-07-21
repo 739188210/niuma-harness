@@ -53,7 +53,8 @@ function prepareEntryPlan(context) {
       context.options.rules,
       context.options.harnessDir,
       context.workDirectory,
-      context.manifest.rulesRoot
+      context.manifest.rulesRoot,
+      context.topology
     );
     const freshBlock = sliceContractBlock(freshFull);
     if (!freshBlock) throw new Error('entry template is missing a valid contract zone');
@@ -75,7 +76,8 @@ function prepareEntryPlan(context) {
         context.previousStatus.rules || [],
         context.options.harnessDir,
         context.workDirectory,
-        context.manifest.rulesRoot
+        context.manifest.rulesRoot,
+        context.previousStatus.topology
       )
     ));
   return [...retired, ...current];

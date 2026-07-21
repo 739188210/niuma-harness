@@ -49,7 +49,7 @@ function createDesiredState(input) {
   const activeEntries = getEntryFilesForAgent(agent);
   const { renderEntry } = require('../entry-renderer');
   for (const entry of activeEntries) {
-    files.push(descriptor(workspaceDir, path.join(workspaceDir, entry), renderEntry(agent, entry, rules, harnessDir, workDirectory, manifest.rulesRoot), 'entry', 'entry'));
+    files.push(descriptor(workspaceDir, path.join(workspaceDir, entry), renderEntry(agent, entry, rules, harnessDir, workDirectory, manifest.rulesRoot, topology), 'entry', 'entry'));
   }
 
   const availableRules = getAvailableRuleDirs(manifest.rulesRoot);

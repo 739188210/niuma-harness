@@ -259,7 +259,8 @@ function isGeneratedInactiveEntry(existing, entry, desired, state) {
       state.selections.rules,
       state.harnessDir,
       state.manifest.workDirectory || 'agent-work',
-      state.manifest.rulesRoot
+      state.manifest.rulesRoot,
+      desired.status.topology
     );
     return normalizeEol(existing) === normalizeEol(canonical);
   });

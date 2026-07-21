@@ -40,7 +40,7 @@ After bootstrap, keep this file focused on durable facts that future tasks shoul
 
 ## Maintenance standard
 
-Update this file after bootstrap only when a task verifies a durable fact that future tasks should reuse. This file is verified durable context, not an active-task override. Current user instructions and current workspace files take precedence; when they conflict with a durable fact, verify the current state, use the current facts for the task, and then update or mark the durable fact as stale.
+Update this file after bootstrap only when a task verifies a durable fact that future tasks should reuse. This file is verified durable context, not an active-task override, and is the single source of truth for durable root or cross-module project facts. Do not copy its project summary, code map, commands, dependency or tooling state, known gaps, or architecture facts into the root entry file's Project overrides area; that area is only for short, always-relevant behavioral guardrails and a pointer here. In declared multi-module workspaces, keep module-local durable facts in the applicable module entry. Current user instructions and current workspace files take precedence; when they conflict with a durable fact, verify the current state, use the current facts for the task, and then update or mark the durable fact as stale.
 
 A durable fact is eligible when it is:
 

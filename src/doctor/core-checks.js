@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 const { getAllEntryFiles, getEntryFilesForAgent } = require('../agents');
 const { assertNoSymlinkInPath, safeResolveInside } = require('../fs-safe');
-const { renderTemplate } = require('../scaffold/templates');
 const { renderEntry } = require('../entry-renderer');
 const { analyzeContractBlock, sliceContractBlock } = require('../contract');
 const { addError, addOk } = require('./result');
@@ -29,9 +28,22 @@ function checkEntryFiles(context) {
 }
 
 function checkInactiveEntryContracts(context, activeEntries) {
-  const { result, workspaceRoot } = context;
+  const { result, workspaceRoot, status } = context;
   const harnessDir = path.basename(context.harnessRoot);
-  const canonicalBlock = sliceContractBlock(renderTemplate('entry/entry.md', { HARNESS_DIR: harnessDir, CODEX_RULES: '' }));
+  const canonicalBlocks = [
+    { mode: 'single', modules: [] },
+    status.topology,
+    { mode: 'explicit', modules: [{ id: 'module', root: 'module' }] },
+  ].map((topology) => sliceContractBlock(renderEntry(
+    'claude',
+    'CLAUDE.md',
+    [],
+    harnessDir,
+    context.templateManifest.workDirectory || 'agent-work',
+    context.templateManifest.rulesRoot,
+    topology
+  )).replace(/\r\n/g, '\n'));
+  const uniqueCanonicalBlocks = [...new Set(canonicalBlocks)];
   const normalize = (value) => value.replace(/\r\n/g, '\n');
   for (const entryFile of getAllEntryFiles()) {
     if (activeEntries.has(entryFile)) {
@@ -46,7 +58,7 @@ function checkInactiveEntryContracts(context, activeEntries) {
       continue;
     }
     if (analysis.status === 'valid') {
-      if (canonicalBlock && contractBelongsToOtherHarness(analysis.block, canonicalBlock, harnessDir, normalize)) {
+      if (uniqueCanonicalBlocks.some((canonicalBlock) => contractBelongsToOtherHarness(analysis.block, canonicalBlock, harnessDir, normalize))) {
         continue;
       }
       addError(result, `stale contract zone in ${entryFile}`);
@@ -100,7 +112,8 @@ function checkEntryContractIntegrity(context) {
       context.rules || [],
       harnessDir,
       context.templateManifest.workDirectory || 'agent-work',
-      context.templateManifest.rulesRoot
+      context.templateManifest.rulesRoot,
+      status.topology
     ));
     if (!canonicalBlock) {
       addError(result, 'entry template source has no unique contract block');
