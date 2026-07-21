@@ -195,6 +195,134 @@ test('repair reports a missing user-owned module registry without recreating it'
   assertNoPath(registryPath);
 });
 
+test('registry module identity fields must be safe explicit tokens before init writes', () => {
+  const invalidModules = [
+    { root: 'apps/admin' },
+    { id: 7, root: 'apps/admin' },
+    { id: 'admin\ninjected', root: 'apps/admin' },
+    { id: 'admin|injected', root: 'apps/admin' },
+    { id: 'admin-->', root: 'apps/admin' },
+    { id: 'admin', root: 'apps/admin', kind: null },
+    { id: 'admin', root: 'apps/admin', kind: 'service\ninjected' },
+    { id: 'admin', root: 'apps/admin', kind: 'service|injected' },
+  ];
+
+  for (const module of invalidModules) {
+    const workspace = seedWorkspace();
+    const registryPath = path.join(workspace, 'harness', 'modules.json');
+    fs.mkdirSync(path.dirname(registryPath), { recursive: true });
+    fs.writeFileSync(registryPath, `${JSON.stringify({ schemaVersion: 1, modules: [module] }, null, 2)}\n`, 'utf8');
+    const before = snapshotTree(workspace);
+
+    const result = run(['init', workspace, '--agent', 'claude', '--modules', 'apps/admin']);
+    assert.notStrictEqual(result.status, 0, result.stderr);
+    assert.match(result.stderr, /invalid module registry/);
+    assertTreeUnchanged(workspace, before);
+  }
+});
+
+test('repair diagnoses invalid or drifted project-owned module registries before writing', () => {
+  const workspace = seedWorkspace();
+  let result = run(['init', workspace, '--agent', 'claude', '--modules', 'apps/admin']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const registryPath = path.join(workspace, 'harness', 'modules.json');
+
+  const invalidRegistry = '{not json\n';
+  fs.writeFileSync(registryPath, invalidRegistry, 'utf8');
+  result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stdout, /invalid module registry/);
+  let before = snapshotTree(workspace);
+  result = run(['repair', workspace, '--dry-run']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(result.stdout, /MODULE-REGISTRY-INVALID/);
+  assert.strictEqual(read(registryPath), invalidRegistry);
+  assertTreeUnchanged(workspace, before);
+
+  result = run(['repair', workspace, '-y']);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stderr, /Repair cannot safely resolve/);
+  assert.strictEqual(read(registryPath), invalidRegistry);
+  assertTreeUnchanged(workspace, before);
+  assertNoPath(path.join(workspace, '.niuma-harness'));
+
+  const driftedRegistry = `${JSON.stringify({
+    schemaVersion: 1,
+    modules: [{ id: 'services-orders', root: 'services/orders', kind: 'service' }],
+  }, null, 2)}\n`;
+  fs.writeFileSync(registryPath, driftedRegistry, 'utf8');
+  fs.unlinkSync(path.join(workspace, 'harness', 'docs', 'index.md'));
+  result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stdout, /module registry differs from installed topology/);
+  before = snapshotTree(workspace);
+
+  result = run(['repair', workspace, '--dry-run']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(result.stdout, /MODULE-REGISTRY-DRIFT/);
+  assert.match(result.stdout, /module registry differs from installed topology/);
+  assert.strictEqual(read(registryPath), driftedRegistry);
+  assertTreeUnchanged(workspace, before);
+
+  result = run(['repair', workspace, '-y']);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stderr, /Repair cannot safely resolve/);
+  assert.strictEqual(read(registryPath), driftedRegistry);
+  assertNoPath(path.join(workspace, 'harness', 'docs', 'index.md'));
+  assertNoPath(path.join(workspace, '.niuma-harness'));
+  assertTreeUnchanged(workspace, before);
+});
+
+test('root-only topology diagnoses an existing invalid or drifted registry before Repair writes', () => {
+  const workspace = seedWorkspace();
+  let result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const registryPath = path.join(workspace, 'harness', 'modules.json');
+  fs.writeFileSync(registryPath, '{not json\n', 'utf8');
+  fs.unlinkSync(path.join(workspace, 'harness', 'docs', 'index.md'));
+  const before = snapshotTree(workspace);
+
+  result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stdout, /invalid module registry/);
+  result = run(['repair', workspace, '--dry-run']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(result.stdout, /MODULE-REGISTRY-INVALID/);
+  assertTreeUnchanged(workspace, before);
+
+  result = run(['repair', workspace, '-y']);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stderr, /Repair cannot safely resolve/);
+  assertNoPath(path.join(workspace, 'harness', 'docs', 'index.md'));
+  assertNoPath(path.join(workspace, '.niuma-harness'));
+  assertTreeUnchanged(workspace, before);
+});
+
+test('root-only topology rejects a non-file module registry before Repair writes', () => {
+  const workspace = seedWorkspace();
+  let result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const registryPath = path.join(workspace, 'harness', 'modules.json');
+  fs.mkdirSync(registryPath);
+  fs.unlinkSync(path.join(workspace, 'harness', 'docs', 'index.md'));
+  const before = snapshotTree(workspace);
+
+  result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stdout, /module registry modules\.json is not a regular file/);
+  result = run(['repair', workspace, '--dry-run']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(result.stdout, /MODULE-REGISTRY-MISSING/);
+  assertTreeUnchanged(workspace, before);
+
+  result = run(['repair', workspace, '-y']);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stderr, /Repair cannot safely resolve/);
+  assertNoPath(path.join(workspace, 'harness', 'docs', 'index.md'));
+  assertNoPath(path.join(workspace, '.niuma-harness'));
+  assertTreeUnchanged(workspace, before);
+});
+
 test('Repair ignores user-managed module knowledge while fixing root files', () => {
   const workspace = seedWorkspace();
   let result = run(['init', workspace, '--agent', 'claude', '--modules', 'apps/admin']);

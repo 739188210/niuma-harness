@@ -5,6 +5,7 @@ const { assertNoSymlinkInPath, safeResolveInside, validateRelativePath } = requi
 
 const REGISTRY_FILE = 'modules.json';
 const TOPOLOGY_VERSION = 1;
+const MODULE_TOKEN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/u;
 
 function resolveTopology(workspaceDir, options) {
   if (options.modulesProvided) {
@@ -171,12 +172,42 @@ function parseRegistry(content, workspaceDir) {
   if (!value || Array.isArray(value) || value.schemaVersion !== TOPOLOGY_VERSION || !Array.isArray(value.modules)) {
     throw new Error('invalid module registry: expected schemaVersion 1 with modules array');
   }
-  return normalizeModules(workspaceDir, value.modules.map((module) => ({
-    id: module && module.id,
-    root: module && module.root,
-    kind: module && module.kind,
-    source: 'registry',
-  })));
+  return normalizeModules(workspaceDir, value.modules.map((module, index) => {
+    validateRegistryModule(module, index);
+    return {
+      id: module.id,
+      root: module.root,
+      ...(module.kind === undefined ? {} : { kind: module.kind }),
+      source: 'registry',
+    };
+  }));
+}
+
+function validateRegistryModule(module, index) {
+  if (!module || Array.isArray(module) || typeof module !== 'object') {
+    throw new Error(`invalid module registry: modules[${index}] must be an object`);
+  }
+  if (typeof module.id !== 'string' || !MODULE_TOKEN.test(module.id)) {
+    throw new Error(`invalid module registry: modules[${index}].id must be a safe token`);
+  }
+  if (typeof module.root !== 'string' || !module.root.trim()) {
+    throw new Error(`invalid module registry: modules[${index}].root must be a non-empty string`);
+  }
+  if (module.kind !== undefined && (typeof module.kind !== 'string' || !MODULE_TOKEN.test(module.kind))) {
+    throw new Error(`invalid module registry: modules[${index}].kind must be a safe token`);
+  }
+}
+
+function minimalModule(module) {
+  return {
+    id: module.id,
+    root: module.root,
+    ...(module.kind ? { kind: module.kind } : {}),
+  };
+}
+
+function sameModules(left, right) {
+  return JSON.stringify(left.map(minimalModule)) === JSON.stringify(right.map(minimalModule));
 }
 
 function validateTopologyShape(topology, moduleSupplements) {
@@ -210,5 +241,6 @@ module.exports = {
   parseRegistry,
   registryContent,
   resolveTopology,
+  sameModules,
   validateTopologyShape,
 };

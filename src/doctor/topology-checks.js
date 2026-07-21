@@ -4,7 +4,7 @@ const { digestBytes } = require('../artifact-ledger');
 const { getEntryFilesForAgent } = require('../agents');
 const { assertNoSymlinkInPath, safeResolveInside } = require('../fs-safe');
 const { renderModuleSupplement } = require('../module-entry-renderer');
-const { parseRegistry, REGISTRY_FILE, validateTopologyShape } = require('../topology');
+const { parseRegistry, REGISTRY_FILE, sameModules, validateTopologyShape } = require('../topology');
 const { analyzeModuleBlock, sliceMarkedBlock, MODULE_BEGIN, MODULE_END } = require('../contract');
 const { renderTopologyRoute } = require('../scaffold/topology-writer');
 const { addError, addOk } = require('./result');
@@ -21,14 +21,16 @@ function checkTopology(context) {
     addError(context.result, `invalid topology ownership state: ${error.message}`);
     return;
   }
-  if (status.topology.modules.length === 0 && status.moduleSupplements.length === 0) {
-    addOk(context.result, 'root-only topology');
-    return;
-  }
+  const topologyInstalled = status.topology.modules.length > 0 || status.moduleSupplements.length > 0;
   const registryPath = safeTopologyPath(context, path.posix.join(path.basename(context.harnessRoot), REGISTRY_FILE));
   if (!registryPath) return;
-  if (!fs.existsSync(registryPath) || !fs.lstatSync(registryPath).isFile()) {
-    addError(context.result, `missing module registry ${REGISTRY_FILE}`);
+  if (!fs.existsSync(registryPath)) {
+    if (topologyInstalled) addError(context.result, `missing module registry ${REGISTRY_FILE}`);
+    else addOk(context.result, 'root-only topology');
+    return;
+  }
+  if (!fs.lstatSync(registryPath).isFile()) {
+    addError(context.result, `module registry ${REGISTRY_FILE} is not a regular file`);
     return;
   }
   let modules;
@@ -36,11 +38,12 @@ function checkTopology(context) {
     addError(context.result, error.message);
     return;
   }
-  if (JSON.stringify(modules.map(minimalModule)) !== JSON.stringify(status.topology.modules.map(minimalModule))) {
+  if (!sameModules(modules, status.topology.modules)) {
     addError(context.result, 'module registry differs from installed topology');
     return;
   }
-  addOk(context.result, `topology modules ${modules.length}`);
+  addOk(context.result, topologyInstalled ? `topology modules ${modules.length}` : 'root-only topology');
+  if (!topologyInstalled) return;
   checkRoute(context, modules);
   checkSupplements(context, modules);
 }
@@ -109,7 +112,5 @@ function safeTopologyPath(context, target) {
     return null;
   }
 }
-
-function minimalModule(module) { return { id: module.id, root: module.root, ...(module.kind ? { kind: module.kind } : {}) }; }
 
 module.exports = { checkTopology };

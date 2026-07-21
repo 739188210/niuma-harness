@@ -159,6 +159,8 @@ A normal `init` remains root-only. Use `--topology discover --dry-run` to inspec
 
 An explicit multi-module initialization keeps one root Harness and creates project-maintained `harness/modules.json`, generated `harness/docs/module-topology.md`, and concise local `CLAUDE.md` / `AGENTS.md` supplements for selected modules. Newly created module entries include an empty user-/Agent-maintained module knowledge skeleton outside the Niuma marker; `init` never infers project facts for it. Existing module entries preserve their content outside the marker and are not force-restructured to add that skeleton. Root policy remains additive; module files cannot weaken it. Doctor checks topology and supplements; Repair deliberately does not rewrite module-local files.
 
+`modules.json` uses `schemaVersion: 1` and a `modules` array. Each module needs an explicit `id` containing only letters, digits, `.`, `_`, or `-`; `kind` is optional and follows the same token rule. `root` remains a workspace-relative module directory subject to path and symlink checks. After a project-maintained registry change, run normal `init` to adopt it. If Repair finds an invalid registry or one that differs from installed topology, it reports the issue and stops without rewriting the registry or other files.
+
 ## 7-layer architecture
 
 The generated `docs/layers/` directory is the AI agent operating model:

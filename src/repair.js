@@ -32,6 +32,8 @@ async function runRepair(options, dependencies = {}) {
   const unresolved = plan.issues.filter((issue) => issue.code === 'stale-rule-drift'
     || issue.code === 'invalid-topology-state'
     || issue.code === 'module-registry-missing'
+    || issue.code === 'module-registry-invalid'
+    || issue.code === 'module-registry-drift'
     || issue.code === 'module-supplement-missing'
     || issue.code === 'module-supplement-drift');
   if (unresolved.length > 0) {

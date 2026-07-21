@@ -581,7 +581,7 @@ CI / 日志 / 运行结果 = 客观执行事实
 
 Doctor 可以验证目录、文件、链接、manifest、模板摘要和 Agent 适配产物。
 
-Audit 可以验证任务记录是否完整、是否自相矛盾、是否遗漏 unknown 状态。
+Audit 可以验证任务记录是否完整、是否自相矛盾、是否遗漏 unknown 状态。Audit 运行前要求 Doctor 健康，因此 topology route、registry 或 supplement ownership 的完整性错误会使 Audit 因 Harness 不健康而失败；这只是安装健康前置条件，不代表 Audit 已验证模块业务拓扑或项目事实。
 
 两者都不能验证：
 
@@ -708,20 +708,21 @@ RED → 同一目标 GREEN → 可选 REFACTOR
 - P0.2：已完成。生成 `docs/decisions/README.md`，定义长期 ADR 的归属、模板和使用边界。
 - P0.3：已完成。生成 `docs/experience/README.md`，定义可复用经验与任务记录、项目事实的分层及核验/失效要求。
 - P0.4：已完成。`common/testing.md` 提供文档、后端、前端、数据库/迁移、配置/部署和 API 契约的最小验证方向；它补充而不替代既有强制实用 TDD，并保留 unknown、替代验证和剩余风险记录要求。
-- P0.5：已完成。多模块工作区生成根级模块路由和模块入口的知识骨架。新入口提供职责与边界、依赖与消费者、构建/测试/启动命令、源码/测试入口、配置位置、限制/风险/已知问题、跨模块验证触发条件的空章节；`init` 不填写项目事实，项目与 Agent 只在核验后维护 marker 外知识区。
+- P0.5：已完成。已提供独立于 Profile 的多模块 topology 基础：`init --modules` 与受限的 `--topology discover`、项目维护的 `modules.json`、schema 3 topology ownership、根级模块路由和模块入口 supplement。新入口提供职责与边界、依赖与消费者、构建/测试/启动命令、源码/测试入口、配置位置、限制/风险/已知问题、跨模块验证触发条件的空章节；`init` 不填写项目事实，项目与 Agent 只在核验后维护 marker 外知识区。Doctor 校验 topology、registry、根路由和受管 supplement block；Repair 只恢复根级受管路由，对 registry 与模块本地入口保持保守诊断边界。
 
 **P0 明确不做：**
 
-- 不加 `--profile`，不改 CLI、生成状态 schema、Audit 或反馈记录；
+- 不加 `--profile`，不实现 Profile 选择、版本状态、组合或冲突检测；
 - 不生成真实的应用地图、runbook、计划、归档或中文企业编号目录；仅生成通用模块知识导航骨架，不填充模块职责、依赖、运行命令、端口或架构关系等项目事实；
 - 不加入 Java 企业、动态权限后台、分页 POST、Spring/Vue/SQL、端口、基础设施或任何 shop-trade 专属规则；
-- Doctor 只检查受管文件、目录与完整性，不判断 ADR、经验、模块说明、模块依赖或模块边界的业务真实性。
+- Doctor 校验受管文件、目录、artifact、根级 topology route，以及 registry 与已安装 topology / supplement ownership 的结构和完整性；不判断 `modules.json`、ADR、经验、模块说明、模块依赖或模块边界的业务真实性，也不校验 module supplement marker 外项目维护内容。
+- Audit 仍只审计任务记录与 Harness 健康前置条件，不审计模块或 topology 的业务真实性。
 
 ---
 
 ### P1：引入 Profile 能力
 
-P0 已提供通用多模块知识骨架和入口路由。`multi-application` 不重复生成这些基础内容，而是在显式启用时增加多应用/多仓拓扑、应用级阅读路由、Profile 版本与按 Profile 的 Doctor 完整性校验，并且不得覆盖项目维护的模块说明。
+P0 已提供独立于 Profile 的多模块 topology 基础：`init --modules` / `--topology discover`、项目维护的 `modules.json`、schema 3 topology ownership、根级模块路由、module supplements、Doctor topology 完整性校验，以及对用户维护 topology 内容的保守 Repair 边界。P1 只引入显式、可组合、版本化的 Profile；不得把既有通用 topology 重命名或重实现为 `multi-application` Profile。`multi-application` 在显式启用时增加多应用/多仓拓扑、应用级阅读路由和按 Profile 的 Doctor 完整性校验，并且不得覆盖项目维护的 `modules.json`、marker 外模块知识或 supplements 外内容。
 
 建议目标接口：
 
@@ -738,15 +739,19 @@ java-enterprise
 web-admin
 ```
 
-建议涉及模块：
+建议涉及模块（至少）：
 
 ```text
+新增 Profile registry / resolver / compatibility validation
 src/args.js
 src/cli.js
 src/scaffold.js
+src/scaffold/desired-state.js
 templates/manifest.json
 src/harness-status.js
 src/doctor/checks.js
+src/repair/state.js
+src/repair/planner.js
 ```
 
 验收标准：
@@ -755,7 +760,7 @@ src/doctor/checks.js
 - 重新初始化稳定识别已启用 Profile；
 - Doctor 只校验已启用 Profile 的产物；
 - 未启用 Profile 的工作区不会被附加目录或规则干扰；
-- 已有通用模块知识骨架的工作区启用 `multi-application` 时，不覆盖项目维护的模块说明；
+- 已有通用 topology 的工作区启用 `multi-application` 时，不覆盖项目维护的 `modules.json`、marker 外模块知识或 supplements 外内容；
 - 多 Profile 可组合并具备冲突检测。
 
 ---

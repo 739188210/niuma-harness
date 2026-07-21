@@ -22,6 +22,7 @@ const {
 } = require('../opencode-instructions');
 const { createDesiredState } = require('../scaffold/desired-state');
 const { analyzeModuleBlock, MODULE_BEGIN, MODULE_END } = require('../contract');
+const { parseRegistry, sameModules } = require('../topology');
 
 function createRepairPlan(state, backupRoot) {
   const desired = createDesiredState({
@@ -77,12 +78,23 @@ function addTopologyDiagnostics(collector, state) {
     return;
   }
   if (!status || status.schemaVersion !== 3 || !Array.isArray(status.moduleSupplements)
-      || !status.topology || !Array.isArray(status.topology.modules)
-      || (status.topology.modules.length === 0 && status.moduleSupplements.length === 0)) return;
+      || !status.topology || !Array.isArray(status.topology.modules)) return;
+  const topologyInstalled = status.topology.modules.length > 0 || status.moduleSupplements.length > 0;
   const registryPath = path.join(state.targetDir, 'modules.json');
   const registry = inspectNode(registryPath);
   if (registry.type !== 'file') {
-    collector.add('topology', 'module-registry-missing', registryPath, 'module registry is missing or unsafe; Repair does not own project-maintained topology');
+    if (topologyInstalled || registry.type !== 'missing') {
+      collector.add('topology', 'module-registry-missing', registryPath, 'module registry is missing or unsafe; Repair does not own project-maintained topology');
+    }
+  } else {
+    try {
+      const modules = parseRegistry(fs.readFileSync(registryPath, 'utf8'), state.workspaceDir);
+      if (!sameModules(modules, status.topology.modules)) {
+        collector.add('topology', 'module-registry-drift', registryPath, 'module registry differs from installed topology; Repair does not own project-maintained topology');
+      }
+    } catch (error) {
+      collector.add('topology', 'module-registry-invalid', registryPath, `module registry is invalid; Repair does not own project-maintained topology: ${error.message}`);
+    }
   }
   for (const record of status.moduleSupplements) {
     let targetPath;
