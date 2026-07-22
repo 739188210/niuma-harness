@@ -1,6 +1,6 @@
 {
   "name": "niuma-harness",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Initialize an AI engineering harness for a project workspace.",
   "type": "commonjs",
   "bin": {
