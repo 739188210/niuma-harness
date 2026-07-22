@@ -14,23 +14,32 @@ const {
   safeResolveInside,
   writeFile,
 } = require('../fs-safe');
-const { getAvailableRuleDirs, getLegacyRuleTargetRootsForAgent } = require('../rules');
+const {
+  getAvailableRuleDirs,
+  getLegacyRuleTargetRootsForAgent,
+  getRuleTargetRootsForAgent,
+} = require('../rules');
 
 function prepareRulePlan(context) {
+  const availableRules = getAvailableRuleDirs(context.manifest.rulesRoot);
+  const ruleRendererDependencies = { getAvailableRuleDirs: () => availableRules };
   const current = renderRuleArtifacts(
     context.options.agent,
     context.options.rules,
     context.manifest.rulesRoot,
-    context.variables
+    context.variables,
+    ruleRendererDependencies
   ).map((artifact) => prepareArtifact(context, artifact, 'write'));
-  const allKnown = ['claude', 'opencode', 'multi']
-    .flatMap((agent) => [
-      ...renderRuleArtifacts(agent, getAvailableRuleDirs(context.manifest.rulesRoot), context.manifest.rulesRoot, context.variables),
-      ...renderRuleArtifacts(agent, getAvailableRuleDirs(context.manifest.rulesRoot), context.manifest.rulesRoot, context.variables, {
-        getRuleTargetRootsForAgent: getLegacyRuleTargetRootsForAgent,
-      }),
-    ])
-    .filter((artifact, index, artifacts) => artifacts.findIndex((item) => item.target === artifact.target) === index);
+  const allKnown = renderRuleArtifacts(
+    'known',
+    availableRules,
+    context.manifest.rulesRoot,
+    context.variables,
+    {
+      ...ruleRendererDependencies,
+      getRuleTargetRootsForAgent: () => getKnownRuleTargetRoots(),
+    }
+  );
   const knownByTarget = new Map(allKnown.map((artifact) => [artifact.target, artifact]));
   const activeTargets = new Set(current.map((artifact) => artifact.target));
   const previous = context.previousStatus
@@ -64,6 +73,15 @@ function prepareRulePlan(context) {
     artifacts: validateArtifactRecords(current.map((item) => item.record)),
     plan,
   };
+}
+
+function getKnownRuleTargetRoots() {
+  const roots = new Set();
+  for (const agent of ['claude', 'opencode', 'multi']) {
+    for (const root of getRuleTargetRootsForAgent(agent)) roots.add(root);
+    for (const root of getLegacyRuleTargetRootsForAgent(agent)) roots.add(root);
+  }
+  return [...roots];
 }
 
 function prepareArtifact(context, artifact, operation) {
