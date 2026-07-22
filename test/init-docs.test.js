@@ -130,9 +130,9 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
   assert.match(policyMemo, /harness\/docs\/policy\/untrusted-content\.md/);
   const index = read(path.join(h, 'docs', 'index.md'));
   assert.match(index, /harness\/docs\/policy\/untrusted-content\.md/);
-  assert.match(index, /tool-managed navigation map/);
-  assert.match(index, /stable project facts in `harness\/docs\/project-context\.md`/);
-  assert.match(index, /task-local pointers in `agent-work\/`/);
+  assert.match(index, /navigation map for the harness/);
+  assert.match(index, /`harness\/docs\/project-context\.md` stores verified stable project facts/);
+  assert.match(index, /`agent-work\/` stores task-local notes, plans, verification evidence, and handoff state/);
   assert.match(index, /`harness\/README\.md` explains the harness structure and how to use it\./);
   assert.doesNotMatch(index, /Agents may add short runtime pointers/);
 
@@ -158,6 +158,8 @@ test('generated docs prioritize task facts and route context reading by need', (
   assert.match(index, /more specific and stricter Policy rule decides/);
   assert.match(index, /Read only the task-relevant stable facts/);
   assert.match(index, /Before relying on a project-context fact, inspect task-relevant current README, build files, configuration, source, tests, or command output/);
+  assert.doesNotMatch(index, /## Project pointers/);
+  assert.doesNotMatch(index, /## Maintenance/);
 
   const context = read(path.join(h, 'docs', 'layers', '01-context.md'));
   assert.match(context, /fact priority, and the Policy exception/);
@@ -182,7 +184,6 @@ test('generated docs prioritize task facts and route context reading by need', (
   assert.match(customIndex, /`ai-harness\/docs\/project-context\.md`/);
   assert.match(customContext, /`ai-harness\/docs\/index\.md`/);
   const customEntry = read(path.join(customWorkspace, 'CLAUDE.md'));
-  assert.match(customEntry, /Root or cross-module durable facts belong only in `ai-harness\/docs\/project-context\.md`/);
   assert.match(customEntry, /Their single source of truth is[\s\S]*ai-harness\/docs\/project-context\.md/);
   assert.match(customContext, /`ai-harness\/docs\/project-context\.md`/);
   assert.doesNotMatch(customIndex, /{{HARNESS_DIR}}|`harness\/docs\//);
@@ -204,8 +205,8 @@ test('generated docs route module knowledge by scope', () => {
   assert.match(entry, /root or cross-module durable facts/);
   assert.match(context, /module knowledge area/);
   assert.match(context, /current module files/);
-  assert.match(memory, /module-local durable facts/);
-  assert.match(memory, /root or cross-module durable facts/);
+  assert.match(memory, /module-local durable facts/i);
+  assert.match(memory, /root or cross-module durable facts/i);
   assert.match(memory, /`agent-work\//);
   assert.match(index, /marker-external module knowledge/);
   assert.match(index, /Cross-module verification triggers/);
@@ -411,7 +412,6 @@ test('generated project context defines first-use bootstrap protocol', () => {
   const entry = read(path.join(workspace, 'CLAUDE.md'));
   assert.match(entry, /if bootstrap status is `pending`, complete its one-time initial project scan before non-trivial work/);
   assert.match(entry, /# Project overrides/);
-  assert.match(entry, /Root or cross-module durable facts belong only in `harness\/docs\/project-context\.md`/);
   assert.match(entry, /Do not duplicate root project structure, code maps, commands, dependency or tooling state/);
   assert.match(entry, /Their single source of truth is[\s\S]*harness\/docs\/project-context\.md/);
   assert.match(projectContext, /is the single source of truth for durable root or cross-module project facts/);

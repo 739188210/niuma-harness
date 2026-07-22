@@ -53,10 +53,6 @@ The entry file's operating loop drives task work. This map is consulted by need 
 
 If project-specific facts are missing, inspect the current workspace before acting. Do not guess missing paths, commands, stack details, or ownership.
 
-## Project pointers
-
-Project-specific code locations, commands, and stable conventions are maintained in `{{HARNESS_DIR}}/docs/project-context.md`. Keep long-lived decision rationale in project-maintained records under `{{HARNESS_DIR}}/docs/decisions/`, reusable experience in `{{HARNESS_DIR}}/docs/experience/`, and task-local notes in `agent-work/`. This tool-managed index only points to generated harness structure.
-
 ## 7-layer harness model
 
 - Context protocol: `{{HARNESS_DIR}}/docs/layers/01-context.md`
@@ -89,7 +85,3 @@ Project-specific code locations, commands, and stable conventions are maintained
 ## Verification commands
 
 The authoritative command list belongs in `{{HARNESS_DIR}}/docs/project-context.md`. Use this index only to locate where verification guidance lives.
-
-## Maintenance
-
-This index is a tool-managed navigation map. In generated harnesses, keep stable project facts in `{{HARNESS_DIR}}/docs/project-context.md`, long-lived decision rationale in project-maintained `{{HARNESS_DIR}}/docs/decisions/` records, reusable experience in project-maintained `{{HARNESS_DIR}}/docs/experience/` records, and task-local pointers in `agent-work/`; change this file by updating the generator template.

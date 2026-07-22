@@ -8,8 +8,6 @@ For every non-trivial task, create or update `agent-work/tasks/<task-name>/harne
 
 The record captures the agent's task-level account of Bootstrap, Task rating, Context, Action boundary, Execution, Verification, Recovery, and Outcome. It connects success criteria and recovery steps to stable evidence IDs in task-local `verification.md`.
 
-Legacy Markdown-only records remain readable and unchanged, but do not provide the structured fields required for a complete execution record.
-
 ## When to record
 
 Use a record for every non-trivial task. Common indicators include changing files, running verification, requiring multiple steps, using delegated work, or touching release, security, data, dependency, API, or policy boundaries.

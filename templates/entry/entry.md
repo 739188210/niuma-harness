@@ -3,7 +3,7 @@
 This file has two zones:
 
 - The **contract** below is managed by `niuma-harness`. Do not edit it; `doctor` checks it.
-- **Project overrides** at the bottom are free for short, always-relevant behavioral constraints. Root or cross-module durable facts belong only in `{{HARNESS_DIR}}/docs/project-context.md`{{ENTRY_OVERRIDES_SCOPE_GUIDANCE}}.
+- **Project overrides** at the bottom are free for short, always-relevant behavioral constraints.
 
 <!-- niuma-harness:contract begin — do not modify -->
 # Niuma Harness — Operating Loop
