@@ -10,13 +10,7 @@ const {
   tempDir,
   updateManifest,
 } = require('./helpers');
-
-function initWorkspace(agent = 'claude', extra = []) {
-  const workspace = tempDir();
-  const init = run(['init', workspace, '--agent', agent, ...extra]);
-  assert.strictEqual(init.status, 0, init.stderr);
-  return workspace;
-}
+const { initWorkspace } = require('./support/cli-fixtures');
 
 function doctor(workspace, extra = []) {
   return run(['doctor', workspace, ...extra]);

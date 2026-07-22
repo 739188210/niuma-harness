@@ -14,9 +14,14 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "node test/cli.test.js",
+    "test": "node test/all.test.js",
     "check": "npm test",
-    "pack:dry": "npm pack --dry-run"
+    "pack:dry": "npm pack --dry-run",
+    "test:init": "node test/init.test.js",
+    "test:doctor": "node test/doctor.test.js",
+    "test:repair": "node test/repair.test.js",
+    "test:audit": "node test/audit.test.js",
+    "test:topology": "node test/topology.test.js"
   },
   "keywords": [
     "ai",

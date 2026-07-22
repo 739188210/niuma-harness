@@ -70,8 +70,9 @@ This source repository intentionally does **not** contain a generated `harness/`
 
 ## Commands
 
-- `npm test` — full test suite (`node test/cli.test.js`).
+- `npm test` — full test suite (`node test/all.test.js`).
 - `npm run check` — alias for `npm test`.
+- `npm run test:init`, `npm run test:doctor`, `npm run test:repair`, `npm run test:audit`, `npm run test:topology` — focused suite aggregators.
 - `npm run pack:dry` — preview npm package contents.
 - `node bin/niuma-harness.js --help` — local CLI help.
 - `node bin/niuma-harness.js init <tmp> --agent claude --dry-run` — preview generated files without writing.
@@ -111,8 +112,8 @@ Generated harness docs follow the seven-layer model under `docs/layers/`, with p
 
 Tests use `node:test`, built-in `assert`, temporary workspaces, and the real CLI via `spawnSync` rather than mocking command orchestration.
 
-- `test/cli.test.js` is the full `npm test` aggregator for filesystem/ledger/rule safety, agent switching, workspace conflicts, init, Doctor, Repair, and help suites.
-- `test/init.test.js` and `test/doctor.test.js` further aggregate their focused init and integrity sub-suites.
-- `test/helpers.js` and `test/init-fixtures.js` hold shared temporary-workspace, CLI, and assertion helpers.
+- `test/all.test.js` is the full `npm test` aggregator for filesystem/ledger/rule safety, agent switching, workspace conflicts, init, Doctor, Repair, Audit, help, and topology suites; `test/cli.test.js` remains its compatibility entry point.
+- `test/init.test.js`, `test/doctor.test.js`, `test/repair.test.js`, and `test/audit.test.js` aggregate their focused leaf suites.
+- `test/helpers.js`, `test/init-fixtures.js`, and `test/support/` hold shared temporary-workspace, CLI, assertion, and test-domain helpers.
 
 When changing scaffold behavior, update `templates/manifest.json`, the relevant writer/checker, and focused tests together so generated files and doctor validation stay aligned.

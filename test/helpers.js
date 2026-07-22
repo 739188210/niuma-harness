@@ -3,6 +3,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
+const { after } = require('node:test');
 const {
   getAvailableCommandFiles,
   getCommandId,
@@ -22,6 +23,7 @@ const bin = path.join(root, 'bin', 'niuma-harness.js');
 const allCommandFiles = getAvailableCommandFiles();
 const allRuleDirs = getAvailableRuleDirs();
 const allSkillDirs = getAvailableSkillDirs();
+const tempRoots = new Set();
 const layerMemos = [
   'docs/layers/01-context.md',
   'docs/layers/02-policy.md',
@@ -55,8 +57,20 @@ function runWithCliRoot(cliRoot, args) {
 }
 
 function tempDir() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'niuma-harness-'));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'niuma-harness-'));
+  tempRoots.add(tempRoot);
+  return tempRoot;
 }
+
+function cleanupTempDirs() {
+  if (process.env.NIUMA_HARNESS_KEEP_TEST_TEMPS) return;
+  for (const tempRoot of tempRoots) {
+    fs.rmSync(tempRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    tempRoots.delete(tempRoot);
+  }
+}
+
+after(cleanupTempDirs);
 
 function assertFile(filePath) {
   assert.ok(fs.existsSync(filePath), `${filePath} should exist`);

@@ -1,0 +1,17 @@
+require('./temp-cleanup.test');
+require('./fs-safe.test');
+require('./artifact-ledger.test');
+require('./rule-artifacts.test');
+require('./agent-switch.test');
+require('./workspace-harness-conflict.test');
+require('./init.test');
+require('./doctor.test');
+require('./repair-cli.test');
+require('./repair.test');
+require('./repair-orchestration.test');
+require('./audit-cli.test');
+require('./audit-records.test');
+require('./audit.test');
+require('./audit-regression.test');
+require('./help.test');
+require('./topology.test');
