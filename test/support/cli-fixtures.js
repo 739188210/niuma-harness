@@ -10,12 +10,6 @@ function runCliSuccess(args, message = 'CLI command should succeed') {
   return result;
 }
 
-function runCliFailure(args, message = 'CLI command should fail') {
-  const result = run(args);
-  assert.notStrictEqual(result.status, 0, `${message}:\n${resultOutput(result)}`);
-  return result;
-}
-
 function initWorkspace(options = {}, legacyExtra = []) {
   const { agent, extra } = typeof options === 'string'
     ? { agent: options, extra: legacyExtra }
@@ -25,4 +19,4 @@ function initWorkspace(options = {}, legacyExtra = []) {
   return workspace;
 }
 
-module.exports = { initWorkspace, runCliFailure, runCliSuccess };
+module.exports = { initWorkspace };

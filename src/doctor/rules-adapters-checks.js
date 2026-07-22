@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const { renderRuleArtifacts } = require('../rule-artifacts');
-const { getAvailableRuleDirs, getRuleAdapterTargetsForAgent } = require('../rules');
+const { getRuleAdapterTargetsForAgent } = require('../rules');
 const { safeResolveInside } = require('../fs-safe');
 const { createTemplateVariables } = require('../template-variables');
 const { addError, addOk } = require('./result');
@@ -97,13 +97,6 @@ function getOpenCodeRulePaths(context, rules) {
   )
     .filter((artifact) => artifact.target.startsWith('.opencode/rules/'))
     .map((artifact) => artifact.target);
-}
-
-function getKnownOpenCodeRulePaths(context) {
-  return getOpenCodeRulePaths(
-    context,
-    getAvailableRuleDirs(context.templateManifest.rulesRoot)
-  );
 }
 
 function readOpenCodeConfig(configPath, result, options = {}) {

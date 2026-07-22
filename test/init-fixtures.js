@@ -31,6 +31,7 @@ const {
 } = require('./helpers');
 const { getDefaultRulesForAgent, normalizeRules, normalizeRulesOut, normalizeSelectedRules } = require('../src/rules');
 const { getSkillFiles, normalizeSkills } = require('../src/skills');
+const { initWorkspace } = require('./support/cli-fixtures');
 
 const agentCases = [
   { agent: 'claude', entryFiles: ['CLAUDE.md'], absentEntryFiles: ['AGENTS.md'] },
@@ -91,13 +92,6 @@ function assertAgentEntryShape(workspace, scenario, options = {}) {
     entryFiles: scenario.entryFiles,
     harnessDir,
   });
-}
-
-function initWorkspace(agent) {
-  const workspace = tempDir();
-  const result = run(['init', workspace, '--agent', agent]);
-  assert.strictEqual(result.status, 0, result.stderr);
-  return workspace;
 }
 
 function readTextTree(root, options = {}) {

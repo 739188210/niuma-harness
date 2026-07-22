@@ -64,4 +64,4 @@ function passingAuditRecord(taskId) {
   };
 }
 
-module.exports = { markedAuditRecord, markedRecord, markedVerificationRecord, passingAuditRecord };
+module.exports = { markedAuditRecord, markedVerificationRecord, passingAuditRecord };

@@ -24,7 +24,6 @@ function checkManagedContentIntegrity(context) {
   checkRuleSelection(context);
   checkSelectedSkills(context, variables);
   checkUnselectedSkills(context);
-  checkRuleAdapters(context);
   checkCurrentCommandArtifacts(context, variables);
 }
 
@@ -98,9 +97,6 @@ function checkUnselectedSkills(context) {
   }
 }
 
-function checkRuleAdapters(context) {
-}
-
 function checkCurrentCommandArtifacts(context, variables) {
   const artifacts = renderCommandArtifacts(
     context.agent,
@@ -138,22 +134,6 @@ function checkPathAbsent(context, baseDir, target) {
   if (targetPath && fs.existsSync(targetPath)) {
     addError(context.result, `unexpected managed content ${target}`);
   }
-}
-
-function listRelativeFiles(directory) {
-  if (!fs.existsSync(directory)) {
-    return [];
-  }
-  const files = [];
-  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-    const entryPath = path.join(directory, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...listRelativeFiles(entryPath).map((relative) => path.posix.join(entry.name, relative)));
-    } else if (entry.isFile()) {
-      files.push(entry.name);
-    }
-  }
-  return files.sort();
 }
 
 function safeManagedPath(context, baseDir, target) {

@@ -160,12 +160,6 @@ function isRegularFileWithoutSymlink(filePath) {
   return stat.isFile() && !stat.isSymbolicLink();
 }
 
-function isDirectoryWithoutSymlink(dirPath) {
-  if (!fs.existsSync(dirPath)) return false;
-  const stat = fs.lstatSync(dirPath);
-  return stat.isDirectory() && !stat.isSymbolicLink();
-}
-
 function countOccurrences(value, marker) {
   return value.split(marker).length - 1;
 }
