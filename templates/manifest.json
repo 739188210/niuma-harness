@@ -20,113 +20,113 @@
     },
     {
       "target": "docs/index.md",
-      "template": "core/docs/index.md"
+      "template": "core/index.md"
     },
     {
       "target": "docs/module-topology.md",
-      "template": "core/docs/module-topology.md",
+      "template": "core/module-topology.md",
       "dynamic": true
     },
     {
       "target": "docs/experiments/task-execution-record.md",
-      "template": "core/docs/experiments/task-execution-record.md"
+      "template": "core/experiments/task-execution-record.md"
     },
     {
       "target": "docs/decisions/README.md",
-      "template": "core/docs/decisions/README.md",
+      "template": "core/decisions/README.md",
       "initialCollision": "error"
     },
     {
       "target": "docs/experience/README.md",
-      "template": "core/docs/experience/README.md",
+      "template": "core/experience/README.md",
       "initialCollision": "error"
     },
     {
       "target": "docs/project-context.md",
-      "template": "core/docs/project-context.md",
+      "template": "core/project-context.md",
       "managed": "user"
     },
     {
       "target": "docs/layers/01-context.md",
-      "template": "core/docs/layers/01-context.md"
+      "template": "core/layers/01-context.md"
     },
     {
       "target": "docs/layers/02-policy.md",
-      "template": "core/docs/layers/02-policy.md"
+      "template": "core/layers/02-policy.md"
     },
     {
       "target": "docs/layers/03-process.md",
-      "template": "core/docs/layers/03-process.md"
+      "template": "core/layers/03-process.md"
     },
     {
       "target": "docs/layers/04-observation.md",
-      "template": "core/docs/layers/04-observation.md"
+      "template": "core/layers/04-observation.md"
     },
     {
       "target": "docs/layers/05-recovery.md",
-      "template": "core/docs/layers/05-recovery.md"
+      "template": "core/layers/05-recovery.md"
     },
     {
       "target": "docs/layers/06-memory.md",
-      "template": "core/docs/layers/06-memory.md"
+      "template": "core/layers/06-memory.md"
     },
     {
       "target": "docs/layers/07-loop.md",
-      "template": "core/docs/layers/07-loop.md"
+      "template": "core/layers/07-loop.md"
     },
     {
       "target": "docs/policy/action-boundary.md",
-      "template": "core/docs/policy/action-boundary.md"
+      "template": "core/policy/action-boundary.md"
     },
     {
       "target": "docs/policy/secret-leak.md",
-      "template": "core/docs/policy/secret-leak.md"
+      "template": "core/policy/secret-leak.md"
     },
     {
       "target": "docs/policy/untrusted-content.md",
-      "template": "core/docs/policy/untrusted-content.md"
+      "template": "core/policy/untrusted-content.md"
     },
     {
       "target": "docs/process/task-triage.md",
-      "template": "core/docs/process/task-triage.md"
+      "template": "core/process/task-triage.md"
     },
     {
       "target": "docs/process/bugfix.md",
-      "template": "core/docs/process/bugfix.md"
+      "template": "core/process/bugfix.md"
     },
     {
       "target": "docs/process/feature-development.md",
-      "template": "core/docs/process/feature-development.md"
+      "template": "core/process/feature-development.md"
     },
     {
       "target": "docs/process/refactor.md",
-      "template": "core/docs/process/refactor.md"
+      "template": "core/process/refactor.md"
     },
     {
       "target": "docs/process/test-driven-development.md",
-      "template": "core/docs/process/test-driven-development.md"
+      "template": "core/process/test-driven-development.md"
     },
     {
       "target": "docs/process/review.md",
-      "template": "core/docs/process/review.md"
+      "template": "core/process/review.md"
     },
     {
       "target": "docs/process/release.md",
-      "template": "core/docs/process/release.md"
+      "template": "core/process/release.md"
     },
     {
       "target": "docs/process/isolation.md",
-      "template": "core/docs/process/isolation.md"
+      "template": "core/process/isolation.md"
     },
     {
       "target": "docs/process/subagent-development.md",
-      "template": "core/docs/process/subagent-development.md"
+      "template": "core/process/subagent-development.md"
     }
   ],
   "workTemplateFiles": [
     {
       "target": "agent-work/README.md",
-      "template": "core/agent-work/README.md"
+      "template": "agent-work/README.md"
     }
   ],
   "rulesRoot": "rules",

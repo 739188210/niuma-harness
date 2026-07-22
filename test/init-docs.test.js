@@ -20,6 +20,30 @@ test('init claude: entry at workspace root, harness content under harness/', () 
   assertAgentEntryShape(workspace, agentCases[0]);
 });
 
+test('template sources use the flattened package layout while preserving runtime targets', () => {
+  const templatesRoot = path.join(__dirname, '..', 'templates');
+  const manifest = JSON.parse(read(path.join(templatesRoot, 'manifest.json')));
+  const templateFiles = [...manifest.templateFiles, ...manifest.workTemplateFiles];
+
+  for (const file of templateFiles) {
+    assert.doesNotMatch(file.template, /^core\/(?:docs|agent-work)\//);
+    const source = path.join(templatesRoot, ...file.template.split('/'));
+    assert.ok(fs.lstatSync(source).isFile(), `template source must be a file: ${file.template}`);
+  }
+
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  assertFile(path.join(workspace, 'harness', 'docs', 'index.md'));
+  assertFile(path.join(workspace, 'harness', 'docs', 'layers', '01-context.md'));
+  assertFile(path.join(workspace, 'harness', 'docs', 'policy', 'action-boundary.md'));
+  assertFile(path.join(workspace, 'harness', 'docs', 'process', 'review.md'));
+  assertFile(path.join(workspace, 'agent-work', 'README.md'));
+
+  const doctor = run(['doctor', workspace]);
+  assert.strictEqual(doctor.status, 0, doctor.stdout || doctor.stderr);
+});
+
 test('re-init preserves a legacy automation document as user content', () => {
   const workspace = initWorkspace('claude');
   const legacyPath = path.join(workspace, 'harness', 'docs', 'automation', 'automation-intent.md');

@@ -72,9 +72,9 @@ niuma-harness
 
 #### 建议落点
 
-- `templates/core/docs/index.md`
-- `templates/core/docs/layers/01-context.md`
-- `templates/core/docs/project-context.md`
+- `templates/core/index.md`
+- `templates/core/layers/01-context.md`
+- `templates/core/project-context.md`
 
 #### 收益
 
@@ -112,8 +112,8 @@ ADR：某个长期有效的项目/组织决策，以及为何如此决策。
 新增：
 
 ```text
-templates/core/docs/decisions/
-templates/core/docs/decisions/README.md
+templates/core/decisions/
+templates/core/decisions/README.md
 ```
 
 建议 ADR 模板：
@@ -170,8 +170,8 @@ agent-work/tasks/：单次任务过程、证据、阻塞和恢复记录
 #### 建议新增
 
 ```text
-templates/core/docs/experience/
-templates/core/docs/experience/README.md
+templates/core/experience/
+templates/core/experience/README.md
 ```
 
 同时在 Memory 层明确：任务日志不能直接升级为长期经验。
@@ -615,9 +615,9 @@ Agent 是否实际阅读过源码
 修改：
 
 ```text
-templates/core/docs/index.md
-templates/core/docs/layers/01-context.md
-templates/core/docs/project-context.md
+templates/core/index.md
+templates/core/layers/01-context.md
+templates/core/project-context.md
 ```
 
 验收标准：
@@ -632,8 +632,8 @@ templates/core/docs/project-context.md
 
 ```text
 templates/manifest.json
-templates/core/docs/index.md
-templates/core/docs/layers/06-memory.md
+templates/core/index.md
+templates/core/layers/06-memory.md
 ```
 
 验收标准：
