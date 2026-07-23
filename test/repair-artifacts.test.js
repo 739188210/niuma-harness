@@ -272,3 +272,212 @@ test('repair authorizes stale rule removal only for an exact canonical ledger tu
     });
   }
 });
+
+test('repair removes an exact ledger-owned deselected skill with backup', () => {
+  const workspace = initWorkspace('claude');
+  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
+  const manifest = readJson(manifestPath);
+  const staleSkill = manifest.skills[0];
+  const record = manifest.artifacts.find((item) => item.kind === 'skill'
+    && item.target === `.claude/skills/${staleSkill}/SKILL.md`);
+  const target = path.join(workspace, ...record.target.split('/'));
+  const original = fs.readFileSync(target);
+  manifest.skills = manifest.skills.filter((skill) => skill !== staleSkill);
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+  let result = run(['repair', workspace, '--dry-run']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(result.stdout, new RegExp(`REMOVE\\s+${record.target.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}`));
+
+  result = run(['repair', workspace, '-y']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertNoPath(target);
+  const backup = result.stdout.match(/Backup retained: (.+)/)[1].trim();
+  assert.deepStrictEqual(fs.readFileSync(path.join(backup, 'files', ...record.target.split('/'))), original);
+  assert.strictEqual(run(['doctor', workspace]).status, 0);
+});
+
+test('repair preserves a modified or unledgered matching skill path', () => {
+  const workspace = initWorkspace('claude', ['--skills', 'none']);
+  const target = path.join(workspace, '.claude', 'skills', 'database-readonly', 'SKILL.md');
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, 'user-owned matching skill\n', 'utf8');
+
+  let result = run(['repair', workspace, '--dry-run']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.doesNotMatch(result.stdout, /REMOVE\s+\.claude\/skills\/database-readonly\/SKILL\.md/);
+
+  result = run(['repair', workspace, '-y']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.strictEqual(read(target), 'user-owned matching skill\n');
+});
+
+test('repair preserves a drifted ledger-owned deselected skill', () => {
+  const workspace = initWorkspace('claude');
+  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
+  const manifest = readJson(manifestPath);
+  const staleSkill = manifest.skills[0];
+  const record = manifest.artifacts.find((item) => item.kind === 'skill'
+    && item.target === `.claude/skills/${staleSkill}/SKILL.md`);
+  const target = path.join(workspace, ...record.target.split('/'));
+  manifest.skills = manifest.skills.filter((skill) => skill !== staleSkill);
+  fs.writeFileSync(target, 'modified stale skill\n', 'utf8');
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+  let result = run(['repair', workspace, '--dry-run']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(result.stdout, /STALE-SKILL-DRIFT/);
+  assert.doesNotMatch(result.stdout, new RegExp(`REMOVE\\s+${record.target.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}`));
+  assert.strictEqual(read(target), 'modified stale skill\n');
+
+  result = run(['repair', workspace, '-y']);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stderr, /cannot safely resolve user-owned or drifted obsolete artifacts/i);
+  assert.strictEqual(read(target), 'modified stale skill\n');
+});
+
+test('repair removes only an exact legacy Claude rule pointer', () => {
+  const workspace = initWorkspace('claude', ['--rules', 'none']);
+  const target = path.join(workspace, '.claude', 'rules', 'niuma-common.md');
+  const { renderLegacyClaudeRulePointer } = require('../src/scaffold/rules-adapters-writer');
+  const canonical = renderLegacyClaudeRulePointer('harness', 'common');
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, canonical, 'utf8');
+
+  let result = run(['repair', workspace, '--dry-run']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(result.stdout, /REMOVE\s+\.claude\/rules\/niuma-common\.md/);
+
+  result = run(['repair', workspace, '-y']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertNoPath(target);
+});
+
+test('repair preserves a modified legacy Claude rule pointer', () => {
+  const workspace = initWorkspace('claude', ['--rules', 'none']);
+  const target = path.join(workspace, '.claude', 'rules', 'niuma-common.md');
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, 'user-owned pointer\n', 'utf8');
+
+  const result = run(['repair', workspace, '--dry-run']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.doesNotMatch(result.stdout, /REMOVE\s+\.claude\/rules\/niuma-common\.md/);
+  assert.strictEqual(read(target), 'user-owned pointer\n');
+});
+
+test('repair preserves matching skill files from a schema-3 manifest without skill ledger evidence', () => {
+  const workspace = initWorkspace('claude');
+  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
+  const manifest = readJson(manifestPath);
+  const staleSkill = manifest.skills[0];
+  const record = manifest.artifacts.find((item) => item.kind === 'skill'
+    && item.target === `.claude/skills/${staleSkill}/SKILL.md`);
+  const target = path.join(workspace, ...record.target.split('/'));
+  const original = fs.readFileSync(target);
+  manifest.schemaVersion = 3;
+  manifest.skills = manifest.skills.filter((skill) => skill !== staleSkill);
+  manifest.artifacts = manifest.artifacts.filter((item) => item.kind !== 'skill');
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+  let result = run(['repair', workspace, '--dry-run']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.doesNotMatch(result.stdout, new RegExp(`REMOVE\\s+${record.target.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}`));
+
+  result = run(['repair', workspace, '-y']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.deepStrictEqual(fs.readFileSync(target), original);
+  assert.strictEqual(readJson(manifestPath).schemaVersion, 4);
+  assert.strictEqual(run(['doctor', workspace]).status, 0);
+});
+
+test('repair does not authorize skill removal from a forged ledger tuple', () => {
+  const workspace = initWorkspace('claude');
+  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
+  const manifest = readJson(manifestPath);
+  const staleSkill = manifest.skills[0];
+  const record = manifest.artifacts.find((item) => item.kind === 'skill'
+    && item.target === `.claude/skills/${staleSkill}/SKILL.md`);
+  const target = path.join(workspace, ...record.target.split('/'));
+  const original = fs.readFileSync(target);
+  manifest.skills = manifest.skills.filter((skill) => skill !== staleSkill);
+  record.source = 'skills/database-readonly/forged.md';
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+  const result = run(['repair', workspace, '--dry-run']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.doesNotMatch(result.stdout, new RegExp(`REMOVE\\s+${record.target.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}`));
+  assert.deepStrictEqual(fs.readFileSync(target), original);
+});
+
+test('repair does not authorize skill removal from a forged ledger digest', () => {
+  const workspace = initWorkspace('claude');
+  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
+  const manifest = readJson(manifestPath);
+  const staleSkill = manifest.skills[0];
+  const record = manifest.artifacts.find((item) => item.kind === 'skill'
+    && item.target === `.claude/skills/${staleSkill}/SKILL.md`);
+  const target = path.join(workspace, ...record.target.split('/'));
+  const userBytes = Buffer.from('user-owned matching skill\n');
+  manifest.skills = manifest.skills.filter((skill) => skill !== staleSkill);
+  fs.writeFileSync(target, userBytes);
+  record.digest = digestBytes(userBytes);
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+  const result = run(['repair', workspace, '--dry-run']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.doesNotMatch(result.stdout, new RegExp(`REMOVE\\s+${record.target.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}`));
+  assert.deepStrictEqual(fs.readFileSync(target), userBytes);
+});
+
+test('repair preserves retired skill files when their package template no longer exists', () => {
+  const cliRoot = copyCliPackage();
+  const workspace = tempDir();
+  let result = runWithCliRoot(cliRoot, ['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
+  const manifest = readJson(manifestPath);
+  const staleSkill = manifest.skills[0];
+  const record = manifest.artifacts.find((item) => item.kind === 'skill'
+    && item.target === `.claude/skills/${staleSkill}/SKILL.md`);
+  const target = path.join(workspace, ...record.target.split('/'));
+  const original = fs.readFileSync(target);
+  manifest.skills = manifest.skills.filter((skill) => skill !== staleSkill);
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  fs.rmSync(path.join(cliRoot, 'templates', 'skills', staleSkill), { recursive: true, force: true });
+
+  result = runWithCliRoot(cliRoot, ['repair', workspace, '--dry-run']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.doesNotMatch(result.stdout, new RegExp(`REMOVE\\s+${record.target.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}`));
+  assert.deepStrictEqual(fs.readFileSync(target), original);
+});
+
+test('repair removes an exact legacy Claude rule pointer for a custom harness directory', () => {
+  const workspace = initWorkspace('claude', ['--harness-dir', 'ai-harness', '--rules', 'none']);
+  const target = path.join(workspace, '.claude', 'rules', 'niuma-common.md');
+  const { renderLegacyClaudeRulePointer } = require('../src/scaffold/rules-adapters-writer');
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, renderLegacyClaudeRulePointer('ai-harness', 'common'), 'utf8');
+
+  const result = run(['repair', workspace, '-y', '--harness-dir', 'ai-harness']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertNoPath(target);
+});
+
+test('repair preserves directory and symlink legacy pointer targets', () => {
+  const workspace = initWorkspace('claude', ['--rules', 'none']);
+  const target = path.join(workspace, '.claude', 'rules', 'niuma-common.md');
+  fs.mkdirSync(target, { recursive: true });
+  let result = run(['repair', workspace, '--dry-run']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.doesNotMatch(result.stdout, /REMOVE\s+\.claude\/rules\/niuma-common\.md/);
+  assert.ok(fs.lstatSync(target).isDirectory());
+
+  fs.rmSync(target, { recursive: true, force: true });
+  const outside = path.join(tempDir(), 'pointer.md');
+  fs.writeFileSync(outside, 'outside pointer\n', 'utf8');
+  fs.symlinkSync(outside, target);
+  result = run(['repair', workspace, '--dry-run']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.doesNotMatch(result.stdout, /REMOVE\s+\.claude\/rules\/niuma-common\.md/);
+  assert.ok(fs.lstatSync(target).isSymbolicLink());
+});

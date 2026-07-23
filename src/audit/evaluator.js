@@ -51,11 +51,11 @@ const CROSS_RESULT_MATRIX = {
   },
 };
 
-function evaluateAudit({ workspaceRoot, harnessRoot, bootstrapContent, taskEntries = [], selectionReason }) {
+function evaluateAudit({ workspaceRoot, harnessRoot, bootstrapContent, taskEntries = [], selectionReason, workDirectory = 'agent-work' }) {
   const bootstrap = evaluateBootstrap({ workspaceRoot, content: bootstrapContent });
   const dimensions = { Bootstrap: bootstrap };
   const findings = bootstrap.findings.slice();
-  const taskResults = taskEntries.map((taskEntry) => evaluateTask({ workspaceRoot, taskEntry }));
+  const taskResults = taskEntries.map((taskEntry) => evaluateTask({ workspaceRoot, taskEntry, workDirectory }));
 
   if (taskResults.length === 1) {
     Object.assign(dimensions, taskResults[0].dimensions);
@@ -127,7 +127,7 @@ function evaluateBootstrap({ workspaceRoot, content }) {
   return withFindings('Bootstrap', findings);
 }
 
-function evaluateTask({ workspaceRoot, taskEntry }) {
+function evaluateTask({ workspaceRoot, taskEntry, workDirectory = 'agent-work' }) {
   if (!taskEntry || taskEntry.kind !== 'structured') {
     const invalid = taskEntry && taskEntry.kind === 'invalid';
     const missing = taskEntry && taskEntry.kind === 'missing';
@@ -149,7 +149,7 @@ function evaluateTask({ workspaceRoot, taskEntry }) {
     evaluateRating(record.rating, boundaryFacts, findings);
     evaluateContext(workspaceRoot, record.context, findings);
     const criterionIds = evaluateExecution(record.execution, findings);
-    const evidence = evaluateVerification(workspaceRoot, taskEntry, record.verification, criterionIds, findings);
+    const evidence = evaluateVerification(workspaceRoot, workDirectory, taskEntry, record.verification, criterionIds, findings);
     evaluateRecovery(record.recovery, evidence, record.outcome, record.task, findings);
     evaluateOutcome(record.task, record.outcome, record.recovery, criterionIds, evidence, findings);
     evaluateCrossResultMatrix(record, findings);
@@ -344,10 +344,10 @@ function evaluateExecution(execution, findings) {
   return criterionIds;
 }
 
-function evaluateVerification(workspaceRoot, taskEntry, verification, criterionIds, findings) {
+function evaluateVerification(workspaceRoot, workDirectory, taskEntry, verification, criterionIds, findings) {
   const empty = new Map();
   if (!isObject(verification)) return empty;
-  const expectedPath = path.posix.join('agent-work', 'tasks', taskEntry.taskName, 'verification.md');
+  const expectedPath = path.posix.join(workDirectory, 'tasks', taskEntry.taskName, 'verification.md');
   if (verification.path !== expectedPath) {
     fail(findings, 'Verification', 'Verification uses the canonical task-local path.', String(verification.path), `Task verification path must be exactly ${expectedPath} to prevent cross-task evidence.`);
     return empty;

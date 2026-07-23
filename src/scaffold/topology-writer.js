@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { getEntryFilesForAgent } = require('../agents');
 const { inspectFileTarget, safeResolveInside, writeFile } = require('../fs-safe');
 const { REGISTRY_FILE, parseRegistry, registryContent, sameModules } = require('../topology');
 
@@ -43,8 +44,7 @@ function prepareTopologyPlan(context) {
 }
 
 function renderTopologyRoute(harnessDir, modules, agent) {
-  const entryFiles = agent === 'claude' ? ['CLAUDE.md']
-    : agent === 'multi' ? ['CLAUDE.md', 'AGENTS.md'] : ['AGENTS.md'];
+  const entryFiles = getEntryFilesForAgent(agent);
   const table = modules.length === 0
     ? '| _(none declared)_ | - | - | - |\n'
     : modules.map((module) => {

@@ -83,7 +83,7 @@ test('explicit modules initialize root routing and local supplements', () => {
   assert.match(rootEntry, /module-local durable facts belong in the applicable[\s\S]*module entry/i);
   const moduleEntry = read(path.join(workspace, 'apps', 'admin', 'CLAUDE.md'));
   assert.match(moduleEntry, /put root or cross-module durable facts in the root `project-context\.md`/);
-  assert.strictEqual(readJson(path.join(harness, 'manifest.json')).schemaVersion, 3);
+  assert.strictEqual(readJson(path.join(harness, 'manifest.json')).schemaVersion, 4);
   const doctor = run(['doctor', workspace]);
   assert.strictEqual(doctor.status, 0, doctor.stdout || doctor.stderr);
 });

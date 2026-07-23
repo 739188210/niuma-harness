@@ -11,16 +11,18 @@ const {
 } = require('../contract');
 const { getCommandArtifactDescriptors } = require('../commands');
 const {
-  getAvailableRuleDirs,
+  getLegacyClaudeRulePointerTarget,
   getLegacyRuleTargetRootsForAgent,
   getRuleTargetRootsForAgent,
-} = require('../rules');
-const { getAvailableSkillDirs, getSkillFiles, getSkillTargetRootsForAgent } = require('../skills');
+} = require('../agent-native-targets');
+const { getAvailableRuleDirs } = require('../rules');
+const { renderAllSkillArtifacts } = require('../skill-artifacts');
+const { renderLegacyClaudeRulePointer } = require('../scaffold/rules-adapters-writer');
 const {
   assertNoLossyJsonNumbers,
   reconcileOpenCodeInstructions,
 } = require('../opencode-instructions');
-const { createDesiredState } = require('../scaffold/desired-state');
+const { createDesiredState } = require('./desired-state');
 const { analyzeModuleBlock, MODULE_BEGIN, MODULE_END } = require('../contract');
 const { parseRegistry, sameModules } = require('../topology');
 
@@ -30,6 +32,7 @@ function createRepairPlan(state, backupRoot) {
     commands: state.selections.commands,
     harnessDir: state.harnessDir,
     manifest: state.manifest,
+    runtimeLayout: state.runtimeLayout,
     rules: state.selections.rules,
     skills: state.selections.skills,
     topology: state.selections.topologyInvalid ? { mode: 'single', modules: [] } : state.selections.topology,
@@ -54,8 +57,7 @@ function createRepairPlan(state, backupRoot) {
     planDesiredFile(collector, file);
   }
   planUnselectedAdapters(collector, desired, state);
-  planUnselectedSkills(collector, desired, state);
-  planStaleSkills(collector, desired, state);
+  planStaleSkillArtifacts(collector, desired, state);
   planStaleCommands(collector, desired, state);
   planManifest(collector, desired, state);
 
@@ -77,7 +79,7 @@ function addTopologyDiagnostics(collector, state) {
     collector.add('topology', 'invalid-topology-state', state.manifestPath, 'installed topology ownership state is invalid and cannot be safely rebuilt');
     return;
   }
-  if (!status || status.schemaVersion !== 3 || !Array.isArray(status.moduleSupplements)
+  if (!status || status.schemaVersion < 3 || !Array.isArray(status.moduleSupplements)
       || !status.topology || !Array.isArray(status.topology.modules)) return;
   const topologyInstalled = status.topology.modules.length > 0 || status.moduleSupplements.length > 0;
   const registryPath = path.join(state.targetDir, 'modules.json');
@@ -258,7 +260,7 @@ function isGeneratedInactiveEntry(existing, entry, desired, state) {
       entry,
       state.selections.rules,
       state.harnessDir,
-      state.manifest.workDirectory || 'agent-work',
+      state.runtimeLayout.workDirectory,
       state.manifest.rulesRoot,
       desired.status.topology
     );
@@ -412,48 +414,39 @@ function planUnselectedAdapters(collector, desired, state) {
   const selected = new Set(state.selections.rules);
   for (const rule of getAvailableRuleDirs(state.manifest.rulesRoot)) {
     if (selected.has(rule)) continue;
-    const targetPath = path.join(state.workspaceDir, '.claude', 'rules', `niuma-${rule}.md`);
+    const target = getLegacyClaudeRulePointerTarget(rule);
+    const targetPath = path.join(state.workspaceDir, ...target.split('/'));
     const observed = inspectNode(targetPath);
-    if (observed.type !== 'missing' && observed.type !== 'blocked') {
-      collector.add('adapters', 'stale-adapter', targetPath, 'unselected Claude rule pointer remains', {
+    const canonicalDigest = digestBytes(renderLegacyClaudeRulePointer(state.harnessDir, rule));
+    if (observed.type === 'file' && observed.digest === canonicalDigest) {
+      collector.add('adapters', 'stale-adapter', targetPath, 'exact legacy Claude rule pointer remains', {
         action: 'remove-node', expectedType: 'absent', observed, requiresBackup: true,
       });
     }
   }
 }
 
-function planUnselectedSkills(collector, desired, state) {
-  const selected = new Set(state.selections.skills);
-  for (const root of getSkillTargetRootsForAgent(state.selections.agent)) {
-    for (const skill of getAvailableSkillDirs(state.manifest.skillsRoot)) {
-      if (selected.has(skill)) continue;
-      for (const file of getSkillFiles(skill, state.manifest.skillsRoot)) {
-        const targetPath = path.join(state.workspaceDir, ...root.split('/'), skill, ...file.relativePath.split('/'));
-        const observed = inspectNode(targetPath);
-        if (observed.type !== 'missing' && observed.type !== 'blocked') {
-          collector.add('skills', 'stale-skill', targetPath, 'unselected skill template remains', {
-            action: 'remove-node', expectedType: 'absent', observed, requiresBackup: true,
-          });
-        }
-      }
-    }
-  }
-}
+function planStaleSkillArtifacts(collector, desired, state) {
+  const previous = readArtifactRecords(state.manifestInfo.value)
+    .filter((record) => record.kind === 'skill');
+  if (previous.length === 0) return;
+  const activeTargets = new Set(desired.skillArtifacts.map((artifact) => artifact.target));
+  const canonicalByTarget = new Map(renderAllSkillArtifacts(state.manifest.skillsRoot, desired.variables)
+    .map((artifact) => [artifact.target, artifact]));
 
-function planStaleSkills(collector, desired, state) {
-  const active = new Set(getSkillTargetRootsForAgent(state.selections.agent));
-  const roots = ['.claude/skills', '.agents/skills', '.opencode/skills'];
-  for (const root of roots.filter((item) => !active.has(item))) {
-    for (const skill of getAvailableSkillDirs(state.manifest.skillsRoot)) {
-      for (const file of getSkillFiles(skill, state.manifest.skillsRoot)) {
-        const targetPath = path.join(state.workspaceDir, ...root.split('/'), skill, ...file.relativePath.split('/'));
-        const observed = inspectNode(targetPath);
-        if (observed.type !== 'missing' && observed.type !== 'blocked') {
-          collector.add('skills', 'stale-skill', targetPath, 'inactive agent skill template remains', {
-            action: 'remove-node', expectedType: 'absent', observed, requiresBackup: true,
-          });
-        }
-      }
+  for (const record of previous) {
+    if (activeTargets.has(record.target)) continue;
+    const canonical = canonicalByTarget.get(record.target);
+    if (!canonical || canonical.kind !== record.kind || canonical.source !== record.source
+        || canonical.digest !== record.digest) continue;
+    const targetPath = path.join(state.workspaceDir, ...record.target.split('/'));
+    const observed = inspectNode(targetPath);
+    if (observed.type === 'file' && observed.digest === record.digest) {
+      collector.add('skills', 'stale-skill', targetPath, 'inactive ledger-owned skill artifact remains', {
+        action: 'remove-node', expectedType: 'absent', observed, requiresBackup: true,
+      });
+    } else if (observed.type !== 'missing') {
+      collector.add('skills', 'stale-skill-drift', targetPath, 'drifted or unsafe stale skill artifact is preserved');
     }
   }
 }
@@ -486,7 +479,8 @@ function planStaleCommands(collector, desired, state) {
 function planManifest(collector, desired, state) {
   const content = Buffer.from(`${JSON.stringify(desired.status, null, 2)}\n`);
   const observed = inspectNode(desired.statusPath);
-  if (observed.type === 'file' && state.manifestInfo.usable) return;
+  if (observed.type === 'file' && state.manifestInfo.usable
+      && state.manifestInfo.value.schemaVersion === desired.status.schemaVersion) return;
   collector.add('manifest', state.manifestInfo.error ? 'invalid-manifest' : 'manifest-drift', desired.statusPath, state.manifestInfo.error || state.manifestInfo.errors.join('; ') || 'manifest must be regenerated', {
     action: observed.type === 'missing' ? 'write-file' : 'replace-file', content, expectedType: 'file', observed, requiresBackup: observed.type !== 'missing', manifest: true,
   });

@@ -2,6 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const { safeResolveInside, validateRelativePath } = require('../fs-safe');
+const { getRuntimeLayout } = require('../runtime-layout');
 
 const ROOT_DIR = path.resolve(__dirname, '..', '..');
 const TEMPLATE_DIR = path.join(ROOT_DIR, 'templates');
@@ -22,6 +23,7 @@ function validateManifest(manifest) {
   validateSkillsRoot(manifest.skillsRoot);
   validateCommandsRoot(manifest.commandsRoot);
   validateTemplateFiles(manifest);
+  getRuntimeLayout(manifest);
 }
 
 function validateDirectories(manifest) {

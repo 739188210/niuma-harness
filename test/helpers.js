@@ -14,6 +14,7 @@ const { getAvailableRuleDirs, getDefaultRulesForAgent } = require('../src/rules'
 const { renderCommandArtifacts } = require('../src/command-artifacts');
 const { digestBytes } = require('../src/artifact-ledger');
 const { renderRuleArtifacts } = require('../src/rule-artifacts');
+const { renderSkillArtifacts } = require('../src/skill-artifacts');
 const { createTemplateVariables } = require('../src/template-variables');
 const { getAvailableSkillDirs, getSkillTargetRootsForAgent } = require('../src/skills');
 
@@ -143,7 +144,7 @@ function expectedDefaultCommands(agent) {
 function assertManifest(filePath, expected) {
   assertFile(filePath);
   const manifest = readJson(filePath);
-  assert.ok([2, 3].includes(manifest.schemaVersion), 'manifest schemaVersion should be supported');
+  assert.ok([2, 3, 4].includes(manifest.schemaVersion), 'manifest schemaVersion should be supported');
   assert.strictEqual(manifest.agent, expected.agent);
   assert.deepStrictEqual(manifest.rules, expected.rules || expectedDefaultRules(expected.agent));
   assert.deepStrictEqual(manifest.skills, expected.skills || allSkillDirs);
@@ -185,6 +186,7 @@ function assertArtifactRecords(manifestPath, manifest, agent, commandFiles, expl
     agent,
     commandFiles,
     manifest.rules,
+    manifest.skills,
     manifest.harnessDir,
     explicitTargets
   );
@@ -196,14 +198,15 @@ function assertArtifactRecords(manifestPath, manifest, agent, commandFiles, expl
   }
 }
 
-function getExpectedArtifactRecords(agent, commandFiles, rules, harnessDir = 'harness', explicitCommandTargets) {
+function getExpectedArtifactRecords(agent, commandFiles, rules, skills, harnessDir = 'harness', explicitCommandTargets) {
   const variables = createTemplateVariables({ agent, harnessDir }, 'agent-work');
   const commandArtifacts = renderCommandArtifacts(agent, commandFiles, undefined, variables);
   const expectedCommands = explicitCommandTargets
     ? commandArtifacts.filter((artifact) => explicitCommandTargets.includes(artifact.target))
     : commandArtifacts;
   const ruleArtifacts = renderRuleArtifacts(agent, rules, undefined, variables);
-  return [...expectedCommands, ...ruleArtifacts]
+  const skillArtifacts = renderSkillArtifacts(agent, skills, undefined, variables);
+  return [...expectedCommands, ...ruleArtifacts, ...skillArtifacts]
     .map(({ kind, source, target, digest, content }) => ({
       kind,
       source,

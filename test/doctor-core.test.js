@@ -105,6 +105,36 @@ test('doctor fails on invalid JSON manifest', () => {
   assert.match(result.stdout, /invalid manifest\.json/);
 });
 
+test('doctor reports invalid agents without throwing', () => {
+  for (const agent of [undefined, 'unknown']) {
+    const workspace = tempDir();
+    const init = run(['init', workspace, '--agent', 'claude']);
+    assert.strictEqual(init.status, 0, init.stderr);
+    updateManifest(workspace, (manifest) => {
+      if (agent === undefined) delete manifest.agent;
+      else manifest.agent = agent;
+    });
+
+    const result = run(['doctor', workspace]);
+    assert.notStrictEqual(result.status, 0, 'doctor should reject an invalid agent');
+    assert.match(result.stdout, /invalid agent|missing agent/);
+    assert.doesNotMatch(result.stderr, /Unsupported agent/);
+  }
+});
+
+test('doctor reports invalid agents with module topology without throwing', () => {
+  const workspace = tempDir();
+  fs.mkdirSync(path.join(workspace, 'apps', 'admin'), { recursive: true });
+  const init = run(['init', workspace, '--agent', 'multi', '--modules', 'apps/admin']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  updateManifest(workspace, (manifest) => { manifest.agent = 'unknown'; });
+
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'doctor should reject an invalid agent');
+  assert.match(result.stdout, /invalid agent/);
+  assert.doesNotMatch(result.stderr, /Unsupported agent/);
+});
+
 test('doctor fails when an entry file is missing', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);

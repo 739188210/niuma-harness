@@ -1,7 +1,9 @@
 require('./temp-cleanup.test');
 require('./fs-safe.test');
+require('./runtime-layout.test');
 require('./artifact-ledger.test');
 require('./rule-artifacts.test');
+require('./agent-native-targets.test');
 require('./agent-switch.test');
 require('./workspace-harness-conflict.test');
 require('./init.test');

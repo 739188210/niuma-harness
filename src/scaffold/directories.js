@@ -2,11 +2,11 @@
 const { ensureDir, inspectDirectoryTarget, safeResolveInside } = require('../fs-safe');
 
 function prepareDirectoryPlan(context) {
-  const { manifest, targetDir, workspaceDir } = context;
+  const { manifest, runtimeLayout, targetDir, workspaceDir } = context;
   return [
     targetDir,
     ...manifest.directories.map((directory) => safeResolveInside(targetDir, directory, 'directory target')),
-    ...(manifest.workDirectories || []).map((directory) => safeResolveInside(workspaceDir, directory, 'work directory target')),
+    ...runtimeLayout.workDirectories.map((directory) => safeResolveInside(workspaceDir, directory, 'work directory target')),
   ].map((targetPath) => ({
     action: inspectDirectoryTarget(targetPath) ? 'skip' : 'create',
     targetPath,

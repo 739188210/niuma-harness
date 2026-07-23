@@ -5,12 +5,13 @@ const { getCommandArtifactDescriptors } = require('../commands');
 const { digestBytes, findArtifactRecord, validateArtifactRecords } = require('../artifact-ledger');
 const { assertNoSymlinkInPath, safeResolveInside } = require('../fs-safe');
 const { renderRuleArtifacts } = require('../rule-artifacts');
+const { renderSkillArtifacts } = require('../skill-artifacts');
 const { createTemplateVariables } = require('../template-variables');
 const { addError, addOk } = require('./result');
 
 function checkArtifactFiles(context) {
   const { agent, commands, result, status, workspaceRoot } = context;
-  if (![2, 3].includes(status.schemaVersion)) {
+  if (![2, 3, 4].includes(status.schemaVersion)) {
     return;
   }
 
@@ -23,6 +24,10 @@ function checkArtifactFiles(context) {
   }
   context.artifacts = artifacts;
   addOk(result, `artifacts ${artifacts.length}`);
+  if (status.schemaVersion < 4 && artifacts.some((record) => record.kind === 'skill')) {
+    addError(result, 'skill artifact records require schemaVersion 4');
+    return;
+  }
 
   const commandArtifacts = artifacts.filter((record) => record.kind === 'command');
   let activeCommandArtifacts = commandArtifacts;
@@ -40,7 +45,7 @@ function checkArtifactFiles(context) {
   if (agent && context.rules) {
     const variables = createTemplateVariables(
       { agent, harnessDir: path.basename(context.harnessRoot) },
-      context.templateManifest.workDirectory || 'agent-work'
+      context.runtimeLayout.workDirectory
     );
     const expectedRules = renderRuleArtifacts(
       agent,
@@ -51,6 +56,24 @@ function checkArtifactFiles(context) {
     const ruleArtifacts = artifacts.filter((record) => record.kind === 'rule');
     const activeRuleArtifacts = checkExpectedRuleRecords(result, artifacts, ruleArtifacts, expectedRules);
     for (const record of activeRuleArtifacts) {
+      checkArtifactFile(workspaceRoot, result, record);
+    }
+  }
+
+  if (status.schemaVersion >= 4 && agent && context.skills) {
+    const variables = createTemplateVariables(
+      { agent, harnessDir: path.basename(context.harnessRoot) },
+      context.runtimeLayout.workDirectory
+    );
+    const expectedSkills = renderSkillArtifacts(
+      agent,
+      context.skills,
+      context.templateManifest.skillsRoot,
+      variables
+    );
+    const skillArtifacts = artifacts.filter((record) => record.kind === 'skill');
+    const activeSkillArtifacts = checkExpectedSkillRecords(result, artifacts, skillArtifacts, expectedSkills);
+    for (const record of activeSkillArtifacts) {
       checkArtifactFile(workspaceRoot, result, record);
     }
   }
@@ -101,6 +124,31 @@ function checkExpectedRuleRecords(result, artifacts, ruleArtifacts, expected) {
     const descriptor = expectedByTarget.get(record.target);
     if (!descriptor || record.source !== descriptor.source) {
       addError(result, `inactive rule artifact record ${record.target}`);
+    }
+  }
+  return active;
+}
+
+function checkExpectedSkillRecords(result, artifacts, skillArtifacts, expected) {
+  const expectedByTarget = new Map(expected.map((descriptor) => [descriptor.target, descriptor]));
+  const active = [];
+  for (const descriptor of expected) {
+    const record = artifacts.find((item) => item.target === descriptor.target);
+    if (!record) {
+      addError(result, `missing skill artifact record ${descriptor.target}`);
+      continue;
+    }
+    if (record.kind !== descriptor.kind || record.source !== descriptor.source || record.digest !== descriptor.digest) {
+      addError(result, `invalid skill artifact record ${descriptor.target}`);
+      continue;
+    }
+    active.push(record);
+    addOk(result, `skill artifact record ${descriptor.target}`);
+  }
+  for (const record of skillArtifacts) {
+    const descriptor = expectedByTarget.get(record.target);
+    if (!descriptor || record.source !== descriptor.source || record.digest !== descriptor.digest) {
+      addError(result, `inactive skill artifact record ${record.target}`);
     }
   }
   return active;

@@ -9,7 +9,7 @@ const {
   writeFile,
 } = require('../fs-safe');
 const { renderEntry } = require('../entry-renderer');
-const { renderTemplate } = require('./templates');
+const { renderTemplate } = require('../generator/template-renderer');
 const {
   analyzeContractBlock,
   removeContractBlock,

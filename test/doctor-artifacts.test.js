@@ -131,6 +131,78 @@ test('doctor fails when schemaVersion 2 artifacts are missing', () => {
   assert.match(result.stdout, /artifacts must be an array/);
 });
 
+test('doctor rejects schema-4 selected skill records that differ from canonical descriptors', async (t) => {
+  const cases = [
+    {
+      name: 'missing record',
+      mutate(manifest, record) {
+        manifest.artifacts = manifest.artifacts.filter((item) => item !== record);
+      },
+      expected: /missing skill artifact record/,
+    },
+    {
+      name: 'wrong kind',
+      mutate(_manifest, record) { record.kind = 'command'; },
+      expected: /invalid skill artifact record/,
+    },
+    {
+      name: 'wrong source',
+      mutate(_manifest, record) { record.source = 'skills\/forged\/SKILL.md'; },
+      expected: /invalid skill artifact record/,
+    },
+    {
+      name: 'wrong digest',
+      mutate(_manifest, record) { record.digest = `sha256:${'0'.repeat(64)}`; },
+      expected: /invalid skill artifact record/,
+    },
+    {
+      name: 'inactive record',
+      mutate(manifest) { manifest.skills = []; },
+      expected: /inactive skill artifact record/,
+    },
+  ];
+
+  for (const scenario of cases) {
+    await t.test(scenario.name, () => {
+      const workspace = tempDir();
+      const init = run(['init', workspace, '--agent', 'claude', '--skills', primarySkill]);
+      assert.strictEqual(init.status, 0, init.stderr);
+      updateManifest(workspace, (manifest) => {
+        const record = manifest.artifacts.find((item) => item.kind === 'skill'
+          && item.target === `.claude/skills/${primarySkill}/SKILL.md`);
+        scenario.mutate(manifest, record);
+      });
+      const result = run(['doctor', workspace]);
+      assert.notStrictEqual(result.status, 0, 'doctor should reject invalid skill ownership');
+      assert.match(result.stdout, scenario.expected);
+    });
+  }
+});
+
+test('doctor keeps schema-3 manifests compatible without skill ledger records', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  updateManifest(workspace, (manifest) => {
+    manifest.schemaVersion = 3;
+    manifest.artifacts = manifest.artifacts.filter((item) => item.kind !== 'skill');
+  });
+  const result = run(['doctor', workspace]);
+  assert.strictEqual(result.status, 0, result.stdout);
+});
+
+test('doctor rejects skill ledger records in schema-3 manifests', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  updateManifest(workspace, (manifest) => {
+    manifest.schemaVersion = 3;
+  });
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, 'schema-3 cannot own skill records');
+  assert.match(result.stdout, /skill artifact records require schemaVersion 4/);
+});
+
 test('doctor fails when a command artifact record is missing', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);

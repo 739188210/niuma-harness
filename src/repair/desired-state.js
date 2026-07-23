@@ -1,25 +1,29 @@
 const path = require('path');
 const { getAllEntryFiles, getEntryFilesForAgent } = require('../agents');
+const {
+  getAllRuleAdapterTargets,
+  isRuleArtifactManagedByAdapter,
+} = require('../agent-native-targets');
 const { digestBytes, validateArtifactRecords } = require('../artifact-ledger');
 const { renderCommandArtifacts } = require('../command-artifacts');
 const { renderRuleArtifacts } = require('../rule-artifacts');
 const { getAvailableRuleDirs, getRuleAdapterTargetsForAgent } = require('../rules');
-const { getAvailableSkillDirs, getSkillFiles, getSkillTargetRootsForAgent } = require('../skills');
+const { getAvailableSkillDirs } = require('../skills');
+const { renderSkillArtifacts } = require('../skill-artifacts');
 const { createStatus } = require('../harness-status');
 const { createTemplateVariables } = require('../template-variables');
-const { TEMPLATE_DIR } = require('./manifest');
-const { renderTemplate } = require('./templates');
-const { renderTopologyRoute } = require('./topology-writer');
+const { renderTemplate } = require('../generator/template-renderer');
+const { renderTopologyRoute } = require('../scaffold/topology-writer');
 
 function createDesiredState(input) {
-  const { agent, commands, harnessDir, manifest, rules, skills, topology = { mode: 'single', modules: [] }, moduleSupplements = [], workspaceDir } = input;
+  const { agent, commands, harnessDir, manifest, runtimeLayout, rules, skills, topology = { mode: 'single', modules: [] }, moduleSupplements = [], workspaceDir } = input;
   const targetDir = path.join(workspaceDir, harnessDir);
-  const workDirectory = manifest.workDirectory || 'agent-work';
+  const { workDirectory } = runtimeLayout;
   const variables = createTemplateVariables({ agent, harnessDir }, workDirectory);
   const directories = [
     targetDir,
     ...manifest.directories.map((item) => path.join(targetDir, ...item.split('/'))),
-    ...(manifest.workDirectories || []).map((item) => path.join(workspaceDir, ...item.split('/'))),
+    ...runtimeLayout.workDirectories.map((item) => path.join(workspaceDir, ...item.split('/'))),
   ];
   const files = [];
 
@@ -63,13 +67,13 @@ function createDesiredState(input) {
   }
 
   const adapterTargets = getRuleAdapterTargetsForAgent(agent);
-  for (const root of getSkillTargetRootsForAgent(agent)) {
-    for (const skill of skills) {
-      for (const file of getSkillFiles(skill, manifest.skillsRoot)) {
-        const source = path.relative(TEMPLATE_DIR, file.sourcePath).split(path.sep).join('/');
-        files.push(descriptor(workspaceDir, path.join(workspaceDir, ...root.split('/'), skill, ...file.relativePath.split('/')), renderTemplate(source, variables), 'tool', 'skills'));
-      }
-    }
+  const skillArtifacts = renderSkillArtifacts(agent, skills, manifest.skillsRoot, variables)
+    .map((item) => ({
+      ...item,
+      targetPath: path.join(workspaceDir, ...item.target.split('/')),
+    }));
+  for (const artifact of skillArtifacts) {
+    files.push(descriptor(workspaceDir, artifact.targetPath, artifact.content, 'tool', 'skills'));
   }
 
   const commandArtifacts = renderCommandArtifacts(agent, commands, manifest.commandsRoot, variables)
@@ -78,9 +82,9 @@ function createDesiredState(input) {
       digest: digestBytes(Buffer.from(item.content, 'utf8')),
       targetPath: path.join(workspaceDir, ...item.target.split('/')),
     }));
-  const records = validateArtifactRecords([...commandArtifacts, ...ruleArtifacts]
+  const records = validateArtifactRecords([...commandArtifacts, ...ruleArtifacts, ...skillArtifacts]
     .map((item) => ({ kind: item.kind, source: item.source, target: item.target, digest: item.digest })));
-  const artifactByTarget = new Map([...commandArtifacts, ...ruleArtifacts].map((item) => [item.target, item]));
+  const artifactByTarget = new Map([...commandArtifacts, ...ruleArtifacts, ...skillArtifacts].map((item) => [item.target, item]));
   const artifacts = records.map((record) => ({ ...artifactByTarget.get(record.target), ...record }));
   for (const artifact of commandArtifacts) {
     files.push(descriptor(workspaceDir, artifact.targetPath, artifact.content, 'command', 'commands'));
@@ -96,7 +100,7 @@ function createDesiredState(input) {
     skills,
     topology,
     moduleSupplements,
-  }, { workDirectory });
+  }, runtimeLayout);
 
   for (const file of files) {
     let current = path.dirname(file.targetPath);
@@ -112,6 +116,7 @@ function createDesiredState(input) {
     artifacts,
     commandArtifacts,
     ruleArtifacts,
+    skillArtifacts,
     availableRules,
     availableSkills: getAvailableSkillDirs(manifest.skillsRoot),
     directories: [...new Set(directories)].sort((left, right) => left.length - right.length || left.localeCompare(right)),
@@ -126,13 +131,15 @@ function createDesiredState(input) {
 }
 
 function createOpenCodeDesired(targets, ruleArtifacts) {
-  const active = targets.some((item) => item.kind === 'opencode-instructions');
+  const target = targets.find((item) => item.kind === 'opencode-instructions');
+  const knownTarget = getAllRuleAdapterTargets()
+    .find((item) => item.kind === 'opencode-instructions');
   return {
-    active,
-    paths: active ? ruleArtifacts
-      .filter((artifact) => artifact.target.startsWith('.opencode/rules/'))
+    active: Boolean(target),
+    paths: target ? ruleArtifacts
+      .filter((artifact) => isRuleArtifactManagedByAdapter(target, artifact.target))
       .map((artifact) => artifact.target) : [],
-    target: 'opencode.json',
+    target: (target || knownTarget).file,
   };
 }
 

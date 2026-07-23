@@ -14,11 +14,8 @@ const {
   safeResolveInside,
   writeFile,
 } = require('../fs-safe');
-const {
-  getAvailableRuleDirs,
-  getLegacyRuleTargetRootsForAgent,
-  getRuleTargetRootsForAgent,
-} = require('../rules');
+const { getAllKnownRuleTargetRoots } = require('../agent-native-targets');
+const { getAvailableRuleDirs } = require('../rules');
 
 function prepareRulePlan(context) {
   const availableRules = getAvailableRuleDirs(context.manifest.rulesRoot);
@@ -76,12 +73,7 @@ function prepareRulePlan(context) {
 }
 
 function getKnownRuleTargetRoots() {
-  const roots = new Set();
-  for (const agent of ['claude', 'opencode', 'multi']) {
-    for (const root of getRuleTargetRootsForAgent(agent)) roots.add(root);
-    for (const root of getLegacyRuleTargetRootsForAgent(agent)) roots.add(root);
-  }
-  return [...roots];
+  return getAllKnownRuleTargetRoots();
 }
 
 function prepareArtifact(context, artifact, operation) {

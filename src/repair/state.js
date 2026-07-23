@@ -4,12 +4,14 @@ const { getEntryFilesForAgent, normalizeAgent } = require('../agents');
 const { digestBytes, validateArtifactRecords } = require('../artifact-ledger');
 const { renderCommandArtifacts } = require('../command-artifacts');
 const { renderRuleArtifacts } = require('../rule-artifacts');
+const { renderSkillArtifacts } = require('../skill-artifacts');
 const { canonicalizeWorkspacePath } = require('../fs-safe');
 const { getAvailableCommandFiles, getDefaultCommandsForAgent } = require('../commands');
 const { getAvailableRuleDirs, getDefaultRulesForAgent, normalizeConcreteRules } = require('../rules');
 const { getAvailableSkillDirs, normalizeConcreteSkills } = require('../skills');
-const { loadManifest, validateManifest } = require('../scaffold/manifest');
+const { loadManifest, validateManifest } = require('../generator/template-manifest');
 const { createTemplateVariables } = require('../template-variables');
+const { assertWorkDirBinding, getRuntimeLayout } = require('../runtime-layout');
 const { hasDamagedHarnessStructure, scanWorkspaceHarnesses } = require('../workspace-harnesses');
 const { validateTopologyShape } = require('../topology');
 
@@ -25,9 +27,11 @@ async function resolveRepairState(options, chooseAgent) {
   if (!location.recognized) {
     throw new Error(`No Niuma harness found at ${location.harnessRoot}. Run init before repair.`);
   }
+  const runtimeLayout = getRuntimeLayout(manifest);
   const parsed = parseManifestSelections(
     manifestInfo.value,
     location.harnessDir,
+    runtimeLayout,
     manifest,
     availableCommands,
     availableRules,
@@ -61,6 +65,7 @@ async function resolveRepairState(options, chooseAgent) {
     harnessDir: location.harnessDir,
     manifest,
     manifestInfo: { ...manifestInfo, errors: parsed.errors, usable: parsed.usable },
+    runtimeLayout,
     manifestPath: location.manifestPath,
     selections: {
       agent,
@@ -159,15 +164,15 @@ function readRepairManifest(manifestPath) {
   }
 }
 
-function parseManifestSelections(value, harnessDir, manifest, commands, rules, skills) {
+function parseManifestSelections(value, harnessDir, runtimeLayout, manifest, commands, rules, skills) {
   const errors = [];
   if (!value || Array.isArray(value) || typeof value !== 'object') {
     return { agent: null, errors: ['manifest must be an object'], rules: null, skills: null, usable: false };
   }
-  if (![2, 3].includes(value.schemaVersion)) errors.push('schemaVersion must be 2 or 3');
+  if (![2, 3, 4].includes(value.schemaVersion)) errors.push('schemaVersion must be 2, 3, or 4');
   if (value.createdBy !== 'niuma-harness') errors.push('createdBy must be niuma-harness');
   if (value.harnessDir !== harnessDir) errors.push(`harnessDir must be ${harnessDir}`);
-  if (value.workDir !== 'agent-work') errors.push('workDir must match package manifest: agent-work');
+  try { assertWorkDirBinding(value.workDir, runtimeLayout); } catch (error) { errors.push(error.message); }
   let agent = null;
   try { agent = normalizeAgent(value.agent); } catch (error) { errors.push(error.message); }
   if (!agent) errors.push('agent is missing');
@@ -176,7 +181,7 @@ function parseManifestSelections(value, harnessDir, manifest, commands, rules, s
   let topology = { mode: 'single', modules: [] };
   let moduleSupplements = [];
   let topologyInvalid = false;
-  if (value.schemaVersion === 3) {
+  if (value.schemaVersion >= 3) {
     try {
       validateTopologyShape(value.topology, value.moduleSupplements);
       topology = value.topology;
@@ -219,7 +224,7 @@ function parseManifestSelections(value, harnessDir, manifest, commands, rules, s
     const actual = validateArtifactRecords(value.artifacts);
     if (agent) {
       const expectedCommands = getDefaultCommandsForAgent(agent, commands);
-      const variables = createTemplateVariables({ agent, harnessDir }, manifest.workDirectory || 'agent-work');
+      const variables = createTemplateVariables({ agent, harnessDir }, runtimeLayout.workDirectory);
       const commandRecords = renderCommandArtifacts(agent, expectedCommands, manifest.commandsRoot, variables)
         .map((artifact) => ({
           digest: digestBytes(Buffer.from(artifact.content, 'utf8')),
@@ -236,8 +241,21 @@ function parseManifestSelections(value, harnessDir, manifest, commands, rules, s
             target: artifact.target,
           }))
         : [];
-      const expected = validateArtifactRecords([...commandRecords, ...ruleRecords]);
-      if (JSON.stringify(actual) !== JSON.stringify(expected)) errors.push('artifacts must match package commands and selected rules');
+      const skillRecords = value.schemaVersion >= 4 && normalizedSkills
+        ? renderSkillArtifacts(agent, normalizedSkills, manifest.skillsRoot, variables)
+          .map((artifact) => ({
+            digest: artifact.digest,
+            kind: artifact.kind,
+            source: artifact.source,
+            target: artifact.target,
+          }))
+        : [];
+      const expected = validateArtifactRecords([...commandRecords, ...ruleRecords, ...skillRecords]);
+      if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+        errors.push(value.schemaVersion >= 4
+          ? 'artifacts must match package commands, selected rules, and selected skills'
+          : 'artifacts must match package commands and selected rules');
+      }
     }
   } catch (error) { errors.push(error.message); }
   return {

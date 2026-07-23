@@ -17,7 +17,7 @@ const {
   getAvailableSkillDirs,
   normalizeConcreteSkills,
 } = require('./skills');
-const { loadManifest, validateManifest } = require('./scaffold/manifest');
+const { loadManifest, validateManifest } = require('./generator/template-manifest');
 const { createDirectories, prepareDirectoryPlan } = require('./scaffold/directories');
 const { prepareFilePlan, writeFilePlan } = require('./scaffold/entries');
 const { getModuleSupplementRecords, prepareModuleEntryPlan, writeModuleEntryPlan } = require('./scaffold/module-entries');
@@ -31,6 +31,7 @@ const { prepareRulePlan, writeRuleFiles } = require('./scaffold/rules-writer');
 const { prepareSkillPlan, writeSkillFiles } = require('./scaffold/skills-writer');
 const { prepareStatusPlan, writeStatusFile } = require('./scaffold/status-writer');
 const { createTemplateVariables } = require('./template-variables');
+const { getRuntimeLayout } = require('./runtime-layout');
 const {
   findCompetingHarnesses,
   formatCompetingHarnessError,
@@ -60,8 +61,8 @@ function createInitContext(options) {
   const manifest = loadManifest();
   validateManifest(manifest);
 
-  const workDirectory = manifest.workDirectory || 'agent-work';
-  assertHarnessDirAvailable(options, workDirectory);
+  const runtimeLayout = getRuntimeLayout(manifest);
+  assertHarnessDirAvailable(options, runtimeLayout.workDirectory);
   const availableCommands = getAvailableCommandFiles(manifest.commandsRoot);
   assertCommandSkillIdsAvailable(availableCommands, getAvailableSkillDirs(manifest.skillsRoot));
   const commands = getDefaultCommandsForAgent(options.agent, availableCommands);
@@ -79,19 +80,23 @@ function createInitContext(options) {
     options,
     previousStatus,
     printAction,
+    runtimeLayout,
     targetDir,
     topology,
-    variables: createTemplateVariables(options, workDirectory),
-    workDirectory,
+    variables: createTemplateVariables(options, runtimeLayout.workDirectory),
+    workDirectory: runtimeLayout.workDirectory,
     workspaceDir,
   };
   const preparedCommands = prepareCommandPlan(context);
   context.commandPlan = preparedCommands.plan;
   const preparedRules = prepareRulePlan(context);
   context.rulePlan = preparedRules.plan;
+  const preparedSkills = prepareSkillPlan(context);
+  context.skillPlan = preparedSkills.plan;
   context.artifacts = validateArtifactRecords([
     ...preparedCommands.artifacts,
     ...preparedRules.artifacts,
+    ...preparedSkills.artifacts,
   ]);
   context.directoryPlan = prepareDirectoryPlan(context);
   context.topologyPlan = prepareTopologyPlan(context);
@@ -99,7 +104,6 @@ function createInitContext(options) {
   context.moduleEntryPlan = prepareModuleEntryPlan(context);
   context.moduleSupplements = getModuleSupplementRecords(context.moduleEntryPlan);
   context.ruleAdapterPlan = prepareRuleAdapterPlan(context);
-  context.skillPlan = prepareSkillPlan(context);
   context.statusPlan = prepareStatusPlan(context);
   return context;
 }
@@ -123,8 +127,8 @@ function readPreviousStatus(targetDir, harnessDir, availableCommands, availableS
   if (!status || Array.isArray(status) || typeof status !== 'object') {
     throw new Error(`invalid previous ${STATUS_FILE}: expected a JSON object`);
   }
-  if (![2, 3].includes(status.schemaVersion) || status.createdBy !== 'niuma-harness') {
-    throw new Error(`unsupported previous ${STATUS_FILE}; schemaVersion 2 or 3 ownership data is required`);
+  if (![2, 3, 4].includes(status.schemaVersion) || status.createdBy !== 'niuma-harness') {
+    throw new Error(`unsupported previous ${STATUS_FILE}; schemaVersion 2, 3, or 4 ownership data is required`);
   }
   if (status.harnessDir !== harnessDir) {
     throw new Error(`invalid previous ${STATUS_FILE}: harnessDir must be ${harnessDir}`);
@@ -152,7 +156,7 @@ function readPreviousStatus(targetDir, harnessDir, availableCommands, availableS
   if (!sameStringArray(status.skills, skills)) {
     throw new Error(`invalid previous ${STATUS_FILE}: skills must be canonical`);
   }
-  if (status.schemaVersion === 3) {
+  if (status.schemaVersion >= 3) {
     const { validateTopologyShape } = require('./topology');
     try {
       validateTopologyShape(status.topology, status.moduleSupplements);
@@ -169,10 +173,11 @@ function readPreviousStatus(targetDir, harnessDir, availableCommands, availableS
 
   return {
     agent,
+    schemaVersion: status.schemaVersion,
     artifacts,
     commands,
-    moduleSupplements: status.schemaVersion === 3 && Array.isArray(status.moduleSupplements) ? status.moduleSupplements : [],
-    topology: status.schemaVersion === 3 ? status.topology : { mode: 'single', modules: [] },
+    moduleSupplements: status.schemaVersion >= 3 && Array.isArray(status.moduleSupplements) ? status.moduleSupplements : [],
+    topology: status.schemaVersion >= 3 ? status.topology : { mode: 'single', modules: [] },
     openCodeInstructions,
     rules,
     skills,

@@ -1,21 +1,12 @@
 // commands 分发模型：从 templates/commands 发现命令源模板，并映射到各 agent 的原生产物。
 const fs = require('fs');
 const path = require('path');
+const { getCommandTargetsForAgent } = require('./agent-native-targets');
 const { parseMarkdownFrontmatter } = require('./frontmatter');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const TEMPLATE_DIR = path.join(ROOT_DIR, 'templates');
 const DEFAULT_COMMANDS_ROOT = 'commands';
-const COMMAND_TARGETS = {
-  claude: [{ kind: 'claude-command', root: '.claude/commands' }],
-  codex: [{ kind: 'codex-skill-command', root: '.agents/skills' }],
-  opencode: [{ kind: 'opencode-command', root: '.opencode/commands' }],
-  multi: [
-    { kind: 'claude-command', root: '.claude/commands' },
-    { kind: 'codex-skill-command', root: '.agents/skills' },
-    { kind: 'opencode-command', root: '.opencode/commands' },
-  ],
-};
 
 function getCommandsRootPath(commandsRoot = DEFAULT_COMMANDS_ROOT) {
   return path.join(TEMPLATE_DIR, ...String(commandsRoot || DEFAULT_COMMANDS_ROOT).split(/[\\/]+/));
@@ -89,15 +80,6 @@ function parseCommandSpec(commandFile, content) {
     argumentHint: parsed.fields['argument-hint'] || '',
     body: parsed.body,
   };
-}
-
-function getCommandTargetsForAgent(agent) {
-  const targets = COMMAND_TARGETS[agent];
-  if (!targets) {
-    throw new Error(`unknown agent for command targets: ${agent}`);
-  }
-
-  return targets.map((target) => ({ ...target }));
 }
 
 function getCommandArtifactDescriptors(agent, commandFiles) {

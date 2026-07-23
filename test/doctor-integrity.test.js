@@ -80,14 +80,13 @@ test('doctor preserves rules selection semantics and rejects stale excluded surf
   expectDoctorError(excludedWorkspace, /unexpected managed content \.claude\/rules\/web\/testing\.md/);
 });
 
-test('doctor rejects known files from unselected skills but preserves local files', () => {
+test('doctor preserves matching-path files for unselected skills without ledger ownership', () => {
   const workspace = initWorkspace('claude', ['--skills', 'none']);
   const skillRoot = path.join(workspace, '.claude', 'skills', 'zentao-bug-workflow');
   fs.mkdirSync(skillRoot, { recursive: true });
   fs.writeFileSync(path.join(skillRoot, 'zentao.config.json'), '{"local":true}\n', 'utf8');
+  fs.writeFileSync(path.join(skillRoot, 'SKILL.md'), 'user-owned matching path\n', 'utf8');
   assert.strictEqual(doctor(workspace).status, 0);
-  fs.writeFileSync(path.join(skillRoot, 'SKILL.md'), 'stale\n', 'utf8');
-  expectDoctorError(workspace, /unexpected managed content \.claude\/skills\/zentao-bug-workflow\/SKILL\.md/);
 });
 
 test('doctor detects exact drift in tool-managed core and work templates', () => {

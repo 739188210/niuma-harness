@@ -89,9 +89,9 @@ Dependency-free CommonJS Node CLI. `bin/niuma-harness.js` invokes `main()` from 
 
 1. `src/args.js` parses CLI flags and normalizes agent, rule, and skill selections. `src/commands.js` separately discovers command templates and maps them to agent-native artifacts.
 2. `src/cli.js` fills a missing `--agent` via `src/prompts.js` in TTY mode, finalizes default/agent rules, then dispatches.
-3. `src/scaffold.js` builds the init context from `templates/manifest.json` and preflights ownership-sensitive plans before writing. It applies directories, entry/core files, canonical rules, native rule adapters, skills, and command artifacts through `src/scaffold/*`, then writes the generated `harness/manifest.json` last via `src/scaffold/status-writer.js`.
+3. `src/generator/` owns the package-template manifest and rendering primitives. `src/scaffold.js` builds the init context from them and preflights ownership-sensitive plans before writing. It applies directories, entry/core files, canonical rules, native rule adapters, skills, and command artifacts through `src/scaffold/*`, then writes the generated `harness/manifest.json` last via `src/scaffold/status-writer.js`.
 4. `src/doctor.js` locates generated `manifest.json`, then `src/doctor/checks.js` validates the harness root, workspace `agent-work/`, entry contract integrity, selected rules, skills, commands, and required docs.
-5. `src/repair.js` is the recovery path for unhealthy or drifted installed state, not a force mode for init. It builds canonical desired state through `src/scaffold/desired-state.js`, prints the complete plan, creates and verifies permanent no-follow backups under `.niuma-harness/repairs/`, revalidates observations, applies with the manifest last, runs Doctor, and performs best-effort synchronous rollback on validation failure. Focused stages live under `src/repair/`.
+5. `src/repair.js` is the recovery path for unhealthy or drifted installed state, not a force mode for init. It builds canonical desired state through `src/repair/desired-state.js`, prints the complete plan, creates and verifies permanent no-follow backups under `.niuma-harness/repairs/`, revalidates observations, applies with the manifest last, runs Doctor, and performs best-effort synchronous rollback on validation failure. Focused stages live under `src/repair/`.
 
 `src/fs-safe.js` centralizes path confinement and symlink refusal for scaffold writes/removals. `src/contract.js` owns the managed contract markers and replacement helpers used by both entry merging and doctor integrity checks.
 
@@ -117,3 +117,21 @@ Tests use `node:test`, built-in `assert`, temporary workspaces, and the real CLI
 - `test/helpers.js`, `test/init-fixtures.js`, and `test/support/` hold shared temporary-workspace, CLI, assertion, and test-domain helpers.
 
 When changing scaffold behavior, update `templates/manifest.json`, the relevant writer/checker, and focused tests together so generated files and doctor validation stay aligned.
+
+
+## Compact Instructions
+
+当自动压缩上下文时，请优先保留：
+
+- 当前任务目标、验收标准和用户明确的偏好；
+- 已确认的架构决策，以及被否决方案的原因；
+- 修改过的文件、关键函数、接口契约和数据结构；
+- 未解决的错误：完整报错、复现条件、已排除的原因；
+- 已执行的测试、结果、尚未执行的验证步骤；
+- 明确的待办事项、依赖关系和建议执行顺序。
+
+可以省略：
+
+- 已完成且不再影响后续工作的工具输出；
+- 可由代码或 Git 历史重新获得的冗长细节；
+- 被证伪且与当前决策无关的探索过程。

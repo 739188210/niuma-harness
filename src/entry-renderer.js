@@ -1,12 +1,14 @@
+const { getRuleEntryInjectionForAgent } = require('./agent-native-targets');
 const { renderCodexRulesBlock } = require('./rule-artifacts');
 const { createTemplateVariables } = require('./template-variables');
-const { renderTemplate } = require('./scaffold/templates');
+const { renderTemplate } = require('./generator/template-renderer');
 
 function renderEntry(agent, entryFile, rules, harnessDir, workDirectory, rulesRoot, topology = { mode: 'single', modules: [] }) {
   const variables = createTemplateVariables({ agent, harnessDir }, workDirectory);
   const hasModules = Array.isArray(topology && topology.modules) && topology.modules.length > 0;
   Object.assign(variables, entryTopologyGuidance(hasModules, harnessDir));
-  variables.CODEX_RULES = entryFile === 'AGENTS.md' && (agent === 'codex' || agent === 'multi')
+  const ruleInjection = getRuleEntryInjectionForAgent(agent);
+  variables.CODEX_RULES = ruleInjection && entryFile === ruleInjection.entryFile
     ? renderCodexRulesBlock(rules, rulesRoot, variables)
     : '';
   return renderTemplate('entry/entry.md', variables);

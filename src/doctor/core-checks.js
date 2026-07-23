@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { getAllEntryFiles, getEntryFilesForAgent } = require('../agents');
 const { assertNoSymlinkInPath, safeResolveInside } = require('../fs-safe');
+const { resolveRuntimePaths } = require('../runtime-layout');
 const { renderEntry } = require('../entry-renderer');
 const { analyzeContractBlock, sliceContractBlock } = require('../contract');
 const { addError, addOk } = require('./result');
@@ -39,7 +40,7 @@ function checkInactiveEntryContracts(context, activeEntries) {
     'CLAUDE.md',
     [],
     harnessDir,
-    context.templateManifest.workDirectory || 'agent-work',
+    context.runtimeLayout.workDirectory,
     context.templateManifest.rulesRoot,
     topology
   )).replace(/\r\n/g, '\n'));
@@ -111,7 +112,7 @@ function checkEntryContractIntegrity(context) {
       entryFile,
       context.rules || [],
       harnessDir,
-      context.templateManifest.workDirectory || 'agent-work',
+      context.runtimeLayout.workDirectory,
       context.templateManifest.rulesRoot,
       status.topology
     ));
@@ -199,29 +200,18 @@ function checkTemplateFiles(context) {
 
 // workDir 位于 workspace 根（harness 目录的父级）。
 function checkWorkDir(context) {
-  const { result, status, workspaceRoot } = context;
-  if (!status.workDir) {
-    addError(result, 'missing workDir');
-    return;
-  }
-
-  const workDir = resolveWorkDir(workspaceRoot, status.workDir, result);
-  if (!workDir) {
-    return;
-  }
-
-  checkDirectory(workDir, `${status.workDir}/`, result);
-  checkRegularFile(path.join(workDir, 'README.md'), `${status.workDir}/README.md`, result);
-  checkDirectory(path.join(workDir, 'tasks'), `${status.workDir}/tasks/`, result);
-}
-
-function resolveWorkDir(workspaceRoot, workDir, result) {
+  const { result, runtimeLayout, workspaceRoot } = context;
+  let runtimePaths;
   try {
-    return safeResolveInside(workspaceRoot, workDir, 'workDir');
+    runtimePaths = resolveRuntimePaths(workspaceRoot, runtimeLayout);
   } catch (error) {
     addError(result, error.message);
-    return null;
+    return;
   }
+
+  checkDirectory(runtimePaths.workDir, `${runtimeLayout.workDirectory}/`, result);
+  checkRegularFile(runtimePaths.readmePath, runtimeLayout.readmeTarget, result);
+  checkDirectory(runtimePaths.tasksPath, `${runtimeLayout.tasksDirectory}/`, result);
 }
 
 function checkRelativeFile(harnessRoot, relativePath, label, result) {

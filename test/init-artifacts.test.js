@@ -55,7 +55,7 @@ test('same-agent re-init preserves command and rule records in the mixed ledger'
   result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   const kinds = new Set(readJson(path.join(workspace, 'harness', 'manifest.json')).artifacts.map((record) => record.kind));
-  assert.deepStrictEqual([...kinds].sort(), ['command', 'rule']);
+  assert.deepStrictEqual([...kinds].sort(), ['command', 'rule', 'skill']);
 });
 
 test('agent-switch to Codex removes Markdown rule records from the mixed ledger', () => {
@@ -66,7 +66,7 @@ test('agent-switch to Codex removes Markdown rule records from the mixed ledger'
   result = run(['init', workspace, '--agent', 'codex']);
   assert.strictEqual(result.status, 0, result.stderr);
   const kinds = new Set(readJson(path.join(workspace, 'harness', 'manifest.json')).artifacts.map((record) => record.kind));
-  assert.deepStrictEqual([...kinds].sort(), ['command']);
+  assert.deepStrictEqual([...kinds].sort(), ['command', 'skill']);
   assert.match(read(path.join(workspace, 'AGENTS.md')), /Selected engineering rules/);
 });
 
@@ -301,7 +301,7 @@ if (allSkillDirs.includes('zentao-bug-workflow')) {
     assert.match(readme, /"actions": \["comment"\]/);
   });
 
-  test('zentao local config is preserved while managed skill files refresh on re-init', () => {
+  test('zentao local config survives while drifted managed skill files block re-init', () => {
     const workspace = tempDir();
     let result = run(['init', workspace, '--agent', 'claude', '--skills', 'zentao-bug-workflow']);
     assert.strictEqual(result.status, 0, result.stderr);
@@ -309,17 +309,16 @@ if (allSkillDirs.includes('zentao-bug-workflow')) {
     const configPath = path.join(skillRoot, 'zentao.config.json');
     const examplePath = path.join(skillRoot, 'zentao.config.example.json');
     const scriptPath = path.join(skillRoot, 'scripts', 'zentao_bug.py');
-    const originalExample = read(examplePath);
-    const originalScript = read(scriptPath);
     fs.writeFileSync(configPath, '{"local": true}\n', 'utf8');
     fs.writeFileSync(examplePath, '{"unsafeExample": true}\n', 'utf8');
     fs.writeFileSync(scriptPath, 'old unsafe script\n', 'utf8');
 
     result = run(['init', workspace, '--agent', 'claude', '--skills', 'zentao-bug-workflow']);
-    assert.strictEqual(result.status, 0, result.stderr);
+    assert.notStrictEqual(result.status, 0);
+    assert.match(result.stderr, /owned skill artifact drifted/);
     assert.strictEqual(read(configPath), '{"local": true}\n', 'local zentao config should be preserved');
-    assert.strictEqual(read(examplePath), originalExample, 'managed ZenTao example should be refreshed');
-    assert.strictEqual(read(scriptPath), originalScript, 'managed ZenTao helper should be refreshed');
+    assert.strictEqual(read(examplePath), '{"unsafeExample": true}\n');
+    assert.strictEqual(read(scriptPath), 'old unsafe script\n');
   });
 
   test('deselecting zentao removes managed files but preserves local config and unknown files', () => {
@@ -382,29 +381,22 @@ test('--skills all installs all available skills', () => {
   });
 });
 
-test('re-init refreshes managed skill files and removes unselected known skills', () => {
+test('re-init rejects a drifted selected skill before retiring other known skills', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'claude', '--skills', 'all']);
   assert.strictEqual(result.status, 0, result.stderr);
   const selectedSkillFile = path.join(workspace, '.claude', 'skills', primarySkill, 'SKILL.md');
   const originalSkill = read(selectedSkillFile);
-  const unknownSkill = path.join(workspace, '.claude', 'skills', 'local-user-skill', 'SKILL.md');
-  fs.mkdirSync(path.dirname(unknownSkill), { recursive: true });
+  const otherSkill = allSkillDirs.find((skillName) => skillName !== primarySkill);
+  const otherSkillFile = path.join(workspace, '.claude', 'skills', otherSkill, 'SKILL.md');
   fs.writeFileSync(selectedSkillFile, 'custom skill\n', 'utf8');
-  fs.writeFileSync(unknownSkill, 'local skill\n', 'utf8');
 
   result = run(['init', workspace, '--agent', 'claude', '--skills', primarySkill]);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assert.strictEqual(read(selectedSkillFile), originalSkill, 'managed skill file should be refreshed on re-init');
-  assertFile(unknownSkill);
-  for (const skillName of allSkillDirs.filter((skillName) => skillName !== primarySkill)) {
-    assertNoPath(path.join(workspace, '.claude', 'skills', skillName, 'SKILL.md'));
-  }
-  assertManifest(path.join(workspace, 'harness', 'manifest.json'), {
-    agent: 'claude',
-    skills: [primarySkill],
-    entryFiles: ['CLAUDE.md'],
-  });
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stderr, /owned skill artifact drifted/);
+  assert.strictEqual(read(selectedSkillFile), 'custom skill\n');
+  assert.strictEqual(read(otherSkillFile), read(path.join(workspace, '.claude', 'skills', otherSkill, 'SKILL.md')));
+  assert.notStrictEqual(read(selectedSkillFile), originalSkill);
 });
 
 test('deselecting a known skill preserves unknown files inside its directory', () => {

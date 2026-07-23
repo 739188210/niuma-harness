@@ -3,10 +3,10 @@ const path = require('path');
 const { renderCommandArtifacts } = require('../command-artifacts');
 const { assertNoSymlinkInPath, safeResolveInside } = require('../fs-safe');
 const { renderRuleArtifacts } = require('../rule-artifacts');
-const { TEMPLATE_DIR } = require('../scaffold/manifest');
-const { renderTemplate } = require('../scaffold/templates');
+const { TEMPLATE_DIR } = require('../generator/template-manifest');
+const { renderTemplate } = require('../generator/template-renderer');
 const { getAvailableRuleDirs, getRuleAdapterTargetsForAgent } = require('../rules');
-const { getAvailableSkillDirs, getSkillFiles, getSkillTargetRootsForAgent } = require('../skills');
+const { getSkillFiles, getSkillTargetRootsForAgent } = require('../skills');
 const { createTemplateVariables } = require('../template-variables');
 const { addError, addOk } = require('./result');
 
@@ -18,12 +18,11 @@ function checkManagedContentIntegrity(context) {
 
   const variables = createTemplateVariables(
     { agent, harnessDir: path.basename(context.harnessRoot) },
-    context.templateManifest.workDirectory || 'agent-work'
+    context.runtimeLayout.workDirectory
   );
   checkManagedTemplates(context, variables);
   checkRuleSelection(context);
   checkSelectedSkills(context, variables);
-  checkUnselectedSkills(context);
   checkCurrentCommandArtifacts(context, variables);
 }
 
@@ -53,7 +52,7 @@ function checkRuleSelection(context) {
   const selected = new Set(context.rules);
   const variables = createTemplateVariables(
     { agent: context.agent, harnessDir: path.basename(context.harnessRoot) },
-    context.templateManifest.workDirectory || 'agent-work'
+    context.runtimeLayout.workDirectory
   );
   const known = renderRuleArtifacts(
     context.agent,
@@ -76,23 +75,6 @@ function checkSelectedSkills(context, variables) {
         const target = path.posix.join(targetRoot, skillName, skillFile.relativePath);
         checkExactContent(context, context.workspaceRoot, target, renderTemplate(sourceRelativePath, variables));
       }
-    }
-  }
-}
-
-function checkUnselectedSkills(context) {
-  const selected = new Set(context.skills);
-  for (const targetRoot of getSkillTargetRootsForAgent(context.agent)) {
-    for (const skillName of getAvailableSkillDirs(context.templateManifest.skillsRoot)) {
-      if (selected.has(skillName)) {
-        continue;
-      }
-      checkKnownFilesAbsent(
-        context,
-        context.workspaceRoot,
-        path.posix.join(targetRoot, skillName),
-        getSkillFiles(skillName, context.templateManifest.skillsRoot).map((file) => file.relativePath)
-      );
     }
   }
 }
@@ -121,12 +103,6 @@ function checkExactContent(context, baseDir, target, expected) {
     return;
   }
   addOk(context.result, `managed content intact ${target}`);
-}
-
-function checkKnownFilesAbsent(context, baseDir, root, relativeFiles) {
-  for (const relativePath of relativeFiles) {
-    checkPathAbsent(context, baseDir, path.posix.join(root, relativePath));
-  }
 }
 
 function checkPathAbsent(context, baseDir, target) {

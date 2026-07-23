@@ -1,7 +1,12 @@
 // 为 OpenCode 写入已生成规则正文的 instruction paths，并迁移可验证的旧 Claude 指针。
 const fs = require('fs');
-const path = require('path');
 
+const {
+  getAllRuleAdapterTargets,
+  getLegacyClaudeRulePointerRoot,
+  getLegacyClaudeRulePointerTarget,
+  isRuleArtifactManagedByAdapter,
+} = require('../agent-native-targets');
 const { getAvailableRuleDirs, getRuleAdapterTargetsForAgent } = require('../rules');
 const {
   assertNoLossyJsonNumbers,
@@ -20,19 +25,22 @@ function prepareRuleAdapterPlan(context) {
   const targets = getRuleAdapterTargetsForAgent(context.options.agent);
   const targetKinds = new Set(targets.map((target) => target.kind));
   const availableRules = getAvailableRuleDirs(context.manifest.rulesRoot);
-  const pointerRoot = '.claude/rules';
+  const pointerRoot = getLegacyClaudeRulePointerRoot();
   const pointerActions = availableRules
     .map((ruleName) => ({
-      targetPath: getClaudeRulePointerPath(context, pointerRoot, ruleName),
+      targetPath: getLegacyClaudeRulePointerPath(context.workspaceDir, ruleName),
       expectedContent: renderLegacyClaudeRulePointer(context.options.harnessDir, ruleName),
     }))
     .filter((item) => inspectFileTarget(item.targetPath)
       && fs.readFileSync(item.targetPath, 'utf8') === item.expectedContent);
   const openCodeTarget = targets.find((target) => target.kind === 'opencode-instructions');
-  const configPath = getOpenCodeConfigPath(context, openCodeTarget || { file: 'opencode.json' });
+  const knownOpenCodeTarget = getAllRuleAdapterTargets()
+    .find((target) => target.kind === 'opencode-instructions');
+  const configPath = getOpenCodeConfigPath(context, openCodeTarget || knownOpenCodeTarget);
   const expectedPaths = openCodeTarget
     ? context.rulePlan
-      .filter((item) => item.operation === 'write' && item.target.startsWith('.opencode/rules/'))
+      .filter((item) => item.operation === 'write'
+        && isRuleArtifactManagedByAdapter(openCodeTarget, item.target))
       .map((item) => item.target)
     : [];
   const ownedPaths = context.previousStatus ? context.previousStatus.openCodeInstructions : [];
@@ -82,8 +90,8 @@ function writeClaudeRulePointers(context) {
   }
 }
 
-function getClaudeRulePointerPath(context, root, ruleName) {
-  return safeResolveInside(context.workspaceDir, path.join(root, `niuma-${ruleName}.md`), 'claude rule pointer');
+function getLegacyClaudeRulePointerPath(workspaceDir, ruleName) {
+  return safeResolveInside(workspaceDir, getLegacyClaudeRulePointerTarget(ruleName), 'claude rule pointer');
 }
 
 function renderLegacyClaudeRulePointer(harnessDir, ruleName) {
@@ -118,6 +126,8 @@ function readOpenCodeConfig(configPath) {
 }
 
 module.exports = {
+  getLegacyClaudeRulePointerTarget,
   prepareRuleAdapterPlan,
+  renderLegacyClaudeRulePointer,
   writeRuleAdapterFiles,
 };

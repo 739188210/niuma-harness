@@ -14,7 +14,7 @@ function prepareStatusPlan(context) {
       openCodeInstructions: context.ruleAdapterPlan.expectedOpenCodePaths,
       topology: context.topology,
       moduleSupplements: context.moduleSupplements,
-    }, { workDirectory: context.workDirectory }), null, 2)}\n`,
+    }, context.runtimeLayout), null, 2)}\n`,
     targetPath: statusPath,
   };
 }

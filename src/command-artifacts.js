@@ -4,8 +4,8 @@ const {
   getCommandsRootPath,
   parseCommandSpec,
 } = require('./commands');
-const { TEMPLATE_DIR } = require('./scaffold/manifest');
-const { renderTemplate } = require('./scaffold/templates');
+const { TEMPLATE_DIR } = require('./generator/template-manifest');
+const { renderTemplate } = require('./generator/template-renderer');
 
 function renderCommandArtifacts(agent, commands, commandsRoot, variables) {
   const commandsRootPath = getCommandsRootPath(commandsRoot);

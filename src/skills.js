@@ -1,6 +1,10 @@
 // skills 选择模型：从 templates/skills 发现技能包，并规范化 CLI 输入。
 const fs = require('fs');
 const path = require('path');
+const {
+  getAllSkillTargetRoots,
+  getSkillTargetRootsForAgent,
+} = require('./agent-native-targets');
 const { listFilesRecursive } = require('./fs-safe');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
@@ -8,12 +12,6 @@ const TEMPLATE_DIR = path.join(ROOT_DIR, 'templates');
 const DEFAULT_SKILLS_ROOT = 'skills';
 const DEFAULT_SKILLS_SELECTION = 'all';
 const SPECIAL_SKILLS = new Set(['all', 'none']);
-const SKILL_TARGET_ROOTS = {
-  claude: ['.claude/skills'],
-  codex: ['.agents/skills'],
-  opencode: ['.opencode/skills'],
-  multi: ['.claude/skills', '.agents/skills', '.opencode/skills'],
-};
 
 function getSkillsRootPath(skillsRoot = DEFAULT_SKILLS_ROOT) {
   return path.join(TEMPLATE_DIR, ...String(skillsRoot || DEFAULT_SKILLS_ROOT).split(/[\\/]+/));
@@ -81,15 +79,6 @@ function normalizeConcreteSkills(skills, availableSkills = getAvailableSkillDirs
   return availableSkills.filter((skill) => normalized.includes(skill));
 }
 
-function getSkillTargetRootsForAgent(agent) {
-  const targetRoots = SKILL_TARGET_ROOTS[agent];
-  if (!targetRoots) {
-    throw new Error(`unknown agent for skill targets: ${agent}`);
-  }
-
-  return [...targetRoots];
-}
-
 function parseSkillTokens(value, label) {
   const raw = String(value || '').trim();
   if (!raw) {
@@ -133,6 +122,7 @@ module.exports = {
   getSkillsRootPath,
   getAvailableSkillDirs,
   getSkillFiles,
+  getAllSkillTargetRoots,
   normalizeSkills,
   normalizeConcreteSkills,
   getSkillTargetRootsForAgent,

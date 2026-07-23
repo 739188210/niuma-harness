@@ -20,6 +20,12 @@ const {
   tempDir,
 } = require('./helpers');
 const { getEntryFilesForAgent } = require('../src/agents');
+const { getCommandArtifactDescriptors } = require('../src/commands');
+const {
+  getRuleAdapterTargetsForAgent,
+  getRuleEntryInjectionForAgent,
+  getRuleTargetRootsForAgent,
+} = require('../src/agent-native-targets');
 const { getSkillTargetRootsForAgent } = require('../src/skills');
 
 const agents = ['claude', 'codex', 'opencode', 'multi'];
@@ -55,15 +61,47 @@ for (const from of agents) {
         }
       }
 
+      const activeCommandTargets = new Set(getCommandArtifactDescriptors(to, allCommandFiles)
+        .map((descriptor) => descriptor.target));
+      for (const descriptor of getCommandArtifactDescriptors(from, allCommandFiles)) {
+        if (activeCommandTargets.has(descriptor.target)) continue;
+        assertNoPath(path.join(workspace, ...descriptor.target.split('/')));
+      }
+
+      const activeRuleRoots = new Set(getRuleTargetRootsForAgent(to));
+      for (const root of getRuleTargetRootsForAgent(from)) {
+        const target = path.join(workspace, ...root.split('/'), 'common', 'testing.md');
+        if (activeRuleRoots.has(root)) {
+          assertFile(target);
+        } else {
+          assertNoPath(target);
+        }
+      }
+
+      const injection = getRuleEntryInjectionForAgent(to);
+      const agentsPath = path.join(workspace, 'AGENTS.md');
+      if (injection && fs.existsSync(agentsPath)) {
+        assert.match(read(agentsPath), /^## Selected engineering rules$/m);
+      }
+
       const manifestPath = path.join(workspace, 'harness', 'manifest.json');
       assertManifest(manifestPath, {
         agent: to,
         skills: [skill],
         entryFiles: getEntryFilesForAgent(to),
       });
+      const manifest = JSON.parse(read(manifestPath));
+      const adapterActive = getRuleAdapterTargetsForAgent(to)
+        .some((target) => target.kind === 'opencode-instructions');
+      assert.strictEqual(adapterActive, manifest.openCodeInstructions.length > 0);
       assert.deepStrictEqual(
-        JSON.parse(read(manifestPath)).artifacts,
-        getExpectedArtifactRecords(to, allCommandFiles, JSON.parse(read(manifestPath)).rules)
+        manifest.artifacts,
+        getExpectedArtifactRecords(
+          to,
+          allCommandFiles,
+          JSON.parse(read(manifestPath)).rules,
+          JSON.parse(read(manifestPath)).skills
+        )
       );
       const doctor = run(['doctor', workspace]);
       assert.strictEqual(doctor.status, 0, doctor.stdout || doctor.stderr);

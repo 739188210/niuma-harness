@@ -1,10 +1,12 @@
 // doctor 的高层检查编排：字段校验后委托 core/rules 子检查。
 const path = require('path');
 const { getEntryFilesForAgent, normalizeAgent } = require('../agents');
+const { getRuleAdapterTargetsForAgent } = require('../agent-native-targets');
 const { formatCommands, getDefaultCommandsForAgent } = require('../commands');
 const { formatRules, normalizeConcreteRules } = require('../rules');
 const { formatSkills, normalizeConcreteSkills } = require('../skills');
-const { loadManifest } = require('../scaffold/manifest');
+const { loadManifest } = require('../generator/template-manifest');
+const { assertWorkDirBinding, getRuntimeLayout } = require('../runtime-layout');
 const { addError, addOk } = require('./result');
 const { checkManagedContentIntegrity } = require('./integrity-checks');
 const {
@@ -46,6 +48,7 @@ function checkHarness(harnessRoot, status, result) {
 
 function createCheckContext(harnessRoot, status, result) {
   const templateManifest = loadManifest();
+  const runtimeLayout = getRuntimeLayout(templateManifest);
   return {
     agent: null,
     artifacts: null,
@@ -56,6 +59,7 @@ function createCheckContext(harnessRoot, status, result) {
     harnessRoot,
     result,
     rules: null,
+    runtimeLayout,
     skills: null,
     status,
     templateManifest,
@@ -65,7 +69,7 @@ function createCheckContext(harnessRoot, status, result) {
 
 function checkSchemaVersion(context) {
   const { result, status } = context;
-  if (![2, 3].includes(status.schemaVersion)) {
+  if (![2, 3, 4].includes(status.schemaVersion)) {
     addError(result, `unsupported schemaVersion: ${status.schemaVersion}`);
     return;
   }
@@ -93,13 +97,18 @@ function checkHarnessDir(context) {
 }
 
 function checkWorkDirBinding(context) {
-  const { result, status, templateManifest } = context;
-  const expected = templateManifest.workDirectory || 'agent-work';
-  if (status.workDir !== expected) {
-    addError(result, `workDir must match package manifest: ${expected}`);
+  const { result, runtimeLayout, status } = context;
+  if (!status.workDir) {
+    addError(result, 'missing workDir');
     return;
   }
-  addOk(result, `workDir binding ${expected}`);
+  try {
+    assertWorkDirBinding(status.workDir, runtimeLayout);
+  } catch (error) {
+    addError(result, error.message);
+    return;
+  }
+  addOk(result, `workDir binding ${runtimeLayout.workDirectory}`);
 }
 
 function checkAgent(context) {
@@ -166,7 +175,11 @@ function checkOpenCodeInstructionOwnership(context) {
       return;
     }
   }
-  const openCodeActive = context.agent === 'opencode' || context.agent === 'multi';
+  if (!context.agent) {
+    return;
+  }
+  const openCodeActive = getRuleAdapterTargetsForAgent(context.agent)
+    .some((target) => target.kind === 'opencode-instructions');
   if (!openCodeActive && status.openCodeInstructions.length > 0) {
     addError(result, 'openCodeInstructions must be empty for the active agent');
     return;

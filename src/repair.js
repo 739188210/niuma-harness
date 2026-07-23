@@ -30,6 +30,7 @@ async function runRepair(options, dependencies = {}) {
     return;
   }
   const unresolved = plan.issues.filter((issue) => issue.code === 'stale-rule-drift'
+    || issue.code === 'stale-skill-drift'
     || issue.code === 'invalid-topology-state'
     || issue.code === 'module-registry-missing'
     || issue.code === 'module-registry-invalid'
@@ -37,7 +38,7 @@ async function runRepair(options, dependencies = {}) {
     || issue.code === 'module-supplement-missing'
     || issue.code === 'module-supplement-drift');
   if (unresolved.length > 0) {
-    throw new Error(`Repair cannot safely resolve user-owned module or drifted obsolete artifacts: ${unresolved.map((issue) => issue.path).join(', ')}`);
+    throw new Error(`Repair cannot safely resolve user-owned or drifted obsolete artifacts: ${unresolved.map((issue) => issue.path).join(', ')}`);
   }
   const confirmed = options.yes || await (dependencies.confirmRepair || confirmRepair)();
   if (!confirmed) {

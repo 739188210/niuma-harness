@@ -59,7 +59,7 @@ test('artifact ledger rejects malformed records and duplicate targets', () => {
     [record('path//empty.md')],
     [{ ...record('valid.md'), digest: 'sha256:ABC' }],
     [{ ...record('valid.md'), kind: '' }],
-    [{ ...record('valid.md'), kind: 'skill' }],
+    [{ ...record('valid.md'), kind: 'unknown' }],
     [{ ...record('valid.md'), source: '' }],
     [record('duplicate.md'), record('duplicate.md')],
     [record('duplicate.md'), ruleRecord('duplicate.md')],

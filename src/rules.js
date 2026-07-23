@@ -1,30 +1,18 @@
 // rules 选择模型：从模板目录发现规则包，并把 CLI 输入规范化为目录数组。
 const fs = require('fs');
 const path = require('path');
+const {
+  getLegacyRuleTargetRootsForAgent,
+  getRuleAdapterTargetsForAgent,
+  getRuleEntryInjectionForAgent,
+  getRuleTargetRootsForAgent,
+} = require('./agent-native-targets');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const TEMPLATE_DIR = path.join(ROOT_DIR, 'templates');
 const DEFAULT_RULES_ROOT = 'rules';
 const DEFAULT_RULES_SELECTION = 'common';
 const DEFAULT_ENGINEERING_RULES = ['common'];
-const RULE_ADAPTER_TARGETS = {
-  claude: [],
-  codex: [],
-  opencode: [{ kind: 'opencode-instructions', file: 'opencode.json' }],
-  multi: [{ kind: 'opencode-instructions', file: 'opencode.json' }],
-};
-const RULE_TARGET_ROOTS = {
-  claude: ['.claude/rules'],
-  codex: [],
-  opencode: ['.opencode/rules'],
-  multi: ['.claude/rules', '.opencode/rules'],
-};
-const LEGACY_RULE_TARGET_ROOTS = {
-  claude: ['.claude/rules/niuma'],
-  codex: [],
-  opencode: ['.opencode/rules/niuma'],
-  multi: ['.claude/rules/niuma', '.opencode/rules/niuma'],
-};
 const PREFERRED_RULE_ORDER = ['common', 'web', 'typescript', 'java', 'python', 'fastapi'];
 const SPECIAL_RULES = new Set(['all', 'none']);
 
@@ -82,31 +70,6 @@ function normalizeRules(rules, availableRules = getAvailableRuleDirs()) {
 
 function getDefaultRulesForAgent(agent, availableRules = getAvailableRuleDirs()) {
   return mergeRules(DEFAULT_ENGINEERING_RULES, availableRules);
-}
-
-function getRuleAdapterTargetsForAgent(agent) {
-  const targets = RULE_ADAPTER_TARGETS[agent];
-  if (!targets) {
-    throw new Error(`unknown agent for rule adapters: ${agent}`);
-  }
-
-  return targets.map((target) => ({ ...target }));
-}
-
-function getRuleTargetRootsForAgent(agent) {
-  const roots = RULE_TARGET_ROOTS[agent];
-  if (!roots) {
-    throw new Error(`unknown agent for rule targets: ${agent}`);
-  }
-  return [...roots];
-}
-
-function getLegacyRuleTargetRootsForAgent(agent) {
-  const roots = LEGACY_RULE_TARGET_ROOTS[agent];
-  if (!roots) {
-    throw new Error(`unknown agent for legacy rule targets: ${agent}`);
-  }
-  return [...roots];
 }
 
 function normalizeSelectedRules(rules, availableRules = getAvailableRuleDirs()) {
@@ -191,6 +154,7 @@ module.exports = {
   normalizeConcreteRules,
   getDefaultRulesForAgent,
   getRuleAdapterTargetsForAgent,
+  getRuleEntryInjectionForAgent,
   getRuleTargetRootsForAgent,
   getLegacyRuleTargetRootsForAgent,
   normalizeSelectedRules,

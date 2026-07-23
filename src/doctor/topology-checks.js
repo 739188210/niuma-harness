@@ -21,6 +21,9 @@ function checkTopology(context) {
     addError(context.result, `invalid topology ownership state: ${error.message}`);
     return;
   }
+  if (!context.agent) {
+    return;
+  }
   const topologyInstalled = status.topology.modules.length > 0 || status.moduleSupplements.length > 0;
   const registryPath = safeTopologyPath(context, path.posix.join(path.basename(context.harnessRoot), REGISTRY_FILE));
   if (!registryPath) return;

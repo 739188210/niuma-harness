@@ -3,9 +3,9 @@ const { getEntryFilesForAgent } = require('./agents');
 
 const STATUS_FILE = 'manifest.json';
 
-function createStatus(options, manifest = {}) {
+function createStatus(options, runtimeLayout) {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     agent: options.agent,
     rules: options.rules,
     skills: options.skills,
@@ -13,7 +13,7 @@ function createStatus(options, manifest = {}) {
     artifacts: options.artifacts || [],
     openCodeInstructions: options.openCodeInstructions || [],
     harnessDir: options.harnessDir,
-    workDir: manifest.workDirectory || 'agent-work',
+    workDir: runtimeLayout.workDirectory,
     entryFiles: getEntryFilesForAgent(options.agent),
     topology: options.topology || { mode: 'single', modules: [] },
     moduleSupplements: options.moduleSupplements || [],

@@ -2,6 +2,10 @@
 const fs = require('fs');
 const path = require('path');
 
+const {
+  getAllRuleAdapterTargets,
+  isRuleArtifactManagedByAdapter,
+} = require('../agent-native-targets');
 const { renderRuleArtifacts } = require('../rule-artifacts');
 const { getRuleAdapterTargetsForAgent } = require('../rules');
 const { safeResolveInside } = require('../fs-safe');
@@ -27,7 +31,7 @@ function checkRuleAdapterFiles(context) {
 
 function checkOpenCodeRulesInstruction(context, target) {
   const { result, workspaceRoot } = context;
-  const expected = getOpenCodeRulePaths(context, context.rules);
+  const expected = getOpenCodeRulePaths(context, context.rules, target);
   if (expected.length === 0) {
     checkNoStaleOpenCodeRulesInstruction(context);
     return;
@@ -62,7 +66,9 @@ function checkOpenCodeRulesInstruction(context, target) {
 
 function checkNoStaleOpenCodeRulesInstruction(context) {
   const { result, workspaceRoot } = context;
-  const configPath = safeResolveInside(workspaceRoot, 'opencode.json', 'opencode config');
+  const target = getAllRuleAdapterTargets().find((item) => item.kind === 'opencode-instructions');
+  if (!target) return;
+  const configPath = safeResolveInside(workspaceRoot, target.file, 'opencode config');
   if (!fs.existsSync(configPath)) {
     return;
   }
@@ -84,10 +90,10 @@ function checkNoStaleOpenCodeRulesInstruction(context) {
   }
 }
 
-function getOpenCodeRulePaths(context, rules) {
+function getOpenCodeRulePaths(context, rules, target) {
   const variables = createTemplateVariables(
     { agent: context.agent, harnessDir: path.basename(context.harnessRoot) },
-    context.templateManifest.workDirectory || 'agent-work'
+    context.runtimeLayout.workDirectory
   );
   return renderRuleArtifacts(
     context.agent,
@@ -95,7 +101,7 @@ function getOpenCodeRulePaths(context, rules) {
     context.templateManifest.rulesRoot,
     variables
   )
-    .filter((artifact) => artifact.target.startsWith('.opencode/rules/'))
+    .filter((artifact) => isRuleArtifactManagedByAdapter(target, artifact.target))
     .map((artifact) => artifact.target);
 }
 

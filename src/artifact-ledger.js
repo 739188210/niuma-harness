@@ -4,7 +4,7 @@ const path = require('path');
 const { validateRelativePath } = require('./fs-safe');
 
 const DIGEST_PATTERN = /^sha256:[0-9a-f]{64}$/;
-const ARTIFACT_KINDS = new Set(['command', 'rule']);
+const ARTIFACT_KINDS = new Set(['command', 'rule', 'skill']);
 
 function digestBytes(value) {
   const bytes = Buffer.isBuffer(value) ? value : Buffer.from(value, 'utf8');

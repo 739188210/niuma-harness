@@ -2,6 +2,8 @@
 const fs = require('fs');
 const path = require('path');
 const { canonicalizeWorkspacePath, assertNoSymlinkInPath, safeResolveInside } = require('./fs-safe');
+const { loadManifest, validateManifest } = require('./generator/template-manifest');
+const { assertWorkDirBinding, getRuntimeLayout, resolveRuntimePaths } = require('./runtime-layout');
 const { STATUS_FILE } = require('./harness-status');
 const { locateStatusFile } = require('./doctor/status');
 const { inspectHarness } = require('./doctor');
@@ -70,9 +72,17 @@ function inspectAuditUnsafe(options) {
   }
 
   let records;
+  let runtimeLayout;
   try {
-    const workDir = safeWorkspaceWorkDir(location.workspaceDir, status.workDir);
-    records = loadTaskRecords(workDir);
+    const templateManifest = loadManifest();
+    validateManifest(templateManifest);
+    runtimeLayout = getRuntimeLayout(templateManifest);
+    assertWorkDirBinding(status.workDir, runtimeLayout);
+    const runtimePaths = resolveRuntimePaths(location.workspaceDir, runtimeLayout);
+    if (fs.existsSync(runtimePaths.workDir) && !fs.lstatSync(runtimePaths.workDir).isDirectory()) {
+      throw new Error(`invalid workDir: expected a non-symlink directory: ${runtimePaths.workDir}`);
+    }
+    records = loadTaskRecords(runtimePaths.workDir);
   } catch (error) {
     return { status: 'FAIL', error: error.message, workspaceRoot: location.workspaceDir, harnessRoot: location.harnessRoot };
   }
@@ -92,22 +102,9 @@ function inspectAuditUnsafe(options) {
     harnessRoot: location.harnessRoot,
     bootstrapContent,
     taskEntries: selection.records,
+    workDirectory: runtimeLayout.workDirectory,
     selectionReason: selection.reason || (selection.status === 'none' ? 'No task execution records to evaluate.' : null),
   });
-}
-
-function safeWorkspaceWorkDir(workspaceRoot, workDir) {
-  if (workDir !== 'agent-work') {
-    throw new Error(`invalid ${STATUS_FILE}: unsupported workDir binding: ${workDir}`);
-  }
-  const workDirPath = safeResolveInside(workspaceRoot, workDir, 'workDir');
-  if (fs.existsSync(workDirPath)) {
-    const stat = fs.lstatSync(workDirPath);
-    if (stat.isSymbolicLink() || !stat.isDirectory()) {
-      throw new Error(`invalid workDir: expected a non-symlink directory: ${workDirPath}`);
-    }
-  }
-  return workDirPath;
 }
 
 function printAuditError(result) {
