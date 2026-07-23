@@ -52,7 +52,7 @@ test('runtime layout rejects inconsistent package declarations', () => {
 });
 
 test('runtime paths stay confined and reject a symlinked runtime root', (t) => {
-  const workspace = tempDir();
+  const workspace = fs.realpathSync(tempDir());
   const layout = getRuntimeLayout(manifest());
   const paths = resolveRuntimePaths(workspace, layout);
   assert.strictEqual(paths.workDir, path.join(workspace, 'agent-work'));
