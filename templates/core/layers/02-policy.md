@@ -18,7 +18,7 @@ Use this layer before making changes, before running commands with side effects,
 4. Ask the user before ask-first actions.
 5. Stop instead of acting when the next step is forbidden, unsafe, or unclear in a way that affects behavior, data, security, or user-owned work.
 6. Record unresolved approval blockers and policy risks in `agent-work/` for multi-step tasks.
-7. For non-trivial tasks, give planned and performed actions stable IDs, classifications, and scopes in `harness-feedback.md`; link performed ask-first actions to exact scoped authorization records and record scope changes explicitly.
+7. For non-trivial tasks, give planned and performed actions stable IDs, classifications, and scopes in `harness-feedback.md`; link performed ask-first actions to exact scoped authorization records, record explicit-request exceptions and stop-blocker resolutions, and record scope changes explicitly.
 
 When host tools or higher-priority instructions are stricter than this policy, follow the stricter requirement.
 

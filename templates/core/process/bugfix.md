@@ -22,7 +22,7 @@ Before reporting completion, make sure the task record or final response include
 ## Steps
 
 1. Load Context: read `{{HARNESS_DIR}}/docs/index.md`, `{{HARNESS_DIR}}/docs/project-context.md`, and the affected source or test files.
-2. Check Policy: use `{{HARNESS_DIR}}/docs/policy/action-boundary.md` and pause when the next action is ask-first or forbidden.
+2. Check Policy: use `{{HARNESS_DIR}}/docs/policy/action-boundary.md` and pause when the next action is ask-first, forbidden, or stop-and-escalate. Apply the Policy re-evaluation procedure before treating an explicit request as an exception to a default prohibition.
 3. Understand the symptom, expected behavior, and current behavior.
 4. When the symptom is stably automatable, capture it as a focused failing regression test before the fix. The reproduction check is a verification target: follow `{{HARNESS_DIR}}/docs/process/test-driven-development.md` and make that same target pass afterward.
 5. When reproduction is not achievable, record what was attempted and declare a valid alternative-verification plan before the fix. The fix stays unverified until the symptom can be shown to disappear; report the implemented mitigation and remaining unknown instead of claiming the bug is fixed.

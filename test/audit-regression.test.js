@@ -58,6 +58,10 @@ function materializeDocumentedPassingTask(workspace) {
   const feedbackDoc = read(path.join(workspace, 'harness', 'docs', 'experiments', 'task-execution-record.md'));
   const taskRecord = parseAuditRecord(feedbackDoc, 'generated task-execution-record.md');
   assert.strictEqual(taskRecord.task.id, 'example-task');
+  assert.strictEqual(taskRecord.schemaVersion, 2);
+  assert.deepStrictEqual(taskRecord.boundary.explicitRequestExceptions, []);
+  assert.deepStrictEqual(taskRecord.boundary.blockers, []);
+  assert.deepStrictEqual(taskRecord.boundary.reclassifications, []);
 
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
   const documentedVerification = parseVerificationRecord(workReadme, 'generated agent-work/README.md');

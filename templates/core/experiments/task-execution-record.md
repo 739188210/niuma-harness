@@ -14,14 +14,14 @@ Use a record for every non-trivial task. Common indicators include changing file
 
 For a trivial task, state in the final response that no separate record was needed.
 
-## Complete schema 1 example
+## Complete schema 2 example
 
 Copy this into `agent-work/tasks/example-task/harness-feedback.md`, then replace every example value with truthful task evidence. Keep the task ID equal to the direct task directory name and use canonical UTC timestamps.
 
 <!-- niuma-audit-record:begin -->
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "task": {
     "id": "example-task",
     "recordedAt": "2026-07-12T09:00:00Z",
@@ -78,6 +78,9 @@ Copy this into `agent-work/tasks/example-task/harness-feedback.md`, then replace
       }
     ],
     "authorizationReferences": [],
+    "explicitRequestExceptions": [],
+    "blockers": [],
+    "reclassifications": [],
     "scopeChanges": []
   },
   "execution": {
@@ -162,7 +165,10 @@ Copy this into `agent-work/tasks/example-task/harness-feedback.md`, then replace
 - `rating.classification`: `question`, `small-edit`, `bugfix`, `feature`, `refactor`, `review`, `release`, `security`, `documentation`, or `verification`.
 - `rating.tier`: `quick`, `normal`, or `careful`. Release, security, and declared careful risk factors require `careful`.
 - `context.sufficiency`: `sufficient`, `partial`, or `insufficient`; limited context requires explicit `knownGaps`.
-- Action classifications: `autonomous`, `ask-first`, `forbidden`, or `stop-and-escalate`. Performed ask-first actions need an exact authorization reference. Never report forbidden or stop-and-escalate actions as performed.
+- Action classifications: `autonomous`, `ask-first`, `forbidden`, or `stop-and-escalate`. Performed ask-first actions need an exact authorization reference. A source forbidden or stop action is never performed directly.
+- Schema 1 records retain the original rule: performed `forbidden` and `stop-and-escalate` actions fail. Schema 2 records add `explicitRequestExceptions`, `blockers`, and `reclassifications`, each as an array (empty when unused). A user’s explicit request is evidence for a narrow exception, not a fifth classification or blanket approval.
+- In schema 2, an explicit-request exception has a unique `id`, a source forbidden `actionId`, `requestedBy`, canonical UTC `requestedAt`, exact source `scope`, and `rationale`. Its reclassification creates a distinct successor action ID with the same action and scope; the successor is still `ask-first` when another gate remains.
+- In schema 2, every planned stop-and-escalate action has a blocker with a unique `id`, source `actionId`, classification `stop-and-escalate`, `reason`, and status `unresolved`, `stopped-and-escalated`, or `resolved`. A resolved blocker records `resolution`, canonical UTC `resolvedAt`, and a distinct `successorActionId`; an explicit request alone does not resolve a stop blocker.
 - Every action has a stable `id`, `action`, and `scope`; performed actions must exactly match planned actions. Each scope change is `{ "change": string, "substantive": boolean, "rationale": string }`; substantive changes require a distinct reclassification rationale.
 - `execution.playbook`: `none`, `bugfix`, `feature`, `refactor`, `review`, or `release`. `alignment` is `aligned` or `deviated`; each deviation has `step`, `reason`, boolean `justified`, and `impact`.
 - `verification.declaredConclusion`: `passed`, `partial`, `failed`, `skipped`, or `unknown`. Its criterion IDs must exactly match `execution.successCriteria` and resolve to IDs in the task's `verification.md`.
@@ -185,6 +191,60 @@ An ask-first action uses a matching entry in `authorizationReferences`:
 ```
 
 The performed action sets `"authorizationReference": "auth-1"`, and its ID and scope must match the authorization exactly.
+
+## Schema 2 policy transition examples
+
+A default-forbidden action remains unperformed. When the user explicitly requests its exact action and scope, retain it as the source and create a successor. If any other gate remains, the successor is `ask-first` and uses the normal authorization reference:
+
+```json
+{
+  "explicitRequestExceptions": [{
+    "id": "request-publish",
+    "actionId": "publish-release",
+    "requestedBy": "workspace-owner",
+    "requestedAt": "2026-07-12T08:55:00Z",
+    "scope": "Publish release artifact.",
+    "rationale": "The user directly requested this exact release artifact."
+  }],
+  "reclassifications": [{
+    "id": "reclass-publish",
+    "fromActionId": "publish-release",
+    "toActionId": "publish-release-authorized",
+    "fromClassification": "forbidden",
+    "toClassification": "ask-first",
+    "basis": "explicit-request-exception",
+    "exceptionReference": "request-publish",
+    "rationale": "The external action still requires exact scoped authorization."
+  }]
+}
+```
+
+A stop-and-escalate action is not performed. Resolve it through verified clarification, scope reduction, or a safer successor action, then link the successor through a blocker-resolution reclassification. Do not label release-readiness preparation as autonomous when Policy classifies it as ask-first:
+
+```json
+{
+  "blockers": [{
+    "id": "blocker-credentials",
+    "actionId": "publish-release",
+    "classification": "stop-and-escalate",
+    "reason": "Required credentials are unavailable.",
+    "status": "resolved",
+    "resolution": "Reduce scope to documenting the blocked release state locally.",
+    "resolvedAt": "2026-07-12T09:00:00Z",
+    "successorActionId": "record-blocked-release-state"
+  }],
+  "reclassifications": [{
+    "id": "reclass-readiness",
+    "fromActionId": "publish-release",
+    "toActionId": "record-blocked-release-state",
+    "fromClassification": "stop-and-escalate",
+    "toClassification": "autonomous",
+    "basis": "blocker-resolution",
+    "blockerReference": "blocker-credentials",
+    "rationale": "The local blocked-state record does not prepare a release or require credentials or external writes."
+  }]
+}
+```
 
 ## Boundaries
 

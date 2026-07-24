@@ -11,6 +11,11 @@ const {
   workspaceFixture,
 } = require('./support/audit-evaluator-fixtures');
 const { VERIFICATION_RECORD_BEGIN, VERIFICATION_RECORD_END } = require('../src/audit/records');
+const {
+  explicitRequestSuccessorTask,
+  resolvedStopBlockerTask,
+  schemaTwoTask,
+} = require('./support/audit-policy-fixtures');
 
 test('a complete consistent task passes all applicable dimensions and marks recovery NOT_APPLICABLE', () => {
   const { result } = evaluateFixture();
@@ -90,6 +95,69 @@ test('action boundary fails ask-first without authorization and any performed fo
     const { result } = evaluateFixture(record);
     assert.strictEqual(result.dimensions['Action boundary'].status, 'FAIL', classification);
   }
+});
+
+test('schema 2 explicit-request successors preserve source scope and gates', () => {
+  assert.strictEqual(evaluateFixture(schemaTwoTask()).result.status, 'PASS');
+  assert.strictEqual(evaluateFixture(explicitRequestSuccessorTask()).result.status, 'PASS');
+  assert.strictEqual(evaluateFixture(explicitRequestSuccessorTask('ask-first')).result.status, 'PASS');
+
+  const mutations = [
+    (record) => { record.boundary.reclassifications[0].exceptionReference = 'missing'; },
+    (record) => { record.boundary.explicitRequestExceptions.push({ ...record.boundary.explicitRequestExceptions[0] }); },
+    (record) => { record.boundary.explicitRequestExceptions[0].requestedAt = 'yesterday'; },
+    (record) => { record.boundary.explicitRequestExceptions[0].scope = 'Other artifact.'; },
+    (record) => { record.boundary.reclassifications[0].toActionId = 'publish-release'; },
+    (record) => { record.boundary.plannedActions[0].classification = 'autonomous'; },
+    (record) => { record.boundary.plannedActions[1].scope = 'Other artifact.'; },
+    (record) => { record.boundary.reclassifications = []; },
+  ];
+  for (const mutate of mutations) {
+    const record = explicitRequestSuccessorTask();
+    mutate(record);
+    assert.strictEqual(evaluateFixture(record).result.dimensions['Action boundary'].status, 'FAIL');
+  }
+
+  const missingAuthorization = explicitRequestSuccessorTask('ask-first');
+  delete missingAuthorization.boundary.performedActions[0].authorizationReference;
+  assert.strictEqual(evaluateFixture(missingAuthorization).result.dimensions['Action boundary'].status, 'FAIL');
+});
+
+test('schema 2 stop blockers require resolution and prevent premature completion', () => {
+  assert.strictEqual(evaluateFixture(resolvedStopBlockerTask()).result.status, 'PASS');
+
+  const missingBlocker = schemaTwoTask();
+  missingBlocker.boundary.plannedActions = [{
+    id: 'blocked', action: 'Use unavailable credentials.', classification: 'stop-and-escalate', scope: 'External release.',
+  }];
+  missingBlocker.boundary.performedActions = [];
+  assert.strictEqual(evaluateFixture(missingBlocker).result.dimensions['Action boundary'].status, 'FAIL');
+
+  const unresolved = resolvedStopBlockerTask();
+  unresolved.boundary.blockers[0].status = 'unresolved';
+  delete unresolved.boundary.blockers[0].resolution;
+  delete unresolved.boundary.blockers[0].resolvedAt;
+  delete unresolved.boundary.blockers[0].successorActionId;
+  assert.strictEqual(evaluateFixture(unresolved).result.dimensions.Outcome.status, 'FAIL');
+
+  const unlinkedResolution = resolvedStopBlockerTask();
+  unlinkedResolution.boundary.reclassifications = [];
+  assert.strictEqual(evaluateFixture(unlinkedResolution).result.dimensions['Action boundary'].status, 'FAIL');
+
+  const directStop = resolvedStopBlockerTask();
+  directStop.boundary.performedActions = [directStop.boundary.plannedActions[0]];
+  assert.strictEqual(evaluateFixture(directStop).result.dimensions['Action boundary'].status, 'FAIL');
+
+  const invalidResolution = resolvedStopBlockerTask();
+  invalidResolution.boundary.reclassifications[0].basis = 'explicit-request-exception';
+  invalidResolution.boundary.reclassifications[0].exceptionReference = 'request-publish';
+  assert.strictEqual(evaluateFixture(invalidResolution).result.dimensions['Action boundary'].status, 'FAIL');
+});
+
+test('schema 1 keeps autonomous records compatible when authorizationReferences is absent', () => {
+  const record = passingTask();
+  delete record.boundary.authorizationReferences;
+  assert.strictEqual(evaluateFixture(record).result.status, 'PASS');
 });
 
 test('action boundary fails duplicate performed action IDs', () => {
@@ -568,9 +636,16 @@ test('evaluateAudit includes bootstrap with no task and returns overall PARTIAL'
   assert.match(result.message, /No task execution quality can be evaluated/);
 });
 
-test('task metadata requires schema 1 matching ID canonical UTC and declared fields', () => {
+test('task metadata accepts schema 1 and 2, then requires matching ID canonical UTC and declared fields', () => {
+  const schemaTwo = passingTask();
+  schemaTwo.schemaVersion = 2;
+  schemaTwo.boundary.explicitRequestExceptions = [];
+  schemaTwo.boundary.blockers = [];
+  schemaTwo.boundary.reclassifications = [];
+  assert.strictEqual(evaluateFixture(schemaTwo).result.status, 'PASS');
+
   const mutations = [
-    (record) => { record.schemaVersion = 2; },
+    (record) => { record.schemaVersion = 3; },
     (record) => { record.task.id = 'different-task'; },
     (record) => { record.task.recordedAt = '2026-07-12T17:00:00+08:00'; },
     (record) => { record.task.tool = ' '; },

@@ -366,6 +366,10 @@ test('generated docs define test-change gate', () => {
   assert.match(actionBoundary, /replacement coverage/);
   assert.match(actionBoundary, /A request to turn red into green by weakening, skipping, deleting, or rebaselining verification targets is not valid test maintenance/);
   assert.match(actionBoundary, /The user asks to turn red into green by weakening, skipping, deleting, or rebaselining verification targets/);
+  assert.match(actionBoundary, /## Decision order and reclassification/);
+  assert.match(actionBoundary, /`stop-and-escalate` wins/);
+  assert.match(actionBoundary, /not a fifth classification/);
+  assert.match(actionBoundary, /distinct successor action/);
   const forbiddenUnlessRequested = actionBoundary.match(
     /## Forbidden unless explicitly requested[\s\S]*?## Always stop and escalate/,
   )[0];
@@ -382,6 +386,7 @@ test('generated docs define test-change gate', () => {
 
   const bugfix = read(path.join(h, 'docs', 'process', 'bugfix.md'));
   assert.match(bugfix, /The reproduction check is a verification target/);
+  assert.match(bugfix, /ask-first, forbidden, or stop-and-escalate/);
   assert.match(bugfix, /never remove the only reproduction without a replacement/);
 
   const refactor = read(path.join(h, 'docs', 'process', 'refactor.md'));

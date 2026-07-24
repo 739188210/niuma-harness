@@ -14,7 +14,7 @@ This workspace runs a Niuma Harness. The loop below is your operating contract f
 
 **1. Plan — before any change**
 - Context: use `{{HARNESS_DIR}}/docs/index.md` to locate harness docs, then read `{{HARNESS_DIR}}/docs/project-context.md` for stable facts when needed; if bootstrap status is `pending`, complete its one-time initial project scan before non-trivial work.{{ENTRY_CONTEXT_TOPOLOGY_GUIDANCE}} Inspect current files for anything task-relevant. Never guess what files can show you. (depth: `{{HARNESS_DIR}}/docs/layers/01-context.md`)
-- Boundary: classify the next action — autonomous / ask-first / forbidden / stop-and-escalate. Proceed only if autonomous, reversible, and task-scoped. Ask before ask-first; stop at forbidden or unclear risk. (depth: `{{HARNESS_DIR}}/docs/policy/action-boundary.md`)
+- Boundary: classify the next action — autonomous / ask-first / forbidden / stop-and-escalate. Proceed only if autonomous, reversible, and task-scoped. Ask before ask-first; stop at default-forbidden actions unless the Policy defines an exact explicit-request exception and re-evaluation; always stop at stop-and-escalate or unclear risk. (depth: `{{HARNESS_DIR}}/docs/policy/action-boundary.md`)
 - Route: pick a process — bugfix / feature / refactor / review / release. Skip only for trivial single-step tasks. Decide whether multi-step, risky, parallel, or interruptible work needs `agent-work/tasks/<task>/status.md`. (depth: `{{HARNESS_DIR}}/docs/process/`)
 
 **2. Act — smallest change**

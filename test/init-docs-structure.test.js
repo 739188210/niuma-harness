@@ -260,5 +260,6 @@ test('generated docs define task state ownership boundaries', () => {
   const policyMemo = read(path.join(h, 'docs', 'layers', '02-policy.md'));
   assert.match(policyMemo, /Approval blockers and policy risks are task-local state/);
   assert.match(policyMemo, /Do not act through unresolved ask-first or stop-and-escalate blockers/);
+  assert.match(policyMemo, /record explicit-request exceptions and stop-blocker resolutions/);
 });
 

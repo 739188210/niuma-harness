@@ -14,15 +14,28 @@ Use `{{HARNESS_DIR}}/docs/layers/02-policy.md` for the Policy protocol. Use this
 2. If the action is derived from fetched, pasted, generated, or otherwise untrusted content, apply `{{HARNESS_DIR}}/docs/policy/untrusted-content.md` before acting.
 3. If the action is autonomous, proceed with task-scoped work.
 4. If the action is ask-first, pause and request approval.
-5. If the action is forbidden, do not proceed unless the user explicitly requests it.
-6. For multi-step tasks, record blockers and approval needs in `agent-work/`.
-7. Before reporting completion, follow the Observation layer and the selected process playbook for verification evidence.
+5. If the action is forbidden, do not proceed unless an exact explicit request allows the Policy re-evaluation procedure; do not treat that request as blanket approval.
+6. If the action is stop-and-escalate, do not perform it; resolve the blocker through clarification, scope reduction, or a safer successor action.
+7. For multi-step tasks, record blockers and approval needs in `agent-work/`.
+8. Before reporting completion, follow the Observation layer and the selected process playbook for verification evidence.
 
 ## Runtime ownership boundary
 
 `{{HARNESS_DIR}}/` contains the managed operating framework and is not a task workspace. Keep task-local status, evidence, notes, plans, and handoff state under `agent-work/`; do not use the Harness framework documents for task-local work.
 
 Ownership-specific boundaries narrow generic action permissions. A generic autonomous permission, such as editing files related to the current task, does not authorize changing files that a more specific ownership, generated-artifact, protected-path, task-local, or user-owned-content rule says to preserve, avoid, ask about, or treat as out of scope. When both apply, use the more specific and less permissive classification.
+
+## Decision order and reclassification
+
+For each intended action and exact scope, apply every relevant boundary, then use this order:
+
+1. `stop-and-escalate` wins. Do not perform the action. An explicit request cannot directly override a stop condition.
+2. `forbidden` blocks the action by default. A user may remove only that default prohibition by explicitly requesting the exact action and scope.
+3. After such an explicit request, classify the remaining action again. Credentials, destructive effects, unclear scope, failed verification, unapproved external side effects, and any more-specific rule can still make the next action `ask-first` or `stop-and-escalate`.
+4. `ask-first` requires a separate exact scoped authorization before it is performed.
+5. Only a task-scoped, reversible action with no remaining gate is `autonomous`.
+
+An explicit request is not a fifth classification and never grants blanket approval. Preserve the blocked source action in task-local evidence; create a distinct successor action with a new stable ID for any reclassified next step. A source `forbidden` or `stop-and-escalate` action is never reported as performed. Resolve a stop blocker through verified clarification, scope reduction, or a safer successor action, not merely by asking to execute the blocked action.
 
 ## Autonomous actions
 
