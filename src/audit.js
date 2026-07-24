@@ -6,7 +6,6 @@ const { loadManifest, validateManifest } = require('./generator/template-manifes
 const { assertWorkDirBinding, getRuntimeLayout, resolveRuntimePaths } = require('./runtime-layout');
 const { STATUS_FILE } = require('./harness-status');
 const { locateStatusFile } = require('./doctor/status');
-const { inspectHarness } = require('./doctor');
 const { loadTaskRecords, selectTaskRecords } = require('./audit/records');
 const { evaluateAudit } = require('./audit/evaluator');
 const { printAuditReport } = require('./audit/report');
@@ -40,16 +39,6 @@ function inspectAuditUnsafe(options) {
   const location = locateStatusFile(workspaceRoot, options.harnessDir);
   if (!location) {
     return { status: 'FAIL', error: `missing ${STATUS_FILE}`, workspaceRoot };
-  }
-
-  const doctorResult = inspectHarness({ ...options, targetDir: workspaceRoot });
-  if (doctorResult.errors.length > 0) {
-    return {
-      status: 'FAIL',
-      error: `harness is unhealthy: ${doctorResult.errors.join('; ')}`,
-      workspaceRoot,
-      harnessRoot: location.harnessRoot,
-    };
   }
 
   try {

@@ -88,13 +88,18 @@ function materializeDocumentedPassingTask(workspace) {
   return taskDir;
 }
 
-test('generated marker examples parse with production code and materialize to strict audit PASS', () => {
+test('audit evaluates task records even when the separate Harness health check fails', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
 
   const taskDir = materializeDocumentedPassingTask(workspace);
   const before = snapshotTree(taskDir);
+  fs.unlinkSync(path.join(workspace, '.claude', 'rules', 'common', 'coding-style.md'));
+
+  result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0, result.stdout);
+
   result = run(['audit', workspace, '--task', 'example-task', '--strict']);
   assert.strictEqual(result.status, 0, `${result.stdout}\n${result.stderr}`);
   assert.match(result.stdout, /^Bootstrap: PASS$/m);
