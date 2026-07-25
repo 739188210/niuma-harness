@@ -1,0 +1,29 @@
+aliyun-asr-demo:
+  enabled: true
+  api-key: ${DASHSCOPE_API_KEY:}
+  workspace:
+  file-model: paraformer-v2
+  realtime-model: fun-asr-realtime
+  source-language: zh
+  realtime-translation-enabled: true
+  realtime-translation-model: qwen-plus
+  realtime-translation-target-language: en
+  realtime-translation-max-tokens: 800
+  realtime-format: pcm
+  realtime-sample-rate: 16000
+  file-url-expiration-seconds: 3600
+  max-file-size-bytes: 104857600
+  allowed-formats:
+    - wav
+    - mp3
+    - m4a
+    - aac
+    - opus
+    - flac
+    - webm
+    - mp4
+    - mpeg
+    - mpga
+  local-file:
+    storage-path: ./data
+    public-base-url: http://localhost:8080/static
