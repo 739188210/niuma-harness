@@ -10,15 +10,14 @@ Make the smallest useful structural improvement without changing intended behavi
 
 ## Steps
 
-1. Load task-relevant context through `{{HARNESS_DIR}}/docs/layers/01-context.md`; include the affected implementation and tests.
-2. Check Policy: classify intended refactor actions with `{{HARNESS_DIR}}/docs/policy/action-boundary.md` before acting. Pay special attention to broad, risky, force-style, behavior-adjacent, or test-changing refactors.
-3. State the refactor goal and the behavior that must remain unchanged.
-4. Identify the verification baseline before editing. Treat the baseline verification as the behavior boundary for the refactor.
-5. Split the refactor into small reversible steps.
-6. Change only files needed for the refactor goal.
-7. Run focused verification after meaningful steps.
-8. Stop if behavior changes, verification fails, or the work expands into a feature. Route behavior changes or behavior-changing tests through feature/bugfix plus `{{HARNESS_DIR}}/docs/process/test-driven-development.md`.
-9. Record changed structure, verification evidence, skipped checks, and remaining unknowns, including any behavior-specific material risks.
+1. Apply the base minimum reading set and conditional reads in `{{HARNESS_DIR}}/docs/process/task-triage.md`, then inspect the affected implementation and tests and identify the behavior baseline.
+2. State the refactor goal and the behavior that must remain unchanged.
+3. Identify the verification baseline before editing. Treat the baseline verification as the behavior boundary for the refactor.
+4. Split the refactor into small reversible steps.
+5. Change only files needed for the refactor goal.
+6. Run focused verification after meaningful steps.
+7. Stop if behavior changes, verification fails, or the work expands into a feature. Route behavior changes or behavior-changing tests through feature/bugfix plus `{{HARNESS_DIR}}/docs/process/test-driven-development.md`.
+8. Record changed structure, verification evidence, skipped checks, and remaining unknowns, including any behavior-specific material risks.
 
 ## Scope guard
 

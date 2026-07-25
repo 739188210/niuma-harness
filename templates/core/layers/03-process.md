@@ -4,7 +4,7 @@
 
 Route work through the right task workflow. This layer defines how to choose, switch, or escalate workflows.
 
-This memo is a process-routing protocol. It does not replace concrete task playbooks. Specific task steps belong in `{{HARNESS_DIR}}/docs/process/`.
+This memo is a process-routing protocol. It does not replace concrete task playbooks. `{{HARNESS_DIR}}/docs/process/task-triage.md` owns the base minimum reading set and common conditional reads; selected playbooks list only workflow-specific additional materials, gates, checklist, and evidence. Specific task steps belong in `{{HARNESS_DIR}}/docs/process/`.
 
 ## When to use
 

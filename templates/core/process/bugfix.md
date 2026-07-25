@@ -21,16 +21,15 @@ Before reporting completion, make sure the task record or final response include
 
 ## Steps
 
-1. Load Context: read `{{HARNESS_DIR}}/docs/index.md`, `{{HARNESS_DIR}}/docs/project-context.md`, and the affected source or test files.
-2. Check Policy: use `{{HARNESS_DIR}}/docs/policy/action-boundary.md` and pause when the next action is ask-first, forbidden, or stop-and-escalate. Apply the Policy re-evaluation procedure before treating an explicit request as an exception to a default prohibition.
-3. Understand the symptom, expected behavior, and current behavior.
-4. When the symptom is stably automatable, capture it as a focused failing regression test before the fix. The reproduction check is a verification target: follow `{{HARNESS_DIR}}/docs/process/test-driven-development.md` and make that same target pass afterward.
-5. When reproduction is not achievable, record what was attempted and declare a valid alternative-verification plan before the fix. The fix stays unverified until the symptom can be shown to disappear; report the implemented mitigation and remaining unknown instead of claiming the bug is fixed.
-6. Identify the first root cause instead of chasing downstream symptoms.
-7. Implement the smallest safe fix.
-8. Observe: run the focused verification that proves the bug is fixed.
-9. Run broader checks when the touched area is shared or high risk.
-10. Record what changed, what passed, what failed, what was skipped, and remaining unknowns, including any material risks.
+1. Apply the base minimum reading set and conditional reads in `{{HARNESS_DIR}}/docs/process/task-triage.md`, then inspect the symptom report, affected source or test files, and the smallest reproduction target.
+2. Understand the symptom, expected behavior, and current behavior.
+3. When the symptom is stably automatable, capture it as a focused failing regression test before the fix. The reproduction check is a verification target: follow `{{HARNESS_DIR}}/docs/process/test-driven-development.md` and make that same target pass afterward.
+4. When reproduction is not achievable, record what was attempted and declare a valid alternative-verification plan before the fix. The fix stays unverified until the symptom can be shown to disappear; report the implemented mitigation and remaining unknown instead of claiming the bug is fixed.
+5. Identify the first root cause instead of chasing downstream symptoms.
+6. Implement the smallest safe fix.
+7. Observe: run the focused verification that proves the bug is fixed.
+8. Run broader checks when the touched area is shared or high risk.
+9. Record what changed, what passed, what failed, what was skipped, and remaining unknowns, including any material risks.
 
 ## Recovery
 

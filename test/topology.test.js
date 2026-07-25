@@ -214,12 +214,13 @@ test('fresh module entries include an empty user-managed knowledge skeleton', ()
       /public responsibility.*does not own/i,
       /dependencies.*consume/i,
       /building, testing, and starting/i,
-      /source, runtime, and test entry points/i,
+      /few source, runtime, and test locations that help future module tasks start/i,
+      /current module files remain the source of task facts/i,
       /configuration files, environment-variable/i,
       /limits.*risks.*known issues/i,
-      /cross-module verification.*integration checks/i,
+      /trigger categories, affected consumers or contracts, and required integration checks/i,
     ]) assert.match(entry, prompt);
-    assert.doesNotMatch(entry, /npm test|pnpm test|yarn test/i);
+    assert.doesNotMatch(entry, /## Module task routing|npm test|pnpm test|yarn test/i);
   }
 });
 

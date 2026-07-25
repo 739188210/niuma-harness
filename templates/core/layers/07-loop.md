@@ -16,7 +16,7 @@ When work cannot be safely resumed from the request and current files alone, kee
 agent-work/tasks/<task-name>/status.md
 ```
 
-The ledger is the resume point after interruption, context reset, or handoff. Keep it short and current. Before resuming, read the task plan and ledger, then re-check current code, configuration, tests, and command results before trusting an older direction.
+The ledger is the resume point after interruption, context reset, or handoff. Keep it short and current. Follow the Recovery entry below before resuming; re-check current code, configuration, tests, and command results before trusting an older direction.
 
 Minimum fields:
 
@@ -29,6 +29,19 @@ Minimum fields:
 - Resume instructions
 
 Do not create or maintain a ledger for trivial one-step work unless it helps handoff.
+
+## Recovery entry
+
+Use this as the only task-material reading order after interruption, context reset, cross-session continuation, handoff, named task resume, or before continuing after a failure. Do not continue an older next action until this entry is complete.
+
+1. Locate the named task from the user request, a handoff reference, the current task path, or an active ledger. Do not enumerate `agent-work/tasks/` or guess a task name. If the task is not identifiable from the request and current workspace, stop and ask.
+2. Read that task's `status.md` first when it exists. Extract the goal, current stage, completed steps, candidate next action, blockers or risks, resume instructions, and verification-state pointer. Its next action is not authorization to act; first re-check current facts and Policy.
+3. Read `plan.md` only as earlier execution input: its goal, boundaries, success criteria, smallest approach, and verification design are older direction or assumptions, not current truth.
+4. Read `verification.md` for checks actually run, actual results, skipped checks, and remaining unknowns. Historical passing evidence does not prove the current workspace is healthy; unrun checks remain unknown.
+5. Read `harness-feedback.md` only when it exists and its classification, tier, selected playbook, scope or authorization record, recovery declaration, or outcome affects the next decision. Its absence does not block recovery, and it does not replace verification evidence.
+6. Re-check the smallest current workspace evidence needed for the candidate next action: relevant current source, configuration, tests, README/runbook, and command results. Current facts override older task material.
+7. Route from that evidence without creating another task classification or risk tier: continue the selected playbook's next smallest safe action when its goal, boundary, and preconditions still hold; enter `{{HARNESS_DIR}}/docs/layers/05-recovery.md` when evidence is failing, conflicting, unclear, or unsafe; return to `{{HARNESS_DIR}}/docs/process/task-triage.md` only when current evidence invalidates the original classification, risk tier, success criteria, or selected playbook; follow Policy before an action crosses its boundary.
+8. Before continuing, pausing, or handing off, update only applicable existing records with observed facts: `status.md` for current state, `verification.md` for actual checks, and `harness-feedback.md` when required for a non-trivial task. Do not backfill evidence or create a complete task package merely for format.
 
 ## Ownership boundaries
 

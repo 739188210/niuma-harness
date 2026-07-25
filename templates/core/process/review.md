@@ -10,8 +10,8 @@ Identify blocking issues before work is considered ready, without turning review
 
 ## Steps
 
-1. Load task-relevant context through `{{HARNESS_DIR}}/docs/layers/01-context.md`; include the changed files or diff.
-2. Check Policy: classify the review as read-only reporting before acting. Recommendations may be reported as review findings; re-classify before performing risky, destructive, external, security-sensitive, scope-expanding, or test-changing follow-up actions.
+1. Apply the base minimum reading set and conditional reads in `{{HARNESS_DIR}}/docs/process/task-triage.md`, then inspect the changed files or diff, intended task goal, and available verification evidence.
+2. Classify the review as read-only reporting before acting. Recommendations may be reported as review findings; re-classify before performing risky, destructive, external, security-sensitive, scope-expanding, or test-changing follow-up actions.
 3. Confirm the intended task goal and compare it with the actual changes.
 4. Review correctness, security, maintainability, test coverage, and verification evidence.
 5. Apply relevant installed engineering standards.

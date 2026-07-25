@@ -150,6 +150,16 @@ test('generated docs define task status ledger protocol and guide task record sh
   assert.match(loopMemo, /agent-work\/tasks\/<task-name>\/status\.md/);
   assert.match(loopMemo, /multi-step, risky, parallel, or interruptible/);
   assert.match(loopMemo, /does not introduce another task classification or risk tier/);
+  assert.match(loopMemo, /## Recovery entry/);
+  const recoveryEntry = loopMemo.match(/## Recovery entry[\s\S]*?\n## Ownership boundaries/)[0];
+  assert.match(recoveryEntry, /Do not continue an older next action until this entry is complete/);
+  assert.match(recoveryEntry, /Do not enumerate `agent-work\/tasks\/` or guess a task name/);
+  assert.ok(recoveryEntry.indexOf('`status.md`') < recoveryEntry.indexOf('`plan.md`'));
+  assert.ok(recoveryEntry.indexOf('`plan.md`') < recoveryEntry.indexOf('`verification.md`'));
+  assert.ok(recoveryEntry.indexOf('`verification.md`') < recoveryEntry.indexOf('`harness-feedback.md`'));
+  assert.match(recoveryEntry, /current source, configuration, tests, README\/runbook, and command results/);
+  assert.match(recoveryEntry, /continue the selected playbook.*05-recovery\.md.*task-triage\.md.*Policy/i);
+  assert.match(recoveryEntry, /Do not backfill evidence or create a complete task package merely for format/);
   assert.match(loopMemo, /re-check current code, configuration, tests, and command results before trusting an older direction/);
 
   const entry = read(path.join(workspace, 'CLAUDE.md'));
@@ -232,6 +242,8 @@ test('generated recovery memo maps failure types to required responses', () => {
   const h = path.join(workspace, 'harness');
 
   const recoveryMemo = read(path.join(h, 'docs', 'layers', '05-recovery.md'));
+  assert.match(recoveryMemo, /The Loop Recovery entry owns task-material reading order and current-workspace recheck/);
+  assert.match(recoveryMemo, /Failure types are recovery-handling labels, not task classifications, risk tiers, or playbooks/);
   assert.match(recoveryMemo, /## Failure response map/);
   assert.match(recoveryMemo, /`test`/);
   assert.match(recoveryMemo, /`build`/);

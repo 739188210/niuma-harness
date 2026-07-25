@@ -22,14 +22,13 @@ Before reporting completion, make sure the task record or final response include
 
 ## Steps
 
-1. Load Context: read `{{HARNESS_DIR}}/docs/index.md`, `{{HARNESS_DIR}}/docs/project-context.md`, package metadata, and release-related docs.
-2. Check Policy: use `{{HARNESS_DIR}}/docs/policy/action-boundary.md`; publishing, tagging, pushing, deploying, and version bumps are forbidden unless explicitly requested. An explicit request authorizes only the named action and scope, then requires the Policy re-evaluation procedure; it never overrides stop-and-escalate and still leaves ask-first gates for credentials, destructive effects, failed verification, unclear scope, or external side effects not explicitly covered by the request.
-3. Confirm the release target, version intent, package or artifact scope, and user approval boundary.
-4. Inspect package contents or build artifacts with project-local dry-run commands when available.
-5. Run local verification checks required for the release scope, or request approval for checks that touch external systems, credentials, quotas, or release infrastructure.
-6. Prepare release notes or a summary from verified changes.
-7. Stop before outward-facing actions unless the user explicitly approved that exact action.
-8. Record commands, expected signals, actual results, skipped checks, and remaining unknowns, including release risks.
+1. Apply the base minimum reading set and conditional reads in `{{HARNESS_DIR}}/docs/process/task-triage.md`, then inspect package metadata, release-related docs, and the target package or artifact contents.
+2. Confirm the release target, version intent, package or artifact scope, and user approval boundary. Publishing, tagging, pushing, deploying, and version bumps are forbidden unless explicitly requested. An explicit request authorizes only the named action and scope; it never overrides stop-and-escalate and still leaves ask-first gates for credentials, destructive effects, failed verification, unclear scope, or external side effects not explicitly covered by the request.
+3. Inspect package contents or build artifacts with project-local dry-run commands when available.
+4. Run local verification checks required for the release scope, or request approval for checks that touch external systems, credentials, quotas, or release infrastructure.
+5. Prepare release notes or a summary from verified changes.
+6. Stop before outward-facing actions unless the user explicitly approved that exact action.
+7. Record commands, expected signals, actual results, skipped checks, and remaining unknowns, including release risks.
 
 ## Release readiness checks
 

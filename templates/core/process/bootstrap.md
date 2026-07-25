@@ -10,7 +10,7 @@ Build and maintain a concise, verified project fact base for future work without
 
 Bootstrap is the one-time initial project scan after `niuma-harness init`. It is not scoped to the current user request.
 
-When the bootstrap record in `{{HARNESS_DIR}}/docs/project-context.md` has `"status": "pending"`, the first agent handling non-trivial work must complete the initial scan before normal task execution. A small task, an obvious reference implementation, or a task-local shortcut is not a reason to skip bootstrap.
+Triage reads the bootstrap record as part of its base minimum reading set. When it has `"status": "pending"` and triage identifies the first non-trivial task, complete the initial scan before normal execution of the selected playbook. Bootstrap is a context-maintenance prerequisite, not a task classification, risk tier, or replacement playbook. After the scan, resume the selected playbook using the verified facts. A small task, an obvious reference implementation, or a task-local shortcut is not a reason to skip required bootstrap.
 
 ### Minimum scan
 
@@ -25,7 +25,7 @@ When the bootstrap record in `{{HARNESS_DIR}}/docs/project-context.md` has `"sta
 The marker-delimited bootstrap record remains in `{{HARNESS_DIR}}/docs/project-context.md`; keep it there because it is part of the current execution-record and Audit contract.
 
 - `pending`: no useful initial scan is complete.
-- `partial`: the scan is blocked or intentionally limited by explicit user instruction; state the scope and gaps in `knownGaps`.
+- `partial`: the scan is blocked or intentionally limited by explicit user instruction; state the scope and gaps in `knownGaps`. A `partial` record triggers further bootstrap only when its known gaps or durable-fact maintenance are material to the current task; do not turn unrelated context debt into scope expansion.
 - `complete`: the basic project map, stack, commands, and known gaps are usefully initialized. Use a canonical UTC timestamp, workspace-relative regular-file paths in `filesInspected`, substantive Project summary, Technology stack, and Code map sections, plus at least one explicit verification command.
 
 Do not remove or change the marker's schema and fields while maintaining project facts.
@@ -44,6 +44,8 @@ Maintain facts about:
 - Known gaps and open questions that materially affect future work.
 
 When current workspace evidence conflicts with a recorded fact, use the current evidence for the task. Then update or mark the durable fact stale after verification.
+
+`Task fact routing`, when a project uses it, is an optional navigation aid: update it only when a durable task-to-heading mapping changes. It is not a bootstrap record field, completion requirement, or required project artifact. Do not make it a second code map or use it to copy source/test lists, commands, module-local details, or task material.
 
 Do not store secrets, credentials, private data, task logs, one-off command output, temporary failures, debugging traces, one-task root causes, throwaway scripts, unverified guesses, or current uncommitted file lists. Keep such material under `agent-work/` instead.
 

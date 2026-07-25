@@ -73,7 +73,7 @@ For a declared multi-module workspace, read `{{HARNESS_DIR}}/docs/module-topolog
 
 1. Start from the operating loop in the entry file (`CLAUDE.md` / `AGENTS.md`).
 2. Use this navigation map to locate task-relevant materials.
-3. Read only the task-relevant stable facts in `{{HARNESS_DIR}}/docs/project-context.md`.
+3. In `{{HARNESS_DIR}}/docs/project-context.md`, read the Metadata/bootstrap record and, when it exists and matches the task, the `Task fact routing` table to select only task-relevant stable-fact headings.
 4. Before relying on a project-context fact, inspect task-relevant current README, build files, configuration, source, tests, or command output.
 5. Use `{{HARNESS_DIR}}/docs/process/bootstrap.md` only for bootstrap, context staleness, or durable-fact maintenance.
 6. Read task-relevant experience records only when a recurring scenario or known trap may apply; verify current facts before relying on them.

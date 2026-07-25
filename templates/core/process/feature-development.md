@@ -36,17 +36,16 @@ Before reporting completion, make sure the task record or final response include
 
 ## Steps
 
-1. Load Context: read `{{HARNESS_DIR}}/docs/index.md`, `{{HARNESS_DIR}}/docs/project-context.md`, and relevant existing implementation patterns.
-2. Check Policy: use `{{HARNESS_DIR}}/docs/policy/action-boundary.md` and pause when the next action is ask-first, forbidden, or stop-and-escalate. Apply the Policy re-evaluation procedure before treating an explicit request as an exception to a default prohibition. Isolate first (`{{HARNESS_DIR}}/docs/process/isolation.md`) only when shared-tree work would create avoidable risk or coordination cost, such as intermediate broken states, parallel edits, experimental work, high-risk behavior changes, or overlap with another active task. For large features, consider staged subagent dispatch (`{{HARNESS_DIR}}/docs/process/subagent-development.md`).
-3. Confirm understanding before planning when the feature has unclear scope, missing acceptance criteria, or meaningful design choices whose answer can change the implementation direction.
-4. When the task needs an execution anchor, create `agent-work/tasks/<task-name>/plan.md` before implementation. Record acceptance criteria as stable success-criterion IDs, the smallest path, and planned evidence; follow `agent-work/README.md` for when this is needed and its compact shape.
-5. Classify each acceptance criterion before implementation: test-first when it has a stable automated target, otherwise declare the automation-unsuitability reason and replacement evidence before implementation.
-6. For test-first criteria, follow `{{HARNESS_DIR}}/docs/process/test-driven-development.md`; do not implement before the focused RED evidence.
-7. Choose the smallest implementation path that fits the current architecture.
-8. Plan verification before implementation. Use `{{HARNESS_DIR}}/docs/layers/04-observation.md` for evidence expectations.
-9. Implement the feature with task-scoped changes.
-10. Run relevant verification commands.
-11. Record changes, verification results, skipped checks, and remaining unknowns, including any material risks.
+1. Apply the base minimum reading set and conditional reads in `{{HARNESS_DIR}}/docs/process/task-triage.md`, then inspect relevant existing implementation patterns and acceptance-criterion targets.
+2. Confirm understanding before planning when the feature has unclear scope, missing acceptance criteria, or meaningful design choices whose answer can change the implementation direction. Isolate first (`{{HARNESS_DIR}}/docs/process/isolation.md`) only when shared-tree work would create avoidable risk or coordination cost, such as intermediate broken states, parallel edits, experimental work, high-risk behavior changes, or overlap with another active task. For large features, consider staged subagent dispatch (`{{HARNESS_DIR}}/docs/process/subagent-development.md`).
+3. When the task needs an execution anchor, create `agent-work/tasks/<task-name>/plan.md` before implementation. Record acceptance criteria as stable success-criterion IDs, the smallest path, and planned evidence; follow `agent-work/README.md` for when this is needed and its compact shape.
+4. Classify each acceptance criterion before implementation: test-first when it has a stable automated target, otherwise declare the automation-unsuitability reason and replacement evidence before implementation.
+5. For test-first criteria, follow `{{HARNESS_DIR}}/docs/process/test-driven-development.md`; do not implement before the focused RED evidence.
+6. Choose the smallest implementation path that fits the current architecture.
+7. Plan verification before implementation. Use `{{HARNESS_DIR}}/docs/layers/04-observation.md` for evidence expectations.
+8. Implement the feature with task-scoped changes.
+9. Run relevant verification commands.
+10. Record changes, verification results, skipped checks, and remaining unknowns, including any material risks.
 
 ## When to pause
 

@@ -8,6 +8,30 @@ This is a concrete playbook selected by the Process layer. Use `{{HARNESS_DIR}}/
 
 Classify the request, load the minimum required context, identify policy risks, and choose the next playbook.
 
+## Base minimum reading set
+
+Triage owns the base minimum reading set. Read only what is needed to classify, route, and safely start this task; do not pre-read every Harness document.
+
+1. Use `{{HARNESS_DIR}}/docs/index.md` for fact priority, the Policy exception, and navigation. Do not follow every link.
+2. In `{{HARNESS_DIR}}/docs/project-context.md`, read the Metadata/bootstrap record. When `Task fact routing` exists and matches the task, use it to select the smallest relevant headings; when it is absent or does not match, select headings from the task request instead. For example, read Code map to locate an affected area, Build and verification commands when planning a check, and Engineering conventions or Reference implementations only when they affect the proposed work. It never replaces request-named files or the smallest current source, configuration, build, test, README, or command evidence.
+3. Inspect request-named files and the smallest current source, configuration, build, test, README, or command evidence needed to verify task-specific facts.
+
+Project context is a locator for stable facts, not proof of current task behavior. Current verifiable workspace evidence remains higher priority.
+
+## Conditional reading
+
+Read the following only when its condition applies. These conditions do not create another task classification or risk tier.
+
+| Condition | Additional reading | Boundary |
+|---|---|---|
+| The bootstrap record is `pending` and triage identifies a non-trivial task. | `{{HARNESS_DIR}}/docs/process/bootstrap.md` | Complete the existing minimum scan before normal execution of the selected playbook. Bootstrap is not a new classification, tier, or playbook. |
+| The bootstrap record is `partial` and its `knownGaps` or durable-fact maintenance are material to the task. | `{{HARNESS_DIR}}/docs/process/bootstrap.md` | Address only the task-relevant gap; do not turn unrelated context debt into scope expansion. |
+| The next action is not trivial read-only work, or the task involves security, data, permissions, public APIs, dependencies, releases, destructive effects, or unclear risk. | `{{HARNESS_DIR}}/docs/policy/action-boundary.md`; read `{{HARNESS_DIR}}/docs/layers/02-policy.md` when the Policy protocol is needed. | Policy is checked before the action and is not overridden by ordinary fact priority. |
+| Declared modules, task paths, or current evidence indicate module boundaries or cross-module work. | `{{HARNESS_DIR}}/docs/module-topology.md`, then only affected module supplements and current module files. | For cross-module work, read every affected module's Cross-module verification triggers. |
+| The request, current files, or project material points to a durable architecture, contract, dependency, security, or shared-convention decision. | Search for and read only relevant Accepted, unsuperseded records under `{{HARNESS_DIR}}/docs/decisions/`, then re-check their Source of truth. | An ADR explains rationale; it does not replace current facts or Policy. |
+| A recurring scenario, known trap, or current reference points to reusable experience. | Read only scope-matching Active records under `{{HARNESS_DIR}}/docs/experience/`, then re-check their Source of truth. | Experience is guidance; it does not replace current facts or Policy. |
+| The task needs an execution anchor, recoverable state, or resumes a named task. | Read `agent-work/README.md`; for a named task resume, follow the Recovery entry in `{{HARNESS_DIR}}/docs/layers/07-loop.md`. | Do not enumerate task directories, pre-read, create, or copy a complete task package merely for format. Re-triage only when current evidence invalidates the original classification, risk tier, success criteria, or selected playbook. |
+
 ## Required artifact/checklist
 
 Before reporting completion, make sure the task record or final response includes:
@@ -22,9 +46,8 @@ Before reporting completion, make sure the task record or final response include
 
 ## Steps
 
-1. Load Context: read `{{HARNESS_DIR}}/docs/index.md` and `{{HARNESS_DIR}}/docs/project-context.md` for stable facts.
-2. Check Policy: use `{{HARNESS_DIR}}/docs/layers/02-policy.md` for protocol and `{{HARNESS_DIR}}/docs/policy/action-boundary.md` for concrete action boundaries.
-3. Classify the task:
+1. Establish the base minimum reading set.
+2. Classify the task:
    - question or explanation only
    - small edit
    - bug fix
@@ -37,13 +60,13 @@ Before reporting completion, make sure the task record or final response include
    - investigation (`review` classification)
    - verification (`verification` classification)
    - cleanup (`refactor` classification)
-4. Assign a lightweight risk/impact tier:
+3. Assign a lightweight risk/impact tier:
    - `quick`: clear, low-risk, localized work that can be verified with a minimal check.
    - `normal`: ordinary feature, bug fix, refactor, documentation, or verification work that needs explicit success criteria and evidence.
    - `careful`: work involving security, user data, permissions, public APIs, database shape, dependencies, releases, destructive operations, broad shared code, or high cost of failure.
 
    The tier does not replace Policy. `quick` still requires Observation, and `careful` does not automatically require heavy documentation; it means state the risk, check Policy, and choose evidence before acting.
-5. Choose the playbook:
+4. Choose the playbook:
    - Bug fix: `{{HARNESS_DIR}}/docs/process/bugfix.md`
    - Feature development: `{{HARNESS_DIR}}/docs/process/feature-development.md`
    - Refactor: `{{HARNESS_DIR}}/docs/process/refactor.md`
@@ -58,9 +81,9 @@ Before reporting completion, make sure the task record or final response include
    | Investigation | `{{HARNESS_DIR}}/docs/process/review.md` read-only observation path | Use the existing `review` classification. Do not modify files; clearly separate facts, inferences, and unknowns. |
    | Verification | `{{HARNESS_DIR}}/docs/process/review.md` plus `{{HARNESS_DIR}}/docs/layers/04-observation.md` | Use the existing `verification` classification. Report only checks actually run and observed results; unrun checks are unknown, not passing. |
    | Cleanup | `{{HARNESS_DIR}}/docs/process/refactor.md` | Use the existing `refactor` classification. Check ownership first; ask before deleting files not created by this task or content that may be user-owned. |
-6. Define success criteria, the smallest useful next step, and whether the work needs a `status.md` ledger.
-7. After classification and risk routing, decide whether direct execution is safe or whether the task needs an execution anchor. Use the task-material protocol in `agent-work/README.md`; do not create another classification or risk tier for task files.
-8. Stop and ask when the request lacks enough information, expands scope, or crosses a Policy boundary.
+5. Apply only the conditional reads that now apply. If bootstrap is required, complete it before normal execution of the selected playbook, then resume that playbook using verified facts.
+6. Define success criteria, the smallest useful next step, an evidence plan, and whether the work needs task-local execution material or a `status.md` ledger. After classification and risk routing, decide whether direct execution is safe or whether the task needs an execution anchor. Use the task-material protocol in `agent-work/README.md`; do not create another classification or risk tier for task files.
+7. Stop and ask when the request lacks enough information, expands scope, or crosses a Policy boundary.
 
 ## Observation
 
@@ -69,4 +92,3 @@ Before leaving triage, identify what evidence will show that the next step succe
 ## Recovery
 
 Use `{{HARNESS_DIR}}/docs/layers/05-recovery.md` when classification is unclear after reading available context. Do not guess; report the ambiguity and ask for the missing decision.
-

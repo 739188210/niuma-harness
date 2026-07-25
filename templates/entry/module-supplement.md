@@ -30,7 +30,7 @@
 
 ## Source and test entry points
 
-<!-- Verified source, runtime, and test entry points; keep only locations that help future module work. -->
+<!-- Record only the few source, runtime, and test locations that help future module tasks start. These are locators; current module files remain the source of task facts. Do not list the full module tree or task-local investigation paths. -->
 
 ## Configuration locations
 
@@ -42,4 +42,4 @@
 
 ## Cross-module verification triggers
 
-<!-- Verified change categories that require cross-module verification, affected consumers or contracts, and required integration checks. -->
+<!-- Record verified trigger categories, affected consumers or contracts, and required integration checks. Keep this to reusable module boundaries; do not copy root facts or task logs. -->

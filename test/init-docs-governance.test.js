@@ -233,6 +233,13 @@ test('generated process playbooks define required artifact contracts', () => {
   const h = path.join(workspace, 'harness');
 
   const triage = read(path.join(h, 'docs', 'process', 'task-triage.md'));
+  assert.match(triage, /## Base minimum reading set/);
+  assert.match(triage, /## Conditional reading/);
+  assert.match(triage, /`harness\/docs\/process\/bootstrap\.md`/);
+  assert.match(triage, /`harness\/docs\/policy\/action-boundary\.md`/);
+  assert.match(triage, /`harness\/docs\/module-topology\.md`/);
+  assert.match(triage, /`harness\/docs\/decisions\//);
+  assert.match(triage, /`harness\/docs\/experience\//);
   assert.match(triage, /## Required artifact\/checklist/);
   assert.match(triage, /Task classification/);
   assert.match(triage, /Whether a `status\.md` ledger is needed/);
@@ -248,6 +255,17 @@ test('generated process playbooks define required artifact contracts', () => {
   assert.match(triage, /deleting files not created by this task/);
 
   const feature = read(path.join(h, 'docs', 'process', 'feature-development.md'));
+  for (const playbook of [
+    read(path.join(h, 'docs', 'process', 'bugfix.md')),
+    feature,
+    read(path.join(h, 'docs', 'process', 'refactor.md')),
+    read(path.join(h, 'docs', 'process', 'review.md')),
+    read(path.join(h, 'docs', 'process', 'release.md')),
+  ]) {
+    assert.match(playbook, /base minimum reading set.*task-triage\.md/i);
+  }
+  assert.doesNotMatch(feature, /Load Context: read `harness\/docs\/index\.md`, `harness\/docs\/project-context\.md`/);
+  assert.match(feature, /relevant existing implementation patterns and acceptance-criterion targets/);
   assert.match(feature, /## Required artifact\/checklist/);
   assert.match(feature, /Acceptance criteria/);
   assert.match(feature, /When the task needs an execution anchor, create `agent-work\/tasks\/<task-name>\/plan\.md` before implementation/);
@@ -255,21 +273,26 @@ test('generated process playbooks define required artifact contracts', () => {
   assert.match(feature, /keep status, context, plan, verification, and handoff notes/);
 
   const bugfix = read(path.join(h, 'docs', 'process', 'bugfix.md'));
+  assert.doesNotMatch(bugfix, /Load Context: read `harness\/docs\/index\.md`, `harness\/docs\/project-context\.md`/);
+  assert.match(bugfix, /symptom report, affected source or test files, and the smallest reproduction target/);
   assert.match(bugfix, /## Required artifact\/checklist/);
   assert.match(bugfix, /Reproduction signal/);
 
   const refactor = read(path.join(h, 'docs', 'process', 'refactor.md'));
+  assert.match(refactor, /affected implementation and tests and identify the behavior baseline/);
   assert.match(refactor, /## Required artifact\/checklist/);
   assert.match(refactor, /Behavior baseline/);
   assert.match(refactor, /keep status, context, plan, verification, and handoff notes/);
 
   const review = read(path.join(h, 'docs', 'process', 'review.md'));
+  assert.match(review, /changed files or diff, intended task goal, and available verification evidence/);
   assert.match(review, /## Required artifact\/checklist/);
   assert.match(review, /Findings grouped by severity/);
   assert.match(review, /## Fix boundary/);
   assert.match(review, /Fixing findings is a separate action/);
 
   const release = read(path.join(h, 'docs', 'process', 'release.md'));
+  assert.match(release, /package metadata, release-related docs, and the target package or artifact contents/);
   assert.match(release, /## Required artifact\/checklist/);
   assert.match(release, /Release target/);
   assert.match(release, /Package or artifact scope/);
@@ -414,7 +437,7 @@ test('generated docs define test-change gate', () => {
 
   const bugfix = read(path.join(h, 'docs', 'process', 'bugfix.md'));
   assert.match(bugfix, /The reproduction check is a verification target/);
-  assert.match(bugfix, /ask-first, forbidden, or stop-and-escalate/);
+  assert.match(bugfix, /test-change gate in `harness\/docs\/policy\/action-boundary\.md`/);
   assert.match(bugfix, /never remove the only reproduction without a replacement/);
 
   const refactor = read(path.join(h, 'docs', 'process', 'refactor.md'));

@@ -10,6 +10,8 @@ Use this layer when tests fail, builds fail, commands fail, context is missing, 
 
 If the Loop layer flags a rationalization about missing evidence or dismissing failures as unrelated, use this layer to classify the failure or uncertainty before continuing. Scope-expansion rationalizations route through Process and Policy.
 
+The Loop Recovery entry owns task-material reading order and current-workspace recheck. Use this layer only after that entry finds a failure, conflict, uncertainty, or unsafe state. Failure types are recovery-handling labels, not task classifications, risk tiers, or playbooks.
+
 ## Agent protocol
 
 1. Classify the failure type: test, build, command, context, bad edit, unclear requirement, acceptance mismatch, scope drift, process stall, policy block, or unknown.

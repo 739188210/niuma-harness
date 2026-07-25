@@ -51,7 +51,7 @@ Use readable stable success-criterion IDs. When an existing task record or user-
 
 ### Recoverable execution
 
-Add and maintain `status.md` when work is multi-stage, interruptible, delegated, parallel, risky, under recovery, changing scope or direction, or cannot be safely resumed from current code alone. Follow `{{HARNESS_DIR}}/docs/layers/07-loop.md` for the ledger and recovery protocol.
+Add and maintain `status.md` when work is multi-stage, interruptible, delegated, parallel, risky, under recovery, changing scope or direction, or cannot be safely resumed from current code alone. On resume, `status.md` is the first task-local operational state to read; `plan.md` is not current truth. Follow the Recovery entry in `{{HARNESS_DIR}}/docs/layers/07-loop.md` for the only complete recovery order.
 
 Create other files only when they provide information that cannot stay concise in the plan or ledger:
 
@@ -109,7 +109,7 @@ Use one schema 1 marker block in `verification.md`; `harness-feedback.md` refere
 
 ## Runtime protocol
 
-The Loop layer defines how agents keep task status current and resume safely: `{{HARNESS_DIR}}/docs/layers/07-loop.md`.
+The Loop Recovery entry defines the only task-material reading order for safe resume; this guide defines only when material is needed and each file's role: `{{HARNESS_DIR}}/docs/layers/07-loop.md`.
 
 ## Durable facts
 

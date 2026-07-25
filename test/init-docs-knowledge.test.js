@@ -31,7 +31,7 @@ test('generated docs prioritize task facts and route context reading by need', (
   assert.match(index, /## Policy exception/);
   assert.match(index, /Action permission, security boundaries, and ownership conflicts are not decided by ordinary fact priority/);
   assert.match(index, /more specific and stricter Policy rule decides/);
-  assert.match(index, /Read only the task-relevant stable facts/);
+  assert.match(index, /Metadata\/bootstrap record and, when it exists and matches the task, the `Task fact routing` table/);
   assert.match(index, /Before relying on a project-context fact, inspect task-relevant current README, build files, configuration, source, tests, or command output/);
   assert.doesNotMatch(index, /## Project pointers/);
   assert.doesNotMatch(index, /## Maintenance/);
@@ -64,6 +64,68 @@ test('generated docs prioritize task facts and route context reading by need', (
   assert.match(customContext, /`ai-harness\/docs\/project-context\.md`/);
   assert.doesNotMatch(customIndex, /{{HARNESS_DIR}}|`harness\/docs\//);
   assert.doesNotMatch(customContext, /{{HARNESS_DIR}}|`harness\/docs\//);
+});
+
+test('generated docs route minimum process reading through triage and process triggers', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const entry = read(path.join(workspace, 'CLAUDE.md'));
+  const triage = read(path.join(h, 'docs', 'process', 'task-triage.md'));
+  const context = read(path.join(h, 'docs', 'layers', '01-context.md'));
+  const bootstrap = read(path.join(h, 'docs', 'process', 'bootstrap.md'));
+  const process = read(path.join(h, 'docs', 'layers', '03-process.md'));
+
+  assert.match(entry, /task-triage\.md.*base minimum reading set/i);
+  assert.match(triage, /## Base minimum reading set/);
+  assert.match(triage, /Do not pre-read every Harness document/i);
+  assert.match(triage, /Metadata\/bootstrap record/);
+  assert.match(triage, /select the smallest relevant headings/);
+  assert.match(triage, /current source, configuration, build, test, README, or command evidence/);
+  assert.match(triage, /## Conditional reading/);
+  assert.match(triage, /`pending` and triage identifies a non-trivial task/);
+  assert.match(triage, /`harness\/docs\/process\/bootstrap\.md`/);
+  assert.match(triage, /`partial`.*`knownGaps`.*material to the task/);
+  assert.match(triage, /`harness\/docs\/policy\/action-boundary\.md`/);
+  assert.match(triage, /`harness\/docs\/module-topology\.md`/);
+  assert.match(triage, /Accepted, unsuperseded records/i);
+  assert.match(triage, /scope-matching Active records/i);
+  assert.match(triage, /`agent-work\/README\.md`/);
+  assert.match(triage, /do not create another classification or risk tier/i);
+  assert.match(triage, /for a named task resume, follow the Recovery entry in `harness\/docs\/layers\/07-loop\.md`/i);
+  assert.match(triage, /Re-triage only when current evidence invalidates the original classification, risk tier, success criteria, or selected playbook/);
+
+  assert.match(context, /task-triage\.md` defines the base minimum reading set/);
+  assert.match(context, /Metadata\/bootstrap record, then only the task-relevant headings/);
+  assert.match(context, /Do not enumerate decision, experience, or task-work directories speculatively/);
+  assert.match(bootstrap, /context-maintenance prerequisite, not a task classification, risk tier, or replacement playbook/);
+  assert.match(bootstrap, /After the scan, resume the selected playbook/);
+  assert.match(bootstrap, /`partial` record.*material to the current task/);
+  assert.match(process, /task-triage\.md` owns the base minimum reading set and common conditional reads/);
+  assert.match(process, /workflow-specific additional materials, gates, checklist, and evidence/);
+
+  const customWorkspace = tempDir();
+  const customResult = run(['init', customWorkspace, '--agent', 'claude', '--harness-dir', 'ai-harness']);
+  assert.strictEqual(customResult.status, 0, customResult.stderr);
+  const customEntry = read(path.join(customWorkspace, 'CLAUDE.md'));
+  const customTriage = read(path.join(customWorkspace, 'ai-harness', 'docs', 'process', 'task-triage.md'));
+  const customLoop = read(path.join(customWorkspace, 'ai-harness', 'docs', 'layers', '07-loop.md'));
+  const customWorkReadme = read(path.join(customWorkspace, 'agent-work', 'README.md'));
+  const customProcess = read(path.join(customWorkspace, 'ai-harness', 'docs', 'layers', '03-process.md'));
+
+  for (const body of [customEntry, customTriage, customLoop, customWorkReadme, customProcess]) {
+    assert.doesNotMatch(body, /{{HARNESS_DIR}}|`harness\/docs\//);
+  }
+  assert.match(customEntry, /`ai-harness\/docs\/process\/task-triage\.md`/);
+  assert.match(customTriage, /`ai-harness\/docs\/index\.md`/);
+  assert.match(customTriage, /`ai-harness\/docs\/project-context\.md`/);
+  assert.match(customTriage, /`ai-harness\/docs\/policy\/action-boundary\.md`/);
+  assert.match(customTriage, /`ai-harness\/docs\/layers\/07-loop\.md`/);
+  assert.match(customLoop, /## Recovery entry/);
+  assert.match(customWorkReadme, /`ai-harness\/docs\/layers\/07-loop\.md`/);
+  assert.match(customProcess, /`ai-harness\/docs\/process\/task-triage\.md`/);
 });
 
 test('generated docs route module knowledge by scope', () => {
@@ -116,6 +178,22 @@ test('generated project context separates user facts from managed bootstrap prot
   assert.match(projectContext, /"filesInspected": \[\]/);
   assert.match(projectContext, /"scanScope": "Not scanned"/);
   assert.match(projectContext, /"knownGaps"/);
+  assert.match(projectContext, /## Task fact routing/);
+  assert.match(projectContext, /Task need \/ signal/);
+  assert.match(projectContext, /Read these root fact sections/);
+  assert.match(projectContext, /Then verify against/);
+  assert.match(projectContext, /compact locator for recurring task needs/);
+  assert.match(projectContext, /does not require every project to fill it or every task to read every row/);
+  assert.match(projectContext, /does not replace current workspace evidence, `harness\/docs\/module-topology\.md`, or module supplements/);
+  for (const heading of [
+    'Project summary',
+    'Technology stack',
+    'Code map',
+    'Engineering conventions',
+    'Build and verification commands',
+    'Reference implementations',
+    'Open questions',
+  ]) assert.match(projectContext, new RegExp(heading));
   assert.match(projectContext, /## Project summary/);
   assert.match(projectContext, /## Technology stack/);
   assert.match(projectContext, /## Code map/);
@@ -126,7 +204,7 @@ test('generated project context separates user facts from managed bootstrap prot
   const contextProtocol = read(path.join(h, 'docs', 'process', 'bootstrap.md'));
   assert.match(contextProtocol, /one-time initial project scan after `niuma-harness init`/);
   assert.match(contextProtocol, /not scoped to the current user request/);
-  assert.match(contextProtocol, /A small task, an obvious reference implementation, or a task-local shortcut is not a reason to skip bootstrap/);
+  assert.match(contextProtocol, /A small task, an obvious reference implementation, or a task-local shortcut is not a reason to skip required bootstrap/);
   assert.match(contextProtocol, /package manifests, lockfiles, workspace or monorepo configuration/);
   assert.match(contextProtocol, /`pending`|`partial`|`complete`/);
   assert.match(contextProtocol, /Do not remove or change the marker's schema and fields/);
@@ -137,10 +215,22 @@ test('generated project context separates user facts from managed bootstrap prot
   assert.match(entry, /# Project overrides/);
   assert.match(entry, /Their single source of truth is[\s\S]*harness\/docs\/project-context\.md/);
 
+  const triage = read(path.join(h, 'docs', 'process', 'task-triage.md'));
+  assert.match(triage, /When `Task fact routing` exists and matches the task, use it to select the smallest relevant headings/);
+  assert.match(triage, /when it is absent or does not match, select headings from the task request instead/i);
+  assert.match(triage, /It never replaces request-named files or the smallest current source, configuration, build, test, README, or command evidence/);
+
   const contextMemo = read(path.join(h, 'docs', 'layers', '01-context.md'));
-  assert.match(contextMemo, /bootstrap, context staleness, or durable-fact maintenance is needed, also read `harness\/docs\/process\/bootstrap\.md`/);
+  assert.match(contextMemo, /Apply only the relevant triage conditions for bootstrap, Policy, module routing, ADRs, experience, or task-local recovery material/);
+  assert.match(contextMemo, /optional locator for existing stable-fact headings, not an authority or a second code map/);
   const memoryMemo = read(path.join(h, 'docs', 'layers', '06-memory.md'));
   assert.match(memoryMemo, /follow `harness\/docs\/process\/bootstrap\.md` for the one-time initial scan/);
   assert.match(memoryMemo, /record only verified durable facts/);
+  assert.match(memoryMemo, /When a project uses `Task fact routing`, update it only when the task-to-heading mapping changes/);
+
+  assert.match(contextProtocol, /Task fact routing.*optional navigation aid/);
+  assert.match(contextProtocol, /not a bootstrap record field, completion requirement, or required project artifact/);
+  const index = read(path.join(h, 'docs', 'index.md'));
+  assert.match(index, /Metadata\/bootstrap record and, when it exists and matches the task, the `Task fact routing` table/);
 });
 
