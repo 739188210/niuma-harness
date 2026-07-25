@@ -45,6 +45,8 @@ niuma-harness audit [target] [--harness-dir <name>] [--task <name> | --all] [--s
 | `--rules <selection>` | `all`, `none`, or `<rule-dir>[,<rule-dir>...]` |
 | `--rules-out <selection>` | Exclude selected rule directories from `all` |
 | `--skills <selection>` | `all`, `none`, or `<skill>[,<skill>...]`, default: `all` |
+| `--topology <mode>` | `single` disables interactive automatic discovery; `discover` explicitly reads root module declarations |
+| `--modules <paths>` | Explicit comma-separated existing module roots; bypasses automatic discovery |
 | `--dry-run` | Print planned actions without writing files |
 
 ### Doctor/check options
@@ -155,9 +157,9 @@ Runtime task records live under the workspace-level `agent-work/` directory.
 
 ## Multi-module targets
 
-A normal `init` remains root-only. Use `--topology discover --dry-run` to inspect bounded candidates from root Maven, Gradle, npm-workspace, or pnpm-workspace declarations. It never recursively scans arbitrary folders, runs project commands, follows symlinks, or adopts modules without an explicit `--modules` selection.
+When the selected Harness directory has no existing `manifest.json`, an interactive normal `init` discovers bounded module candidates from root Maven, Gradle, npm-workspace, or pnpm-workspace declarations, lists them, and requires confirmation before writing. Declining leaves the workspace unchanged: no Harness or module files are written. A normal non-interactive `init` remains root-only for scripts and CI. Use `--topology single` to explicitly stay root-only in an interactive terminal, `--modules` to explicitly select module roots, or `--topology discover --dry-run` to preview candidates only. Discovery never recursively scans arbitrary folders, runs project commands, or follows symlinks.
 
-An explicit multi-module initialization keeps one root Harness and creates project-maintained `harness/modules.json`, generated `harness/docs/module-topology.md`, and concise local `CLAUDE.md` / `AGENTS.md` supplements for selected modules. Newly created module entries include an empty user-/Agent-maintained module knowledge skeleton outside the Niuma marker; `init` never infers project facts for it. Existing module entries preserve their content outside the marker and are not force-restructured to add that skeleton. Root policy remains additive; module files cannot weaken it. Doctor checks topology and supplements; Repair deliberately does not rewrite module-local files.
+A confirmed or explicitly selected multi-module initialization keeps one root Harness and creates project-maintained `harness/modules.json`, generated `harness/docs/module-topology.md`, and concise local `CLAUDE.md` / `AGENTS.md` supplements for selected modules. Newly created module entries include an empty user-/Agent-maintained module knowledge skeleton outside the Niuma marker; `init` never infers project facts for it. Existing module entries preserve their content outside the marker and are not force-restructured to add that skeleton. Root policy remains additive; module files cannot weaken it. Doctor checks topology and supplements; Repair deliberately does not rewrite module-local files.
 
 `modules.json` uses `schemaVersion: 1` and a `modules` array. Each module needs an explicit `id` containing only letters, digits, `.`, `_`, or `-`; `kind` is optional and follows the same token rule. `root` remains a workspace-relative module directory subject to path and symlink checks. After a project-maintained registry change, run normal `init` to adopt it. If Repair finds an invalid registry or one that differs from installed topology, it reports the issue and stops without rewriting the registry or other files.
 

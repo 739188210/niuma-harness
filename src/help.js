@@ -13,8 +13,8 @@ Init options:
   --rules <selection>    all | none | <rule-dir>[,<rule-dir>...]
   --rules-out <dirs>     Exclude rule dirs from all installed rules
   --skills <selection>   all | none | <skill>[,<skill>...], default: all
-  --topology <mode>      single | discover; discover only reads root workspace declarations
-  --modules <paths>      Explicit comma-separated existing module roots
+  --topology <mode>      single | discover; single disables auto-discovery, discover reads root declarations
+  --modules <paths>      Explicit comma-separated existing module roots; bypasses auto-discovery
   --dry-run              Print planned actions without writing files
 
 Doctor/check options:

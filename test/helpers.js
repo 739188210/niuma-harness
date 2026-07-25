@@ -21,6 +21,7 @@ const { getAvailableSkillDirs, getSkillTargetRootsForAgent } = require('../src/s
 const root = path.resolve(__dirname, '..');
 const node = process.execPath;
 const bin = path.join(root, 'bin', 'niuma-harness.js');
+const interactiveCli = path.join(root, 'test', 'interactive-cli.js');
 const allCommandFiles = getAvailableCommandFiles();
 const allRuleDirs = getAvailableRuleDirs();
 const allSkillDirs = getAvailableSkillDirs();
@@ -39,6 +40,14 @@ function run(args) {
   return spawnSync(node, [bin, ...args], {
     cwd: root,
     encoding: 'utf8',
+  });
+}
+
+function runInteractive(args, input = '') {
+  return spawnSync(node, [interactiveCli, ...args], {
+    cwd: root,
+    encoding: 'utf8',
+    input,
   });
 }
 
@@ -345,6 +354,7 @@ module.exports = {
   read,
   readJson,
   run,
+  runInteractive,
   runWithCliRoot,
   snapshotTree,
   tempDir,

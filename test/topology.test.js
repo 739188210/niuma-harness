@@ -9,6 +9,7 @@ const {
   read,
   readJson,
   run,
+  runInteractive,
   snapshotTree,
   tempDir,
 } = require('./helpers');
@@ -23,6 +24,103 @@ function seedWorkspace() {
   }, null, 2));
   return workspace;
 }
+
+test('discovery coalesces duplicate roots from package and pnpm workspace declarations', () => {
+  const workspace = tempDir();
+  fs.mkdirSync(path.join(workspace, 'apps', 'admin'), { recursive: true });
+  fs.writeFileSync(path.join(workspace, 'package.json'), JSON.stringify({ private: true, workspaces: ['apps/*'] }, null, 2));
+  fs.writeFileSync(path.join(workspace, 'pnpm-workspace.yaml'), "packages:\n  - 'apps/./admin'\n");
+  const before = snapshotTree(workspace);
+
+  let result = run(['init', workspace, '--agent', 'claude', '--topology', 'discover', '--dry-run']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Topology: apps\/admin/);
+  assert.strictEqual((result.stdout.match(/apps\/admin/g) || []).length, 1);
+  assertTreeUnchanged(workspace, before);
+
+  result = runInteractive(['init', workspace, '--agent', 'claude', '--topology', 'discover'], 'y\n');
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(result.stdout, /- apps\/admin \(package\.json workspaces\)/);
+  assert.strictEqual((result.stdout.match(/- apps\/admin \(/g) || []).length, 1);
+  const harness = path.join(workspace, 'harness');
+  assert.deepStrictEqual(readJson(path.join(harness, 'modules.json')).modules.map((module) => module.root), ['apps/admin']);
+  assert.strictEqual(run(['doctor', workspace]).status, 0);
+});
+
+test('interactive first init discovers and adopts module candidates after confirmation', () => {
+  const workspace = seedWorkspace();
+  const result = runInteractive(['init', workspace, '--agent', 'claude'], 'y\n');
+
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Discovered module candidates:/);
+  assert.match(result.stdout, /apps\/admin/);
+  assert.match(result.stdout, /services\/orders/);
+  assert.match(result.stdout, /Initialize supplements for all listed modules\? \[y\/N\]/);
+  const harness = path.join(workspace, 'harness');
+  assert.deepStrictEqual(readJson(path.join(harness, 'modules.json')).modules.map((module) => module.root), ['apps/admin', 'services/orders']);
+  assertFile(path.join(workspace, 'apps', 'admin', 'CLAUDE.md'));
+  assertFile(path.join(workspace, 'services', 'orders', 'CLAUDE.md'));
+  assert.strictEqual(readJson(path.join(harness, 'manifest.json')).topology.mode, 'discover');
+  assert.strictEqual(run(['doctor', workspace]).status, 0);
+});
+
+test('interactive first init leaves a discovered workspace unchanged when confirmation is declined', () => {
+  const workspace = seedWorkspace();
+  const before = snapshotTree(workspace);
+  const result = runInteractive(['init', workspace, '--agent', 'claude'], 'n\n');
+
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Topology discovery was not adopted\. No files changed\./);
+  assertTreeUnchanged(workspace, before);
+});
+
+test('non-interactive init remains root-only when module candidates are discoverable', () => {
+  const workspace = seedWorkspace();
+  const result = run(['init', workspace, '--agent', 'claude']);
+
+  assert.strictEqual(result.status, 0, result.stderr);
+  const harness = path.join(workspace, 'harness');
+  assert.deepStrictEqual(readJson(path.join(harness, 'manifest.json')).topology, { mode: 'single', modules: [] });
+  assertNoPath(path.join(harness, 'modules.json'));
+  assertNoPath(path.join(workspace, 'apps', 'admin', 'CLAUDE.md'));
+  assertNoPath(path.join(workspace, 'services', 'orders', 'CLAUDE.md'));
+  assert.strictEqual(run(['doctor', workspace]).status, 0);
+});
+
+test('explicit topology selection bypasses interactive automatic discovery', () => {
+  const singleWorkspace = seedWorkspace();
+  let result = runInteractive(['init', singleWorkspace, '--agent', 'claude', '--topology', 'single']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.doesNotMatch(result.stdout, /Discovered module candidates/);
+  assertNoPath(path.join(singleWorkspace, 'harness', 'modules.json'));
+
+  const explicitWorkspace = seedWorkspace();
+  result = runInteractive(['init', explicitWorkspace, '--agent', 'claude', '--modules', 'apps/admin']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.doesNotMatch(result.stdout, /Discovered module candidates/);
+  assertFile(path.join(explicitWorkspace, 'apps', 'admin', 'CLAUDE.md'));
+  assertNoPath(path.join(explicitWorkspace, 'services', 'orders', 'CLAUDE.md'));
+});
+
+test('interactive re-init does not rediscover existing topology', () => {
+  const workspace = seedWorkspace();
+  let result = run(['init', workspace, '--agent', 'claude', '--modules', 'apps/admin']);
+  assert.strictEqual(result.status, 0, result.stderr);
+
+  result = runInteractive(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.doesNotMatch(result.stdout, /Discovered module candidates/);
+  assertFile(path.join(workspace, 'apps', 'admin', 'CLAUDE.md'));
+});
+
+test('interactive init without module candidates remains root-only without prompting', () => {
+  const workspace = tempDir();
+  const result = runInteractive(['init', workspace, '--agent', 'claude']);
+
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.doesNotMatch(result.stdout, /Discovered module candidates/);
+  assert.deepStrictEqual(readJson(path.join(workspace, 'harness', 'manifest.json')).topology, { mode: 'single', modules: [] });
+});
 
 test('topology discovery previews candidates without writing', () => {
   const workspace = seedWorkspace();
@@ -460,7 +558,20 @@ test('discovery reads every Gradle include argument', () => {
   assert.match(result.stdout, /Topology: app, shared/);
 });
 
-test('module roots cannot alias the workspace root or each other', () => {
+test('discovery still rejects distinct nested module roots', () => {
+  const workspace = tempDir();
+  fs.mkdirSync(path.join(workspace, 'apps', 'admin'), { recursive: true });
+  fs.writeFileSync(path.join(workspace, 'package.json'), JSON.stringify({ private: true, workspaces: ['apps'] }, null, 2));
+  fs.writeFileSync(path.join(workspace, 'pnpm-workspace.yaml'), "packages:\n  - 'apps/admin'\n");
+  const before = snapshotTree(workspace);
+  const result = run(['init', workspace, '--agent', 'claude', '--topology', 'discover', '--dry-run']);
+
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stderr, /nested module roots/i);
+  assertTreeUnchanged(workspace, before);
+});
+
+test('explicit module roots cannot alias the workspace root or each other', () => {
   const workspace = seedWorkspace();
   const before = snapshotTree(workspace);
 
@@ -480,6 +591,25 @@ test('module roots cannot alias the workspace root or each other', () => {
     assert.match(result.stderr, /module root/i);
     assertTreeUnchanged(workspace, before);
   }
+});
+
+test('module registry keeps duplicate normalized roots invalid', () => {
+  const workspace = seedWorkspace();
+  const registryPath = path.join(workspace, 'harness', 'modules.json');
+  fs.mkdirSync(path.dirname(registryPath), { recursive: true });
+  fs.writeFileSync(registryPath, JSON.stringify({
+    schemaVersion: 1,
+    modules: [
+      { id: 'admin-a', root: 'apps/admin' },
+      { id: 'admin-b', root: 'apps/./admin' },
+    ],
+  }, null, 2));
+  const before = snapshotTree(workspace);
+  const result = run(['init', workspace, '--agent', 'claude']);
+
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stderr, /duplicate module root/i);
+  assertTreeUnchanged(workspace, before);
 });
 
 test('unsafe or malformed module targets fail before any write', () => {

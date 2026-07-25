@@ -18,7 +18,7 @@ function resolveTopology(workspaceDir, options) {
 }
 
 function createTopology(workspaceDir, candidates, mode) {
-  const modules = normalizeModules(workspaceDir, candidates);
+  const modules = normalizeModules(workspaceDir, candidates, { dedupeRoots: mode === 'discover' });
   return { mode, modules };
 }
 
@@ -108,8 +108,17 @@ function expandWorkspacePatterns(workspaceDir, patterns, source) {
   return candidates;
 }
 
-function normalizeModules(workspaceDir, candidates) {
-  const normalized = candidates.map((candidate) => normalizeModule(workspaceDir, candidate));
+function normalizeModules(workspaceDir, candidates, options = {}) {
+  let normalized = candidates.map((candidate) => normalizeModule(workspaceDir, candidate));
+  if (options.dedupeRoots) {
+    const roots = new Set();
+    normalized = normalized.filter((module) => {
+      const key = normalizePathForPlatform(module.root);
+      if (roots.has(key)) return false;
+      roots.add(key);
+      return true;
+    });
+  }
   normalized.sort((left, right) => left.root.localeCompare(right.root) || left.id.localeCompare(right.id));
   const roots = new Set();
   const ids = new Set();

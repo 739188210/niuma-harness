@@ -1,4 +1,6 @@
 // CLI 入口只做命令分发，具体行为委托给 init/doctor 模块。
+const fs = require('fs');
+const path = require('path');
 const { parseArgs } = require('./args');
 const { getHelpText } = require('./help');
 const { chooseAgent, chooseDiscoveredModules } = require('./prompts');
@@ -9,6 +11,7 @@ const { runDoctor } = require('./doctor');
 const { runInit } = require('./scaffold');
 const { runRepair } = require('./repair');
 const { runAudit } = require('./audit');
+const { STATUS_FILE } = require('./harness-status');
 
 function finalizeRules(options) {
   if (options.rulesOut) {
@@ -23,6 +26,12 @@ function finalizeRules(options) {
   options.rules = getDefaultRulesForAgent(options.agent);
 }
 
+function shouldDiscoverTopology(options, workspaceDir) {
+  if (options.topology === 'discover') return true;
+  if (options.topologyProvided || options.modulesProvided || !process.stdin.isTTY) return false;
+  return !fs.existsSync(path.join(workspaceDir, options.harnessDir, STATUS_FILE));
+}
+
 async function main(argv) {
   const options = parseArgs(argv);
 
@@ -34,16 +43,20 @@ async function main(argv) {
   if (options.command === 'init') {
     options.agent = await chooseAgent(options.agent);
     finalizeRules(options);
-    if (options.topology === 'discover') {
-      const discovered = resolveTopology(canonicalizeWorkspacePath(options.targetDir || '.'), options);
-      if (!options.dryRun) {
-        const accepted = await chooseDiscoveredModules(discovered.modules);
-        if (!accepted) {
-          console.log('Topology discovery was not adopted. No files changed.');
-          return;
+    const workspaceDir = canonicalizeWorkspacePath(options.targetDir || '.');
+    if (shouldDiscoverTopology(options, workspaceDir)) {
+      const explicitDiscovery = options.topology === 'discover';
+      const discovered = resolveTopology(workspaceDir, { ...options, topology: 'discover' });
+      if (explicitDiscovery || discovered.modules.length > 0) {
+        if (!options.dryRun) {
+          const accepted = await chooseDiscoveredModules(discovered.modules);
+          if (!accepted) {
+            console.log('Topology discovery was not adopted. No files changed.');
+            return;
+          }
         }
+        options.resolvedTopology = discovered;
       }
-      options.resolvedTopology = discovered;
     }
     runInit(options);
     return;
