@@ -1,21 +1,53 @@
 # Harness Runtime Index
 
-This is the navigation map for the harness. The entry file (`CLAUDE.md` / `AGENTS.md`) holds the operating loop; open this map when the loop's Context phase needs to locate project structure, docs, or commands.
+This is the complete runtime navigation map for the harness. The entry file (`CLAUDE.md` / `AGENTS.md`) holds the always-loaded operating loop; use this map to find detailed protocols, policy, playbooks, project facts, and task-local materials.
 
-## Structure guide
+## Runtime navigation
 
-- `{{HARNESS_DIR}}/docs/project-context.md` stores verified stable project facts.
-- `{{HARNESS_DIR}}/docs/decisions/` stores project-maintained long-lived decision rationale.
-- `{{HARNESS_DIR}}/docs/experience/` stores project-maintained reusable experience, known traps, and verified approaches.
-- `{{HARNESS_DIR}}/docs/layers/` defines the agent operating model: how to use context, policy, process, observation, recovery, memory, and loop capabilities.
-- `{{HARNESS_DIR}}/docs/policy/action-boundary.md` defines concrete action permission boundaries.
-- `{{HARNESS_DIR}}/docs/policy/untrusted-content.md` defines how to treat external or unverified content as data, not instructions.
-- `{{HARNESS_DIR}}/docs/policy/secret-leak.md` defines the secret-leak emergency response.
-- `{{HARNESS_DIR}}/docs/process/` contains concrete task playbooks selected by the Process layer.
-- Optional engineering standards selected during init are installed in the selected agent's native rule surface.
-- `{{HARNESS_DIR}}/docs/experiments/` stores active experimental harness feedback mechanisms.
-- `agent-work/` stores task-local notes, plans, verification evidence, and handoff state.
-- `{{HARNESS_DIR}}/README.md` explains the harness structure and how to use it.
+<!-- niuma-navigation:begin -->
+
+### Project knowledge and maintenance
+
+- [Verified project facts](project-context.md)
+- [Project bootstrap and context maintenance](process/bootstrap.md)
+- [Decision-record guide](decisions/README.md)
+- [Experience-record guide](experience/README.md)
+
+### Operating protocols
+
+- [Context](layers/01-context.md)
+- [Policy](layers/02-policy.md)
+- [Process](layers/03-process.md)
+- [Observation](layers/04-observation.md)
+- [Recovery](layers/05-recovery.md)
+- [Memory](layers/06-memory.md)
+- [Loop](layers/07-loop.md)
+
+### Concrete policy
+
+- [Action boundary](policy/action-boundary.md)
+- [Secret-leak response](policy/secret-leak.md)
+- [Untrusted content](policy/untrusted-content.md)
+
+### Task workflows
+
+- [Task triage and lightweight default routing](process/task-triage.md)
+- [Bug fixes](process/bugfix.md)
+- [Feature development](process/feature-development.md)
+- [Refactoring](process/refactor.md)
+- [Test-driven development](process/test-driven-development.md)
+- [Reviews](process/review.md)
+- [Release readiness](process/release.md)
+- [Workspace isolation](process/isolation.md)
+- [Subagent development](process/subagent-development.md)
+
+### Runtime materials
+
+- [Task execution feedback](experiments/task-execution-record.md)
+- [Harness maintainer orientation](../README.md)
+- [Task-local work area](../../agent-work/README.md)
+
+<!-- niuma-navigation:end -->
 
 ## Fact priority
 
@@ -39,48 +71,16 @@ For a declared multi-module workspace, read `{{HARNESS_DIR}}/docs/module-topolog
 
 ## Runtime reading order
 
-The entry file's operating loop drives task work. This map is consulted by need when a phase needs navigation:
-
 1. Start from the operating loop in the entry file (`CLAUDE.md` / `AGENTS.md`).
-2. Use this file to locate structure, docs, workflows, and verification commands.
+2. Use this navigation map to locate task-relevant materials.
 3. Read only the task-relevant stable facts in `{{HARNESS_DIR}}/docs/project-context.md`.
 4. Before relying on a project-context fact, inspect task-relevant current README, build files, configuration, source, tests, or command output.
-5. Read task-relevant experience records in `{{HARNESS_DIR}}/docs/experience/` only when a recurring scenario or known trap may apply; verify current facts before relying on them.
-6. Read the relevant protocol in `{{HARNESS_DIR}}/docs/layers/` when a phase needs depth.
-7. Select the relevant playbook from `{{HARNESS_DIR}}/docs/process/` when the task needs one.
-8. Apply relevant installed engineering standards.
-9. Use `agent-work/` for multi-step task notes and verification evidence.
+5. Use `{{HARNESS_DIR}}/docs/process/bootstrap.md` only for bootstrap, context staleness, or durable-fact maintenance.
+6. Read task-relevant experience records only when a recurring scenario or known trap may apply; verify current facts before relying on them.
+7. Read the relevant layer protocol and select the relevant playbook when the task needs depth.
+8. Apply relevant installed engineering standards and use `agent-work/` for multi-step task notes and verification evidence.
 
 If project-specific facts are missing, inspect the current workspace before acting. Do not guess missing paths, commands, stack details, or ownership.
-
-## 7-layer harness model
-
-- Context protocol: `{{HARNESS_DIR}}/docs/layers/01-context.md`
-- Policy boundary: `{{HARNESS_DIR}}/docs/layers/02-policy.md`
-- Process routing: `{{HARNESS_DIR}}/docs/layers/03-process.md`
-- Observation protocol: `{{HARNESS_DIR}}/docs/layers/04-observation.md`
-- Recovery protocol: `{{HARNESS_DIR}}/docs/layers/05-recovery.md`
-- Memory policy: `{{HARNESS_DIR}}/docs/layers/06-memory.md`
-- Loop runtime: `{{HARNESS_DIR}}/docs/layers/07-loop.md`
-
-## Task workflows
-
-- Task triage: `{{HARNESS_DIR}}/docs/process/task-triage.md`
-- Bug fixes: `{{HARNESS_DIR}}/docs/process/bugfix.md`
-- Feature development: `{{HARNESS_DIR}}/docs/process/feature-development.md`
-- Refactoring: `{{HARNESS_DIR}}/docs/process/refactor.md`
-- Test-driven development: `{{HARNESS_DIR}}/docs/process/test-driven-development.md`
-- Reviews: `{{HARNESS_DIR}}/docs/process/review.md`
-- Release readiness: `{{HARNESS_DIR}}/docs/process/release.md`
-
-## Cross-cutting workflows
-
-- Workspace isolation: `{{HARNESS_DIR}}/docs/process/isolation.md`
-- Subagent development: `{{HARNESS_DIR}}/docs/process/subagent-development.md`
-
-## Experimental feedback
-
-- Task execution feedback: `{{HARNESS_DIR}}/docs/experiments/task-execution-record.md`
 
 ## Verification commands
 

@@ -92,8 +92,10 @@ test('doctor preserves matching-path files for unselected skills without ledger 
 test('doctor detects exact drift in tool-managed core and work templates', () => {
   const workspace = initWorkspace();
   append(path.join(workspace, 'harness', 'docs', 'layers', '01-context.md'));
+  append(path.join(workspace, 'harness', 'docs', 'process', 'bootstrap.md'));
   append(path.join(workspace, 'agent-work', 'README.md'));
   const result = expectDoctorError(workspace, /managed content drifted docs\/layers\/01-context\.md/);
+  assert.match(result.stdout, /managed content drifted docs\/process\/bootstrap\.md/);
   assert.match(result.stdout, /managed content drifted agent-work\/README\.md/);
 });
 

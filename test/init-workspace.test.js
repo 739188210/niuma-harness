@@ -247,7 +247,7 @@ test('--harness-dir uses a custom directory name', () => {
   assert.doesNotMatch(entry, /\(depth: `docs\//);
 
   const index = read(path.join(workspace, 'ai-harness', 'docs', 'index.md'));
-  assert.match(index, /`ai-harness\/README\.md`/);
+  assert.match(index, /\[Harness maintainer orientation\]\(\.\.\/README\.md\)/);
 
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
   assert.match(workReadme, /ai-harness\/docs\/experiments\/task-execution-record\.md/);
@@ -405,16 +405,39 @@ test('re-init refreshes tool-managed files', () => {
   assert.match(read(memo), /## Agent protocol/, 'tool-managed file should be restored from template');
 });
 
-test('re-init preserves user-maintained project-context.md', () => {
+test('re-init preserves user facts while refreshing the managed context protocol', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   const ctx = path.join(workspace, 'harness', 'docs', 'project-context.md');
+  const protocol = path.join(workspace, 'harness', 'docs', 'process', 'bootstrap.md');
   fs.writeFileSync(ctx, 'my project facts\n', 'utf8');
+  fs.writeFileSync(protocol, 'stale bootstrap protocol\n', 'utf8');
 
   result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   assert.strictEqual(read(ctx), 'my project facts\n', 'user-maintained project-context should be preserved');
+  assert.match(read(protocol), /# Project Bootstrap and Context Maintenance Process/);
+  assert.doesNotMatch(read(protocol), /stale bootstrap protocol/);
+});
+
+test('re-init creates bootstrap.md without modifying a legacy context protocol file', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const facts = path.join(workspace, 'harness', 'docs', 'project-context.md');
+  const protocol = path.join(workspace, 'harness', 'docs', 'process', 'bootstrap.md');
+  const legacy = path.join(workspace, 'harness', 'docs', 'process', 'project-context.md');
+  const legacyContent = '# Legacy context protocol\n\nKeep this unchanged.\n';
+  fs.writeFileSync(facts, 'my project facts\n', 'utf8');
+  fs.rmSync(protocol);
+  fs.writeFileSync(legacy, legacyContent, 'utf8');
+
+  result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.strictEqual(read(facts), 'my project facts\n');
+  assert.match(read(protocol), /# Project Bootstrap and Context Maintenance Process/);
+  assert.strictEqual(read(legacy), legacyContent);
 });
 
 test('directory symlink attack is rejected', (t) => {

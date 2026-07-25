@@ -13,14 +13,15 @@ Use this layer after loading context and policy, before implementation, and when
 ## Agent protocol
 
 1. If the task type or risk is unclear, use `{{HARNESS_DIR}}/docs/process/task-triage.md` first to classify it. Triage is a routing step, not the final execution playbook.
-2. Select the final execution playbook from bugfix, feature, refactor, review, or release. Documentation, cleanup, investigation, and verification are task intents that should route to the closest existing playbook; use `none` only when no execution playbook applies.
+2. Select the final execution playbook from bugfix, feature, refactor, review, or release. Documentation, cleanup, investigation, and verification use the explicit lightweight default routes in `{{HARNESS_DIR}}/docs/process/task-triage.md`; use `none` only when no execution playbook applies.
 3. For feature or bugfix behavior work, make a test-first versus alternative verification decision before implementation. Follow `{{HARNESS_DIR}}/docs/process/test-driven-development.md` for eligible stable automatable behavior and declare valid alternative evidence before implementation when automation is unsuitable.
 4. Follow any confirmation gate defined by the selected workflow before writing detailed plans or implementation docs.
 5. If working in the shared tree would create avoidable risk or coordination cost, isolate the workspace first (`{{HARNESS_DIR}}/docs/process/isolation.md`) before acting. Do not isolate merely because a task has more than one step. For large or risky work, consider staged subagent dispatch (`{{HARNESS_DIR}}/docs/process/subagent-development.md`).
 6. Define the smallest useful goal and success criteria.
-7. Break work into observable steps.
-8. Escalate to the user if the task scope expands beyond the selected workflow.
-9. For non-trivial tasks, record the classification, tier and rationale, risk factors, selected playbook, canonical success criteria, performed/skipped steps, decision impact, deviations, and any scope-triggered reclassification in `harness-feedback.md`.
+7. Decide whether direct execution remains safe. When it does not, create the smallest task-local execution material before editing; `agent-work/README.md` is the only authority for that decision and for file roles.
+8. Break work into observable steps.
+9. Escalate to the user if the task scope expands beyond the selected workflow.
+10. For non-trivial tasks, record the classification, tier and rationale, risk factors, selected playbook, canonical success criteria, performed/skipped steps, decision impact, deviations, and any scope-triggered reclassification in `harness-feedback.md`.
 
 ## Task state ownership
 
@@ -43,6 +44,7 @@ Use this as a routing aid only. The selected workflow owns the full checklist, s
 | "release", "publish", "ship", "tag", "package" | `{{HARNESS_DIR}}/docs/process/release.md` | Release target, approval boundary, and package or artifact scope. |
 | "security", "data", "API", "dependency", or other risky/wide-scope work | `{{HARNESS_DIR}}/docs/process/task-triage.md` plus Policy | Classification, policy boundary, selected workflow, and evidence plan. |
 | "done", "verify", "prove", "is this complete?" | Current selected workflow plus Observation | Completion evidence using the Observation schema. |
+| "documentation", "docs", "investigate", "verify", "cleanup" as lightweight task intents | `{{HARNESS_DIR}}/docs/process/task-triage.md` | Explicit lightweight default route, ownership gate where applicable, and Observation expectations. |
 
 Trigger words are routing hints, not permission to bypass Policy. If multiple rows match, start with `{{HARNESS_DIR}}/docs/process/task-triage.md`. Do not duplicate the selected workflow's steps in this memo.
 

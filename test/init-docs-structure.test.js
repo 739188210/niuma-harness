@@ -92,7 +92,7 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
   assertFile(path.join(h, 'README.md'));
   const readme = read(path.join(h, 'README.md'));
   assert.match(readme, /^# Niuma Harness$/m);
-  assert.match(readme, /general entry/);
+  assert.match(readme, /task-execution framework/);
   assert.match(readme, /CLAUDE\.md/);
   assert.match(readme, /AGENTS\.md/);
   assert.match(readme, /docs\/index\.md/);
@@ -129,11 +129,11 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
   const policyMemo = read(path.join(h, 'docs', 'layers', '02-policy.md'));
   assert.match(policyMemo, /harness\/docs\/policy\/untrusted-content\.md/);
   const index = read(path.join(h, 'docs', 'index.md'));
-  assert.match(index, /harness\/docs\/policy\/untrusted-content\.md/);
-  assert.match(index, /navigation map for the harness/);
-  assert.match(index, /`harness\/docs\/project-context\.md` stores verified stable project facts/);
-  assert.match(index, /`agent-work\/` stores task-local notes, plans, verification evidence, and handoff state/);
-  assert.match(index, /`harness\/README\.md` explains the harness structure and how to use it\./);
+  assert.match(index, /\[Untrusted content\]\(policy\/untrusted-content\.md\)/);
+  assert.match(index, /complete runtime navigation map/);
+  assert.match(index, /\[Verified project facts\]\(project-context\.md\)/);
+  assert.match(index, /\[Task-local work area\]\(\.\.\/\.\.\/agent-work\/README\.md\)/);
+  assert.match(index, /\[Harness maintainer orientation\]\(\.\.\/README\.md\)/);
   assert.doesNotMatch(index, /Agents may add short runtime pointers/);
 
   assertNoPath(path.join(h, 'docs', 'automation'));
@@ -149,6 +149,15 @@ test('generated docs define task status ledger protocol and guide task record sh
   const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop.md'));
   assert.match(loopMemo, /agent-work\/tasks\/<task-name>\/status\.md/);
   assert.match(loopMemo, /multi-step, risky, parallel, or interruptible/);
+  assert.match(loopMemo, /does not introduce another task classification or risk tier/);
+  assert.match(loopMemo, /re-check current code, configuration, tests, and command results before trusting an older direction/);
+
+  const entry = read(path.join(workspace, 'CLAUDE.md'));
+  assert.match(entry, /maintain resumable task state under `agent-work\/tasks\/<task>\/` as defined by `harness\/docs\/layers\/07-loop\.md`/);
+  assert.match(entry, /required structured execution record and evidence links/);
+  assert.doesNotMatch(entry, /verification summary or evidence pointer/);
+  assert.doesNotMatch(entry, /update current stage, completed steps, and next action/);
+  assert.doesNotMatch(entry, /harness-feedback\.md/);
 
   const memoryMemo = read(path.join(h, 'docs', 'layers', '06-memory.md'));
   assert.match(memoryMemo, /status\.md/);
@@ -156,6 +165,14 @@ test('generated docs define task status ledger protocol and guide task record sh
 
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
   assert.match(workReadme, /status\.md/);
+  assert.match(workReadme, /## Choose the smallest useful execution material/);
+  assert.match(workReadme, /### Direct execution/);
+  assert.match(workReadme, /### Minimum execution anchor/);
+  assert.match(workReadme, /### Recoverable execution/);
+  assert.match(workReadme, /Do not create a task folder or a full set of files merely to satisfy a format/);
+  assert.match(workReadme, /`plan\.md` is an execution input, not a completion summary/);
+  assert.match(workReadme, /Start and update it when verification occurs; do not backfill it after completion/);
+  assert.match(workReadme, /`init`, `doctor`, and `repair` do not create, rewrite, or delete task folders or task-local files/);
 
 });
 
@@ -203,6 +220,9 @@ test('generated observation memo defines evidence schema', () => {
   assert.match(observationMemo, /use `harness\/docs\/index\.md` only as navigation/);
   assert.doesNotMatch(observationMemo, /project-local commands documented in `harness\/docs\/index\.md`/);
   assert.match(observationMemo, /final Observation verifies the integrated result/);
+  assert.match(observationMemo, /plan may design which success criteria need evidence/);
+  assert.match(observationMemo, /`verification\.md` records only checks actually run and their results/);
+  assert.match(observationMemo, /Do not backfill evidence after completion/);
 });
 
 test('generated recovery memo maps failure types to required responses', () => {

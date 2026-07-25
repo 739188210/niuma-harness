@@ -28,23 +28,27 @@ test('generated docs route durable decisions without taking ownership of project
   assert.match(guide, /Current user instructions and current workspace files take precedence/);
   assert.match(guide, /verify the current state, use the higher-priority source for the task, and then update, supersede, or retire the record/);
   assert.match(guide, /Individual decision records are project-maintained/);
-  for (const field of ['Status', 'Date', 'Scope', 'Source of truth', 'Context', 'Decision', 'Consequences', 'Alternatives considered', 'Verification or migration notes']) {
+  for (const field of ['Status', 'Date', 'Scope', 'Source of truth', 'Context', 'Decision', 'Consequences', 'Alternatives considered', 'Verification or migration notes', 'Task evidence \\(optional\\)']) {
     assert.match(guide, new RegExp(`## ${field}`));
   }
   assert.match(guide, /Current source files, configuration, tests, verified runbooks, or command\/output evidence to re-check/);
   assert.match(guide, /This ADR records decision rationale; it is not the current-state authority/);
+  assert.match(guide, /Origin task/);
+  assert.match(guide, /Task evidence is a locator for the decision's origin/);
+  assert.match(guide, /Omit this section when no task evidence is useful/);
 
   const index = read(path.join(h, 'docs', 'index.md'));
   assert.match(index, /Governance and reusable knowledge: applicable Rules, accepted and unsuperseded ADRs, and active experience records/);
   assert.match(index, /Historical and task material: historical notes, migration material, old proposals, plans, task records/);
 
   const harnessReadme = read(path.join(h, 'README.md'));
-  assert.match(harnessReadme, /`docs\/decisions\/`: project-maintained long-lived decision records and rationale/);
-  assert.match(harnessReadme, /Only `docs\/decisions\/README\.md` is tool-managed; individual decision records are project-maintained/);
+  assert.match(harnessReadme, /Individual decision and experience records are also project-maintained/);
+  assert.match(harnessReadme, /only their README guides are tool-managed/);
 
   const memory = read(path.join(h, 'docs', 'layers', '06-memory.md'));
   assert.match(memory, /Put important long-lived decision rationale in project-maintained records under `harness\/docs\/decisions\//);
   assert.match(memory, /Do not promote every task decision, one-off log, unverified guess, or sensitive detail into a decision record/);
+  assert.match(memory, /Do not create an ADR, experience record, or project-context update merely to close a task/);
 
   const projectAdr = path.join(h, 'docs', 'decisions', '0001-example.md');
   const projectAdrContent = '# Project decision\n\nKeep this exact content.\n';
@@ -60,7 +64,7 @@ test('generated docs route durable decisions without taking ownership of project
   const customIndex = read(path.join(customWorkspace, 'ai-harness', 'docs', 'index.md'));
   const customMemory = read(path.join(customWorkspace, 'ai-harness', 'docs', 'layers', '06-memory.md'));
   assert.match(customGuide, /`ai-harness\/docs\/decisions\//);
-  assert.match(customIndex, /`ai-harness\/docs\/decisions\//);
+  assert.match(customIndex, /\[Decision-record guide\]\(decisions\/README\.md\)/);
   assert.match(customMemory, /`ai-harness\/docs\/decisions\//);
   for (const body of [customGuide, customIndex, customMemory]) {
     assert.doesNotMatch(body, /{{HARNESS_DIR}}|`harness\/docs\//);
@@ -82,6 +86,9 @@ test('generated docs route reusable experience without taking ownership of proje
   assert.match(guide, /Do not promote raw task notes, one-off failures, temporary logs, unverified guesses, or sensitive data/);
   assert.match(guide, /Current user instructions and current workspace files take precedence/);
   assert.match(guide, /Individual experience records are project-maintained/);
+  assert.match(guide, /Origin task/);
+  assert.match(guide, /Optional locator for the task evidence that suggested this lesson/);
+  assert.match(guide, /omit it when no task evidence is useful/);
   for (const field of ['Status', 'Last verified', 'Scope', 'Source of truth', 'Applicable when', 'Scenario or symptoms', 'Verified approach', 'What not to assume', 'Invalidation conditions', 'Promotion notes']) {
     assert.match(guide, new RegExp(`## ${field}`));
   }
@@ -91,12 +98,13 @@ test('generated docs route reusable experience without taking ownership of proje
   assert.match(index, /superseded or expired experience/);
 
   const harnessReadme = read(path.join(h, 'README.md'));
-  assert.match(harnessReadme, /`docs\/experience\/`: project-maintained reusable lessons/);
-  assert.match(harnessReadme, /Only `docs\/experience\/README\.md` is tool-managed; individual experience records are project-maintained/);
+  assert.match(harnessReadme, /Individual decision and experience records are also project-maintained/);
+  assert.match(harnessReadme, /only their README guides are tool-managed/);
 
   const memory = read(path.join(h, 'docs', 'layers', '06-memory.md'));
   assert.match(memory, /Put verified reusable experience with clear applicability and invalidation conditions in project-maintained records under `harness\/docs\/experience\//);
   assert.match(memory, /Do not promote raw task notes, one-off failures, temporary logs, unverified guesses, or sensitive details into experience records/);
+  assert.match(memory, /When an ADR or experience record is created from a task, it may link the task path/);
 
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
   assert.match(workReadme, /candidate reusable experience/);
@@ -116,9 +124,12 @@ test('generated docs route reusable experience without taking ownership of proje
   const customIndex = read(path.join(customWorkspace, 'ai-harness', 'docs', 'index.md'));
   const customMemory = read(path.join(customWorkspace, 'ai-harness', 'docs', 'layers', '06-memory.md'));
   const customWorkReadme = read(path.join(customWorkspace, 'agent-work', 'README.md'));
+  assert.match(customIndex, /\[Experience-record guide\]\(experience\/README\.md\)/);
   for (const body of [customGuide, customIndex, customMemory, customWorkReadme]) {
-    assert.match(body, /`ai-harness\/docs\/experience\//);
     assert.doesNotMatch(body, /{{HARNESS_DIR}}|`harness\/docs\//);
+  }
+  for (const body of [customGuide, customMemory, customWorkReadme]) {
+    assert.match(body, /`ai-harness\/docs\/experience\//);
   }
 });
 
@@ -148,7 +159,8 @@ test('generated docs expose experimental task execution feedback guidance', () =
   assert.doesNotMatch(feedbackDoc, /can be removed or disabled/i);
 
   const entry = read(path.join(workspace, 'CLAUDE.md'));
-  assert.match(entry, /Non-trivial tasks must maintain the structured execution record/);
+  assert.match(entry, /Non-trivial tasks must maintain the required structured execution record and evidence links/);
+  assert.match(entry, /harness\/docs\/experiments\/task-execution-record\.md/);
   assert.doesNotMatch(entry, /niuma-harness audit/);
 
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
@@ -164,8 +176,7 @@ test('generated docs expose experimental task execution feedback guidance', () =
 
 
   const index = read(path.join(h, 'docs', 'index.md'));
-  assert.match(index, /harness\/docs\/experiments\//);
-  assert.match(index, /Task execution feedback: `harness\/docs\/experiments\/task-execution-record\.md`/);
+  assert.match(index, /\[Task execution feedback\]\(experiments\/task-execution-record\.md\)/);
 });
 
 
@@ -184,6 +195,8 @@ test('generated feature docs define pre-plan confirmation gate', () => {
 
   const processMemo = read(path.join(h, 'docs', 'layers', '03-process.md'));
   assert.match(processMemo, /confirmation gate defined by the selected workflow/);
+  assert.match(processMemo, /Decide whether direct execution remains safe/);
+  assert.match(processMemo, /agent-work\/README\.md.*only authority for that decision and for file roles/);
 });
 
 test('generated process memo maps triggers to workflows and artifacts', () => {
@@ -205,6 +218,9 @@ test('generated process memo maps triggers to workflows and artifacts', () => {
   assert.match(processMemo, /harness\/docs\/process\/release\.md/);
   assert.match(processMemo, /package or artifact scope/);
   assert.match(processMemo, /Observation schema/);
+  assert.match(processMemo, /explicit lightweight default routes in `harness\/docs\/process\/task-triage\.md`/);
+  assert.match(processMemo, /"documentation", "docs", "investigate", "verify", "cleanup" as lightweight task intents/);
+  assert.match(processMemo, /ownership gate where applicable/);
   assert.match(processMemo, /Trigger words are routing hints, not permission to bypass Policy/);
   assert.match(processMemo, /If multiple rows match, start with `harness\/docs\/process\/task-triage\.md`/);
   assert.match(processMemo, /Do not duplicate/);
@@ -220,10 +236,22 @@ test('generated process playbooks define required artifact contracts', () => {
   assert.match(triage, /## Required artifact\/checklist/);
   assert.match(triage, /Task classification/);
   assert.match(triage, /Whether a `status\.md` ledger is needed/);
+  assert.match(triage, /After classification and risk routing, decide whether direct execution is safe/);
+  assert.match(triage, /do not create another classification or risk tier for task files/);
+  assert.match(triage, /Documentation update[\s\S]*harness\/docs\/process\/refactor\.md/);
+  assert.match(triage, /generated output, internal links, and factual accuracy/);
+  assert.match(triage, /Investigation[\s\S]*harness\/docs\/process\/review\.md[\s\S]*Use the existing `review` classification[\s\S]*Do not modify files/);
+  assert.match(triage, /facts, inferences, and unknowns/);
+  assert.match(triage, /Verification[\s\S]*harness\/docs\/layers\/04-observation\.md[\s\S]*Use the existing `verification` classification/);
+  assert.match(triage, /unrun checks are unknown, not passing/);
+  assert.match(triage, /Cleanup[\s\S]*Use the existing `refactor` classification[\s\S]*Check ownership first/);
+  assert.match(triage, /deleting files not created by this task/);
 
   const feature = read(path.join(h, 'docs', 'process', 'feature-development.md'));
   assert.match(feature, /## Required artifact\/checklist/);
   assert.match(feature, /Acceptance criteria/);
+  assert.match(feature, /When the task needs an execution anchor, create `agent-work\/tasks\/<task-name>\/plan\.md` before implementation/);
+  assert.match(feature, /acceptance criteria as stable success-criterion IDs/);
   assert.match(feature, /keep status, context, plan, verification, and handoff notes/);
 
   const bugfix = read(path.join(h, 'docs', 'process', 'bugfix.md'));
@@ -410,7 +438,7 @@ test('generated docs require practical TDD for eligible behavior work', () => {
   assert.match(protocol, /not trusted proof of the agent's chronological execution order/);
 
   const index = read(path.join(h, 'docs', 'index.md'));
-  assert.match(index, /Test-driven development: `harness\/docs\/process\/test-driven-development\.md`/);
+  assert.match(index, /\[Test-driven development\]\(process\/test-driven-development\.md\)/);
 
   const process = read(path.join(h, 'docs', 'layers', '03-process.md'));
   assert.match(process, /test-first versus alternative verification decision before implementation/);

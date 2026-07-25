@@ -13,9 +13,10 @@ Use this layer before declaring work complete, after any code or documentation c
 1. Identify the smallest checks that prove the task goal.
 2. Prefer project-local commands documented in `{{HARNESS_DIR}}/docs/project-context.md`; use `{{HARNESS_DIR}}/docs/index.md` only as navigation.
 3. Run focused checks first, then broader checks when justified.
-4. Record evidence using the schema below: check, expected signal, actual result, skipped checks, and remaining unknowns.
-5. Treat unrun checks as unknown, not as passing.
-6. If verification fails, treat the failing check as evidence. Do not change the verification target unless the selected process permits it and the reason is recorded.
+4. A task plan may design which success criteria need evidence, but `verification.md` records only checks actually run and their results. Do not backfill evidence after completion.
+5. Record evidence using the schema below: check, expected signal, actual result, skipped checks, and remaining unknowns.
+6. Treat unrun checks as unknown, not as passing.
+7. If verification fails, treat the failing check as evidence. Do not change the verification target unless the selected process permits it and the reason is recorded.
 
 ## Test-first evidence
 

@@ -13,18 +13,18 @@ This workspace runs a Niuma Harness. The loop below is your operating contract f
 ## The loop
 
 **1. Plan — before any change**
-- Context: use `{{HARNESS_DIR}}/docs/index.md` to locate harness docs, then read `{{HARNESS_DIR}}/docs/project-context.md` for stable facts when needed; if bootstrap status is `pending`, complete its one-time initial project scan before non-trivial work.{{ENTRY_CONTEXT_TOPOLOGY_GUIDANCE}} Inspect current files for anything task-relevant. Never guess what files can show you. (depth: `{{HARNESS_DIR}}/docs/layers/01-context.md`)
+- Context: use `{{HARNESS_DIR}}/docs/index.md` to locate harness docs, then read `{{HARNESS_DIR}}/docs/project-context.md` for stable facts when needed. For bootstrap, context staleness, or durable-fact maintenance, read `{{HARNESS_DIR}}/docs/process/bootstrap.md`.{{ENTRY_CONTEXT_TOPOLOGY_GUIDANCE}} Inspect current files for anything task-relevant. Never guess what files can show you. (depth: `{{HARNESS_DIR}}/docs/layers/01-context.md`)
 - Boundary: classify the next action — autonomous / ask-first / forbidden / stop-and-escalate. Proceed only if autonomous, reversible, and task-scoped. Ask before ask-first; stop at default-forbidden actions unless the Policy defines an exact explicit-request exception and re-evaluation; always stop at stop-and-escalate or unclear risk. (depth: `{{HARNESS_DIR}}/docs/policy/action-boundary.md`)
-- Route: pick a process — bugfix / feature / refactor / review / release. Skip only for trivial single-step tasks. Decide whether multi-step, risky, parallel, or interruptible work needs `agent-work/tasks/<task>/status.md`. (depth: `{{HARNESS_DIR}}/docs/process/`)
+- Route: pick a process — bugfix / feature / refactor / review / release. For documentation, investigation, verification, cleanup, or unclear intent, use `{{HARNESS_DIR}}/docs/process/task-triage.md` for the lightweight default route. For resumable task state, follow `{{HARNESS_DIR}}/docs/layers/07-loop.md`; use `agent-work/README.md` when work needs task-local execution material. Skip only for trivial single-step tasks. (depth: `{{HARNESS_DIR}}/docs/process/`)
 
 **2. Act — smallest change**
 Make the minimal task-aligned change. No scope creep, no drive-by refactor, no new dependencies without asking.
 
 **3. Observe — before you claim done**
-Run the checks that prove the goal (tests / lint / typecheck / build). Record exact commands and results. Unrun checks are "unknown", never "passing". If using `status.md`, update its verification summary or evidence pointer. (depth: `{{HARNESS_DIR}}/docs/layers/04-observation.md`)
+Run the checks that prove the goal (tests / lint / typecheck / build). Record exact commands and results. Unrun checks are "unknown", never "passing". Update relevant task records under `agent-work/` according to Observation and Loop guidance. (depth: `{{HARNESS_DIR}}/docs/layers/04-observation.md`)
 
 **4. Reflect**
-Compare evidence to success criteria. If using `status.md`, update current stage, completed steps, and next action. Failing or unclear → step 5. Passing → step 6.
+Compare evidence to success criteria. Update resumable task state when needed. Failing or unclear → step 5. Passing → step 6.
 
 **5. Repair — bounded**
 Find the first root cause, not downstream symptoms. Smallest safe fix, then re-run the focused check. Bounded retries only — after a few focused attempts fail, stop and report. Never delete or weaken tests, assertions, or checks to force green. (depth: `{{HARNESS_DIR}}/docs/layers/05-recovery.md`)
@@ -33,7 +33,7 @@ Find the first root cause, not downstream symptoms. Smallest safe fix, then re-r
 Task-local notes → `agent-work/`.{{ENTRY_MEMORY_SCOPE_GUIDANCE}} Verified root or cross-module durable facts → `{{HARNESS_DIR}}/docs/project-context.md`. Write only after verification. No secrets, no guesses. (depth: `{{HARNESS_DIR}}/docs/layers/06-memory.md`)
 
 **7. Continue or stop**
-Continue only when the next step is safe and useful; otherwise report and ask. For multi-step, risky, parallel, or interruptible work, keep `agent-work/tasks/<task>/status.md` current enough to resume. Non-trivial tasks must maintain the structured execution record defined in `{{HARNESS_DIR}}/docs/experiments/task-execution-record.md` at `agent-work/tasks/<task>/harness-feedback.md` and reference stable IDs from `verification.md`.
+Continue only when the next step is safe and useful; otherwise report and ask. For multi-step, risky, parallel, or interruptible work, maintain resumable task state under `agent-work/tasks/<task>/` as defined by `{{HARNESS_DIR}}/docs/layers/07-loop.md`. Non-trivial tasks must maintain the required structured execution record and evidence links under `agent-work/tasks/<task>/`; see `{{HARNESS_DIR}}/docs/experiments/task-execution-record.md`.
 
 ## Red lines (apply to every task)
 

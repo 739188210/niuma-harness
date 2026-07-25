@@ -6,19 +6,17 @@ Define the operating loop that connects all other layers. This layer tells an AI
 
 ## When to use
 
-Use this layer for any multi-step task, long-running investigation, repeated verification cycle, or recovery flow. Also use it after context resets to resume work safely.
-
-For multi-step, risky, parallel, or interruptible work, use `agent-work/tasks/<task-name>/status.md` as the explicit progress ledger and recovery point.
+Use this layer for multi-stage, interruptible, delegated, parallel, recovery, or repeated-verification work. Also use it after context resets to resume work safely. The task-material protocol in `agent-work/README.md` decides whether work can stay direct, needs a minimum plan anchor, or needs recoverable state; this layer does not introduce another task classification or risk tier.
 
 ## Explicit task state
 
-For multi-step, risky, parallel, or interruptible work, keep an explicit task status ledger at:
+When work cannot be safely resumed from the request and current files alone, keep an explicit task status ledger at:
 
 ```text
 agent-work/tasks/<task-name>/status.md
 ```
 
-The ledger is the resume point after interruption, context reset, or handoff. Keep it short and current.
+The ledger is the resume point after interruption, context reset, or handoff. Keep it short and current. Before resuming, read the task plan and ledger, then re-check current code, configuration, tests, and command results before trusting an older direction.
 
 Minimum fields:
 
@@ -44,7 +42,7 @@ Before pausing or stopping delegated work, the active task owner records the int
 
 ## Agent protocol
 
-1. Plan: load Context, check Policy, select a Process, and decide whether the task needs a `status.md` ledger.
+1. Plan: load Context, check Policy, select a Process, and use `agent-work/README.md` to decide whether direct execution, a minimum plan anchor, or recoverable state is needed.
 2. Act: make the smallest task-aligned change or investigation step.
 3. Observe: run or record the relevant checks, then update verification state in the ledger when one is used.
 4. Reflect: compare evidence with success criteria and update current stage, completed steps, and next action.

@@ -1,6 +1,6 @@
 # Agent Work Area
 
-This workspace-level directory stores task-local agent work.
+This workspace-level directory stores task-local agent work. It is an execution aid: create only the material that lets an agent start, continue, recover, or hand off work correctly. Do not create a task folder or a full set of files merely to satisfy a format.
 
 Create runtime task records under:
 
@@ -14,21 +14,59 @@ agent-work/tasks/<task-name>/
   notes.md
 ```
 
-## Suggested file roles
+`init`, `doctor`, and `repair` do not create, rewrite, or delete task folders or task-local files.
 
-- `status.md`: goal, current stage, completed steps, next action, blockers or risks, verification summary, and resume instructions.
-- `context.md`: task-local context gathered during execution, including `affectedModules` when the task is module-local or cross-module.
-- `plan.md`: current plan, scope decisions, and implementation sequence.
-- `verification.md`: exact checks, expected signals, actual results, skipped checks with reasons, and remaining unknowns.
-- `harness-feedback.md`: required structured execution record for non-trivial tasks in this package release.
-- `notes.md`: temporary investigation notes, findings, candidate reusable experience, fix decisions, and handoff notes.
+## Choose the smallest useful execution material
+
+Task classification, risk tier, Policy, and playbook selection stay defined by `{{HARNESS_DIR}}/docs/process/task-triage.md` and the selected process. This guide does not create another task type or risk tier. After those decisions, choose only the material needed to execute and recover safely.
+
+### Direct execution
+
+Do not create a task folder when the goal, affected location, expected result, and smallest verification are clear; the work is local and reversible; there is no meaningful solution choice; and a later agent could safely reconstruct the work quickly from the request and current files. Make the change, run the smallest relevant check, and report the actual result.
+
+### Minimum execution anchor
+
+Before changing files, create `agent-work/tasks/<task-name>/plan.md` when a meaningful solution choice, compatibility boundary, multiple related edits, test-first behavior, multiple success criteria, or interruption risk would make later recovery unsafe. `plan.md` is an execution input, not a completion summary.
+
+Use this compact shape:
+
+```md
+# Task plan
+
+## Goal and boundaries
+- Goal:
+- Non-goals and constraints:
+
+## Success criteria
+- `criterion-id`: <observable behavior or result>
+
+## Smallest approach
+- <why this path fits the current architecture>
+
+## Verification design
+- `criterion-id` → `<planned evidence-id or check>`
+```
+
+Use readable stable success-criterion IDs. When an existing task record or user-approved material already supplies an ID, reuse it rather than creating a second ID scheme. The plan designs verification; it does not claim that verification ran.
+
+### Recoverable execution
+
+Add and maintain `status.md` when work is multi-stage, interruptible, delegated, parallel, risky, under recovery, changing scope or direction, or cannot be safely resumed from current code alone. Follow `{{HARNESS_DIR}}/docs/layers/07-loop.md` for the ledger and recovery protocol.
+
+Create other files only when they provide information that cannot stay concise in the plan or ledger:
+
+- `context.md`: task objective, scope, verified current facts, constraints, assumptions, and open questions. Do not use it for implementation steps or raw command output.
+- `plan.md`: goal, non-goals, stable success criteria, smallest approach, implementation order, and verification design.
+- `status.md`: current stage, completed steps, next safe action, blockers or risks, and resume instructions. It is the active operational ledger, not durable memory.
+- `verification.md`: actual checks, expected signals, actual results, skipped checks, and remaining unknowns. Start and update it when verification occurs; do not backfill it after completion.
+- `harness-feedback.md`: the required structured execution record for non-trivial tasks in this package release. Its existing schema and evidence links remain authoritative for that record.
+- `notes.md`: temporary investigation notes, failed attempts, candidate approaches, candidate reusable experience, handoff details, and optional candidates for later knowledge promotion. It is not verification evidence or a durable fact source.
 
 ## What belongs here
 
-- Task goals and acceptance criteria.
-- Task-local status ledgers for multi-step, risky, parallel, or interruptible work.
+- Task goals, acceptance criteria, plans, and execution boundaries when they are needed for safe execution or recovery.
+- Task-local status ledgers for multi-step, risky, parallel, interruptible, or recovery work.
 - Task-local context gathered during execution.
-- Plans for multi-step work.
 - Verification commands, expected signals, actual results, skipped checks, and remaining unknowns, including material risks.
 - Package-enabled experimental Harness execution records for non-trivial tasks.
 - Handoff state after interruption.
@@ -71,10 +109,10 @@ Use one schema 1 marker block in `verification.md`; `harness-feedback.md` refere
 
 ## Runtime protocol
 
-The Loop layer defines how agents keep task status current: `{{HARNESS_DIR}}/docs/layers/07-loop.md`.
+The Loop layer defines how agents keep task status current and resume safely: `{{HARNESS_DIR}}/docs/layers/07-loop.md`.
 
 ## Durable facts
 
-Durable project facts should move through the Memory layer before being recorded in the active harness root's `{{HARNESS_DIR}}/docs/project-context.md`. Candidate reusable experience stays task-local until verified and condensed through the Memory layer into a project-maintained record under `{{HARNESS_DIR}}/docs/experience/`; raw task evidence remains here.
+Promote only material with real long-term value. Durable project facts should move through the Memory layer before being recorded in the active harness root's `{{HARNESS_DIR}}/docs/project-context.md`. Candidate reusable experience stays task-local until verified and condensed through the Memory layer into a project-maintained record under `{{HARNESS_DIR}}/docs/experience/`; raw task evidence remains here. Create an ADR only when a durable decision rationale must survive the task; do not create an empty ADR or experience record merely to state that none was needed.
 
 Do not put task-local records under `{{HARNESS_DIR}}/docs/`.

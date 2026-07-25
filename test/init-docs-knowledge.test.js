@@ -46,9 +46,9 @@ test('generated docs prioritize task facts and route context reading by need', (
   assert.match(context, /more specific, stricter Policy rule/);
 
   const projectContext = read(path.join(h, 'docs', 'project-context.md'));
-  assert.match(projectContext, /verified durable context, not an active-task override/);
-  assert.match(projectContext, /Current user instructions and current workspace files take precedence/);
-  assert.match(projectContext, /verify the current state, use the current facts for the task, and then update or mark the durable fact as stale/);
+  assert.match(projectContext, /verified stable facts about this project/);
+  assert.match(projectContext, /Use `harness\/docs\/process\/bootstrap\.md` for bootstrap and context-maintenance rules/);
+  assert.doesNotMatch(projectContext, /## Bootstrap protocol/);
 
   const customWorkspace = tempDir();
   const customResult = run(['init', customWorkspace, '--agent', 'claude', '--harness-dir', 'ai-harness']);
@@ -56,7 +56,8 @@ test('generated docs prioritize task facts and route context reading by need', (
   const customIndex = read(path.join(customWorkspace, 'ai-harness', 'docs', 'index.md'));
   const customContext = read(path.join(customWorkspace, 'ai-harness', 'docs', 'layers', '01-context.md'));
 
-  assert.match(customIndex, /`ai-harness\/docs\/project-context\.md`/);
+  assert.match(customIndex, /\[Verified project facts\]\(project-context\.md\)/);
+  assert.match(customIndex, /\[Project bootstrap and context maintenance\]\(process\/bootstrap\.md\)/);
   assert.match(customContext, /`ai-harness\/docs\/index\.md`/);
   const customEntry = read(path.join(customWorkspace, 'CLAUDE.md'));
   assert.match(customEntry, /Their single source of truth is[\s\S]*ai-harness\/docs\/project-context\.md/);
@@ -101,7 +102,7 @@ test('generated docs route module knowledge by scope', () => {
 });
 
 
-test('generated project context defines first-use bootstrap protocol', () => {
+test('generated project context separates user facts from managed bootstrap protocol', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
@@ -115,33 +116,31 @@ test('generated project context defines first-use bootstrap protocol', () => {
   assert.match(projectContext, /"filesInspected": \[\]/);
   assert.match(projectContext, /"scanScope": "Not scanned"/);
   assert.match(projectContext, /"knownGaps"/);
-  assert.match(projectContext, /## Bootstrap protocol/);
-  assert.match(projectContext, /one-time full initial project scan after `niuma-harness init`/);
-  assert.match(projectContext, /not scoped to the current user request/);
-  assert.match(projectContext, /A small task, an obvious reference implementation, or a task-local shortcut is not a valid reason to skip bootstrap/);
-  assert.match(projectContext, /Minimum bootstrap scan/);
-  assert.match(projectContext, /package manifests, lockfiles, workspace or monorepo config/);
-  assert.match(projectContext, /Set `status` to `complete` only when the basic project map, stack, commands, and known gaps are usefully initialized/);
-  assert.match(projectContext, /Set `status` to `partial` only when the scan is blocked/);
-  assert.match(projectContext, /Remove only this explanatory `Bootstrap protocol` section/);
-  assert.match(projectContext, /## Maintenance standard/);
-  assert.match(projectContext, /Update this file after bootstrap only when a task verifies a durable fact/);
-  assert.match(projectContext, /Maintain these categories when evidence exists/);
-  assert.match(projectContext, /Do not store/);
-  assert.doesNotMatch(projectContext, /Unknown until verified/);
-  assert.doesNotMatch(projectContext, /Record the product purpose/);
+  assert.match(projectContext, /## Project summary/);
+  assert.match(projectContext, /## Technology stack/);
+  assert.match(projectContext, /## Code map/);
+  assert.match(projectContext, /## Build and verification commands/);
+  assert.match(projectContext, /process\/bootstrap\.md`/);
+  assert.doesNotMatch(projectContext, /## Bootstrap protocol|## Maintenance standard/);
+
+  const contextProtocol = read(path.join(h, 'docs', 'process', 'bootstrap.md'));
+  assert.match(contextProtocol, /one-time initial project scan after `niuma-harness init`/);
+  assert.match(contextProtocol, /not scoped to the current user request/);
+  assert.match(contextProtocol, /A small task, an obvious reference implementation, or a task-local shortcut is not a reason to skip bootstrap/);
+  assert.match(contextProtocol, /package manifests, lockfiles, workspace or monorepo configuration/);
+  assert.match(contextProtocol, /`pending`|`partial`|`complete`/);
+  assert.match(contextProtocol, /Do not remove or change the marker's schema and fields/);
+  assert.match(contextProtocol, /Do not store secrets, credentials, private data, task logs/);
 
   const entry = read(path.join(workspace, 'CLAUDE.md'));
-  assert.match(entry, /if bootstrap status is `pending`, complete its one-time initial project scan before non-trivial work/);
+  assert.match(entry, /For bootstrap, context staleness, or durable-fact maintenance, read `harness\/docs\/process\/bootstrap\.md`/);
   assert.match(entry, /# Project overrides/);
-  assert.match(entry, /Do not duplicate root project structure, code maps, commands, dependency or tooling state/);
   assert.match(entry, /Their single source of truth is[\s\S]*harness\/docs\/project-context\.md/);
-  assert.match(projectContext, /is the single source of truth for durable root or cross-module project facts/);
-  assert.match(projectContext, /Do not copy its project summary, code map, commands, dependency or tooling state, known gaps, or architecture facts into the root entry file's Project overrides area/);
 
+  const contextMemo = read(path.join(h, 'docs', 'layers', '01-context.md'));
+  assert.match(contextMemo, /bootstrap, context staleness, or durable-fact maintenance is needed, also read `harness\/docs\/process\/bootstrap\.md`/);
   const memoryMemo = read(path.join(h, 'docs', 'layers', '06-memory.md'));
-  assert.match(memoryMemo, /Bootstrap `harness\/docs\/project-context\.md` when its structured bootstrap record has `"status": "pending"`/);
-  assert.match(memoryMemo, /perform the one-time initial project scan defined in that file/);
+  assert.match(memoryMemo, /follow `harness\/docs\/process\/bootstrap\.md` for the one-time initial scan/);
   assert.match(memoryMemo, /record only verified durable facts/);
 });
 

@@ -78,7 +78,7 @@ test('multiple candidates are reported in stable order', () => {
   assert.ok(result.stderr.indexOf('- alpha') < result.stderr.indexOf('- zeta'));
 });
 
-test('discovery ignores unrelated manifests and recognizes damaged harness structure', () => {
+test('discovery ignores unrelated manifests and recognizes current and legacy damaged harness structure', () => {
   const workspace = tempDir();
   writeManifestCandidate(workspace, 'unrelated', '{"createdBy":"other"}\n');
   writeManifestCandidate(workspace, 'nested', '{"metadata":{"createdBy":"niuma-harness"}}\n');
@@ -91,7 +91,7 @@ test('discovery ignores unrelated manifests and recognizes damaged harness struc
     '# Niuma Harness\n\nThis directory contains the generated Niuma Harness\n',
     'utf8',
   );
-  fs.writeFileSync(path.join(damaged, 'docs', 'index.md'), '# Harness Runtime Index\n\n## 7-layer harness model\n', 'utf8');
+  fs.writeFileSync(path.join(damaged, 'docs', 'index.md'), '# Harness Runtime Index\n', 'utf8');
   fs.writeFileSync(path.join(damaged, 'docs', 'layers', '07-loop.md'), '# Loop Runtime Layer Memo\n\nagent-work/tasks/<task-name>/status.md\n', 'utf8');
   fs.writeFileSync(path.join(damaged, 'docs', 'policy', 'action-boundary.md'), '# Action Boundary Policy\n\n## Autonomous actions\n', 'utf8');
 
@@ -125,7 +125,7 @@ test('damaged structure does not follow internal symlinks', () => {
   );
   fs.mkdirSync(path.join(outside, 'layers'), { recursive: true });
   fs.mkdirSync(path.join(outside, 'policy'), { recursive: true });
-  fs.writeFileSync(path.join(outside, 'index.md'), '# Harness Runtime Index\n\n## 7-layer harness model\n', 'utf8');
+  fs.writeFileSync(path.join(outside, 'index.md'), '# Harness Runtime Index\n', 'utf8');
   fs.writeFileSync(path.join(outside, 'layers', '07-loop.md'), '# Loop Runtime Layer Memo\n\nagent-work/tasks/<task-name>/status.md\n', 'utf8');
   fs.writeFileSync(path.join(outside, 'policy', 'action-boundary.md'), '# Action Boundary Policy\n\n## Autonomous actions\n', 'utf8');
   let linked = false;

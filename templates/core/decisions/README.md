@@ -60,4 +60,13 @@ Copy this structure into a project-maintained Markdown file when a decision warr
 ## Verification or migration notes
 
 <How to validate, adopt, or safely transition this decision>
+
+## Task evidence (optional)
+
+- Origin task: `<agent-work/tasks/<task-name>/>`
+- Success criteria: `<criterion-id>`
+- Verification: `<agent-work/tasks/<task-name>/verification.md>` (`evidenceIds`: `<evidence-id>`)
+- Rechecked against source of truth: `<YYYY-MM-DD — current files, command, or user confirmation>`
+
+<Task evidence is a locator for the decision's origin. It does not replace the current source of truth or copy raw task logs. Omit this section when no task evidence is useful.>
 ```

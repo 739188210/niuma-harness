@@ -33,23 +33,34 @@ Before reporting completion, make sure the task record or final response include
    - review
    - release readiness
    - security-sensitive change
-   - documentation update
-   - verification or investigation
+   - documentation update (`documentation` classification)
+   - investigation (`review` classification)
+   - verification (`verification` classification)
+   - cleanup (`refactor` classification)
 4. Assign a lightweight risk/impact tier:
    - `quick`: clear, low-risk, localized work that can be verified with a minimal check.
    - `normal`: ordinary feature, bug fix, refactor, documentation, or verification work that needs explicit success criteria and evidence.
    - `careful`: work involving security, user data, permissions, public APIs, database shape, dependencies, releases, destructive operations, broad shared code, or high cost of failure.
 
    The tier does not replace Policy. `quick` still requires Observation, and `careful` does not automatically require heavy documentation; it means state the risk, check Policy, and choose evidence before acting.
-5. Choose the closest playbook:
+5. Choose the playbook:
    - Bug fix: `{{HARNESS_DIR}}/docs/process/bugfix.md`
    - Feature development: `{{HARNESS_DIR}}/docs/process/feature-development.md`
    - Refactor: `{{HARNESS_DIR}}/docs/process/refactor.md`
    - Review: `{{HARNESS_DIR}}/docs/process/review.md`
    - Release readiness: `{{HARNESS_DIR}}/docs/process/release.md`
-   - Other tasks: use the closest playbook and keep task notes when needed.
+
+   Lightweight default routing for common task intents:
+
+   | Intent | Default route | Extra requirement |
+   |---|---|---|
+   | Documentation update | `{{HARNESS_DIR}}/docs/process/refactor.md` | Keep the smallest useful scope; verify generated output, internal links, and factual accuracy. |
+   | Investigation | `{{HARNESS_DIR}}/docs/process/review.md` read-only observation path | Use the existing `review` classification. Do not modify files; clearly separate facts, inferences, and unknowns. |
+   | Verification | `{{HARNESS_DIR}}/docs/process/review.md` plus `{{HARNESS_DIR}}/docs/layers/04-observation.md` | Use the existing `verification` classification. Report only checks actually run and observed results; unrun checks are unknown, not passing. |
+   | Cleanup | `{{HARNESS_DIR}}/docs/process/refactor.md` | Use the existing `refactor` classification. Check ownership first; ask before deleting files not created by this task or content that may be user-owned. |
 6. Define success criteria, the smallest useful next step, and whether the work needs a `status.md` ledger.
-7. Stop and ask when the request lacks enough information, expands scope, or crosses a Policy boundary.
+7. After classification and risk routing, decide whether direct execution is safe or whether the task needs an execution anchor. Use the task-material protocol in `agent-work/README.md`; do not create another classification or risk tier for task files.
+8. Stop and ask when the request lacks enough information, expands scope, or crosses a Policy boundary.
 
 ## Observation
 

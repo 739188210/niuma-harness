@@ -67,5 +67,10 @@ Copy this structure into a project-maintained Markdown file when a reusable less
 
 ## Promotion notes
 
-<Safe reference to the task evidence that suggested this lesson, if useful>
+- Origin task: `<agent-work/tasks/<task-name>/>`
+- Success criteria: `<criterion-id>`
+- Verification: `<agent-work/tasks/<task-name>/verification.md>` (`evidenceIds`: `<evidence-id>`)
+- Rechecked against source of truth: `<YYYY-MM-DD — current files, command, or user confirmation>`
+
+<Optional locator for the task evidence that suggested this lesson. It does not replace Source of truth or copy raw task logs; omit it when no task evidence is useful.>
 ```

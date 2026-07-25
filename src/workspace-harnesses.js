@@ -8,7 +8,7 @@ const DAMAGED_HARNESS_MARKERS = [
     relativePath: 'README.md',
   },
   {
-    fragments: ['# Harness Runtime Index', '## 7-layer harness model'],
+    fragments: ['# Harness Runtime Index'],
     relativePath: 'docs/index.md',
   },
   {
