@@ -66,11 +66,11 @@ If any condition is not met, ask first. If the host tool or higher-priority inst
 
 Verification targets include tests, assertions, snapshots, fixtures, mocks, coverage thresholds, lint/typecheck/build configuration, and documented manual check steps.
 
-Agents may add new tests or strengthen existing checks when that is task-scoped. This includes autonomous task-scoped test creation or updates needed to express approved changed behavior or regression coverage, provided the prior behavior contract is preserved or strengthened.
+Agents may add new tests or strengthen existing checks when that is task-scoped. This includes autonomous task-scoped focused RED test creation or updates needed to express approved changed behavior or confirmed regression coverage, even in an existing test file or verification target, when they preserve or strengthen the prior behavior contract and do not remove, bypass, or dilute existing guarantees.
 
 After a failure, do not edit, delete, skip, weaken, or rebaseline verification targets to make the workspace pass. First assume the implementation is wrong.
 
-Changing an existing verification target is ask-first unless the task explicitly requests test maintenance or the agent can show that the target conflicts with verified intended behavior. Record the reason, the behavior contract being preserved, and the replacement coverage.
+Other changes to an existing verification target are ask-first when they are an uncertain semantic rewrite or test-maintenance work not directly needed to express the approved behavior or confirmed regression. The task may explicitly request test maintenance, or the agent may show that the target conflicts with verified intended behavior. Record the reason, the behavior contract being preserved, and the replacement coverage.
 
 Forbidden target-moving includes deleting failing tests, loosening assertions, broadening expected values, marking tests skipped or focused, accepting snapshots without semantic review, lowering coverage thresholds, or excluding failing paths from verification.
 
@@ -113,7 +113,7 @@ Agents must ask before:
 - Preparing release or deployment readiness checks before an approved outward-facing action.
 - Making large refactors beyond the requested task.
 - Moving uncertain facts into long-lived project context.
-- Changing existing verification targets unless the task explicitly requests test maintenance or the target conflicts with verified intended behavior.
+- Other changes to existing verification targets that are an uncertain semantic rewrite or test-maintenance work not directly needed to express approved behavior or confirmed regression coverage, unless the task explicitly requests test maintenance or the target conflicts with verified intended behavior.
 
 ## Forbidden unless explicitly requested
 

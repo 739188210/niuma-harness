@@ -15,7 +15,7 @@ Non-test-first work includes documentation, formatting, static configuration, ty
 ## RED → same-target GREEN → optional REFACTOR
 
 1. Define one focused behavior target before implementation.
-2. Add or update the focused test and run it. It must genuinely fail for the intended missing or incorrect behavior.
+2. Add or update the focused test and run it. A task-scoped focused RED update that directly expresses approved changed behavior or confirmed regression coverage uses the autonomous test-change allowance; an uncertain semantic rewrite of an existing target is ask-first. It must genuinely fail for the intended missing or incorrect behavior.
 3. Make the minimal task-scoped implementation change.
 4. Re-run that same target and confirm it passes.
 5. Refactor only when useful; recheck the relevant target after a refactor.
@@ -30,7 +30,7 @@ Time pressure, convenience, inability to find a test, and test complexity are no
 
 ## Test integrity and evidence
 
-Follow the test-change gate in `{{HARNESS_DIR}}/docs/policy/action-boundary.md`. Record focused RED and GREEN results as separate truthful evidence entries under the Observation protocol; record a refactor recheck when applicable.
+Follow the test-change gate in `{{HARNESS_DIR}}/docs/policy/action-boundary.md`; the focused RED allowance never permits moving a target after failure to make work pass. Record focused RED and GREEN results as separate truthful evidence entries under the Observation protocol; record a refactor recheck when applicable.
 
 These records are task evidence, not trusted proof of the agent's chronological execution order.
 

@@ -413,12 +413,17 @@ test('generated docs define test-change gate', () => {
   const actionBoundary = read(path.join(h, 'docs', 'policy', 'action-boundary.md'));
   assert.match(actionBoundary, /## Test-change gate/);
   assert.match(actionBoundary, /Verification targets include tests, assertions, snapshots/);
-  assert.match(actionBoundary, /Agents may add new tests or strengthen existing checks/);
+  assert.match(actionBoundary, /focused RED test creation or updates/);
+  assert.match(actionBoundary, /approved changed behavior or confirmed regression coverage/);
+  assert.match(actionBoundary, /even in an existing test file or verification target/);
+  assert.match(actionBoundary, /preserve or strengthen the prior behavior contract/);
   assert.match(actionBoundary, /do not edit, delete, skip, weaken, or rebaseline verification targets/);
-  assert.match(actionBoundary, /Changing an existing verification target is ask-first/);
+  assert.match(actionBoundary, /Other changes to an existing verification target are ask-first/);
+  assert.match(actionBoundary, /uncertain semantic rewrite/);
   assert.match(actionBoundary, /task explicitly requests test maintenance/);
   assert.match(actionBoundary, /target conflicts with verified intended behavior/);
   assert.match(actionBoundary, /replacement coverage/);
+  assert.doesNotMatch(actionBoundary, /Changing an existing verification target is ask-first unless/);
   assert.match(actionBoundary, /A request to turn red into green by weakening, skipping, deleting, or rebaselining verification targets is not valid test maintenance/);
   assert.match(actionBoundary, /The user asks to turn red into green by weakening, skipping, deleting, or rebaselining verification targets/);
   assert.match(actionBoundary, /## Decision order and reclassification/);
@@ -461,6 +466,8 @@ test('generated docs require practical TDD for eligible behavior work', () => {
   assert.match(protocol, /## RED → same-target GREEN → optional REFACTOR/);
   assert.match(protocol, /must genuinely fail/);
   assert.match(protocol, /same target/);
+  assert.match(protocol, /approved changed behavior or confirmed regression coverage/);
+  assert.match(protocol, /uncertain semantic rewrite.*ask-first/i);
   assert.match(protocol, /time pressure, convenience, inability to find a test, and test complexity/i);
   assert.match(protocol, /not trusted proof of the agent's chronological execution order/);
 
@@ -490,8 +497,10 @@ test('generated docs require practical TDD for eligible behavior work', () => {
   assert.doesNotMatch(observation, /niuma-verification-record:begin/);
 
   const policy = read(path.join(h, 'docs', 'policy', 'action-boundary.md'));
-  assert.match(policy, /task-scoped test creation or updates needed to express approved changed behavior or regression coverage/);
-  assert.match(policy, /prior behavior contract is preserved or strengthened/);
+  assert.match(policy, /task-scoped focused RED test creation or updates needed to express approved changed behavior or confirmed regression coverage/);
+  assert.match(policy, /even in an existing test file or verification target/);
+  assert.match(policy, /preserve or strengthen the prior behavior contract/);
+  assert.match(policy, /Other changes to an existing verification target are ask-first/);
 });
 
 test('generated docs select task material mechanically without pre-creating a package', () => {
