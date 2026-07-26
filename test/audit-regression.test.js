@@ -2,12 +2,9 @@ const test = require('node:test');
 const {
   AUDIT_RECORD_BEGIN,
   AUDIT_RECORD_END,
-  BOOTSTRAP_RECORD_BEGIN,
-  BOOTSTRAP_RECORD_END,
   VERIFICATION_RECORD_BEGIN,
   VERIFICATION_RECORD_END,
   parseAuditRecord,
-  parseBootstrapRecord,
   parseVerificationRecord,
 } = require('../src/audit/records');
 const {
@@ -23,38 +20,11 @@ const {
   tempDir,
 } = require('./helpers');
 
-function replaceMarkerRecord(content, begin, end, record) {
-  const start = content.indexOf(begin);
-  const finish = content.indexOf(end, start);
-  assert.ok(start >= 0 && finish > start, `expected ${begin} before ${end}`);
-  return `${content.slice(0, start)}${markerRecord(begin, end, record)}${content.slice(finish + end.length)}`;
-}
-
 function markerRecord(begin, end, record) {
   return `${begin}\n\`\`\`json\n${JSON.stringify(record, null, 2)}\n\`\`\`\n${end}`;
 }
 
 function materializeDocumentedPassingTask(workspace) {
-  const projectContextPath = path.join(workspace, 'harness', 'docs', 'project-context.md');
-  const projectContext = read(projectContextPath);
-  const bootstrap = parseBootstrapRecord(projectContext, 'generated project-context.md');
-  assert.strictEqual(bootstrap.status, 'pending');
-  Object.assign(bootstrap, {
-    status: 'complete',
-    recordedAt: '2026-07-12T08:00:00Z',
-    filesInspected: ['harness/manifest.json'],
-    scanScope: 'Generated Harness manifest, documentation, and workspace task area.',
-    knownGaps: [],
-  });
-  let completedContext = replaceMarkerRecord(projectContext, BOOTSTRAP_RECORD_BEGIN, BOOTSTRAP_RECORD_END, bootstrap);
-  completedContext = completedContext
-    .replace('## Project summary\n', '## Project summary\n\nA generated Niuma Harness test workspace.\n')
-    .replace('## Technology stack\n', '## Technology stack\n\nNode.js CLI-generated Markdown documents.\n')
-    .replace('## Code map\n', '## Code map\n\n`harness/` contains managed docs and `agent-work/` contains runtime records.\n')
-    .replace('# test\n', 'npm test\n');
-  fs.writeFileSync(projectContextPath, completedContext);
-  assert.strictEqual(parseBootstrapRecord(read(projectContextPath)).status, 'complete');
-
   const feedbackDoc = read(path.join(workspace, 'harness', 'docs', 'experiments', 'task-execution-record.md'));
   const taskRecord = parseAuditRecord(feedbackDoc, 'generated task-execution-record.md');
   assert.strictEqual(taskRecord.task.id, 'example-task');
@@ -62,6 +32,7 @@ function materializeDocumentedPassingTask(workspace) {
   assert.deepStrictEqual(taskRecord.boundary.explicitRequestExceptions, []);
   assert.deepStrictEqual(taskRecord.boundary.blockers, []);
   assert.deepStrictEqual(taskRecord.boundary.reclassifications, []);
+  taskRecord.context.harnessDocs = taskRecord.context.harnessDocs.filter((entry) => !entry.path.endsWith('/docs/project-context.md'));
 
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
   const documentedVerification = parseVerificationRecord(workReadme, 'generated agent-work/README.md');
@@ -88,6 +59,30 @@ function materializeDocumentedPassingTask(workspace) {
   return taskDir;
 }
 
+test('valid task audits ignore fresh legacy missing and malformed project-context documents', () => {
+  const variants = [
+    ['fresh', null],
+    ['legacy-marker', '<!-- niuma-bootstrap-record:begin -->\nlegacy metadata\n<!-- niuma-bootstrap-record:end -->\n'],
+    ['missing', false],
+    ['malformed', '{not valid markdown or JSON'],
+  ];
+
+  for (const [name, content] of variants) {
+    const workspace = tempDir();
+    const init = run(['init', workspace, '--agent', 'claude']);
+    assert.strictEqual(init.status, 0, `${name}: ${init.stderr}`);
+    materializeDocumentedPassingTask(workspace);
+    const projectContextPath = path.join(workspace, 'harness', 'docs', 'project-context.md');
+    if (content === false) fs.unlinkSync(projectContextPath);
+    else if (typeof content === 'string') fs.writeFileSync(projectContextPath, content);
+
+    const result = run(['audit', workspace, '--task', 'example-task', '--strict']);
+    assert.strictEqual(result.status, 0, `${name}: ${result.stdout}\n${result.stderr}`);
+    assert.doesNotMatch(result.stdout, /^Bootstrap:/m, name);
+    assert.match(result.stdout, /^Audit: PASS$/m, name);
+  }
+});
+
 test('audit evaluates task records even when the separate Harness health check fails', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'claude']);
@@ -102,7 +97,6 @@ test('audit evaluates task records even when the separate Harness health check f
 
   result = run(['audit', workspace, '--task', 'example-task', '--strict']);
   assert.strictEqual(result.status, 0, `${result.stdout}\n${result.stderr}`);
-  assert.match(result.stdout, /^Bootstrap: PASS$/m);
   assert.match(result.stdout, /^Audit: PASS$/m);
   assertTreeUnchanged(taskDir, before);
 });

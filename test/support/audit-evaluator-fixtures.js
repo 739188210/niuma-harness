@@ -1,8 +1,6 @@
 const { fs, path, tempDir } = require('../helpers');
 const { evaluateTask } = require('../../src/audit/evaluator');
 const {
-  BOOTSTRAP_RECORD_BEGIN,
-  BOOTSTRAP_RECORD_END,
   VERIFICATION_RECORD_BEGIN,
   VERIFICATION_RECORD_END,
 } = require('../../src/audit/records');
@@ -21,35 +19,6 @@ function workspaceFixture() {
   fs.writeFileSync(path.join(harnessRoot, 'docs', 'project-context.md'), '# Context\n');
   fs.writeFileSync(path.join(harnessRoot, 'docs', 'process.md'), '# Process\n');
   return { workspaceRoot, harnessRoot, taskDir };
-}
-
-function completeBootstrap() {
-  return {
-    schemaVersion: 1,
-    status: 'complete',
-    recordedAt: '2026-07-12T08:00:00Z',
-    filesInspected: ['package.json'],
-    scanScope: 'Package manifest, source, tests, and Harness docs.',
-    knownGaps: [],
-  };
-}
-
-function completeBootstrapContent(record = completeBootstrap()) {
-  return [
-    '# Project Context',
-    marker(BOOTSTRAP_RECORD_BEGIN, BOOTSTRAP_RECORD_END, record).trim(),
-    '## Project summary',
-    'A dependency-free Node.js CLI for generated engineering harnesses.',
-    '## Technology stack',
-    'CommonJS on Node.js with built-in test tooling.',
-    '## Code map',
-    '`src/` contains CLI code and `test/` contains tests.',
-    '## Build and verification commands',
-    '```bash',
-    'npm test',
-    '```',
-    '',
-  ].join('\n');
 }
 
 function passingVerification() {
@@ -140,8 +109,6 @@ function dimensionReasons(result, name) {
 }
 
 module.exports = {
-  completeBootstrap,
-  completeBootstrapContent,
   dimensionReasons,
   evaluateFixture,
   marker,

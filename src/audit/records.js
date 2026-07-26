@@ -5,18 +5,12 @@ const { safeResolveInside } = require('../fs-safe');
 
 const AUDIT_RECORD_BEGIN = '<!-- niuma-audit-record:begin -->';
 const AUDIT_RECORD_END = '<!-- niuma-audit-record:end -->';
-const BOOTSTRAP_RECORD_BEGIN = '<!-- niuma-bootstrap-record:begin -->';
-const BOOTSTRAP_RECORD_END = '<!-- niuma-bootstrap-record:end -->';
 const VERIFICATION_RECORD_BEGIN = '<!-- niuma-verification-record:begin -->';
 const VERIFICATION_RECORD_END = '<!-- niuma-verification-record:end -->';
 const RECORD_FILE = 'harness-feedback.md';
 
 function parseAuditRecord(content, label = RECORD_FILE) {
   return parseMarkerRecord(content, AUDIT_RECORD_BEGIN, AUDIT_RECORD_END, 'audit record', label);
-}
-
-function parseBootstrapRecord(content, label = 'project-context.md') {
-  return parseMarkerRecord(content, BOOTSTRAP_RECORD_BEGIN, BOOTSTRAP_RECORD_END, 'bootstrap record', label);
 }
 
 function parseVerificationRecord(content, label = 'verification.md') {
@@ -171,15 +165,12 @@ function byTaskName(left, right) {
 module.exports = {
   AUDIT_RECORD_BEGIN,
   AUDIT_RECORD_END,
-  BOOTSTRAP_RECORD_BEGIN,
-  BOOTSTRAP_RECORD_END,
   RECORD_FILE,
   VERIFICATION_RECORD_BEGIN,
   VERIFICATION_RECORD_END,
   getRecordedAt,
   loadTaskRecords,
   parseAuditRecord,
-  parseBootstrapRecord,
   parseVerificationRecord,
   selectTaskRecords,
 };

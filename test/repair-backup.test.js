@@ -219,36 +219,30 @@ test('repair backs up and replaces a file-directory type conflict', () => {
   assert.strictEqual(read(path.join(backup, 'files', 'harness', 'docs', 'project-context.md', 'user.txt')), 'user data\n');
 });
 
-test('repair preserves user project facts while restoring the managed context protocol', () => {
+test('repair leaves a legacy bootstrap file and project context unchanged without planning or backing either up', () => {
   const workspace = initWorkspace();
   const facts = path.join(workspace, 'harness', 'docs', 'project-context.md');
-  const protocol = path.join(workspace, 'harness', 'docs', 'process', 'bootstrap.md');
-  fs.writeFileSync(facts, '# Project facts\n\nKeep this user content.\n', 'utf8');
-  fs.writeFileSync(protocol, 'drifted context protocol\n', 'utf8');
+  const legacyBootstrap = path.join(workspace, 'harness', 'docs', 'process', 'bootstrap.md');
+  const factsContent = '# Project facts\n\nKeep this user content.\n';
+  const legacyContent = '# Legacy bootstrap notes\n\nKeep this unchanged.\n';
+  fs.writeFileSync(facts, factsContent, 'utf8');
+  fs.writeFileSync(legacyBootstrap, legacyContent, 'utf8');
+  fs.appendFileSync(path.join(workspace, 'harness', 'docs', 'process', 'task-triage.md'), 'drift\n', 'utf8');
 
-  const result = run(['repair', workspace, '-y']);
+  let result = run(['repair', workspace, '--dry-run']);
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.strictEqual(read(facts), '# Project facts\n\nKeep this user content.\n');
-  assert.match(read(protocol), /# Project Bootstrap and Context Maintenance Process/);
+  assert.match(result.stdout, /harness\/docs\/process\/task-triage\.md/);
+  assert.doesNotMatch(result.stdout, /bootstrap\.md/);
+  assert.doesNotMatch(result.stdout, /project-context\.md/);
+
+  result = run(['repair', workspace, '-y']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.strictEqual(read(facts), factsContent);
+  assert.strictEqual(read(legacyBootstrap), legacyContent);
   const backup = result.stdout.match(/Backup retained: (.+)/)[1].trim();
-  assert.strictEqual(
-    read(path.join(backup, 'files', 'harness', 'docs', 'process', 'bootstrap.md')),
-    'drifted context protocol\n',
-  );
-});
-
-test('repair creates bootstrap.md without modifying a legacy context protocol file', () => {
-  const workspace = initWorkspace();
-  const protocol = path.join(workspace, 'harness', 'docs', 'process', 'bootstrap.md');
-  const legacy = path.join(workspace, 'harness', 'docs', 'process', 'project-context.md');
-  const legacyContent = '# Legacy context protocol\n\nKeep this unchanged.\n';
-  fs.rmSync(protocol);
-  fs.writeFileSync(legacy, legacyContent, 'utf8');
-
-  const result = run(['repair', workspace, '-y']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assert.match(read(protocol), /# Project Bootstrap and Context Maintenance Process/);
-  assert.strictEqual(read(legacy), legacyContent);
+  assertNoPath(path.join(backup, 'files', 'harness', 'docs', 'process', 'bootstrap.md'));
+  assertNoPath(path.join(backup, 'files', 'harness', 'docs', 'project-context.md'));
+  assert.strictEqual(run(['doctor', workspace]).status, 0);
 });
 
 test('repair retires only the managed contract from an inactive entry', () => {

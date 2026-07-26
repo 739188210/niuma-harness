@@ -131,7 +131,7 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
   const index = read(path.join(h, 'docs', 'index.md'));
   assert.match(index, /\[Untrusted content\]\(policy\/untrusted-content\.md\)/);
   assert.match(index, /complete runtime navigation map/);
-  assert.match(index, /\[Verified project facts\]\(project-context\.md\)/);
+  assert.match(index, /\[Project knowledge index\]\(project-context\.md\)/);
   assert.match(index, /\[Task-local work area\]\(\.\.\/\.\.\/agent-work\/README\.md\)/);
   assert.match(index, /\[Harness maintainer orientation\]\(\.\.\/README\.md\)/);
   assert.doesNotMatch(index, /Agents may add short runtime pointers/);

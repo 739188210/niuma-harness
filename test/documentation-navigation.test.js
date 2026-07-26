@@ -66,7 +66,8 @@ test('generated runtime index is the complete static documentation navigation ma
   assert.doesNotMatch(readme, /## 7-layer harness model/);
   assert.doesNotMatch(readme, /## Task workflows/);
 
-  assert.match(index, /\[Project bootstrap and context maintenance\]\(process\/bootstrap\.md\)/);
+  assert.match(index, /\[Project knowledge index\]\(project-context\.md\)/);
+  assert.doesNotMatch(index, /bootstrap|process\/bootstrap\.md/i);
   assert.match(index, /\[Task-local work area\]\(\.\.\/\.\.\/agent-work\/README\.md\)/);
 });
 

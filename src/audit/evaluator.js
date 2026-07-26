@@ -1,10 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 const { safeResolveInside } = require('../fs-safe');
-const { parseBootstrapRecord, parseVerificationRecord } = require('./records');
+const { parseVerificationRecord } = require('./records');
 
 const DIMENSIONS = [
-  'Bootstrap',
   'Task rating',
   'Context',
   'Action boundary',
@@ -51,20 +50,19 @@ const CROSS_RESULT_MATRIX = {
   },
 };
 
-function evaluateAudit({ workspaceRoot, harnessRoot, bootstrapContent, taskEntries = [], selectionReason, workDirectory = 'agent-work' }) {
-  const bootstrap = evaluateBootstrap({ workspaceRoot, content: bootstrapContent });
-  const dimensions = { Bootstrap: bootstrap };
-  const findings = bootstrap.findings.slice();
+function evaluateAudit({ workspaceRoot, harnessRoot, taskEntries = [], selectionReason, workDirectory = 'agent-work' }) {
+  const dimensions = {};
+  const findings = [];
   const taskResults = taskEntries.map((taskEntry) => evaluateTask({ workspaceRoot, taskEntry, workDirectory }));
 
   if (taskResults.length === 1) {
     Object.assign(dimensions, taskResults[0].dimensions);
   } else if (taskResults.length > 1) {
-    for (const name of DIMENSIONS.slice(1)) {
+    for (const name of DIMENSIONS) {
       dimensions[name] = aggregateDimension(name, taskResults.map((result) => result.dimensions[name]));
     }
   } else {
-    for (const name of DIMENSIONS.slice(1)) dimensions[name] = dimension(name, 'PARTIAL', []);
+    for (const name of DIMENSIONS) dimensions[name] = dimension(name, 'PARTIAL', []);
   }
   for (const result of taskResults) findings.push(...result.findings);
 
@@ -88,45 +86,6 @@ function evaluateAudit({ workspaceRoot, harnessRoot, bootstrapContent, taskEntri
   };
 }
 
-function evaluateBootstrap({ workspaceRoot, content }) {
-  let record;
-  try {
-    record = parseBootstrapRecord(content);
-  } catch (error) {
-    if (/missing bootstrap record markers/u.test(error.message)) {
-      return withFindings('Bootstrap', [finding('Bootstrap', 'PARTIAL', 'Bootstrap is structurally recorded.', 'Legacy Markdown metadata only.', 'Legacy bootstrap evidence has no schema 1 marker record.', 'Add a schema 1 bootstrap record without inventing prior evidence.')]);
-    }
-    return withFindings('Bootstrap', [finding('Bootstrap', 'FAIL', 'Bootstrap record is parseable.', error.message, 'The structured bootstrap record is invalid.', 'Keep exactly one valid marker-delimited JSON object.')]);
-  }
-
-  const findings = [];
-  if (record.schemaVersion !== 1) partial(findings, 'Bootstrap', 'Bootstrap uses schema version 1.', String(record.schemaVersion), 'Bootstrap schema is missing or unsupported.');
-  if (!['pending', 'partial', 'complete'].includes(record.status)) fail(findings, 'Bootstrap', 'Bootstrap status is valid.', String(record.status), 'Bootstrap status must be pending, partial, or complete.');
-  if (record.status === 'pending') partial(findings, 'Bootstrap', 'Bootstrap evidence is complete.', 'status=pending', 'Bootstrap has not been completed.');
-
-  if (record.status === 'partial' || record.status === 'complete') {
-    requireUtc(findings, 'Bootstrap', record.recordedAt, 'bootstrap recordedAt', record.status === 'complete' ? 'FAIL' : 'PARTIAL');
-    requireText(findings, 'Bootstrap', record.scanScope, 'scan scope', record.status === 'complete' ? 'FAIL' : 'PARTIAL');
-    if (!Array.isArray(record.filesInspected) || record.filesInspected.length === 0) {
-      addBySeverity(findings, record.status === 'complete' ? 'FAIL' : 'PARTIAL', 'Bootstrap', 'Inspected paths are recorded.', JSON.stringify(record.filesInspected), 'No inspected paths are recorded.');
-    } else {
-      for (const reference of record.filesInspected) validateWorkspaceReference(findings, workspaceRoot, reference, 'Bootstrap', 'inspected path', record.status === 'complete' ? 'FAIL' : 'PARTIAL');
-    }
-  }
-  if (record.status === 'partial' && (!Array.isArray(record.knownGaps) || record.knownGaps.length === 0)) {
-    partial(findings, 'Bootstrap', 'Partial bootstrap records known gaps.', JSON.stringify(record.knownGaps), 'Partial bootstrap has no explicit gap.');
-  }
-  if (record.status === 'complete') {
-    for (const heading of ['Project summary', 'Technology stack', 'Code map']) {
-      const section = markdownSection(content, heading);
-      if (!isSubstantive(section)) fail(findings, 'Bootstrap', `${heading} is substantive.`, section || '(empty)', `${heading} is missing or placeholder-only.`);
-    }
-    const commands = markdownSection(content, 'Build and verification commands');
-    if (!hasVerificationCommand(commands)) fail(findings, 'Bootstrap', 'At least one verification command is recorded.', commands || '(empty)', 'Complete bootstrap has no explicit verification command.');
-  }
-  return withFindings('Bootstrap', findings);
-}
-
 function evaluateTask({ workspaceRoot, taskEntry, workDirectory = 'agent-work' }) {
   if (!taskEntry || taskEntry.kind !== 'structured') {
     const invalid = taskEntry && taskEntry.kind === 'invalid';
@@ -137,7 +96,7 @@ function evaluateTask({ workspaceRoot, taskEntry, workDirectory = 'agent-work' }
       : missing
         ? 'The task execution record is missing.'
         : 'Legacy evidence is incomplete.';
-    const findings = DIMENSIONS.slice(1).map((name) => finding(name, invalid ? 'FAIL' : 'PARTIAL', 'Structured task evidence is available.', reason, consequence, 'Provide one schema 1 marker record.'));
+    const findings = DIMENSIONS.map((name) => finding(name, invalid ? 'FAIL' : 'PARTIAL', 'Structured task evidence is available.', reason, consequence, 'Provide one schema 1 marker record.'));
     return taskEvaluation(findings, false, taskEntry);
   }
 
@@ -158,7 +117,7 @@ function evaluateTask({ workspaceRoot, taskEntry, workDirectory = 'agent-work' }
     fail(findings, 'Execution', 'Malformed nested task data is handled safely.', error.message, 'The task record contains malformed nested data that could not be evaluated.');
   }
 
-  for (const name of DIMENSIONS.slice(1)) {
+  for (const name of DIMENSIONS) {
     if (!hasDimensionFinding(findings, name) && !hasDimensionData(record, name)) {
       partial(findings, name, `${name} evidence is recorded.`, 'Missing section.', `${name} evidence is incomplete; self-report cannot prove actual reads or execution.`);
     }
@@ -655,7 +614,7 @@ function evaluateEvidenceSources(sources, findings) {
 function taskEvaluation(findings, recoveryNotApplicable = false, taskEntry = null) {
   const attributed = taskEntry ? findings.map((entry) => ({ ...entry, taskName: taskEntry.taskName, taskPath: taskEntry.path || taskEntry.label || null })) : findings;
   const dimensions = {};
-  for (const name of DIMENSIONS.slice(1)) {
+  for (const name of DIMENSIONS) {
     const selected = stableFindings(attributed.filter((entry) => entry.dimension === name));
     dimensions[name] = dimension(name, selected.length ? aggregateStatus(selected.map((entry) => entry.severity)) : 'PASS', selected);
   }
@@ -699,22 +658,6 @@ function isRegularPathWithoutSymlink(root, target) {
     if (current !== target && !stat.isDirectory()) return false;
   }
   return fs.lstatSync(target).isFile();
-}
-
-function markdownSection(content, heading) {
-  const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const match = new RegExp(`^## ${escaped}\\s*$([\\s\\S]*?)(?=^## |$(?![\\s\\S]))`, 'mu').exec(content);
-  return match ? match[1].trim() : '';
-}
-
-function isSubstantive(value) {
-  if (!nonEmpty(value)) return false;
-  return !/^(unknown|none|not scanned|todo|tbd|n\/a|placeholder|[-`#\s]*)$/iu.test(value.trim());
-}
-
-function hasVerificationCommand(value) {
-  if (!nonEmpty(value)) return false;
-  return /(?:^|\n)\s*(?:npm|pnpm|yarn|node|npx|bun|deno|python|pytest|go|cargo|mvn|gradle|make|dotnet|ruby|bundle)\s+[^#\s]/u.test(value);
 }
 
 function requireUtc(findings, dimensionName, value, label, severity = 'PARTIAL') {
@@ -768,6 +711,5 @@ function hasDimensionData(record, name) {
 module.exports = {
   DIMENSIONS,
   evaluateAudit,
-  evaluateBootstrap,
   evaluateTask,
 };

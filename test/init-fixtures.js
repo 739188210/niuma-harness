@@ -59,7 +59,7 @@ function assertCommonHarnessShape(workspace, options = {}) {
   assertFile(path.join(harnessRoot, 'docs', 'decisions', 'README.md'));
   assertDir(path.join(harnessRoot, 'docs', 'experience'));
   assertFile(path.join(harnessRoot, 'docs', 'experience', 'README.md'));
-  assertFile(path.join(harnessRoot, 'docs', 'process', 'bootstrap.md'));
+  assertNoPath(path.join(harnessRoot, 'docs', 'process', 'bootstrap.md'));
   assertFile(path.join(harnessRoot, 'docs', 'process', 'refactor.md'));
   assertFile(path.join(harnessRoot, 'docs', 'process', 'test-driven-development.md'));
   assertFile(path.join(harnessRoot, 'docs', 'process', 'review.md'));

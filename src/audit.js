@@ -1,7 +1,7 @@
 // Audit orchestration is intentionally read-only. Evaluation/reporting are layered later.
 const fs = require('fs');
 const path = require('path');
-const { canonicalizeWorkspacePath, assertNoSymlinkInPath, safeResolveInside } = require('./fs-safe');
+const { canonicalizeWorkspacePath, assertNoSymlinkInPath } = require('./fs-safe');
 const { loadManifest, validateManifest } = require('./generator/template-manifest');
 const { assertWorkDirBinding, getRuntimeLayout, resolveRuntimePaths } = require('./runtime-layout');
 const { STATUS_FILE } = require('./harness-status');
@@ -76,20 +76,10 @@ function inspectAuditUnsafe(options) {
     return { status: 'FAIL', error: error.message, workspaceRoot: location.workspaceDir, harnessRoot: location.harnessRoot };
   }
   const selection = selectTaskRecords(records, options);
-  let bootstrapContent;
-  try {
-    const bootstrapPath = safeResolveInside(location.harnessRoot, 'docs/project-context.md', 'project context');
-    assertNoSymlinkInPath(bootstrapPath);
-    if (!fs.lstatSync(bootstrapPath).isFile()) throw new Error(`Path exists but is not a regular file: ${bootstrapPath}`);
-    bootstrapContent = fs.readFileSync(bootstrapPath, 'utf8');
-  } catch (error) {
-    return { status: 'FAIL', error: error.message, workspaceRoot: location.workspaceDir, harnessRoot: location.harnessRoot };
-  }
 
   return evaluateAudit({
     workspaceRoot: location.workspaceDir,
     harnessRoot: location.harnessRoot,
-    bootstrapContent,
     taskEntries: selection.records,
     workDirectory: runtimeLayout.workDirectory,
     selectionReason: selection.reason || (selection.status === 'none' ? 'No task execution records to evaluate.' : null),

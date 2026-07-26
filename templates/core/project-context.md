@@ -1,25 +1,18 @@
 # Project Context
 
-This file stores verified stable facts about this project. It is maintained by agents and humans as durable project knowledge is discovered. Use `{{HARNESS_DIR}}/docs/process/bootstrap.md` for bootstrap and context-maintenance rules.
+This file is the project knowledge index: a compact map of verified durable facts that future tasks may reuse. Facts are added or refreshed only when a task verifies them and they have durable value. Each fact scope records its source and freshness boundary when useful. Current workspace evidence always overrides this file.
 
-## Metadata
+Missing coverage means inspect the relevant workspace evidence now; it does not require a whole-project scan or a speculative project summary. Keep task-local notes, debugging traces, handoff state, and temporary evidence in `agent-work/tasks/<task-name>/`.
 
-<!-- niuma-bootstrap-record:begin -->
-```json
-{
-  "schemaVersion": 1,
-  "status": "pending",
-  "recordedAt": null,
-  "filesInspected": [],
-  "scanScope": "Not scanned",
-  "knownGaps": ["Initial project bootstrap has not been completed."]
-}
-```
-<!-- niuma-bootstrap-record:end -->
+## Context coverage
 
-The marker records bootstrap state. Keep its schema and fields intact. `status` is `pending`, `partial`, or `complete`; the required scan, completion criteria, and maintenance rules are defined in `{{HARNESS_DIR}}/docs/process/bootstrap.md`.
+Use this table to find the smallest fact scope that may help the task. A scope is `verified` when it is confirmed from listed sources; `partial` when it has an explicit scope gap; `unverified` when it must not be relied on as fact; and `stale` when it must be rechecked against current evidence.
 
-Keep this file focused on verified durable facts that future tasks should reuse. Task-local notes, debugging traces, handoff state, and temporary evidence belong in `agent-work/tasks/<task-name>/`.
+| Scope | Status | Primary sources | Known gap |
+| --- | --- | --- | --- |
+| Build and verification commands | unverified | Current package scripts, CI configuration, and command output | Add only verified commands needed by a task. |
+| Workspace topology | unverified | Current README files, workspace configuration, and source layout | Add affected module boundaries as they are verified. |
+| Engineering conventions | unverified | Current source, tests, lint/format configuration, and accepted decisions | Add durable conventions only when they affect recurring work. |
 
 ## Task fact routing
 
@@ -27,22 +20,16 @@ Use this optional table as a compact locator for recurring task needs. It maps a
 
 | Task need / signal | Read these root fact sections | Then verify against |
 | --- | --- | --- |
-| Understand project purpose, architecture boundaries, or technology direction | Project summary; Technology stack; Code map | Current README, manifests, configuration, and source |
-| Locate implementation, entry points, tests, or reusable patterns | Code map; Reference implementations | Current source, tests, and configuration |
+| Understand project purpose, architecture boundaries, or technology direction | Workspace topology; Engineering conventions | Current README, manifests, configuration, and source |
+| Locate implementation, entry points, tests, or reusable patterns | Workspace topology; Engineering conventions | Current source, tests, and configuration |
 | Choose or run verification | Build and verification commands | Current scripts, CI configuration, and actual command output |
-| Apply local engineering conventions or constraints | Engineering conventions; Reference implementations | Affected code and current tests |
-| Address known limitations, missing facts, or unresolved risks | Open questions | Current evidence; ask the user when needed |
-| Work across declared modules | Code map, then the module route | `{{HARNESS_DIR}}/docs/module-topology.md`, affected module supplements, and current module files |
-
-## Project summary
-
-## Technology stack
-
-## Code map
-
-## Engineering conventions
+| Apply local engineering conventions or constraints | Engineering conventions | Affected code and current tests |
+| Address known limitations, missing facts, or unresolved risks | Context coverage | Current evidence; ask the user when needed |
+| Work across declared modules | Workspace topology, then the module route | `{{HARNESS_DIR}}/docs/module-topology.md`, affected module supplements, and current module files |
 
 ## Build and verification commands
+
+Add a concise, source-backed command reference here when a task verifies it.
 
 ```bash
 # install
@@ -52,6 +39,10 @@ Use this optional table as a compact locator for recurring task needs. It maps a
 # lint/typecheck/build
 ```
 
-## Reference implementations
+## Workspace topology
 
-## Open questions
+Add verified root or cross-module boundaries here when they are useful beyond the current task.
+
+## Engineering conventions
+
+Add verified recurring conventions and reference implementations here when they affect future work.

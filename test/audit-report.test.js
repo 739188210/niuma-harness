@@ -1,9 +1,8 @@
 const test = require('node:test');
 const { assert, path } = require('./helpers');
-const { DIMENSIONS, evaluateAudit, evaluateBootstrap } = require('../src/audit/evaluator');
+const { DIMENSIONS, evaluateAudit } = require('../src/audit/evaluator');
 const { formatAuditReport } = require('../src/audit/report');
 const {
-  completeBootstrapContent,
   evaluateFixture,
   workspaceFixture,
 } = require('./support/audit-evaluator-fixtures');
@@ -19,7 +18,6 @@ test('all-task findings retain task name and record path attribution in stable r
   const result = evaluateAudit({
     workspaceRoot: fixture.workspaceRoot,
     harnessRoot: fixture.harnessRoot,
-    bootstrapContent: completeBootstrapContent(),
     taskEntries: entries,
   });
   assert.ok(result.findings.length > 0);
@@ -34,13 +32,12 @@ test('all-task findings retain task name and record path attribution in stable r
 test('stable report includes locations selected task every dimension findings limitation and status', () => {
   const fixture = workspaceFixture();
   const task = evaluateFixture();
-  const bootstrap = evaluateBootstrap({ workspaceRoot: fixture.workspaceRoot, content: completeBootstrapContent() });
   const result = {
     status: 'PASS',
     workspaceRoot: fixture.workspaceRoot,
     harnessRoot: fixture.harnessRoot,
     selectedTasks: [{ taskName: 'task-213', recordedAt: '2026-07-12T09:00:00Z' }],
-    dimensions: { Bootstrap: bootstrap, ...task.result.dimensions },
+    dimensions: task.result.dimensions,
     findings: [],
   };
   const first = formatAuditReport(result);

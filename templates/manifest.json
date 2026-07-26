@@ -47,10 +47,6 @@
       "managed": "user"
     },
     {
-      "target": "docs/process/bootstrap.md",
-      "template": "core/process/bootstrap.md"
-    },
-    {
       "target": "docs/layers/01-context.md",
       "template": "core/layers/01-context.md"
     },

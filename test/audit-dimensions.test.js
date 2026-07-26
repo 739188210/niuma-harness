@@ -2,7 +2,6 @@ const test = require('node:test');
 const { assert, fs, path } = require('./helpers');
 const { DIMENSIONS, evaluateAudit, evaluateTask } = require('../src/audit/evaluator');
 const {
-  completeBootstrapContent,
   dimensionReasons,
   evaluateFixture,
   marker,
@@ -19,7 +18,7 @@ const {
 
 test('a complete consistent task passes all applicable dimensions and marks recovery NOT_APPLICABLE', () => {
   const { result } = evaluateFixture();
-  assert.deepStrictEqual(Object.keys(result.dimensions), DIMENSIONS.slice(1));
+  assert.deepStrictEqual(Object.keys(result.dimensions), DIMENSIONS);
   assert.strictEqual(result.status, 'PASS');
   assert.strictEqual(result.dimensions.Recovery.status, 'NOT_APPLICABLE');
   for (const dimension of ['Task rating', 'Context', 'Action boundary', 'Execution', 'Verification', 'Outcome']) {
@@ -622,16 +621,16 @@ test('missing legacy and incomplete task evidence is PARTIAL without claiming be
   assert.ok(result.findings.some((finding) => /task ID|task tool|request summary|declared result/i.test(finding.reason)));
 });
 
-test('evaluateAudit includes bootstrap with no task and returns overall PARTIAL', () => {
+test('evaluateAudit has seven PARTIAL task dimensions when no task is selected', () => {
   const fixture = workspaceFixture();
   const result = evaluateAudit({
     workspaceRoot: fixture.workspaceRoot,
     harnessRoot: fixture.harnessRoot,
-    bootstrapContent: completeBootstrapContent(),
     taskEntries: [],
     selectionReason: 'No task execution records to evaluate.',
   });
-  assert.strictEqual(result.dimensions.Bootstrap.status, 'PASS');
+  assert.deepStrictEqual(Object.keys(result.dimensions), DIMENSIONS);
+  assert.ok(Object.values(result.dimensions).every((dimension) => dimension.status === 'PARTIAL'));
   assert.strictEqual(result.status, 'PARTIAL');
   assert.match(result.message, /No task execution quality can be evaluated/);
 });

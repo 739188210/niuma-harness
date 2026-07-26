@@ -6,7 +6,7 @@ For every non-trivial task, create or update `agent-work/tasks/<task-name>/harne
 
 ## Purpose
 
-The record captures the agent's task-level account of Bootstrap, Task rating, Context, Action boundary, Execution, Verification, Recovery, and Outcome. It connects success criteria and recovery steps to stable evidence IDs in task-local `verification.md`.
+The record captures the agent's task-level account of Task rating, Context, Action boundary, Execution, Verification, Recovery, and Outcome. It connects success criteria and recovery steps to stable evidence IDs in task-local `verification.md`.
 
 ## When to record
 

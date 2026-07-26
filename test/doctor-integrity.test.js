@@ -89,14 +89,17 @@ test('doctor preserves matching-path files for unselected skills without ledger 
   assert.strictEqual(doctor(workspace).status, 0);
 });
 
-test('doctor detects exact drift in tool-managed core and work templates', () => {
+test('doctor ignores a legacy bootstrap file but detects drift in active managed core and work templates', () => {
   const workspace = initWorkspace();
+  const legacyBootstrap = path.join(workspace, 'harness', 'docs', 'process', 'bootstrap.md');
+  fs.writeFileSync(legacyBootstrap, '# Legacy bootstrap notes\n\nKeep this project-owned file.\n', 'utf8');
   append(path.join(workspace, 'harness', 'docs', 'layers', '01-context.md'));
-  append(path.join(workspace, 'harness', 'docs', 'process', 'bootstrap.md'));
+  append(path.join(workspace, 'harness', 'docs', 'process', 'task-triage.md'));
   append(path.join(workspace, 'agent-work', 'README.md'));
   const result = expectDoctorError(workspace, /managed content drifted docs\/layers\/01-context\.md/);
-  assert.match(result.stdout, /managed content drifted docs\/process\/bootstrap\.md/);
+  assert.match(result.stdout, /managed content drifted docs\/process\/task-triage\.md/);
   assert.match(result.stdout, /managed content drifted agent-work\/README\.md/);
+  assert.doesNotMatch(result.stdout, /bootstrap\.md/);
 });
 
 test('doctor detects decision-guide drift but ignores project-maintained ADRs', () => {

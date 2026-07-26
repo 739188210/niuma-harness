@@ -64,7 +64,7 @@ niuma-harness audit [target] [--harness-dir <name>] [--task <name> | --all] [--s
 | `--all` | Audit all direct task directories in stable order |
 | `--strict` | Exit non-zero for `PARTIAL` as well as `FAIL` |
 
-`audit` is read-only and separate from Doctor. It checks the internal consistency of structured bootstrap, `harness-feedback.md`, and `verification.md` self-reports plus safe local references; it cannot prove actual reads, command execution, or objective implementation correctness. The task-execution-record experiment is enabled by the current package and is not workspace-disableable.
+`audit` is read-only and separate from Doctor. It checks the internal consistency of structured `harness-feedback.md` and `verification.md` self-reports plus safe local references; it does not read or validate `project-context.md`, and cannot prove actual reads, command execution, or objective implementation correctness. The task-execution-record experiment is enabled by the current package and is not workspace-disableable.
 
 ### Global options
 
@@ -297,7 +297,7 @@ npx niuma-harness audit . --task task-214
 npx niuma-harness audit . --all --strict
 ```
 
-It reports eight dimensions: Bootstrap, Task rating, Context, Action boundary, Execution, Verification, Recovery, and Outcome. By default it selects the task with the latest valid `task.recordedAt`; ambiguous or invalid timestamps require `--task`. Results are `PASS`, `PARTIAL`, or `FAIL`; default exit codes treat `PARTIAL` as non-failing, while `--strict` exits non-zero for `PARTIAL`. Audit is a consistency checker over self-reports and safe local references, not an agent runtime or proof that recorded actions occurred.
+It reports seven dimensions: Task rating, Context, Action boundary, Execution, Verification, Recovery, and Outcome. By default it selects the task with the latest valid `task.recordedAt`; ambiguous or invalid timestamps require `--task`. Results are `PASS`, `PARTIAL`, or `FAIL`; default exit codes treat `PARTIAL` as non-failing, while `--strict` exits non-zero for `PARTIAL`. Audit is a consistency checker over self-reports and safe local references, not an agent runtime or proof that recorded actions occurred.
 
 ## Doctor
 

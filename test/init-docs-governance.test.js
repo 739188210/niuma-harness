@@ -235,7 +235,9 @@ test('generated process playbooks define required artifact contracts', () => {
   const triage = read(path.join(h, 'docs', 'process', 'task-triage.md'));
   assert.match(triage, /## Base minimum reading set/);
   assert.match(triage, /## Conditional reading/);
-  assert.match(triage, /`harness\/docs\/process\/bootstrap\.md`/);
+  assert.doesNotMatch(triage, /`harness\/docs\/process\/bootstrap\.md`/);
+  assert.match(triage, /matching fact scope, its sources, known gaps, and freshness boundary/);
+  assert.match(triage, /Current verifiable workspace evidence remains higher priority/);
   assert.match(triage, /`harness\/docs\/policy\/action-boundary\.md`/);
   assert.match(triage, /`harness\/docs\/module-topology\.md`/);
   assert.match(triage, /`harness\/docs\/decisions\//);

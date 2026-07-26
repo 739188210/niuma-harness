@@ -405,39 +405,34 @@ test('re-init refreshes tool-managed files', () => {
   assert.match(read(memo), /## Agent protocol/, 'tool-managed file should be restored from template');
 });
 
-test('re-init preserves user facts while refreshing the managed context protocol', () => {
-  const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const ctx = path.join(workspace, 'harness', 'docs', 'project-context.md');
-  const protocol = path.join(workspace, 'harness', 'docs', 'process', 'bootstrap.md');
-  fs.writeFileSync(ctx, 'my project facts\n', 'utf8');
-  fs.writeFileSync(protocol, 'stale bootstrap protocol\n', 'utf8');
-
-  result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assert.strictEqual(read(ctx), 'my project facts\n', 'user-maintained project-context should be preserved');
-  assert.match(read(protocol), /# Project Bootstrap and Context Maintenance Process/);
-  assert.doesNotMatch(read(protocol), /stale bootstrap protocol/);
-});
-
-test('re-init creates bootstrap.md without modifying a legacy context protocol file', () => {
+test('re-init preserves user facts without creating a bootstrap protocol', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   const facts = path.join(workspace, 'harness', 'docs', 'project-context.md');
-  const protocol = path.join(workspace, 'harness', 'docs', 'process', 'bootstrap.md');
-  const legacy = path.join(workspace, 'harness', 'docs', 'process', 'project-context.md');
-  const legacyContent = '# Legacy context protocol\n\nKeep this unchanged.\n';
+  const bootstrap = path.join(workspace, 'harness', 'docs', 'process', 'bootstrap.md');
   fs.writeFileSync(facts, 'my project facts\n', 'utf8');
-  fs.rmSync(protocol);
-  fs.writeFileSync(legacy, legacyContent, 'utf8');
+
+  result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.strictEqual(read(facts), 'my project facts\n', 'user-maintained project-context should be preserved');
+  assertNoPath(bootstrap);
+});
+
+test('re-init preserves legacy bootstrap protocol files without recreating or interpreting them', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const facts = path.join(workspace, 'harness', 'docs', 'project-context.md');
+  const legacyBootstrap = path.join(workspace, 'harness', 'docs', 'process', 'bootstrap.md');
+  const legacyContent = '# Legacy bootstrap protocol\n\nKeep this unchanged.\n';
+  fs.writeFileSync(facts, 'my project facts\n', 'utf8');
+  fs.writeFileSync(legacyBootstrap, legacyContent, 'utf8');
 
   result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   assert.strictEqual(read(facts), 'my project facts\n');
-  assert.match(read(protocol), /# Project Bootstrap and Context Maintenance Process/);
-  assert.strictEqual(read(legacy), legacyContent);
+  assert.strictEqual(read(legacyBootstrap), legacyContent);
 });
 
 test('directory symlink attack is rejected', (t) => {

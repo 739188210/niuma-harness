@@ -8,8 +8,7 @@ This is the complete runtime navigation map for the harness. The entry file (`CL
 
 ### Project knowledge and maintenance
 
-- [Verified project facts](project-context.md)
-- [Project bootstrap and context maintenance](process/bootstrap.md)
+- [Project knowledge index](project-context.md)
 - [Decision-record guide](decisions/README.md)
 - [Experience-record guide](experience/README.md)
 
@@ -73,9 +72,9 @@ For a declared multi-module workspace, read `{{HARNESS_DIR}}/docs/module-topolog
 
 1. Start from the operating loop in the entry file (`CLAUDE.md` / `AGENTS.md`).
 2. Use this navigation map to locate task-relevant materials.
-3. In `{{HARNESS_DIR}}/docs/project-context.md`, read the Metadata/bootstrap record and, when it exists and matches the task, the `Task fact routing` table to select only task-relevant stable-fact headings.
+3. In `{{HARNESS_DIR}}/docs/project-context.md`, read Context coverage and, when it exists and matches the task, the `Task fact routing` table to select only task-relevant stable-fact headings.
 4. Before relying on a project-context fact, inspect task-relevant current README, build files, configuration, source, tests, or command output.
-5. Use `{{HARNESS_DIR}}/docs/process/bootstrap.md` only for bootstrap, context staleness, or durable-fact maintenance.
+5. Refresh a fact scope only when a source changes, its known gap matters to the task, or current evidence conflicts; missing coverage means inspect the relevant workspace evidence, not the whole project.
 6. Read task-relevant experience records only when a recurring scenario or known trap may apply; verify current facts before relying on them.
 7. Read the relevant layer protocol and select the relevant playbook when the task needs depth.
 8. Apply relevant installed engineering standards and use `agent-work/` for multi-step task notes and verification evidence.
