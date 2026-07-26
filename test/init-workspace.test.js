@@ -241,7 +241,8 @@ test('--harness-dir uses a custom directory name', () => {
   });
   assertClaudeRulePointers(workspace, 'ai-harness', expectedDefaultRules('claude'));
   const entry = read(path.join(workspace, 'CLAUDE.md'));
-  assert.match(entry, /ai-harness\/docs\/index\.md/);
+  assert.match(entry, /ai-harness\/docs\/process\/task-triage\.md/);
+  assert.match(entry, /request-named files and the smallest relevant current source, configuration, build, test, README, or command evidence/i);
   assert.match(entry, /ai-harness\/docs\/layers\/01-context\.md/);
   assert.match(entry, /ai-harness\/docs\/experiments\/task-execution-record\.md/);
   assert.doesNotMatch(entry, /\(depth: `docs\//);
@@ -405,17 +406,32 @@ test('re-init refreshes tool-managed files', () => {
   assert.match(read(memo), /## Agent protocol/, 'tool-managed file should be restored from template');
 });
 
-test('re-init preserves user facts without creating a bootstrap protocol', () => {
+test('re-init preserves a legacy four-column context coverage table and custom facts byte-identically', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   const facts = path.join(workspace, 'harness', 'docs', 'project-context.md');
   const bootstrap = path.join(workspace, 'harness', 'docs', 'process', 'bootstrap.md');
-  fs.writeFileSync(facts, 'my project facts\n', 'utf8');
+  const factsContent = `# Project Context
+
+## Context coverage
+
+| Scope | Status | Primary sources | Known gap |
+| --- | --- | --- | --- |
+| Build and verification commands | verified | package.json scripts | Smoke tests must be run manually. |
+| Deployment ownership | partial | ops/runbook.md | Staging ownership is not documented. |
+
+## Custom facts
+
+- Production releases are approved by the platform team.
+- The legacy integration still uses the blue queue.
+`;
+  assert.doesNotMatch(factsContent, /Refresh when/);
+  fs.writeFileSync(facts, factsContent, 'utf8');
 
   result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.strictEqual(read(facts), 'my project facts\n', 'user-maintained project-context should be preserved');
+  assert.strictEqual(read(facts), factsContent, 'user-managed legacy project-context content must remain byte-identical');
   assertNoPath(bootstrap);
 });
 

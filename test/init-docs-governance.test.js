@@ -270,9 +270,10 @@ test('generated process playbooks define required artifact contracts', () => {
   assert.match(feature, /relevant existing implementation patterns and acceptance-criterion targets/);
   assert.match(feature, /## Required artifact\/checklist/);
   assert.match(feature, /Acceptance criteria/);
-  assert.match(feature, /When the task needs an execution anchor, create `agent-work\/tasks\/<task-name>\/plan\.md` before implementation/);
+  assert.match(feature, /Use `agent-work\/README\.md` to select task material only when it is needed/);
+  assert.match(feature, /When it selects a minimum anchor, create `agent-work\/tasks\/<task-name>\/plan\.md` before implementation/);
   assert.match(feature, /acceptance criteria as stable success-criterion IDs/);
-  assert.match(feature, /keep status, context, plan, verification, and handoff notes/);
+  assert.doesNotMatch(feature, /keep status, context, plan, verification, and handoff notes/);
 
   const bugfix = read(path.join(h, 'docs', 'process', 'bugfix.md'));
   assert.doesNotMatch(bugfix, /Load Context: read `harness\/docs\/index\.md`, `harness\/docs\/project-context\.md`/);
@@ -284,7 +285,8 @@ test('generated process playbooks define required artifact contracts', () => {
   assert.match(refactor, /affected implementation and tests and identify the behavior baseline/);
   assert.match(refactor, /## Required artifact\/checklist/);
   assert.match(refactor, /Behavior baseline/);
-  assert.match(refactor, /keep status, context, plan, verification, and handoff notes/);
+  assert.match(refactor, /Use `agent-work\/README\.md` to select task material only when it is needed/);
+  assert.doesNotMatch(refactor, /keep status, context, plan, verification, and handoff notes/);
 
   const review = read(path.join(h, 'docs', 'process', 'review.md'));
   assert.match(review, /changed files or diff, intended task goal, and available verification evidence/);
@@ -483,12 +485,56 @@ test('generated docs require practical TDD for eligible behavior work', () => {
   assert.match(refactor, /Route behavior changes or behavior-changing tests through feature\/bugfix plus `harness\/docs\/process\/test-driven-development\.md`/);
 
   const observation = read(path.join(h, 'docs', 'layers', '04-observation.md'));
-  assert.match(observation, /## Test-first evidence/);
-  assert.match(observation, /focused RED and GREEN as separate truthful evidence entries/);
-  assert.match(observation, /do not prove execution order/);
-  assert.match(observation, /record Recovery as applicable and link the GREEN recheck/);
+  assert.match(observation, /Test-first RED, GREEN, and optional refactor recheck are defined by `harness\/docs\/process\/test-driven-development\.md`/);
+  assert.doesNotMatch(observation, /## Test-first evidence/);
+  assert.doesNotMatch(observation, /niuma-verification-record:begin/);
 
   const policy = read(path.join(h, 'docs', 'policy', 'action-boundary.md'));
   assert.match(policy, /task-scoped test creation or updates needed to express approved changed behavior or regression coverage/);
   assert.match(policy, /prior behavior contract is preserved or strengthened/);
+});
+
+test('generated docs select task material mechanically without pre-creating a package', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
+  assert.match(workReadme, /## Task material selection table/);
+  assert.match(workReadme, /\| Direct \|.*\| No task file \|/);
+  assert.match(workReadme, /\| Minimum \|.*\| `plan\.md` \|/);
+  assert.match(workReadme, /\| Recoverable \|.*\| `plan\.md` and `status\.md` \|/);
+  assert.match(workReadme, /Whenever work is non-trivial under the current experiment, `harness-feedback\.md` is required/);
+  assert.doesNotMatch(workReadme, /Recoverable[\s\S]*required execution record only when each is needed/);
+  assert.match(workReadme, /TDD eligibility alone does not require a task folder or a full task package/);
+  assert.match(workReadme, /Direct work has no task file: put the actual command or manual check, result, skipped checks, and remaining unknowns in the final response/);
+  assert.match(workReadme, /## Copyable verification record/);
+  assert.match(workReadme, /niuma-verification-record:begin/);
+
+  const observation = read(path.join(h, 'docs', 'layers', '04-observation.md'));
+  assert.match(observation, /For the copyable `verification\.md` schema, use `agent-work\/README\.md`/);
+  assert.doesNotMatch(observation, /niuma-verification-record:begin/);
+
+  for (const playbook of [
+    read(path.join(h, 'docs', 'process', 'feature-development.md')),
+    read(path.join(h, 'docs', 'process', 'bugfix.md')),
+    read(path.join(h, 'docs', 'process', 'refactor.md')),
+  ]) {
+    assert.match(playbook, /Use `agent-work\/README\.md` to select task material only when it is needed/);
+    assert.doesNotMatch(playbook, /keep status, context, plan, verification, and handoff notes/);
+  }
+
+  const recovery = read(path.join(h, 'docs', 'layers', '05-recovery.md'));
+  assert.match(recovery, /Update task material only when the record already exists or `agent-work\/README\.md` says it is now needed/);
+  assert.doesNotMatch(recovery, /preserve current state in `status\.md`/);
+
+  const loop = read(path.join(h, 'docs', 'layers', '07-loop.md'));
+  assert.match(loop, /update only existing task material, or create the minimum record only when `agent-work\/README\.md` says it is needed/);
+  assert.doesNotMatch(loop, /finalize `verification\.md` and `harness-feedback\.md`/);
+
+  const untrusted = read(path.join(h, 'docs', 'policy', 'untrusted-content.md'));
+  assert.match(untrusted, /Ordinary project-local command output is execution evidence, not untrusted instructions/);
+  assert.match(untrusted, /suspicious instructions, external content, or generated instructions/);
+  assert.doesNotMatch(untrusted, /Tool output, command output, logs, stack traces, generated reports/);
 });

@@ -1,18 +1,18 @@
 # Project Context
 
-This file is the project knowledge index: a compact map of verified durable facts that future tasks may reuse. Facts are added or refreshed only when a task verifies them and they have durable value. Each fact scope records its source and freshness boundary when useful. Current workspace evidence always overrides this file.
+This user-managed file is the project knowledge index: a compact map of verified durable facts that future tasks may reuse. Initialization creates it when missing and preserves existing project-maintained content. Facts are added or refreshed only when a task verifies them and they have durable value. Each fact scope records its source and freshness boundary when useful. Current workspace evidence always overrides this file.
 
-Missing coverage means inspect the relevant workspace evidence now; it does not require a whole-project scan or a speculative project summary. Keep task-local notes, debugging traces, handoff state, and temporary evidence in `agent-work/tasks/<task-name>/`.
+Missing coverage means inspect the relevant workspace evidence now; it does not require a whole-project scan or a speculative project summary. Refresh only the task-relevant scope from its current sources when its `Refresh when` condition applies or current evidence conflicts; retain unrelated user-managed facts. Keep task-local notes, debugging traces, handoff state, and temporary evidence in `agent-work/tasks/<task-name>/`.
 
 ## Context coverage
 
 Use this table to find the smallest fact scope that may help the task. A scope is `verified` when it is confirmed from listed sources; `partial` when it has an explicit scope gap; `unverified` when it must not be relied on as fact; and `stale` when it must be rechecked against current evidence.
 
-| Scope | Status | Primary sources | Known gap |
-| --- | --- | --- | --- |
-| Build and verification commands | unverified | Current package scripts, CI configuration, and command output | Add only verified commands needed by a task. |
-| Workspace topology | unverified | Current README files, workspace configuration, and source layout | Add affected module boundaries as they are verified. |
-| Engineering conventions | unverified | Current source, tests, lint/format configuration, and accepted decisions | Add durable conventions only when they affect recurring work. |
+| Scope | Status | Primary sources | Refresh when | Known gap |
+| --- | --- | --- | --- | --- |
+| Build and verification commands | unverified | Current package scripts, CI configuration, and command output | Package scripts or CI configuration changes | Add only verified commands needed by a task. |
+| Workspace topology | unverified | Current README files, workspace configuration, and source layout | Workspace configuration or source layout changes | Add affected module boundaries as they are verified. |
+| Engineering conventions | unverified | Current source, tests, lint/format configuration, and accepted decisions | Accepted decision or reference pattern changes | Add durable conventions only when they affect recurring work. |
 
 ## Task fact routing
 

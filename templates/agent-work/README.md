@@ -20,13 +20,23 @@ agent-work/tasks/<task-name>/
 
 Task classification, risk tier, Policy, and playbook selection stay defined by `{{HARNESS_DIR}}/docs/process/task-triage.md` and the selected process. This guide does not create another task type or risk tier. After those decisions, choose only the material needed to execute and recover safely.
 
+## Task material selection table
+
+| Selection | Use when | Create before work | Evidence and reporting |
+|---|---|---|---|
+| Direct | The goal, affected location, expected result, and smallest verification are clear; work is local and reversible; there is no meaningful solution choice; and the request plus current files are enough to reconstruct the work. | No task file | Direct work has no task file: put the actual command or manual check, result, skipped checks, and remaining unknowns in the final response. |
+| Minimum | A meaningful solution choice, compatibility boundary, multiple related edits, multiple success criteria, or interruption risk makes direct work unsafe to reconstruct. | `plan.md` | Record actual evidence in `verification.md` only if keeping it during execution helps recovery or handoff; otherwise report it truthfully in the final response. |
+| Recoverable | Work is multi-stage, interruptible, delegated, parallel, risky, under recovery, changing scope or direction, or cannot be safely resumed from current code alone. | `plan.md` and `status.md` | Update applicable records with observed facts; create `verification.md`, notes, or context only when needed. For non-trivial work under the current experiment, `harness-feedback.md` is required. |
+
+TDD eligibility alone does not require a task folder or a full task package. The selected workflow decides whether work is test-first; this table decides only whether task-local material is needed. Whenever work is non-trivial under the current experiment, `harness-feedback.md` is required regardless of Direct, Minimum, or Recoverable material selection.
+
 ### Direct execution
 
-Do not create a task folder when the goal, affected location, expected result, and smallest verification are clear; the work is local and reversible; there is no meaningful solution choice; and a later agent could safely reconstruct the work quickly from the request and current files. Make the change, run the smallest relevant check, and report the actual result.
+Choose Direct only when every Direct row condition holds. Make the change, run the smallest relevant check, and report the actual result in the final response.
 
 ### Minimum execution anchor
 
-Before changing files, create `agent-work/tasks/<task-name>/plan.md` when a meaningful solution choice, compatibility boundary, multiple related edits, test-first behavior, multiple success criteria, or interruption risk would make later recovery unsafe. `plan.md` is an execution input, not a completion summary.
+Before changing files, create `agent-work/tasks/<task-name>/plan.md` when the Minimum row applies. `plan.md` is an execution input, not a completion summary.
 
 Use this compact shape:
 

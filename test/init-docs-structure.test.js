@@ -215,16 +215,10 @@ test('generated observation memo defines evidence schema', () => {
   const h = path.join(workspace, 'harness');
 
   const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation.md'));
-  assert.match(observationMemo, /## Evidence schema/);
-  assert.match(observationMemo, /niuma-verification-record:begin/);
-  assert.match(observationMemo, /"kind": "command"/);
-  assert.match(observationMemo, /"check"/);
-  assert.match(observationMemo, /"expectedSignal"/);
-  assert.match(observationMemo, /"actualResult"/);
-  assert.match(observationMemo, /"outcome": "passed"/);
-  assert.match(observationMemo, /"exitCode": 0/);
-  assert.match(observationMemo, /"remainingUnknowns"/);
-  assert.match(observationMemo, /outcome: "skipped"/);
+  assert.match(observationMemo, /## Evidence record/);
+  assert.match(observationMemo, /For the copyable `verification\.md` schema, use `agent-work\/README\.md`/);
+  assert.doesNotMatch(observationMemo, /niuma-verification-record:begin/);
+  assert.match(observationMemo, /"skipped"/);
   assert.match(observationMemo, /`status\.md` may summarize verification state, but it does not replace evidence/);
   assert.match(observationMemo, /project-local commands documented in `harness\/docs\/project-context\.md`/);
   assert.match(observationMemo, /use `harness\/docs\/index\.md` only as navigation/);

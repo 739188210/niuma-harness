@@ -8,11 +8,11 @@ This memo is a process-routing protocol. It does not replace concrete task playb
 
 ## When to use
 
-Use this layer after loading context and policy, before implementation, and whenever the task type changes during execution.
+Use this layer after triage selects it, before implementation, and whenever the task type changes during execution.
 
 ## Agent protocol
 
-1. If the task type or risk is unclear, use `{{HARNESS_DIR}}/docs/process/task-triage.md` first to classify it. Triage is a routing step, not the final execution playbook.
+1. For non-trivial work, `{{HARNESS_DIR}}/docs/process/task-triage.md` first classifies the task, applies conditional reading, and selects this layer or a concrete playbook. Triage is a routing step, not the final execution playbook.
 2. Select the final execution playbook from bugfix, feature, refactor, review, or release. Documentation, cleanup, investigation, and verification use the explicit lightweight default routes in `{{HARNESS_DIR}}/docs/process/task-triage.md`; use `none` only when no execution playbook applies.
 3. For feature or bugfix behavior work, make a test-first versus alternative verification decision before implementation. Follow `{{HARNESS_DIR}}/docs/process/test-driven-development.md` for eligible stable automatable behavior and declare valid alternative evidence before implementation when automation is unsuitable.
 4. Follow any confirmation gate defined by the selected workflow before writing detailed plans or implementation docs.

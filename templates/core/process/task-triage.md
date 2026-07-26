@@ -10,13 +10,13 @@ Classify the request, load the minimum required context, identify policy risks, 
 
 ## Base minimum reading set
 
-Triage owns the base minimum reading set. Read only what is needed to classify, route, and safely start this task; do not pre-read every Harness document.
+Triage owns the minimum conditional reading set. Read only what is needed to classify, route, and safely start this task; do not pre-read every Harness document.
 
-1. Use `{{HARNESS_DIR}}/docs/index.md` for fact priority, the Policy exception, and navigation. Do not follow every link.
-2. In `{{HARNESS_DIR}}/docs/project-context.md`, read the matching fact scope, its sources, known gaps, and freshness boundary. When `Task fact routing` exists and matches the task, use it to select the smallest relevant headings; when it is absent or does not match, select headings from the task request instead. For example, read Workspace topology to locate an affected area, Build and verification commands when planning a check, and Engineering conventions only when they affect the proposed work. Missing coverage does not require a whole-project scan: inspect the smallest relevant current evidence now. A source change, task-relevant known gap, or conflict with current evidence requires rechecking the scope. It never replaces request-named files or the smallest current source, configuration, build, test, README, or command evidence.
-3. Inspect request-named files and the smallest current source, configuration, build, test, README, or command evidence needed to verify task-specific facts.
+1. Confirm the request-named files and smallest current source, configuration, build, test, README, or command evidence already inspected at entry; inspect the smallest missing evidence needed to verify task-specific facts.
+2. When the task needs Harness navigation, fact priority, the Policy exception, or a stable project fact, read `{{HARNESS_DIR}}/docs/index.md`, then `{{HARNESS_DIR}}/docs/project-context.md` only when stable facts are needed. Do not follow every link.
+3. In `{{HARNESS_DIR}}/docs/project-context.md`, read the matching fact scope, its sources, known gaps, and freshness boundary, including its `Refresh when` condition. When `Task fact routing` exists and matches the task, use it to select the smallest relevant headings; when it is absent or does not match, select headings from the task request instead. For example, read Workspace topology to locate an affected area, Build and verification commands when planning a check, and Engineering conventions only when they affect the proposed work. Missing coverage does not require a whole-project scan: inspect the smallest relevant current evidence now. A source change, task-relevant known gap, or conflict with current evidence requires rechecking only the selected scope from its listed current sources; use its `Refresh when` condition to identify source changes.
 
-Project context is a locator for stable facts, not proof of current task behavior. Current verifiable workspace evidence remains higher priority.
+Project context is a locator for stable facts, not proof of current task behavior. Current verifiable workspace evidence remains higher priority and never yields to context reading.
 
 ## Conditional reading
 

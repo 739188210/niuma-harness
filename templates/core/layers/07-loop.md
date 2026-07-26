@@ -41,7 +41,7 @@ Use this as the only task-material reading order after interruption, context res
 5. Read `harness-feedback.md` only when it exists and its classification, tier, selected playbook, scope or authorization record, recovery declaration, or outcome affects the next decision. Its absence does not block recovery, and it does not replace verification evidence.
 6. Re-check the smallest current workspace evidence needed for the candidate next action: relevant current source, configuration, tests, README/runbook, and command results. Current facts override older task material.
 7. Route from that evidence without creating another task classification or risk tier: continue the selected playbook's next smallest safe action when its goal, boundary, and preconditions still hold; enter `{{HARNESS_DIR}}/docs/layers/05-recovery.md` when evidence is failing, conflicting, unclear, or unsafe; return to `{{HARNESS_DIR}}/docs/process/task-triage.md` only when current evidence invalidates the original classification, risk tier, success criteria, or selected playbook; follow Policy before an action crosses its boundary.
-8. Before continuing, pausing, or handing off, update only applicable existing records with observed facts: `status.md` for current state, `verification.md` for actual checks, and `harness-feedback.md` when required for a non-trivial task. Do not backfill evidence or create a complete task package merely for format.
+8. Before continuing, pausing, or handing off, update only existing task material, or create the minimum record only when `agent-work/README.md` says it is needed. Record observed facts in `status.md` for current recoverable state, `verification.md` for actual checks when that record is in use, and `harness-feedback.md` only when required. Do not backfill evidence or create a complete task package merely for format.
 
 ## Ownership boundaries
 
@@ -61,7 +61,7 @@ Before pausing or stopping delegated work, the active task owner records the int
 4. Reflect: compare evidence with success criteria and update current stage, completed steps, and next action.
 5. Repair: enter Recovery if the result is failing, unclear, or unsafe. Retries for the same failure are bounded (a small fixed number of focused attempts); once the limit is reached, stop, preserve the failure signal, and report instead of continuing the loop.
 6. Remember: capture verified durable facts through the Memory layer.
-7. Continue or stop: proceed only when the next step is safe and useful; otherwise report and ask. Before pausing or stopping interruptible work, make sure `status.md` is enough to resume from. For non-trivial tasks, finalize `verification.md` and `harness-feedback.md` so every success criterion maps to stable evidence IDs and the declared result, gaps, risks, recovery, and review outcome agree.
+7. Continue or stop: proceed only when the next step is safe and useful; otherwise report and ask. Before pausing or stopping recoverable work, make sure any selected `status.md` is enough to resume from. Use the selected task material or final response to report actual evidence, gaps, risks, recovery, and outcome; do not pre-create verification or execution-record files merely for format.
 
 ## Rationalization red flags
 

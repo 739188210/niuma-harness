@@ -21,7 +21,8 @@ The Loop Recovery entry owns task-material reading order and current-workspace r
 4. Make the smallest safe repair attempt.
 5. Re-run the smallest relevant check.
 6. Stop and report if the same failure persists after focused retries or if repair requires user approval.
-7. When recovery applies, record the failure, root cause, bounded attempts, verification evidence IDs, focused rechecks, stop condition, and declared recovery result in `harness-feedback.md`; otherwise explicitly record recovery as not applicable.
+7. Update task material only when the record already exists or `agent-work/README.md` says it is now needed. Record observed failure and recheck facts in the applicable existing record; do not create a full task package merely because Recovery ran.
+8. When recovery applies and the required execution record exists, record the failure, root cause, bounded attempts, verification evidence IDs, focused rechecks, stop condition, and declared recovery result in `harness-feedback.md`; otherwise explicitly record recovery as not applicable in the final response or applicable task material.
 
 ## Failure response map
 
@@ -37,7 +38,7 @@ Use the failure type to choose the required response form. Do not treat all fail
 | `unclear requirement` | State the ambiguity and the implementation choices it blocks; ask for clarification before continuing. |
 | `acceptance mismatch` | Name the unmet acceptance criterion or stated goal; compare expected behavior with actual result; decide whether the implementation, test/evidence, or requirement needs correction; repair only within the approved scope or ask before changing scope. |
 | `scope drift` | Name how the work exceeded the planned slice or stopped being small and reversible; stop expansion, re-check Process and Policy, and either shrink back to the approved scope or ask for approval before continuing. |
-| `process stall` | Name the stalled stage, missing handoff, blocked subagent, or unresolved dependency; preserve current state in `status.md`; choose the next smallest unblock step or ask for a decision. |
+| `process stall` | Name the stalled stage, missing handoff, blocked subagent, or unresolved dependency; update `status.md` when it exists or the selection table says recoverable state is needed; otherwise report the state in the final response. Choose the next smallest unblock step or ask for a decision. |
 | `policy block` | Name the policy or approval boundary; stop or request approval; do not work around the boundary. |
 | `unknown` | Preserve the observed signal and remaining unknowns; gather the smallest additional evidence needed to reclassify; stop if it cannot be classified safely. |
 

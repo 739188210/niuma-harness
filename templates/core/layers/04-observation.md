@@ -14,49 +14,15 @@ Use this layer before declaring work complete, after any code or documentation c
 2. Prefer project-local commands documented in `{{HARNESS_DIR}}/docs/project-context.md`; use `{{HARNESS_DIR}}/docs/index.md` only as navigation.
 3. Run focused checks first, then broader checks when justified.
 4. A task plan may design which success criteria need evidence, but `verification.md` records only checks actually run and their results. Do not backfill evidence after completion.
-5. Record evidence using the schema below: check, expected signal, actual result, skipped checks, and remaining unknowns.
+5. Record check, expected signal, actual result, skipped checks, and remaining unknowns wherever the task-material selection requires: `verification.md` for a task record, or the final response for Direct work.
 6. Treat unrun checks as unknown, not as passing.
 7. If verification fails, treat the failing check as evidence. Do not change the verification target unless the selected process permits it and the reason is recorded.
 
-## Test-first evidence
+## Evidence record
 
-For eligible test-first work, record focused RED and GREEN as separate truthful evidence entries, and record a refactor recheck when applicable. These records show observed results; they do not prove execution order. Because a RED entry has outcome `failed`, record Recovery as applicable and link the GREEN recheck even when that failure was the expected test-first signal.
+Verification evidence owns exact commands, expected signals, actual results, skipped checks with reasons, and remaining unknowns. For the copyable `verification.md` schema, use `agent-work/README.md`; it is the only copyable schema authority. Keep exactly one schema 1 marker block when `verification.md` is used. `kind` is `command`, `manual`, or `review`; `outcome` is `passed`, `failed`, `skipped`, or `unknown`. A passed/failed command requires an integer `exitCode` (`0` for passed, non-zero for failed); skipped/unknown command evidence uses `null`. Use stable unique evidence IDs, and use an empty `remainingUnknowns` array only when nothing material remains unknown. Record a skipped check with `outcome: "skipped"`, the reason in `actualResult`, and its unresolved impact in `remainingUnknowns`.
 
-## Evidence schema
-
-In `agent-work/tasks/<task-name>/verification.md`, keep exactly one marker-delimited schema 1 JSON block. Copy this shape and replace the example evidence truthfully:
-
-<!-- niuma-verification-record:begin -->
-```json
-{
-  "schemaVersion": 1,
-  "evidence": [
-    {
-      "id": "focused-tests",
-      "kind": "command",
-      "check": "node test/example.test.js",
-      "expectedSignal": "The focused test exits successfully.",
-      "actualResult": "The focused test passed.",
-      "outcome": "passed",
-      "exitCode": 0,
-      "remainingUnknowns": []
-    },
-    {
-      "id": "external-check",
-      "kind": "manual",
-      "check": "Confirm behavior in an unavailable external environment.",
-      "expectedSignal": "The external behavior matches the task criteria.",
-      "actualResult": "Not checked in this workspace.",
-      "outcome": "unknown",
-      "exitCode": null,
-      "remainingUnknowns": ["External environment behavior remains unverified."]
-    }
-  ]
-}
-```
-<!-- niuma-verification-record:end -->
-
-`kind` is `command`, `manual`, or `review`; `outcome` is `passed`, `failed`, `skipped`, or `unknown`. A passed/failed command requires an integer `exitCode` (`0` for passed, non-zero for failed); skipped/unknown command evidence uses `null`. Use stable unique evidence IDs, and use an empty `remainingUnknowns` array only when nothing material remains unknown. Record skipped checks as evidence with `outcome: "skipped"`, the reason in `actualResult`, and the unresolved impact in `remainingUnknowns`.
+Test-first RED, GREEN, and optional refactor recheck are defined by `{{HARNESS_DIR}}/docs/process/test-driven-development.md`; record their actual results as ordinary evidence without restating that protocol here.
 
 ## Evidence ownership
 

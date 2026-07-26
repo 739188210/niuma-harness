@@ -13,11 +13,12 @@ Make the smallest useful structural improvement without changing intended behavi
 1. Apply the base minimum reading set and conditional reads in `{{HARNESS_DIR}}/docs/process/task-triage.md`, then inspect the affected implementation and tests and identify the behavior baseline.
 2. State the refactor goal and the behavior that must remain unchanged.
 3. Identify the verification baseline before editing. Treat the baseline verification as the behavior boundary for the refactor.
-4. Split the refactor into small reversible steps.
-5. Change only files needed for the refactor goal.
-6. Run focused verification after meaningful steps.
-7. Stop if behavior changes, verification fails, or the work expands into a feature. Route behavior changes or behavior-changing tests through feature/bugfix plus `{{HARNESS_DIR}}/docs/process/test-driven-development.md`.
-8. Record changed structure, verification evidence, skipped checks, and remaining unknowns, including any behavior-specific material risks.
+4. Use `agent-work/README.md` to select task material only when it is needed; do not create a task folder or manufacture a test-first package for a pure refactor.
+5. Split the refactor into small reversible steps.
+6. Change only files needed for the refactor goal.
+7. Run focused verification after meaningful steps.
+8. Stop if behavior changes, verification fails, or the work expands into a feature. Route behavior changes or behavior-changing tests through feature/bugfix plus `{{HARNESS_DIR}}/docs/process/test-driven-development.md`.
+9. Record changed structure, verification evidence, skipped checks, and remaining unknowns, including any behavior-specific material risks.
 
 ## Scope guard
 
@@ -31,7 +32,7 @@ Use `{{HARNESS_DIR}}/docs/layers/05-recovery.md` when verification fails, behavi
 
 ## Memory and task notes
 
-For multi-step refactors, keep status, context, plan, verification, and handoff notes under `agent-work/tasks/<task-name>/`.
+Use `agent-work/README.md` to select task material only when it is needed; do not pre-create a full task package for a multi-step refactor.
 
 ## Required artifact/checklist
 

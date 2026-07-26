@@ -38,8 +38,8 @@ Before reporting completion, make sure the task record or final response include
 
 1. Apply the base minimum reading set and conditional reads in `{{HARNESS_DIR}}/docs/process/task-triage.md`, then inspect relevant existing implementation patterns and acceptance-criterion targets.
 2. Confirm understanding before planning when the feature has unclear scope, missing acceptance criteria, or meaningful design choices whose answer can change the implementation direction. Isolate first (`{{HARNESS_DIR}}/docs/process/isolation.md`) only when shared-tree work would create avoidable risk or coordination cost, such as intermediate broken states, parallel edits, experimental work, high-risk behavior changes, or overlap with another active task. For large features, consider staged subagent dispatch (`{{HARNESS_DIR}}/docs/process/subagent-development.md`).
-3. When the task needs an execution anchor, create `agent-work/tasks/<task-name>/plan.md` before implementation. Record acceptance criteria as stable success-criterion IDs, the smallest path, and planned evidence; follow `agent-work/README.md` for when this is needed and its compact shape.
-4. Classify each acceptance criterion before implementation: test-first when it has a stable automated target, otherwise declare the automation-unsuitability reason and replacement evidence before implementation.
+3. Use `agent-work/README.md` to select task material only when it is needed. When it selects a minimum anchor, create `agent-work/tasks/<task-name>/plan.md` before implementation and record acceptance criteria as stable success-criterion IDs, the smallest path, and planned evidence.
+4. Classify each acceptance criterion before implementation: test-first when it has a stable automated target, otherwise declare the automation-unsuitability reason and replacement evidence before implementation. TDD eligibility does not by itself require a task folder or a full task package.
 5. For test-first criteria, follow `{{HARNESS_DIR}}/docs/process/test-driven-development.md`; do not implement before the focused RED evidence.
 6. Choose the smallest implementation path that fits the current architecture.
 7. Plan verification before implementation. Use `{{HARNESS_DIR}}/docs/layers/04-observation.md` for evidence expectations.
@@ -62,7 +62,7 @@ Use `{{HARNESS_DIR}}/docs/layers/05-recovery.md` when tests, builds, commands, c
 
 ## Memory and task notes
 
-For multi-step features, create a task folder under `agent-work/tasks/<task-name>/` and keep status, context, plan, verification, and handoff notes there.
+Use `agent-work/README.md` to select task material only when it is needed; do not pre-create a full task package for a multi-step feature.
 
 Use `{{HARNESS_DIR}}/docs/layers/06-memory.md` before moving any task finding into `{{HARNESS_DIR}}/docs/project-context.md`.
 

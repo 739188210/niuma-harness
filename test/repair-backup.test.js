@@ -245,6 +245,36 @@ test('repair leaves a legacy bootstrap file and project context unchanged withou
   assert.strictEqual(run(['doctor', workspace]).status, 0);
 });
 
+test('repair preserves a legacy four-column context coverage table and custom facts byte-identically', () => {
+  const workspace = initWorkspace();
+  const facts = path.join(workspace, 'harness', 'docs', 'project-context.md');
+  const factsContent = `# Project Context
+
+## Context coverage
+
+| Scope | Status | Primary sources | Known gap |
+| --- | --- | --- | --- |
+| Build and verification commands | verified | package.json scripts | Smoke tests must be run manually. |
+| Deployment ownership | partial | ops/runbook.md | Staging ownership is not documented. |
+
+## Custom facts
+
+- Production releases are approved by the platform team.
+- The legacy integration still uses the blue queue.
+`;
+  assert.doesNotMatch(factsContent, /Refresh when/);
+  fs.writeFileSync(facts, factsContent, 'utf8');
+  fs.appendFileSync(path.join(workspace, 'harness', 'docs', 'process', 'task-triage.md'), 'drift\n', 'utf8');
+
+  const result = run(['repair', workspace, '-y']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Repair completed\. Doctor passed/);
+  assert.strictEqual(read(facts), factsContent, 'user-managed legacy project-context content must remain byte-identical');
+  const backup = result.stdout.match(/Backup retained: (.+)/)[1].trim();
+  assertNoPath(path.join(backup, 'files', 'harness', 'docs', 'project-context.md'));
+  assert.strictEqual(run(['doctor', workspace]).status, 0);
+});
+
 test('repair retires only the managed contract from an inactive entry', () => {
   const workspace = initWorkspace('multi');
   const inactive = path.join(workspace, 'AGENTS.md');

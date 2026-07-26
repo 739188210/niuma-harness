@@ -23,7 +23,7 @@ Before reporting completion, make sure the task record or final response include
 
 1. Apply the base minimum reading set and conditional reads in `{{HARNESS_DIR}}/docs/process/task-triage.md`, then inspect the symptom report, affected source or test files, and the smallest reproduction target.
 2. Understand the symptom, expected behavior, and current behavior.
-3. When the symptom is stably automatable, capture it as a focused failing regression test before the fix. The reproduction check is a verification target: follow `{{HARNESS_DIR}}/docs/process/test-driven-development.md` and make that same target pass afterward.
+3. Use `agent-work/README.md` to select task material only when it is needed; a stably automatable symptom does not by itself require a task folder or a full task package. Capture that symptom as a focused failing regression test before the fix. The reproduction check is a verification target: follow `{{HARNESS_DIR}}/docs/process/test-driven-development.md` and make that same target pass afterward.
 4. When reproduction is not achievable, record what was attempted and declare a valid alternative-verification plan before the fix. The fix stays unverified until the symptom can be shown to disappear; report the implemented mitigation and remaining unknown instead of claiming the bug is fixed.
 5. Identify the first root cause instead of chasing downstream symptoms.
 6. Implement the smallest safe fix.

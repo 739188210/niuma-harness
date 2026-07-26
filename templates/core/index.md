@@ -70,13 +70,13 @@ For a declared multi-module workspace, read `{{HARNESS_DIR}}/docs/module-topolog
 
 ## Runtime reading order
 
-1. Start from the operating loop in the entry file (`CLAUDE.md` / `AGENTS.md`).
-2. Use this navigation map to locate task-relevant materials.
-3. In `{{HARNESS_DIR}}/docs/project-context.md`, read Context coverage and, when it exists and matches the task, the `Task fact routing` table to select only task-relevant stable-fact headings.
+1. The entry loop first directs task-specific current evidence; for non-trivial work, follow `{{HARNESS_DIR}}/docs/process/task-triage.md`.
+2. Use this navigation map only when triage selects Harness navigation, fact priority, the Policy exception, or a linked protocol. Do not follow every link.
+3. When triage selects stable project facts, in `{{HARNESS_DIR}}/docs/project-context.md` read Context coverage and, when it exists and matches the task, the `Task fact routing` table to select only task-relevant stable-fact headings.
 4. Before relying on a project-context fact, inspect task-relevant current README, build files, configuration, source, tests, or command output.
-5. Refresh a fact scope only when a source changes, its known gap matters to the task, or current evidence conflicts; missing coverage means inspect the relevant workspace evidence, not the whole project.
+5. Refresh a fact scope only when its `Refresh when` condition applies, its known gap matters to the task, or current evidence conflicts; recheck only that scope from its listed current sources. Missing coverage means inspect the relevant workspace evidence, not the whole project. Current workspace evidence takes precedence over retained context.
 6. Read task-relevant experience records only when a recurring scenario or known trap may apply; verify current facts before relying on them.
-7. Read the relevant layer protocol and select the relevant playbook when the task needs depth.
+7. Read the selected layer protocol and playbook when the task needs their detail.
 8. Apply relevant installed engineering standards and use `agent-work/` for multi-step task notes and verification evidence.
 
 If project-specific facts are missing, inspect the current workspace before acting. Do not guess missing paths, commands, stack details, or ownership.

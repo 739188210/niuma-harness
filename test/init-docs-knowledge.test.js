@@ -37,7 +37,8 @@ test('generated docs prioritize task facts and route context reading by need', (
   assert.doesNotMatch(index, /## Maintenance/);
 
   const context = read(path.join(h, 'docs', 'layers', '01-context.md'));
-  assert.match(context, /fact priority, and the Policy exception/);
+  assert.match(context, /First inspect request-named files and the smallest relevant current source, configuration, build, test, README, or command evidence/);
+  assert.match(context, /Triage decides whether `harness\/docs\/index\.md`, `harness\/docs\/project-context\.md`, or other Harness material is relevant/);
   assert.match(context, /Classify each task-relevant source as current verifiable fact/);
   assert.match(context, /A file existing in the repository is not automatically a current fact/);
   assert.match(context, /Current verifiable evidence determines task-specific facts/);
@@ -80,9 +81,16 @@ test('generated docs route minimum process reading through triage and process tr
   const projectContext = read(path.join(h, 'docs', 'project-context.md'));
   const process = read(path.join(h, 'docs', 'layers', '03-process.md'));
 
-  assert.match(entry, /task-triage\.md.*base minimum reading set/i);
+  assert.match(entry, /request-named files and the smallest relevant current source, configuration, build, test, README, or command evidence/i);
+  assert.match(entry, /For non-trivial work, route through `harness\/docs\/process\/task-triage\.md`/i);
+  assert.doesNotMatch(entry, /use `harness\/docs\/index\.md` to locate harness docs/i);
+  assert.doesNotMatch(entry, /project knowledge index in `harness\/docs\/project-context\.md`/i);
   assert.match(triage, /## Base minimum reading set/);
   assert.match(triage, /Do not pre-read every Harness document/i);
+  assert.match(triage, /request-named files and smallest current source, configuration, build, test, README, or command evidence/i);
+  assert.match(triage, /## Conditional reading/);
+  assert.match(triage, /needs Harness navigation, fact priority, the Policy exception, or a stable project fact/i);
+  assert.match(triage, /`harness\/docs\/index\.md`, then `harness\/docs\/project-context\.md` only when stable facts are needed/i);
   assert.match(triage, /matching fact scope/);
   assert.match(triage, /select the smallest relevant headings/);
   assert.match(triage, /current source, configuration, build, test, README, or command evidence/);
@@ -99,16 +107,17 @@ test('generated docs route minimum process reading through triage and process tr
   assert.match(triage, /for a named task resume, follow the Recovery entry in `harness\/docs\/layers\/07-loop\.md`/i);
   assert.match(triage, /Re-triage only when current evidence invalidates the original classification, risk tier, success criteria, or selected playbook/);
 
-  assert.match(context, /task-triage\.md` defines the base minimum reading set/);
-  assert.match(context, /matching fact scope, then only the task-relevant headings/);
+  assert.match(context, /For non-trivial work, use `harness\/docs\/process\/task-triage\.md` to select conditional reading and a playbook/);
+  assert.match(context, /When triage selects stable project facts, read only the matching fact scope, task-relevant headings/);
   assert.match(context, /Do not enumerate decision, experience, or task-work directories speculatively/);
   assert.match(projectContext, /## Context coverage/);
-  assert.match(projectContext, /\| Scope \| Status \| Primary sources \| Known gap \|/);
+  assert.match(projectContext, /\| Scope \| Status \| Primary sources \| Refresh when \| Known gap \|/);
   assert.match(projectContext, /Build and verification commands/);
   assert.match(projectContext, /Workspace topology/);
   assert.match(projectContext, /Engineering conventions/);
   assert.match(projectContext, /verified.*partial.*unverified.*stale/i);
   assert.match(process, /task-triage\.md` owns the base minimum reading set and common conditional reads/);
+  assert.match(process, /For non-trivial work, `harness\/docs\/process\/task-triage\.md` first classifies the task, applies conditional reading/);
   assert.match(process, /workflow-specific additional materials, gates, checklist, and evidence/);
 
   const customWorkspace = tempDir();
@@ -125,7 +134,8 @@ test('generated docs route minimum process reading through triage and process tr
     assert.doesNotMatch(body, /{{HARNESS_DIR}}|`harness\/docs\//);
   }
   assert.match(customEntry, /`ai-harness\/docs\/process\/task-triage\.md`/);
-  assert.match(customEntry, /project knowledge index.*current workspace evidence/i);
+  assert.match(customEntry, /first inspect request-named files and the smallest relevant current source, configuration, build, test, README, or command evidence/i);
+  assert.doesNotMatch(customEntry, /project knowledge index.*current workspace evidence/i);
   assert.match(customTriage, /`ai-harness\/docs\/index\.md`/);
   assert.match(customTriage, /`ai-harness\/docs\/project-context\.md`/);
   assert.match(customTriage, /`ai-harness\/docs\/policy\/action-boundary\.md`/);
@@ -186,7 +196,12 @@ test('generated project context grows fact scopes on demand without bootstrap st
   assert.match(projectContext, /Current workspace evidence always overrides this file/);
   assert.match(projectContext, /Missing coverage means.*inspect the relevant workspace evidence now/i);
   assert.match(projectContext, /## Context coverage/);
-  assert.match(projectContext, /\| Scope \| Status \| Primary sources \| Known gap \|/);
+  assert.match(projectContext, /\| Scope \| Status \| Primary sources \| Refresh when \| Known gap \|/);
+  assert.match(projectContext, /\| Build and verification commands \| unverified \| Current package scripts, CI configuration, and command output \| Package scripts or CI configuration changes \| Add only verified commands needed by a task\. \|/);
+  assert.match(projectContext, /\| Workspace topology \| unverified \| Current README files, workspace configuration, and source layout \| Workspace configuration or source layout changes \| Add affected module boundaries as they are verified\. \|/);
+  assert.match(projectContext, /\| Engineering conventions \| unverified \| Current source, tests, lint\/format configuration, and accepted decisions \| Accepted decision or reference pattern changes \| Add durable conventions only when they affect recurring work\. \|/);
+  assert.match(projectContext, /Refresh only the task-relevant scope from its current sources/);
+  assert.match(projectContext, /Current workspace evidence always overrides this file/);
   for (const scope of [
     'Build and verification commands',
     'Workspace topology',
@@ -207,18 +222,22 @@ test('generated project context grows fact scopes on demand without bootstrap st
   assertNoPath(path.join(h, 'docs', 'process', 'bootstrap.md'));
 
   const entry = read(path.join(workspace, 'CLAUDE.md'));
-  assert.match(entry, /project knowledge index.*current workspace evidence/i);
+  assert.match(entry, /first inspect request-named files and the smallest relevant current source, configuration, build, test, README, or command evidence/i);
+  assert.match(entry, /For non-trivial work, route through `harness\/docs\/process\/task-triage\.md`/i);
+  assert.doesNotMatch(entry, /project knowledge index.*current workspace evidence/i);
   assert.match(entry, /# Project overrides/);
   assert.match(entry, /Their single source of truth is[\s\S]*harness\/docs\/project-context\.md/);
   assert.doesNotMatch(entry, /bootstrap/i);
 
   const triage = read(path.join(h, 'docs', 'process', 'task-triage.md'));
+  assert.match(triage, /Confirm the request-named files and smallest current source, configuration, build, test, README, or command evidence already inspected at entry/);
+  assert.match(triage, /needs Harness navigation, fact priority, the Policy exception, or a stable project fact/);
+  assert.match(triage, /read `harness\/docs\/index\.md`, then `harness\/docs\/project-context\.md` only when stable facts are needed/);
   assert.match(triage, /When `Task fact routing` exists and matches the task, use it to select the smallest relevant headings/);
   assert.match(triage, /when it is absent or does not match, select headings from the task request instead/i);
   assert.match(triage, /matching fact scope.*sources.*known gaps.*freshness/i);
   assert.match(triage, /missing coverage.*does not require a whole-project scan/i);
   assert.match(triage, /source change.*task-relevant known gap.*conflict with current evidence/i);
-  assert.match(triage, /It never replaces request-named files or the smallest current source, configuration, build, test, README, or command evidence/);
   assert.doesNotMatch(triage, /bootstrap|`pending`|`partial`|`complete`/i);
 
   const contextMemo = read(path.join(h, 'docs', 'layers', '01-context.md'));
@@ -235,7 +254,9 @@ test('generated project context grows fact scopes on demand without bootstrap st
   assert.doesNotMatch(memoryMemo, /bootstrap/i);
 
   const index = read(path.join(h, 'docs', 'index.md'));
-  assert.match(index, /Context coverage and, when it exists and matches the task, the `Task fact routing` table/);
+  assert.match(index, /entry loop first directs task-specific current evidence/);
+  assert.match(index, /only when triage selects Harness navigation, fact priority, the Policy exception, or a linked protocol/);
+  assert.match(index, /When triage selects stable project facts.*Context coverage.*Task fact routing/i);
   assert.doesNotMatch(index, /bootstrap/i);
 });
 
