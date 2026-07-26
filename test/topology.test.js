@@ -34,8 +34,7 @@ test('discovery coalesces duplicate roots from package and pnpm workspace declar
 
   let result = run(['init', workspace, '--agent', 'claude', '--topology', 'discover', '--dry-run']);
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.match(result.stdout, /Topology: apps\/admin/);
-  assert.strictEqual((result.stdout.match(/apps\/admin/g) || []).length, 1);
+  assert.match(result.stdout, /^Topology: apps\/admin$/m);
   assertTreeUnchanged(workspace, before);
 
   result = runInteractive(['init', workspace, '--agent', 'claude', '--topology', 'discover'], 'y\n');
