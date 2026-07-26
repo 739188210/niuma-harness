@@ -47,7 +47,8 @@ test('entry file carries the operating contract zone', () => {
   assert.match(body, /<!-- niuma-harness:contract begin/, 'entry must open the contract zone');
   assert.match(body, /<!-- niuma-harness:contract end/, 'entry must close the contract zone');
   assert.match(body, /Operating Loop/, 'entry must contain the operating loop');
-  assert.match(body, /harness\/docs\/process\/task-triage\.md/, 'entry must point non-trivial work to triage');
+  assert.match(body, /harness\/docs\/process\/task-triage\.md/, 'entry must point needed workflow routing to triage');
+  assert.match(body, /Direct, Minimum, or Recoverable task-material decision/, 'entry must point task-material selection to DMR');
   assert.match(body, /request-named files and the smallest relevant current source, configuration, build, test, README, or command evidence/i, 'entry must prioritize task-specific current evidence');
   assert.match(body, /harness\/docs\/layers\/01-context\.md/, 'entry depth links must include the harness directory');
   assert.doesNotMatch(body, /\(depth: `docs\//, 'entry depth links must not use workspace-root docs paths');

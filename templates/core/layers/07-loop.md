@@ -6,7 +6,7 @@ Define the operating loop that connects all other layers. This layer tells an AI
 
 ## When to use
 
-Use this layer for multi-stage, interruptible, delegated, parallel, recovery, or repeated-verification work. Also use it after context resets to resume work safely. The task-material protocol in `agent-work/README.md` decides whether work can stay direct, needs a minimum plan anchor, or needs recoverable state; this layer does not introduce another task classification or risk tier.
+Use this layer for selected Recoverable work, or after context resets to resume work safely. The task-material protocol in `agent-work/README.md` decides whether work can stay direct, needs a minimum plan anchor, or needs recoverable state; this layer does not introduce another task classification or risk tier.
 
 ## Explicit task state
 
@@ -28,7 +28,7 @@ Minimum fields:
 - Blockers or risks
 - Resume instructions
 
-Do not create or maintain a ledger for trivial one-step work unless it helps handoff.
+Do not create or maintain `status.md` unless the task-material selection is Recoverable; a handoff or resume need requires selecting Recoverable material first.
 
 ## Recovery entry
 
@@ -78,7 +78,7 @@ During Reflect or Continue, treat these thoughts as stop-and-classify signals. A
 ## Allowed actions
 
 - Maintain a visible task checklist for multi-step work.
-- Maintain `agent-work/tasks/<task-name>/status.md` for multi-step, risky, parallel, or interruptible work.
+- Maintain `agent-work/tasks/<task-name>/status.md` for selected Recoverable work; select Recoverable when handoff or resume needs arise.
 - Continue autonomously through low-risk, task-scoped steps.
 - Pause when policy, uncertainty, repeated failure, or user decision points appear.
 - Resume from `status.md`, task notes, verification evidence, and current project files after interruption.
@@ -88,7 +88,7 @@ During Reflect or Continue, treat these thoughts as stop-and-classify signals. A
 - Do not continue looping when the next action is not tied to the task goal.
 - Do not ignore failed observation and proceed as if the task passed.
 - Do not enter open-ended retries without a stop condition.
-- Do not rely only on conversation state for multi-step, risky, parallel, or interruptible work.
+- Do not rely only on conversation state for selected Recoverable work.
 - Do not treat `status.md` as durable project memory; route durable facts through the Memory layer.
 - Do not treat memory updates as complete until facts are verified.
 

@@ -18,7 +18,7 @@ agent-work/tasks/<task-name>/
 
 ## Choose the smallest useful execution material
 
-Task classification, risk tier, Policy, and playbook selection stay defined by `{{HARNESS_DIR}}/docs/process/task-triage.md` and the selected process. This guide does not create another task type or risk tier. After those decisions, choose only the material needed to execute and recover safely.
+Task classification, risk tier, Policy, and playbook selection stay defined by `{{HARNESS_DIR}}/docs/process/task-triage.md` and the selected process. This guide does not create another task type or risk tier. Direct, Minimum, and Recoverable are the only ordinary task-material selections. Quick, normal, and careful are risk/impact tiers, not task-material selections. Do not use non-trivial, quick, normal, or careful to decide whether to create `plan.md`, `status.md`, or a task folder. After those decisions, choose only the material needed to execute and recover safely.
 
 ## Task material selection table
 
@@ -28,7 +28,7 @@ Task classification, risk tier, Policy, and playbook selection stay defined by `
 | Minimum | A meaningful solution choice, compatibility boundary, multiple related edits, multiple success criteria, or interruption risk makes direct work unsafe to reconstruct. | `plan.md` | Record actual evidence in `verification.md` only if keeping it during execution helps recovery or handoff; otherwise report it truthfully in the final response. |
 | Recoverable | Work is multi-stage, interruptible, delegated, parallel, risky, under recovery, changing scope or direction, or cannot be safely resumed from current code alone. | `plan.md` and `status.md` | Update applicable records with observed facts; create `verification.md`, notes, or context only when needed. For non-trivial work under the current experiment, `harness-feedback.md` is required. |
 
-TDD eligibility alone does not require a task folder or a full task package. The selected workflow decides whether work is test-first; this table decides only whether task-local material is needed. Whenever work is non-trivial under the current experiment, `harness-feedback.md` is required regardless of Direct, Minimum, or Recoverable material selection.
+TDD eligibility alone does not require a task folder or a full task package. The selected workflow decides whether work is test-first; this table decides only whether task-local material is needed. Non-trivial decides only whether `harness-feedback.md` is required under the current experiment, regardless of Direct, Minimum, or Recoverable material selection. Whenever work is non-trivial under the current experiment, `harness-feedback.md` is required.
 
 ### Direct execution
 
@@ -61,7 +61,7 @@ Use readable stable success-criterion IDs. When an existing task record or user-
 
 ### Recoverable execution
 
-Add and maintain `status.md` when work is multi-stage, interruptible, delegated, parallel, risky, under recovery, changing scope or direction, or cannot be safely resumed from current code alone. On resume, `status.md` is the first task-local operational state to read; `plan.md` is not current truth. Follow the Recovery entry in `{{HARNESS_DIR}}/docs/layers/07-loop.md` for the only complete recovery order.
+When the Recoverable row applies, add and maintain `status.md`. On resume, `status.md` is the first task-local operational state to read; `plan.md` is not current truth. Follow the Recovery entry in `{{HARNESS_DIR}}/docs/layers/07-loop.md` for the only complete recovery order.
 
 Create other files only when they provide information that cannot stay concise in the plan or ledger:
 

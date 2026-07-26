@@ -70,7 +70,7 @@ For a declared multi-module workspace, read `{{HARNESS_DIR}}/docs/module-topolog
 
 ## Runtime reading order
 
-1. The entry loop first directs task-specific current evidence; for non-trivial work, follow `{{HARNESS_DIR}}/docs/process/task-triage.md`.
+1. The entry loop first directs task-specific current evidence; when workflow routing, conditional Harness reading, or a non-Direct material decision is needed, follow `{{HARNESS_DIR}}/docs/process/task-triage.md`.
 2. Use this navigation map only when triage selects Harness navigation, fact priority, the Policy exception, or a linked protocol. Do not follow every link.
 3. When triage selects stable project facts, in `{{HARNESS_DIR}}/docs/project-context.md` read Context coverage and, when it exists and matches the task, the `Task fact routing` table to select only task-relevant stable-fact headings.
 4. Before relying on a project-context fact, inspect task-relevant current README, build files, configuration, source, tests, or command output.

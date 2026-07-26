@@ -40,7 +40,7 @@ Before reporting completion, make sure the task record or final response include
 - Selected playbook or reason no playbook is needed.
 - Policy boundary or blocker.
 - Success criteria or smallest useful next step.
-- Whether a `status.md` ledger is needed for multi-step, risky, parallel, or interruptible work.
+- Task-material selection: Direct, Minimum, or Recoverable, with the reason and any task-local files created.
 - Evidence plan.
 
 ## Steps
@@ -81,7 +81,7 @@ Before reporting completion, make sure the task record or final response include
    | Verification | `{{HARNESS_DIR}}/docs/process/review.md` plus `{{HARNESS_DIR}}/docs/layers/04-observation.md` | Use the existing `verification` classification. Report only checks actually run and observed results; unrun checks are unknown, not passing. |
    | Cleanup | `{{HARNESS_DIR}}/docs/process/refactor.md` | Use the existing `refactor` classification. Check ownership first; ask before deleting files not created by this task or content that may be user-owned. |
 5. Apply only the conditional reads that now apply. If a task-relevant fact scope needs refresh, inspect its current sources, record only verified durable facts, then resume the selected playbook using verified facts.
-6. Define success criteria, the smallest useful next step, an evidence plan, and whether the work needs task-local execution material or a `status.md` ledger. After classification and risk routing, decide whether direct execution is safe or whether the task needs an execution anchor. Use the task-material protocol in `agent-work/README.md`; do not create another classification or risk tier for task files.
+6. Define success criteria, the smallest useful next step, and an evidence plan. After classification and risk routing, choose Direct, Minimum, or Recoverable using the task-material protocol in `agent-work/README.md`; do not create another classification or risk tier for task files.
 7. Stop and ask when the request lacks enough information, expands scope, or crosses a Policy boundary.
 
 ## Observation

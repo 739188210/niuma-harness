@@ -12,22 +12,22 @@ Use this layer after triage selects it, before implementation, and whenever the 
 
 ## Agent protocol
 
-1. For non-trivial work, `{{HARNESS_DIR}}/docs/process/task-triage.md` first classifies the task, applies conditional reading, and selects this layer or a concrete playbook. Triage is a routing step, not the final execution playbook.
+1. When triage is needed, `{{HARNESS_DIR}}/docs/process/task-triage.md` first classifies the task, applies conditional reading, and selects this layer or a concrete playbook. Triage is a routing step, not the final execution playbook.
 2. Select the final execution playbook from bugfix, feature, refactor, review, or release. Documentation, cleanup, investigation, and verification use the explicit lightweight default routes in `{{HARNESS_DIR}}/docs/process/task-triage.md`; use `none` only when no execution playbook applies.
 3. For feature or bugfix behavior work, make a test-first versus alternative verification decision before implementation. Follow `{{HARNESS_DIR}}/docs/process/test-driven-development.md` for eligible stable automatable behavior and declare valid alternative evidence before implementation when automation is unsuitable.
 4. Follow any confirmation gate defined by the selected workflow before writing detailed plans or implementation docs.
 5. If working in the shared tree would create avoidable risk or coordination cost, isolate the workspace first (`{{HARNESS_DIR}}/docs/process/isolation.md`) before acting. Do not isolate merely because a task has more than one step. For large or risky work, consider staged subagent dispatch (`{{HARNESS_DIR}}/docs/process/subagent-development.md`).
 6. Define the smallest useful goal and success criteria.
-7. Decide whether direct execution remains safe. When it does not, create the smallest task-local execution material before editing; `agent-work/README.md` is the only authority for that decision and for file roles.
+7. After classification and risk routing, use `agent-work/README.md` to choose Direct, Minimum, or Recoverable task material before editing; it is the only authority for that decision and for file roles.
 8. Break work into observable steps.
 9. Escalate to the user if the task scope expands beyond the selected workflow.
 10. For non-trivial tasks, record the classification, tier and rationale, risk factors, selected playbook, canonical success criteria, performed/skipped steps, decision impact, deviations, and any scope-triggered reclassification in `harness-feedback.md`.
 
 ## Task state ownership
 
-The selected workflow owns the success criteria and required task state for the task type. It decides which task notes, plans, checklists, and evidence records are needed beyond the shared `status.md` ledger.
+The selected workflow owns the success criteria and workflow-specific gates for the task type. `agent-work/README.md` decides the Direct, Minimum, or Recoverable material selection and task-file roles.
 
-For multi-step, risky, parallel, or delegated work, decide who updates `status.md`, who records task notes, and who summarizes verification evidence before work begins. Parallel or delegated work must keep ownership explicit so task ledgers and evidence are not mixed or overwritten.
+For selected Recoverable work, decide who updates `status.md`, who records task notes, and who summarizes verification evidence before work begins. Parallel or delegated work must keep ownership explicit so task ledgers and evidence are not mixed or overwritten.
 
 For delegated work, the parent flow or active task owner is responsible for integrating delegated outputs before completion; use `{{HARNESS_DIR}}/docs/process/subagent-development.md` for the integration gate.
 
@@ -64,7 +64,7 @@ Trigger words are routing hints, not permission to bypass Policy. If multiple ro
 
 ## Forbidden actions
 
-- Do not start editing before selecting a process for non-trivial work.
+- Do not start editing before selecting a process when workflow routing is needed.
 - Do not silently expand a small task into a large refactor.
 - Do not skip verification planning for code or behavior changes.
 - Do not keep following a workflow after its assumptions are proven wrong.

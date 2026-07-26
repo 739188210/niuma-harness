@@ -148,7 +148,8 @@ test('generated docs define task status ledger protocol and guide task record sh
 
   const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop.md'));
   assert.match(loopMemo, /agent-work\/tasks\/<task-name>\/status\.md/);
-  assert.match(loopMemo, /multi-step, risky, parallel, or interruptible/);
+  assert.match(loopMemo, /selected Recoverable work/);
+  assert.match(loopMemo, /task-material protocol in `agent-work\/README\.md` decides whether work can stay direct, needs a minimum plan anchor, or needs recoverable state/);
   assert.match(loopMemo, /does not introduce another task classification or risk tier/);
   assert.match(loopMemo, /## Recovery entry/);
   const recoveryEntry = loopMemo.match(/## Recovery entry[\s\S]*?\n## Ownership boundaries/)[0];
@@ -280,7 +281,8 @@ test('generated docs define task state ownership boundaries', () => {
   assert.match(observationMemo, /`status\.md` may summarize verification state, but it does not replace evidence/);
 
   const processMemo = read(path.join(h, 'docs', 'layers', '03-process.md'));
-  assert.match(processMemo, /The selected workflow owns the success criteria and required task state/);
+  assert.match(processMemo, /The selected workflow owns the success criteria and workflow-specific gates/);
+  assert.match(processMemo, /agent-work\/README\.md.*Direct, Minimum, or Recoverable material selection and task-file roles/);
   assert.match(processMemo, /Parallel or delegated work must keep ownership explicit/);
 
   const policyMemo = read(path.join(h, 'docs', 'layers', '02-policy.md'));

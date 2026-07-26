@@ -82,7 +82,8 @@ test('generated docs route minimum process reading through triage and process tr
   const process = read(path.join(h, 'docs', 'layers', '03-process.md'));
 
   assert.match(entry, /request-named files and the smallest relevant current source, configuration, build, test, README, or command evidence/i);
-  assert.match(entry, /For non-trivial work, route through `harness\/docs\/process\/task-triage\.md`/i);
+  assert.match(entry, /when workflow routing, conditional Harness reading, or a non-Direct material decision is needed, route through `harness\/docs\/process\/task-triage\.md`/i);
+  assert.match(entry, /Direct, Minimum, or Recoverable task-material decision/i);
   assert.doesNotMatch(entry, /use `harness\/docs\/index\.md` to locate harness docs/i);
   assert.doesNotMatch(entry, /project knowledge index in `harness\/docs\/project-context\.md`/i);
   assert.match(triage, /## Base minimum reading set/);
@@ -107,7 +108,7 @@ test('generated docs route minimum process reading through triage and process tr
   assert.match(triage, /for a named task resume, follow the Recovery entry in `harness\/docs\/layers\/07-loop\.md`/i);
   assert.match(triage, /Re-triage only when current evidence invalidates the original classification, risk tier, success criteria, or selected playbook/);
 
-  assert.match(context, /For non-trivial work, use `harness\/docs\/process\/task-triage\.md` to select conditional reading and a playbook/);
+  assert.match(context, /When workflow routing, conditional Harness reading, or a non-Direct material decision is needed, use `harness\/docs\/process\/task-triage\.md` to select conditional reading and a playbook/);
   assert.match(context, /When triage selects stable project facts, read only the matching fact scope, task-relevant headings/);
   assert.match(context, /Do not enumerate decision, experience, or task-work directories speculatively/);
   assert.match(projectContext, /## Context coverage/);
@@ -117,7 +118,7 @@ test('generated docs route minimum process reading through triage and process tr
   assert.match(projectContext, /Engineering conventions/);
   assert.match(projectContext, /verified.*partial.*unverified.*stale/i);
   assert.match(process, /task-triage\.md` owns the base minimum reading set and common conditional reads/);
-  assert.match(process, /For non-trivial work, `harness\/docs\/process\/task-triage\.md` first classifies the task, applies conditional reading/);
+  assert.match(process, /When triage is needed, `harness\/docs\/process\/task-triage\.md` first classifies the task, applies conditional reading/);
   assert.match(process, /workflow-specific additional materials, gates, checklist, and evidence/);
 
   const customWorkspace = tempDir();
@@ -223,7 +224,8 @@ test('generated project context grows fact scopes on demand without bootstrap st
 
   const entry = read(path.join(workspace, 'CLAUDE.md'));
   assert.match(entry, /first inspect request-named files and the smallest relevant current source, configuration, build, test, README, or command evidence/i);
-  assert.match(entry, /For non-trivial work, route through `harness\/docs\/process\/task-triage\.md`/i);
+  assert.match(entry, /when workflow routing, conditional Harness reading, or a non-Direct material decision is needed, route through `harness\/docs\/process\/task-triage\.md`/i);
+  assert.match(entry, /Direct, Minimum, or Recoverable task-material decision/i);
   assert.doesNotMatch(entry, /project knowledge index.*current workspace evidence/i);
   assert.match(entry, /# Project overrides/);
   assert.match(entry, /Their single source of truth is[\s\S]*harness\/docs\/project-context\.md/);

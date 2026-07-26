@@ -45,6 +45,7 @@ Agents may do these without asking when they are task-scoped and reversible:
 - Inspect configuration files, package manifests, and generated harness docs.
 - Edit files directly related to the current user-requested or approved task.
 - Run local read-only inspection commands and project-local verification commands that do not create external side effects.
+- When the user explicitly asks to check whether a package can be released, inspect its local package metadata and contents and run available project-local dry-run, build, test, lint, and artifact checks when they are task-scoped, local, and do not create external side effects.
 - Create task-local notes under `agent-work/tasks/`.
 - Report suspected issues without changing unrelated files.
 
@@ -110,7 +111,7 @@ Agents must ask before:
 - Running destructive commands or commands that write outside the workspace.
 - Deleting files not created by the current task.
 - Overwriting user-authored content with force-style behavior.
-- Preparing release or deployment readiness checks before an approved outward-facing action.
+- Preparing release or deployment readiness checks that access external release or deployment infrastructure, remote or hosted jobs, credentials, remote services, or limited quota.
 - Making large refactors beyond the requested task.
 - Moving uncertain facts into long-lived project context.
 - Other changes to existing verification targets that are an uncertain semantic rewrite or test-maintenance work not directly needed to express approved behavior or confirmed regression coverage, unless the task explicitly requests test maintenance or the target conflicts with verified intended behavior.

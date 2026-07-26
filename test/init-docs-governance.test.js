@@ -195,8 +195,8 @@ test('generated feature docs define pre-plan confirmation gate', () => {
 
   const processMemo = read(path.join(h, 'docs', 'layers', '03-process.md'));
   assert.match(processMemo, /confirmation gate defined by the selected workflow/);
-  assert.match(processMemo, /Decide whether direct execution remains safe/);
-  assert.match(processMemo, /agent-work\/README\.md.*only authority for that decision and for file roles/);
+  assert.match(processMemo, /use `agent-work\/README\.md` to choose Direct, Minimum, or Recoverable task material/);
+  assert.match(processMemo, /only authority for that decision and for file roles/);
 });
 
 test('generated process memo maps triggers to workflows and artifacts', () => {
@@ -244,8 +244,8 @@ test('generated process playbooks define required artifact contracts', () => {
   assert.match(triage, /`harness\/docs\/experience\//);
   assert.match(triage, /## Required artifact\/checklist/);
   assert.match(triage, /Task classification/);
-  assert.match(triage, /Whether a `status\.md` ledger is needed/);
-  assert.match(triage, /After classification and risk routing, decide whether direct execution is safe/);
+  assert.match(triage, /Task-material selection: Direct, Minimum, or Recoverable/);
+  assert.match(triage, /choose Direct, Minimum, or Recoverable using the task-material protocol in `agent-work\/README\.md`/);
   assert.match(triage, /do not create another classification or risk tier for task files/);
   assert.match(triage, /Documentation update[\s\S]*harness\/docs\/process\/refactor\.md/);
   assert.match(triage, /generated output, internal links, and factual accuracy/);
@@ -300,7 +300,11 @@ test('generated process playbooks define required artifact contracts', () => {
   assert.match(release, /## Required artifact\/checklist/);
   assert.match(release, /Release target/);
   assert.match(release, /Package or artifact scope/);
+  assert.match(release, /check whether it can be released/);
+  assert.match(release, /local dry-run, build, test, lint, artifact, and metadata checks/i);
+  assert.match(release, /do not need separate approval/i);
   assert.match(release, /touch external systems, credentials, quotas, or release infrastructure/);
+  assert.match(release, /Publishing, tagging, pushing, deploying, and version bumps are forbidden unless explicitly requested/);
 
   const processMemo = read(path.join(h, 'docs', 'layers', '03-process.md'));
   assert.match(processMemo, /shared tree would create avoidable risk or coordination cost/);
@@ -394,6 +398,11 @@ test('generated docs define external side-effect network gate', () => {
   assert.match(actionBoundary, /Installing dependencies, running remote install scripts/);
   assert.match(actionBoundary, /CI jobs, remote jobs, deploy previews/);
   assert.match(actionBoundary, /Writing comments, issues, pull requests/);
+  assert.match(actionBoundary, /When the user explicitly asks to check whether a package can be released/);
+  assert.match(actionBoundary, /package metadata and contents.*dry-run, build, test, lint, and artifact checks/i);
+  assert.match(actionBoundary, /task-scoped, local, and do not create external side effects/i);
+  assert.match(actionBoundary, /external release or deployment infrastructure, remote or hosted jobs, credentials, remote services, or limited quota/i);
+  assert.doesNotMatch(actionBoundary, /Preparing release or deployment readiness checks before an approved outward-facing action/);
   assert.match(actionBoundary, /Publish, deploy, tag, release, push, or bump package versions/);
   assert.match(actionBoundary, /Delete, overwrite, revoke, rotate, mutate/);
   assert.match(actionBoundary, /Transmit secrets, credentials, tokens, private data/);
@@ -514,6 +523,10 @@ test('generated docs select task material mechanically without pre-creating a pa
   assert.match(workReadme, /\| Direct \|.*\| No task file \|/);
   assert.match(workReadme, /\| Minimum \|.*\| `plan\.md` \|/);
   assert.match(workReadme, /\| Recoverable \|.*\| `plan\.md` and `status\.md` \|/);
+  assert.match(workReadme, /Direct, Minimum, and Recoverable are the only ordinary task-material selections/);
+  assert.match(workReadme, /Quick, normal, and careful are risk\/impact tiers, not task-material selections/);
+  assert.match(workReadme, /Non-trivial decides only whether `harness-feedback\.md` is required/);
+  assert.match(workReadme, /do not use non-trivial, quick, normal, or careful to decide whether to create `plan\.md`, `status\.md`, or a task folder/i);
   assert.match(workReadme, /Whenever work is non-trivial under the current experiment, `harness-feedback\.md` is required/);
   assert.doesNotMatch(workReadme, /Recoverable[\s\S]*required execution record only when each is needed/);
   assert.match(workReadme, /TDD eligibility alone does not require a task folder or a full task package/);
@@ -539,6 +552,8 @@ test('generated docs select task material mechanically without pre-creating a pa
   assert.doesNotMatch(recovery, /preserve current state in `status\.md`/);
 
   const loop = read(path.join(h, 'docs', 'layers', '07-loop.md'));
+  assert.match(loop, /Do not create or maintain `status\.md` unless the task-material selection is Recoverable/);
+  assert.match(loop, /handoff or resume need requires selecting Recoverable material first/);
   assert.match(loop, /update only existing task material, or create the minimum record only when `agent-work\/README\.md` says it is needed/);
   assert.doesNotMatch(loop, /finalize `verification\.md` and `harness-feedback\.md`/);
 
