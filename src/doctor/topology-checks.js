@@ -90,7 +90,13 @@ function checkSupplements(context, modules) {
       addError(context.result, `invalid module supplement ${record.target}`);
       continue;
     }
-    const canonicalBlock = sliceMarkedBlock(renderModuleSupplement(module, record.entryFile, context.workspaceRoot, path.basename(context.harnessRoot)), MODULE_BEGIN, MODULE_END);
+    const canonicalBlock = sliceMarkedBlock(renderModuleSupplement(
+      module,
+      record.entryFile,
+      context.workspaceRoot,
+      path.basename(context.harnessRoot),
+      context.agent
+    ), MODULE_BEGIN, MODULE_END);
     if (!canonicalBlock || digestBytes(analysis.block.replace(/\r\n/g, '\n')) !== digestBytes(canonicalBlock)) {
       addError(context.result, `module supplement drifted ${record.target}`);
       continue;

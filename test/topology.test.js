@@ -179,13 +179,14 @@ test('explicit modules initialize root routing and local supplements', () => {
   assert.match(rootEntry, /Their single source of truth is[\s\S]*harness\/docs\/project-context\.md/);
   assert.match(rootEntry, /module-local durable facts belong in the applicable[\s\S]*module entry/i);
   const moduleEntry = read(path.join(workspace, 'apps', 'admin', 'CLAUDE.md'));
-  assert.match(moduleEntry, /put root or cross-module durable facts in the root `project-context\.md`/);
+  assert.match(moduleEntry, /\[\`?AGENTS\.md\`?\]\(AGENTS\.md\)/);
+  assert.match(moduleEntry, /canonical source for module-local responsibilities/i);
   assert.strictEqual(readJson(path.join(harness, 'manifest.json')).schemaVersion, 4);
   const doctor = run(['doctor', workspace]);
   assert.strictEqual(doctor.status, 0, doctor.stdout || doctor.stderr);
 });
 
-test('fresh module entries include an empty user-managed knowledge skeleton', () => {
+test('multi-module AGENTS.md owns the knowledge skeleton while CLAUDE.md points to it', () => {
   const workspace = seedWorkspace();
   const result = run([
     'init', workspace, '--agent', 'multi',
@@ -193,33 +194,48 @@ test('fresh module entries include an empty user-managed knowledge skeleton', ()
   ]);
 
   assert.strictEqual(result.status, 0, result.stderr);
-  for (const entryFile of ['CLAUDE.md', 'AGENTS.md']) {
+  const claude = read(path.join(workspace, 'apps', 'admin', 'CLAUDE.md'));
+  assert.match(claude, /niuma-harness:module-supplement begin/);
+  assert.match(claude, /\[\`?AGENTS\.md\`?\]\(AGENTS\.md\)/);
+  assert.match(claude, /canonical source for module-local responsibilities/i);
+  assert.match(claude, /do not duplicate them in this file/i);
+  assert.doesNotMatch(claude, /# Module knowledge|## Build, test, and startup commands/);
+
+  const agents = read(path.join(workspace, 'apps', 'admin', 'AGENTS.md'));
+  const markerEnd = agents.indexOf('<!-- niuma-harness:module-supplement end -->');
+  assert.ok(markerEnd >= 0);
+  for (const heading of [
+    '# Module knowledge',
+    '## Module responsibilities and boundaries',
+    '## Dependencies and dependents',
+    '## Build, test, and startup commands',
+    '## Source and test entry points',
+    '## Configuration locations',
+    '## Module constraints, risks, and known issues',
+    '## Cross-module verification triggers',
+  ]) assert.ok(agents.indexOf(heading) > markerEnd, `AGENTS.md must place ${heading} after the managed marker`);
+  for (const prompt of [
+    /public responsibility.*does not own/i,
+    /dependencies.*consume/i,
+    /building, testing, and starting/i,
+    /few source, runtime, and test locations that help future module tasks start/i,
+    /current module files remain the source of task facts/i,
+    /configuration files, environment-variable/i,
+    /limits.*risks.*known issues/i,
+    /trigger categories, affected consumers or contracts, and required integration checks/i,
+  ]) assert.match(agents, prompt);
+  assert.doesNotMatch(agents, /## Module task routing|npm test|pnpm test|yarn test/i);
+});
+
+test('single-agent module entries retain the full knowledge skeleton', () => {
+  for (const [agent, entryFile] of [['claude', 'CLAUDE.md'], ['codex', 'AGENTS.md'], ['opencode', 'AGENTS.md']]) {
+    const workspace = seedWorkspace();
+    const result = run(['init', workspace, '--agent', agent, '--modules', 'apps/admin']);
+    assert.strictEqual(result.status, 0, result.stderr);
     const entry = read(path.join(workspace, 'apps', 'admin', entryFile));
-    const markerEnd = entry.indexOf('<!-- niuma-harness:module-supplement end -->');
-    assert.ok(markerEnd >= 0);
-    for (const heading of [
-      '# Module knowledge',
-      '## Module responsibilities and boundaries',
-      '## Dependencies and dependents',
-      '## Build, test, and startup commands',
-      '## Source and test entry points',
-      '## Configuration locations',
-      '## Module constraints, risks, and known issues',
-      '## Cross-module verification triggers',
-    ]) {
-      assert.ok(entry.indexOf(heading) > markerEnd, `${entryFile} must place ${heading} after the managed marker`);
-    }
-    for (const prompt of [
-      /public responsibility.*does not own/i,
-      /dependencies.*consume/i,
-      /building, testing, and starting/i,
-      /few source, runtime, and test locations that help future module tasks start/i,
-      /current module files remain the source of task facts/i,
-      /configuration files, environment-variable/i,
-      /limits.*risks.*known issues/i,
-      /trigger categories, affected consumers or contracts, and required integration checks/i,
-    ]) assert.match(entry, prompt);
-    assert.doesNotMatch(entry, /## Module task routing|npm test|pnpm test|yarn test/i);
+    assert.match(entry, /# Module knowledge/);
+    assert.match(entry, /## Build, test, and startup commands/);
+    assert.doesNotMatch(entry, /canonical source for module-local responsibilities/i);
   }
 });
 

@@ -39,7 +39,7 @@ function getActiveDescriptors(context, previousByTarget) {
 function prepareWrite(context, descriptor) {
   const { entryFile, module, previous, target } = descriptor;
   const targetPath = safeResolveInside(context.workspaceDir, target, 'module entry target');
-  const fresh = renderModuleSupplement(module, entryFile, context.workspaceDir, context.options.harnessDir);
+  const fresh = renderModuleSupplement(module, entryFile, context.workspaceDir, context.options.harnessDir, context.options.agent);
   const block = sliceMarkedBlock(fresh, MODULE_BEGIN, MODULE_END);
   if (!block) throw new Error('module supplement template is missing a valid managed block');
   if (!inspectFileTarget(targetPath)) {
