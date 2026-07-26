@@ -20,7 +20,6 @@
     "test:init": "node test/init.test.js",
     "test:doctor": "node test/doctor.test.js",
     "test:repair": "node test/repair.test.js",
-    "test:audit": "node test/audit.test.js",
     "test:topology": "node test/topology.test.js"
   },
   "keywords": [

@@ -10,7 +10,6 @@ const { normalizeSelectedRules, getDefaultRulesForAgent } = require('./rules');
 const { runDoctor } = require('./doctor');
 const { runInit } = require('./scaffold');
 const { runRepair } = require('./repair');
-const { runAudit } = require('./audit');
 const { STATUS_FILE } = require('./harness-status');
 
 function finalizeRules(options) {
@@ -62,7 +61,7 @@ async function main(argv) {
     return;
   }
 
-  if (options.command === 'doctor' || options.command === 'check') {
+  if (options.command === 'doctor') {
     runDoctor(options);
     return;
   }
@@ -72,12 +71,7 @@ async function main(argv) {
     return;
   }
 
-  if (options.command === 'audit') {
-    runAudit(options);
-    return;
-  }
-
-  throw new Error(`Unknown command: ${options.command}. Use "init", "doctor", "check", "repair", or "audit".`);
+  throw new Error(`Unknown command: ${options.command}. Use "init", "doctor", or "repair".`);
 }
 
 module.exports = {

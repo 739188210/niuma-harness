@@ -20,7 +20,7 @@ Use this layer before declaring work complete, after any code or documentation c
 
 ## Evidence record
 
-Verification evidence owns exact commands, expected signals, actual results, skipped checks with reasons, and remaining unknowns. For the copyable `verification.md` schema, use `agent-work/README.md`; it is the only copyable schema authority. Keep exactly one schema 1 marker block when `verification.md` is used. `kind` is `command`, `manual`, or `review`; `outcome` is `passed`, `failed`, `skipped`, or `unknown`. A passed/failed command requires an integer `exitCode` (`0` for passed, non-zero for failed); skipped/unknown command evidence uses `null`. Use stable unique evidence IDs, and use an empty `remainingUnknowns` array only when nothing material remains unknown. Record a skipped check with `outcome: "skipped"`, the reason in `actualResult`, and its unresolved impact in `remainingUnknowns`.
+Verification evidence owns exact commands, expected signals, actual results, skipped checks with reasons, and remaining unknowns. When `verification.md` is used, write concise human-readable Markdown from actual observations; do not require a marker, JSON schema, generated IDs, or a parser. Record a skipped check with its reason and unresolved impact. An empty unknowns statement is valid only when nothing material remains unknown.
 
 Test-first RED, GREEN, and optional refactor recheck are defined by `{{HARNESS_DIR}}/docs/process/test-driven-development.md`; record their actual results as ordinary evidence without restating that protocol here.
 

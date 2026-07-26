@@ -91,31 +91,16 @@ Create other files only when they provide information that cannot stay concise i
 - One-off logs that do not help future task work.
 - Promoted experience records; keep raw notes and evidence here, then use the Memory layer to create a condensed project-maintained record under `{{HARNESS_DIR}}/docs/experience/` when warranted.
 
-## Copyable verification record
+## Verification evidence
 
-Use one schema 1 marker block in `verification.md`; `harness-feedback.md` references its stable evidence IDs.
+When a task uses `verification.md`, record only evidence actually observed during the task:
 
-<!-- niuma-verification-record:begin -->
-```json
-{
-  "schemaVersion": 1,
-  "evidence": [
-    {
-      "id": "focused-tests",
-      "kind": "command",
-      "check": "node test/example.test.js",
-      "expectedSignal": "The focused test exits successfully.",
-      "actualResult": "The focused test passed.",
-      "outcome": "passed",
-      "exitCode": 0,
-      "remainingUnknowns": []
-    }
-  ]
-}
-```
-<!-- niuma-verification-record:end -->
+- the check or manual verification step and its expected signal;
+- the actual result, including relevant failure information;
+- every skipped check, its reason, and its unresolved impact; and
+- remaining unknowns, or an explicit statement that none material remain.
 
-`kind` is `command`, `manual`, or `review`; `outcome` is `passed`, `failed`, `skipped`, or `unknown`. Completed command checks use an integer exit code; skipped/unknown command checks use `null`. Unknowns are always an array of non-empty strings, or `[]` when none remain. The full execution-record schema is in `{{HARNESS_DIR}}/docs/experiments/task-execution-record.md`.
+Use concise Markdown that another agent or maintainer can read without a parser. Start the record when verification occurs and update it from actual results; do not backfill evidence after completion. `harness-feedback.md` may link to or summarize this evidence, but it does not replace it.
 
 ## Runtime protocol
 

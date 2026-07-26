@@ -1,14 +1,23 @@
+const fs = require('fs');
+const path = require('path');
 const test = require('node:test');
 const { assert, run } = require('./helpers');
 
-test('--help shows init, doctor, audit, and key options', () => {
+test('README documents only retained CLI commands and doctor health checks', () => {
+  const readme = fs.readFileSync(path.join(__dirname, '..', 'README.md'), 'utf8');
+  assert.match(readme, /niuma-harness init \[target\] \[options\]/);
+  assert.match(readme, /niuma-harness doctor \[target\] \[options\]/);
+  assert.match(readme, /niuma-harness repair \[target\] \[options\]/);
+  assert.match(readme, /## Doctor/);
+});
+
+test('--help shows init, doctor, repair, and no removed command surface', () => {
   const result = run(['--help']);
   assert.strictEqual(result.status, 0, result.stderr);
   assert.match(result.stdout, /niuma-harness init/);
   assert.match(result.stdout, /niuma-harness doctor/);
-  assert.match(result.stdout, /niuma-harness audit/);
-  assert.match(result.stdout, /--task <name>/);
-  assert.match(result.stdout, /--strict/);
+  assert.match(result.stdout, /niuma-harness repair/);
+  assert.match(result.stdout, /Doctor options:/);
   assert.match(result.stdout, /--rules-out/);
   assert.match(result.stdout, /--skills/);
 });

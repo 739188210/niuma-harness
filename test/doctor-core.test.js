@@ -38,15 +38,6 @@ test('doctor passes on a valid harness', () => {
   assert.match(result.stdout, /OK agent-work\/tasks\//);
 });
 
-test('check alias runs the same validation', () => {
-  const workspace = tempDir();
-  const init = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(init.status, 0, init.stderr);
-  const result = run(['check', workspace]);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assert.match(result.stdout, /Status: OK/);
-});
-
 test('doctor accepts workspace and direct harness aliases', (t) => {
   const root = tempDir();
   const workspace = path.join(root, 'workspace');

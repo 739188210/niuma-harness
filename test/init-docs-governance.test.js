@@ -144,7 +144,6 @@ test('generated docs expose experimental task execution feedback guidance', () =
   assert.match(feedbackDoc, /enabled by the current Niuma Harness package/);
   assert.match(feedbackDoc, /not workspace-disableable/);
   assert.match(feedbackDoc, /deleting this document does not disable the requirement/);
-  assert.match(feedbackDoc, /niuma-audit-record:begin/);
   assert.match(feedbackDoc, /"scopeChanges": \[\]/);
   assert.match(feedbackDoc, /"deviations": \[\]/);
   assert.match(feedbackDoc, /"authorizationReferences": \[\]/);
@@ -154,25 +153,18 @@ test('generated docs expose experimental task execution feedback guidance', () =
   assert.match(feedbackDoc, /Use a record for every non-trivial task/);
   assert.match(feedbackDoc, /For a trivial task, state in the final response that no separate record was needed/);
   assert.doesNotMatch(feedbackDoc, /For a trivial read-only task/);
-  assert.doesNotMatch(feedbackDoc, /niuma-harness audit/);
-  assert.doesNotMatch(feedbackDoc, /audit source of truth/);
   assert.doesNotMatch(feedbackDoc, /can be removed or disabled/i);
 
   const entry = read(path.join(workspace, 'CLAUDE.md'));
   assert.match(entry, /Non-trivial tasks must maintain the required structured execution record and evidence links/);
   assert.match(entry, /harness\/docs\/experiments\/task-execution-record\.md/);
-  assert.doesNotMatch(entry, /niuma-harness audit/);
 
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
   assert.match(workReadme, /harness-feedback\.md/);
   assert.match(workReadme, /required structured execution record for non-trivial tasks/);
-  assert.doesNotMatch(workReadme, /niuma-harness audit/);
   assert.match(workReadme, /Package-enabled experimental Harness execution records/);
   assert.doesNotMatch(workReadme, /while .*task-execution-record\.md.*exists/i);
-  assert.match(workReadme, /niuma-verification-record:begin/);
-  assert.match(workReadme, /"kind": "command"/);
-  assert.match(workReadme, /"exitCode": 0/);
-  assert.match(workReadme, /"remainingUnknowns": \[\]/);
+  assert.match(workReadme, /`verification\.md`: actual checks, expected signals, actual results, skipped checks, and remaining unknowns/i);
 
 
   const index = read(path.join(h, 'docs', 'index.md'));
@@ -531,11 +523,12 @@ test('generated docs select task material mechanically without pre-creating a pa
   assert.doesNotMatch(workReadme, /Recoverable[\s\S]*required execution record only when each is needed/);
   assert.match(workReadme, /TDD eligibility alone does not require a task folder or a full task package/);
   assert.match(workReadme, /Direct work has no task file: put the actual command or manual check, result, skipped checks, and remaining unknowns in the final response/);
-  assert.match(workReadme, /## Copyable verification record/);
-  assert.match(workReadme, /niuma-verification-record:begin/);
+  assert.match(workReadme, /actual checks, expected signals, actual results, skipped checks, and remaining unknowns/i);
+  assert.doesNotMatch(workReadme, /niuma-verification-record:begin/);
 
   const observation = read(path.join(h, 'docs', 'layers', '04-observation.md'));
-  assert.match(observation, /For the copyable `verification\.md` schema, use `agent-work\/README\.md`/);
+  assert.match(observation, /Verification evidence owns exact commands, expected signals, actual results, skipped checks with reasons, and remaining unknowns/);
+  assert.doesNotMatch(observation, /copyable `verification\.md` schema/i);
   assert.doesNotMatch(observation, /niuma-verification-record:begin/);
 
   for (const playbook of [

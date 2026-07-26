@@ -21,9 +21,9 @@ npx niuma-harness init
 
 ## Assurance boundary
 
-`init` copies generated harness artifacts into the target workspace; it does not copy the `niuma-harness` CLI implementation there. Later `doctor`, `repair`, or `audit` commands therefore require the CLI to remain available through an installed package or another configured command path.
+`init` copies generated harness artifacts into the target workspace; it does not copy the `niuma-harness` CLI implementation there. Later `doctor` or `repair` commands therefore require the CLI to remain available through an installed package or another configured command path.
 
-The generated Markdown is an agent-facing behavioral contract. `doctor` checks installed managed state, and `audit` checks the internal consistency of self-reported task evidence; neither enforces or proves runtime tool behavior. Preventing tool actions depends on controls supplied by the agent host, such as permissions, hooks, or a sandbox.
+The generated Markdown is an agent-facing behavioral contract. `doctor` checks installed managed state; it does not enforce or prove runtime tool behavior. Preventing tool actions depends on controls supplied by the agent host, such as permissions, hooks, or a sandbox.
 
 ## CLI
 
@@ -31,8 +31,6 @@ The generated Markdown is an agent-facing behavioral contract. `doctor` checks i
 niuma-harness init [target] [options]
 niuma-harness repair [target] [options]
 niuma-harness doctor [target] [options]
-niuma-harness check [target] [options]
-niuma-harness audit [target] [--harness-dir <name>] [--task <name> | --all] [--strict]
 ```
 
 ### Init options
@@ -49,22 +47,11 @@ niuma-harness audit [target] [--harness-dir <name>] [--task <name> | --all] [--s
 | `--modules <paths>` | Explicit comma-separated existing module roots; bypasses automatic discovery |
 | `--dry-run` | Print planned actions without writing files |
 
-### Doctor/check options
+### Doctor options
 
 | Option | Description |
 |---|---|
 | `--harness-dir <name>` | Directory to inspect, default: `harness` |
-
-### Audit options
-
-| Option | Description |
-|---|---|
-| `--harness-dir <name>` | Harness to inspect, default: `harness` |
-| `--task <name>` | Audit one direct task directory |
-| `--all` | Audit all direct task directories in stable order |
-| `--strict` | Exit non-zero for `PARTIAL` as well as `FAIL` |
-
-`audit` is read-only and separate from Doctor. It checks the internal consistency of structured `harness-feedback.md` and `verification.md` self-reports plus safe local references; it does not read or validate `project-context.md`, and cannot prove actual reads, command execution, or objective implementation correctness. The task-execution-record experiment is enabled by the current package and is not workspace-disableable.
 
 ### Global options
 
@@ -90,9 +77,7 @@ npx niuma-harness init ./workspace --agent multi --harness-dir ai-harness
 npx niuma-harness init ./workspace --agent multi --topology discover --dry-run
 npx niuma-harness init ./workspace --agent multi --modules apps/admin,services/orders
 npx niuma-harness doctor ./workspace
-npx niuma-harness check ./workspace --harness-dir ai-harness
-npx niuma-harness audit ./workspace --task task-214
-npx niuma-harness audit ./workspace --all --strict
+npx niuma-harness doctor ./workspace --harness-dir ai-harness
 ```
 
 ## Agent modes
@@ -253,7 +238,7 @@ Before any scaffold mutation, `init` renders and preflights the complete command
 
 A workspace may contain only one recognizable Niuma harness. `init` scans direct child directories for Niuma-owned `manifest.json` files without following sibling directory or manifest symlinks. If a harness exists under another name, normal init and `--dry-run` stop before planning or mutation. `--harness-dir` does not move, merge, adopt, or delete an existing harness; resolve duplicate directories explicitly or re-run with the unique existing directory name. Workspace-mode `doctor` reports competing harnesses, while pointing `doctor` directly at a harness root checks only that root.
 
-`init`, `doctor`, and `check` canonicalize the target before establishing the workspace boundary. This accepts standard filesystem aliases such as macOS `/var/...` → `/private/var/...`, a workspace symlink/junction, and a missing workspace below an aliased existing parent. After that boundary is established, Niuma still refuses symlinks, junctions, and dangling links in paths it reads, writes, or removes inside the canonical workspace. Competing-harness discovery still does not follow sibling directory or manifest links.
+`init` and `doctor` canonicalize the target before establishing the workspace boundary. This accepts standard filesystem aliases such as macOS `/var/...` → `/private/var/...`, a workspace symlink/junction, and a missing workspace below an aliased existing parent. After that boundary is established, Niuma still refuses symlinks, junctions, and dangling links in paths it reads, writes, or removes inside the canonical workspace. Competing-harness discovery still does not follow sibling directory or manifest links.
 
 Re-running with a different agent in the same workspace and `--harness-dir` converges agent-native surfaces. Retired command artifacts and deselected rule files are removed only when canonical targets, ledger ownership, and the recorded digest all match; the new ledger contains only current artifacts. Retired entry files lose only their Niuma contract unless the whole file is the untouched generated entry. Retired skill roots lose only package-known files from the previous selection; local configuration and unknown files remain. Ambiguous contracts, drifted artifacts, invalid target types, and internal symlinks stop during preflight. The implementation revalidates destructive plans before applying them, but it does not provide cross-process TOCTOU protection, a workspace lock, or crash-proof rollback for filesystem failures.
 
@@ -287,25 +272,12 @@ If a valid generated manifest exists, its agent/rules/skills selections are reta
 
 Repair does not provide `--force` or `--include-*` bypasses. It is backup-first and performs best-effort synchronous rollback, but it does not claim cross-process locking or crash-safe transactions.
 
-## Audit
-
-`audit` evaluates structured execution records without modifying the workspace:
-
-```bash
-npx niuma-harness audit .
-npx niuma-harness audit . --task task-214
-npx niuma-harness audit . --all --strict
-```
-
-It reports seven dimensions: Task rating, Context, Action boundary, Execution, Verification, Recovery, and Outcome. By default it selects the task with the latest valid `task.recordedAt`; ambiguous or invalid timestamps require `--task`. Results are `PASS`, `PARTIAL`, or `FAIL`; default exit codes treat `PARTIAL` as non-failing, while `--strict` exits non-zero for `PARTIAL`. Audit is a consistency checker over self-reports and safe local references, not an agent runtime or proof that recorded actions occurred.
-
 ## Doctor
 
 `doctor` checks the generated harness without modifying files:
 
 ```bash
 npx niuma-harness doctor .
-npx niuma-harness check .
 npx niuma-harness doctor . --harness-dir ai-harness
 ```
 

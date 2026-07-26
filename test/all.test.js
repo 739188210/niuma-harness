@@ -9,6 +9,5 @@ require('./workspace-harness-conflict.test');
 require('./init.test');
 require('./doctor.test');
 require('./repair.test');
-require('./audit.test');
 require('./help.test');
 require('./topology.test');

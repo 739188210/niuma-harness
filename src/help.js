@@ -2,9 +2,7 @@ function getHelpText() {
   return `Usage:
   niuma-harness init [target] [options]
   niuma-harness doctor [target] [options]
-  niuma-harness check [target] [options]
   niuma-harness repair [target] [options]
-  niuma-harness audit [target] [--harness-dir <name>] [--task <name> | --all] [--strict]
 
 Init options:
   --agent <name>         claude | codex | opencode | multi
@@ -17,7 +15,7 @@ Init options:
   --modules <paths>      Explicit comma-separated existing module roots; bypasses auto-discovery
   --dry-run              Print planned actions without writing files
 
-Doctor/check options:
+Doctor options:
   --harness-dir <name>   Directory to inspect, default: harness
 
 Repair options:
@@ -29,12 +27,6 @@ Repair options:
   --skills <selection>   Recovery skills when manifest state is unusable
   --dry-run              Print all issues and actions without writing
   -y, --yes              Print the plan and skip confirmation
-
-Audit options:
-  --harness-dir <name>   Harness to inspect, default: harness
-  --task <name>          Audit one task directory
-  --all                  Audit every task directory
-  --strict               Exit non-zero when evidence is partial
 
 Global options:
   -h, --help             Show help
@@ -52,11 +44,8 @@ Examples:
   niuma-harness init . --agent multi --topology discover --dry-run
   niuma-harness init . --agent multi --modules apps/admin,services/orders
   niuma-harness doctor .
-  niuma-harness check . --harness-dir ai-harness
   niuma-harness repair . --dry-run
-  niuma-harness repair . -y
-  niuma-harness audit . --task release-42
-  niuma-harness audit . --all --strict`;
+  niuma-harness repair . -y`;
 }
 
 module.exports = {

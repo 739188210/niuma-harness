@@ -251,7 +251,7 @@ test('--harness-dir uses a custom directory name', () => {
   assert.match(index, /\[Harness maintainer orientation\]\(\.\.\/README\.md\)/);
 
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
-  assert.match(workReadme, /ai-harness\/docs\/experiments\/task-execution-record\.md/);
+  assert.match(workReadme, /required structured execution record for non-trivial tasks/);
   assert.match(workReadme, /ai-harness\/docs\/layers\/07-loop\.md/);
   assert.match(workReadme, /ai-harness\/docs\/project-context\.md/);
   assert.doesNotMatch(workReadme, /`docs\//);

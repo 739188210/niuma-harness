@@ -22,10 +22,6 @@ function parseArgs(argv) {
     backupDirProvided: false,
     dryRun: false,
     yes: false,
-    task: null,
-    taskProvided: false,
-    all: false,
-    strict: false,
     topology: 'single',
     topologyProvided: false,
     modules: null,
@@ -51,17 +47,7 @@ function parseArgs(argv) {
       continue;
     }
 
-    if (arg === '--all') {
-      options.all = true;
-      continue;
-    }
-
-    if (arg === '--strict') {
-      options.strict = true;
-      continue;
-    }
-
-    if (arg === '--agent' || arg === '--tool' || arg === '--rules' || arg === '--rules-out' || arg === '--skills' || arg === '--harness-dir' || arg === '--backup-dir' || arg === '--task' || arg === '--topology' || arg === '--modules') {
+    if (arg === '--agent' || arg === '--tool' || arg === '--rules' || arg === '--rules-out' || arg === '--skills' || arg === '--harness-dir' || arg === '--backup-dir' || arg === '--topology' || arg === '--modules') {
       const value = argv[index + 1];
       if (!value || value.startsWith('-')) {
         throw new Error(`${arg} requires a value.`);
@@ -71,7 +57,7 @@ function parseArgs(argv) {
       continue;
     }
 
-    if (arg.startsWith('--agent=') || arg.startsWith('--tool=') || arg.startsWith('--rules=') || arg.startsWith('--rules-out=') || arg.startsWith('--skills=') || arg.startsWith('--harness-dir=') || arg.startsWith('--backup-dir=') || arg.startsWith('--task=') || arg.startsWith('--topology=') || arg.startsWith('--modules=')) {
+    if (arg.startsWith('--agent=') || arg.startsWith('--tool=') || arg.startsWith('--rules=') || arg.startsWith('--rules-out=') || arg.startsWith('--skills=') || arg.startsWith('--harness-dir=') || arg.startsWith('--backup-dir=') || arg.startsWith('--topology=') || arg.startsWith('--modules=')) {
       const [name, value] = splitLongOption(arg);
       assignOption(options, name, value);
       continue;
@@ -147,15 +133,6 @@ function assignOption(options, name, value) {
     return;
   }
 
-  if (name === 'task') {
-    if (options.taskProvided) {
-      throw new Error('--task may only be provided once.');
-    }
-    options.task = normalizeTaskName(value);
-    options.taskProvided = true;
-    return;
-  }
-
   if (name === 'topology') {
     if (options.topologyProvided) {
       throw new Error('--topology may only be provided once.');
@@ -196,9 +173,6 @@ function splitLongOption(arg) {
 }
 
 function validateCommandOptions(options) {
-  if (options.command !== 'audit' && (options.taskProvided || options.all || options.strict)) {
-    throw new Error('--task, --all, and --strict are only available for audit.');
-  }
   if (options.command !== 'init' && (options.topologyProvided || options.modulesProvided)) {
     throw new Error('--topology and --modules are only available for init.');
   }
@@ -213,22 +187,10 @@ function validateCommandOptions(options) {
     return;
   }
 
-  if (options.command === 'doctor' || options.command === 'check') {
-    if (options.agentProvided || options.rulesProvided || options.rulesOutProvided || options.skillsProvided
-        || options.yes || options.backupDirProvided || options.dryRun || options.taskProvided
-        || options.all || options.strict) {
-      throw new Error('doctor/check only supports --harness-dir.');
-    }
-    return;
-  }
-
-  if (options.command === 'audit') {
+  if (options.command === 'doctor') {
     if (options.agentProvided || options.rulesProvided || options.rulesOutProvided || options.skillsProvided
         || options.yes || options.backupDirProvided || options.dryRun) {
-      throw new Error('audit only supports --harness-dir, --task, --all, and --strict.');
-    }
-    if (options.taskProvided && options.all) {
-      throw new Error('--task and --all cannot be used together.');
+      throw new Error('doctor only supports --harness-dir.');
     }
     return;
   }
@@ -237,17 +199,6 @@ function validateCommandOptions(options) {
       && (options.yes || options.backupDirProvided)) {
     throw new Error('--yes and --backup-dir are only available for repair.');
   }
-}
-
-function normalizeTaskName(task) {
-  const value = String(task || '').trim();
-  if (!value || value === '.' || value === '..' || value.includes('/') || value.includes('\\')) {
-    throw new Error('--task must be a simple directory name.');
-  }
-  if (!/^[A-Za-z0-9._-]+$/.test(value)) {
-    throw new Error('--task may only contain letters, numbers, dots, underscores, and dashes.');
-  }
-  return value;
 }
 
 function normalizeHarnessDir(harnessDir) {
