@@ -4,9 +4,6 @@ const {
   assert,
   assertAgentEntryShape,
   assertCommonHarnessShape,
-  assertFile,
-  assertManifest,
-  assertNoPath,
   initWorkspace,
   path,
   read,
@@ -15,17 +12,6 @@ const {
   tempDir,
 } = require('./init-fixtures');
 
-test('--tool is an alias for --agent', () => {
-  const workspace = tempDir();
-  const result = run(['init', workspace, '--tool', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assertFile(path.join(workspace, 'CLAUDE.md'));
-  assertNoPath(path.join(workspace, 'harness', 'CLAUDE.md'));
-  assertManifest(path.join(workspace, 'harness', 'manifest.json'), {
-    agent: 'claude',
-    entryFiles: ['CLAUDE.md'],
-  });
-});
 
 for (const scenario of agentCases.filter((entry) => entry.agent === 'codex' || entry.agent === 'opencode')) {
   test(`init ${scenario.agent}: AGENTS.md at root`, () => {

@@ -38,7 +38,6 @@ niuma-harness doctor [target] [options]
 | Option | Description |
 |---|---|
 | `--agent <name>` | `claude`, `codex`, `opencode`, or `multi` |
-| `--tool <name>` | Alias for `--agent` |
 | `--harness-dir <name>` | Harness directory for first init or same-name re-init, default: `harness`; changing it is not migration |
 | `--rules <selection>` | `all`, `none`, or `<rule-dir>[,<rule-dir>...]` |
 | `--rules-out <selection>` | Exclude selected rule directories from `all` |

@@ -47,7 +47,7 @@ function parseArgs(argv) {
       continue;
     }
 
-    if (arg === '--agent' || arg === '--tool' || arg === '--rules' || arg === '--rules-out' || arg === '--skills' || arg === '--harness-dir' || arg === '--backup-dir' || arg === '--topology' || arg === '--modules') {
+    if (arg === '--agent' || arg === '--rules' || arg === '--rules-out' || arg === '--skills' || arg === '--harness-dir' || arg === '--backup-dir' || arg === '--topology' || arg === '--modules') {
       const value = argv[index + 1];
       if (!value || value.startsWith('-')) {
         throw new Error(`${arg} requires a value.`);
@@ -57,7 +57,7 @@ function parseArgs(argv) {
       continue;
     }
 
-    if (arg.startsWith('--agent=') || arg.startsWith('--tool=') || arg.startsWith('--rules=') || arg.startsWith('--rules-out=') || arg.startsWith('--skills=') || arg.startsWith('--harness-dir=') || arg.startsWith('--backup-dir=') || arg.startsWith('--topology=') || arg.startsWith('--modules=')) {
+    if (arg.startsWith('--agent=') || arg.startsWith('--rules=') || arg.startsWith('--rules-out=') || arg.startsWith('--skills=') || arg.startsWith('--harness-dir=') || arg.startsWith('--backup-dir=') || arg.startsWith('--topology=') || arg.startsWith('--modules=')) {
       const [name, value] = splitLongOption(arg);
       assignOption(options, name, value);
       continue;
@@ -97,7 +97,7 @@ function parseArgs(argv) {
 }
 
 function assignOption(options, name, value) {
-  if (name === 'agent' || name === 'tool') {
+  if (name === 'agent') {
     options.agent = value;
     options.agentProvided = true;
     return;

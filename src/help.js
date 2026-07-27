@@ -6,7 +6,6 @@ function getHelpText() {
 
 Init options:
   --agent <name>         claude | codex | opencode | multi
-  --tool <name>          Alias for --agent
   --harness-dir <name>   Harness name for first init or same-name re-init; not migration
   --rules <selection>    all | none | <rule-dir>[,<rule-dir>...]
   --rules-out <dirs>     Exclude rule dirs from all installed rules
