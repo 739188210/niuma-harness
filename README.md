@@ -39,7 +39,7 @@ niuma-harness doctor [target] [options]
 |---|---|
 | `--agent <name>` | `claude`, `codex`, `opencode`, or `multi` |
 | `--harness-dir <name>` | Harness directory for first init or same-name re-init, default: `harness`; changing it is not migration |
-| `--rules <selection>` | `all`, `none`, or `<rule-dir>[,<rule-dir>...]` |
+| `--rules <selection>` | `all`, `none`, or `<rule-dir>[,<rule-dir>...]`; named selections automatically include `common` |
 | `--rules-out <selection>` | Exclude selected rule directories from `all` |
 | `--skills <selection>` | `all`, `none`, or `<skill>[,<skill>...]`, default: `all` |
 | `--topology <mode>` | `single` disables interactive automatic discovery; `discover` explicitly reads root module declarations |
@@ -298,9 +298,9 @@ templates/rules/*  ->  agent-native Markdown rule surfaces
 - `codex` embeds the selected Markdown rule content in the managed `AGENTS.md` contract; it does not generate `.codex/rules` engineering rules.
 - `opencode` writes Markdown files under `.opencode/rules/<rule>/` and places those exact paths in the `opencode.json.instructions` string array. OpenCode treats them as additional instruction files alongside `AGENTS.md`; user paths, globs, URLs, and unrelated config fields remain outside Niuma ownership.
 
-All available rule directories are lightweight engineering preferences selected explicitly or through the `common` default.
+All available rule directories are lightweight engineering preferences. `common` is the base selection: it is installed when `--rules` is omitted and automatically included with every ordinary named `--rules` selection. `all` and `none` are standalone selectors.
 
-Multiple selected rule directories can apply to the same task. For example, `.ts` / `.tsx` browser UI work may need both `web/` and `typescript/`; FastAPI API work may need both `python/` and `fastapi/`; a mixed backend/frontend workspace may select `java`, `web`, and `typescript` together.
+Multiple selected rule directories can apply to the same task. For example, `.ts` / `.tsx` browser UI work may select both `web/` and `typescript/`; FastAPI API work may select both `python/` and `fastapi/`; a mixed backend/frontend workspace may select `java`, `web`, and `typescript` together. Selecting `fastapi` does not implicitly select `python`.
 
 When `--rules` is omitted, `init` installs `common`:
 
@@ -311,7 +311,7 @@ When `--rules` is omitted, `init` installs `common`:
 | `opencode` | `common` |
 | `multi` | `common` |
 
-Use `--rules <selection>` to choose engineering rule directories.
+Use `--rules <selection>` to choose engineering rule directories; ordinary named selections include `common`.
 
 ```bash
 npx niuma-harness init . --agent codex --rules common
@@ -320,7 +320,7 @@ npx niuma-harness init . --agent claude --rules java
 npx niuma-harness init . --agent claude --rules python,fastapi
 ```
 
-The first command installs `common`. The second installs `web` and `typescript`. The third installs `java`. The fourth installs `python` and `fastapi`.
+The first command installs `common`. The second installs `common`, `web`, and `typescript`. The third installs `common` and `java`. The fourth installs `common`, `python`, and `fastapi`.
 
 Use `all` to install every available rule directory, or `none` to install no rule files.
 
@@ -329,10 +329,11 @@ npx niuma-harness init . --agent claude --rules all
 npx niuma-harness init . --agent claude --rules none
 ```
 
-Use `--rules-out` to install all available rule directories except the listed ones. Explicit exclusions win.
+Use `--rules-out` to install all available rule directories except the listed ones. This is intentionally separate from named `--rules` selection: it may also exclude `common`.
 
 ```bash
 npx niuma-harness init . --agent claude --rules-out web
+npx niuma-harness init . --agent claude --rules-out common
 ```
 
 ## Skills selection

@@ -7,8 +7,8 @@ function getHelpText() {
 Init options:
   --agent <name>         claude | codex | opencode | multi
   --harness-dir <name>   Harness name for first init or same-name re-init; not migration
-  --rules <selection>    all | none | <rule-dir>[,<rule-dir>...]
-  --rules-out <dirs>     Exclude rule dirs from all installed rules
+  --rules <selection>    all | none | <rule-dir>[,...]; named selections automatically include common
+  --rules-out <dirs>     Exclude rule dirs from all available rules
   --skills <selection>   all | none | <skill>[,<skill>...], default: all
   --topology <mode>      single | discover; single disables auto-discovery, discover reads root declarations
   --modules <paths>      Explicit comma-separated existing module roots; bypasses auto-discovery
@@ -32,7 +32,7 @@ Global options:
 
 Examples:
   niuma-harness init . --agent claude
-  niuma-harness init . --agent codex --rules common
+  niuma-harness init . --agent claude --rules java
   niuma-harness init . --agent claude --skills database-readonly
   niuma-harness init . --agent multi --skills all
   niuma-harness init . --agent claude --rules none --skills none

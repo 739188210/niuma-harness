@@ -219,8 +219,8 @@ test('re-init converges rules from common to none', () => {
 if (allRuleDirs.length > 1) {
   test('--rules all then a specific rule converges on re-init', () => {
     const workspace = tempDir();
-    const selectedRule = 'common';
-    const expectedRules = normalizeSelectedRules([selectedRule], allRuleDirs);
+    const selectedRule = allRuleDirs.includes('java') ? 'java' : allRuleDirs.find((rule) => rule !== 'common');
+    const expectedRules = normalizeRules(selectedRule, allRuleDirs);
     let result = run(['init', workspace, '--agent', 'claude', '--rules', 'all']);
     assert.strictEqual(result.status, 0, result.stderr);
     const harnessRoot = path.join(workspace, 'harness');
@@ -240,16 +240,16 @@ if (allRuleDirs.length > 1) {
 }
 
 for (const scenario of [
-  { rules: 'common', expected: normalizeSelectedRules(['common'], allRuleDirs) },
-  { rules: 'web', expected: normalizeSelectedRules(['web'], allRuleDirs) },
-  { rules: 'typescript', expected: normalizeSelectedRules(['typescript'], allRuleDirs) },
-  { rules: 'java', expected: normalizeSelectedRules(['java'], allRuleDirs) },
-  { rules: 'python', expected: normalizeSelectedRules(['python'], allRuleDirs) },
-  { rules: 'fastapi', expected: normalizeSelectedRules(['fastapi'], allRuleDirs) },
-  { rules: 'web,typescript', expected: normalizeSelectedRules(['web', 'typescript'], allRuleDirs) },
-  { rules: 'java,web', expected: normalizeSelectedRules(['java', 'web'], allRuleDirs) },
-  { rules: 'java,typescript', expected: normalizeSelectedRules(['java', 'typescript'], allRuleDirs) },
-  { rules: 'python,fastapi', expected: normalizeSelectedRules(['python', 'fastapi'], allRuleDirs) },
+  { rules: 'common', expected: normalizeRules('common', allRuleDirs) },
+  { rules: 'web', expected: normalizeRules('web', allRuleDirs) },
+  { rules: 'typescript', expected: normalizeRules('typescript', allRuleDirs) },
+  { rules: 'java', expected: normalizeRules('java', allRuleDirs) },
+  { rules: 'python', expected: normalizeRules('python', allRuleDirs) },
+  { rules: 'fastapi', expected: normalizeRules('fastapi', allRuleDirs) },
+  { rules: 'web,typescript', expected: normalizeRules('web,typescript', allRuleDirs) },
+  { rules: 'java,web', expected: normalizeRules('java,web', allRuleDirs) },
+  { rules: 'java,typescript', expected: normalizeRules('java,typescript', allRuleDirs) },
+  { rules: 'python,fastapi', expected: normalizeRules('python,fastapi', allRuleDirs) },
   { rules: 'all', expected: allRuleDirs },
 ]) {
   test(`--rules ${scenario.rules} installs expected dirs`, () => {
@@ -295,10 +295,14 @@ for (const scenario of [
   });
 }
 
-test('rule normalization sorts and excludes selected rules', () => {
-  const availableRules = ['common', 'web', 'extra'];
-  assert.deepStrictEqual(normalizeRules('extra,common', availableRules), ['common', 'extra']);
-  assert.deepStrictEqual(normalizeRulesOut('common', availableRules), ['web', 'extra']);
+test('ordinary rule selections include common while special selections and exclusions retain their semantics', () => {
+  const availableRules = ['common', 'web', 'python', 'fastapi', 'extra'];
+  assert.deepStrictEqual(normalizeRules('extra,common,extra', availableRules), ['common', 'extra']);
+  assert.deepStrictEqual(normalizeRules('web', availableRules), ['common', 'web']);
+  assert.deepStrictEqual(normalizeRules('fastapi', availableRules), ['common', 'fastapi']);
+  assert.deepStrictEqual(normalizeRules('all', availableRules), availableRules);
+  assert.deepStrictEqual(normalizeRules('none', availableRules), []);
+  assert.deepStrictEqual(normalizeRulesOut('common', availableRules), ['web', 'python', 'fastapi', 'extra']);
   assert.deepStrictEqual(getDefaultRulesForAgent('claude', availableRules), ['common']);
   assert.deepStrictEqual(getDefaultRulesForAgent('multi', availableRules), ['common']);
   assert.deepStrictEqual(normalizeSelectedRules(['common'], availableRules), ['common']);

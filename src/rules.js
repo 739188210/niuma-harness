@@ -65,7 +65,7 @@ function normalizeRules(rules, availableRules = getAvailableRuleDirs()) {
     throw new Error('all and none must be used alone.');
   }
 
-  return normalizeConcreteRules(tokens, availableRules, 'rules');
+  return mergeRules([...DEFAULT_ENGINEERING_RULES, ...tokens], availableRules);
 }
 
 function getDefaultRulesForAgent(agent, availableRules = getAvailableRuleDirs()) {

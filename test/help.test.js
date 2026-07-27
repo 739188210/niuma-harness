@@ -20,6 +20,7 @@ test('--help shows init, doctor, repair, and no removed command surface', () => 
   assert.match(result.stdout, /Doctor options:/);
   assert.match(result.stdout, /--rules-out/);
   assert.match(result.stdout, /--skills/);
+  assert.match(result.stdout, /named selections automatically include common/);
 });
 
 test('init --help shows --agent', () => {
