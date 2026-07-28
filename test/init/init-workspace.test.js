@@ -17,7 +17,7 @@ const {
   readJson,
   run,
   tempDir,
-} = require('./scaffold-fixtures');
+} = require('../support/init-fixtures');
 
 test('multi --rules none installs no agent adapters', () => {
   const workspace = tempDir();

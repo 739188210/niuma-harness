@@ -8,8 +8,8 @@ const {
   run,
   snapshotTree,
   tempDir,
-} = require('./support/helpers');
-const { scanWorkspaceHarnesses } = require('../src/harness/workspace-harnesses');
+} = require('../support/helpers');
+const { scanWorkspaceHarnesses } = require('../../src/harness/workspace-harnesses');
 
 function init(workspace, agent = 'claude', extra = []) {
   return run(['init', workspace, '--agent', agent, '--rules', 'none', '--skills', 'none', ...extra]);

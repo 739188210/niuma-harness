@@ -1,6 +1,6 @@
 const test = require('node:test');
-const { digestBytes } = require('../src/artifact/ledger');
-const { revalidateRulePlan } = require('../src/scaffold/rules-writer');
+const { digestBytes } = require('../../src/artifact/ledger');
+const { revalidateRulePlan } = require('../../src/scaffold/rules-writer');
 const {
   agentCases,
   allRuleDirs,
@@ -27,7 +27,7 @@ const {
   runWithCliRoot,
   snapshotTree,
   tempDir,
-} = require('./scaffold-fixtures');
+} = require('../support/init-fixtures');
 
 test('default rules include common engineering rules', () => {
   for (const scenario of agentCases) {

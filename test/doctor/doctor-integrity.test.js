@@ -9,8 +9,8 @@ const {
   run,
   tempDir,
   updateManifest,
-} = require('./support/helpers');
-const { initWorkspace } = require('./support/cli-fixtures');
+} = require('../support/helpers');
+const { initWorkspace } = require('../support/cli-fixtures');
 
 function doctor(workspace, extra = []) {
   return run(['doctor', workspace, ...extra]);
@@ -224,7 +224,7 @@ test('direct single-topology doctor ignores a multi-module inactive entry owned 
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'claude', '--harness-dir', 'ai-harness', '--rules', 'none', '--skills', 'none']);
   assert.strictEqual(result.status, 0, result.stderr);
-  const { renderEntry } = require('../src/harness/entry-renderer');
+  const { renderEntry } = require('../../src/harness/entry-renderer');
   const otherHarnessEntry = renderEntry(
     'claude',
     'CLAUDE.md',

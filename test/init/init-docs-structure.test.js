@@ -12,7 +12,7 @@ const {
   read,
   run,
   tempDir,
-} = require('./scaffold-fixtures');
+} = require('../support/init-fixtures');
 
 test('init claude: entry at workspace root, harness content under harness/', () => {
   const workspace = initWorkspace('claude');
@@ -21,7 +21,7 @@ test('init claude: entry at workspace root, harness content under harness/', () 
 });
 
 test('template sources use the flattened package layout while preserving runtime targets', () => {
-  const templatesRoot = path.join(__dirname, '..', 'templates');
+  const templatesRoot = path.join(__dirname, '..', '..', 'templates');
   const manifest = JSON.parse(read(path.join(templatesRoot, 'manifest.json')));
   const templateFiles = [...manifest.templateFiles, ...manifest.workTemplateFiles];
 

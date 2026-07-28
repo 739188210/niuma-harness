@@ -1,6 +1,6 @@
 const test = require('node:test');
-const { digestBytes } = require('../src/artifact/ledger');
-const { canonicalizeWorkspacePath } = require('../src/infrastructure/fs-safe');
+const { digestBytes } = require('../../src/artifact/ledger');
+const { canonicalizeWorkspacePath } = require('../../src/infrastructure/fs-safe');
 const {
   allCommandFiles,
   assert,
@@ -14,8 +14,8 @@ const {
   runWithCliRoot,
   snapshotTree,
   tempDir,
-} = require('./support/helpers');
-const { initWorkspace } = require('./support/cli-fixtures');
+} = require('../support/helpers');
+const { initWorkspace } = require('../support/cli-fixtures');
 
 test('repair -y backs up all affected targets and finishes doctor-green', () => {
   const workspace = initWorkspace('multi');

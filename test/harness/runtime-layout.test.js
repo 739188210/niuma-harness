@@ -4,12 +4,12 @@ const {
   fs,
   path,
   tempDir,
-} = require('./support/helpers');
+} = require('../support/helpers');
 const {
   assertWorkDirBinding,
   getRuntimeLayout,
   resolveRuntimePaths,
-} = require('../src/harness/runtime-layout');
+} = require('../../src/harness/runtime-layout');
 
 function manifest(overrides = {}) {
   return {

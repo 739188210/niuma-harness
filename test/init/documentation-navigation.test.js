@@ -6,7 +6,7 @@ const {
   read,
   run,
   tempDir,
-} = require('./scaffold-fixtures');
+} = require('../support/init-fixtures');
 
 const NAVIGATION_BEGIN = '<!-- niuma-navigation:begin -->';
 const NAVIGATION_END = '<!-- niuma-navigation:end -->';
@@ -46,7 +46,7 @@ test('generated runtime index is the complete static documentation navigation ma
   assert.strictEqual(result.status, 0, result.stderr);
 
   const { index, links } = assertNavigationTargets(workspace, 'harness');
-  const manifest = JSON.parse(read(path.join(__dirname, '..', 'templates', 'manifest.json')));
+  const manifest = JSON.parse(read(path.join(__dirname, '..', '..', 'templates', 'manifest.json')));
   const requiredTargets = manifest.templateFiles
     .filter((file) => !file.dynamic && /^(docs\/layers|docs\/policy|docs\/process)\//.test(file.target))
     .map((file) => file.target.slice('docs/'.length));

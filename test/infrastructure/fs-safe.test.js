@@ -4,8 +4,8 @@ const {
   fs,
   path,
   tempDir,
-} = require('./support/helpers');
-const { canonicalizeWorkspacePath } = require('../src/infrastructure/fs-safe');
+} = require('../support/helpers');
+const { canonicalizeWorkspacePath } = require('../../src/infrastructure/fs-safe');
 
 function createDirectoryAlias(target, alias) {
   fs.symlinkSync(target, alias, process.platform === 'win32' ? 'junction' : 'dir');

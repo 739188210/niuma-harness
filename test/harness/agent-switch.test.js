@@ -18,15 +18,15 @@ const {
   run,
   snapshotTree,
   tempDir,
-} = require('./support/helpers');
-const { getEntryFilesForAgent } = require('../src/harness/agents');
-const { getCommandArtifactDescriptors } = require('../src/command/catalog');
+} = require('../support/helpers');
+const { getEntryFilesForAgent } = require('../../src/harness/agents');
+const { getCommandArtifactDescriptors } = require('../../src/command/catalog');
 const {
   getRuleAdapterTargetsForAgent,
   getRuleEntryInjectionForAgent,
   getRuleTargetRootsForAgent,
-} = require('../src/harness/agent-native-targets');
-const { getSkillTargetRootsForAgent } = require('../src/skill/catalog');
+} = require('../../src/harness/agent-native-targets');
+const { getSkillTargetRootsForAgent } = require('../../src/skill/catalog');
 
 const agents = ['claude', 'codex', 'opencode', 'multi'];
 

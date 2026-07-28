@@ -1,6 +1,9 @@
-require('./init-docs.test');
-require('./init-agents.test');
-require('./init-rules.test');
-require('./init-artifacts.test');
-require('./init-workspace.test');
-require('./init-preflight.test');
+require('./init/init-docs-structure.test');
+require('./init/init-docs-governance.test');
+require('./init/init-docs-knowledge.test');
+require('./init/documentation-navigation.test');
+require('./init/init-agents.test');
+require('./init/init-rules.test');
+require('./init/init-artifacts.test');
+require('./init/init-workspace.test');
+require('./init/init-preflight.test');

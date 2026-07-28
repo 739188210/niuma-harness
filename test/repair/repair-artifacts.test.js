@@ -1,6 +1,6 @@
 const test = require('node:test');
-const { digestBytes } = require('../src/artifact/ledger');
-const { canonicalizeWorkspacePath } = require('../src/infrastructure/fs-safe');
+const { digestBytes } = require('../../src/artifact/ledger');
+const { canonicalizeWorkspacePath } = require('../../src/infrastructure/fs-safe');
 const {
   allCommandFiles,
   assert,
@@ -14,8 +14,8 @@ const {
   runWithCliRoot,
   snapshotTree,
   tempDir,
-} = require('./support/helpers');
-const { initWorkspace } = require('./support/cli-fixtures');
+} = require('../support/helpers');
+const { initWorkspace } = require('../support/cli-fixtures');
 
 test('repair restores an owned drifted selected rule with backup and Doctor-green ledger', () => {
   const workspace = initWorkspace('claude');
@@ -339,7 +339,7 @@ test('repair preserves a drifted ledger-owned deselected skill', () => {
 test('repair removes only an exact legacy Claude rule pointer', () => {
   const workspace = initWorkspace('claude', ['--rules', 'none']);
   const target = path.join(workspace, '.claude', 'rules', 'niuma-common.md');
-  const { renderLegacyClaudeRulePointer } = require('../src/scaffold/rules-adapters-writer');
+  const { renderLegacyClaudeRulePointer } = require('../../src/scaffold/rules-adapters-writer');
   const canonical = renderLegacyClaudeRulePointer('harness', 'common');
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.writeFileSync(target, canonical, 'utf8');
@@ -454,7 +454,7 @@ test('repair preserves retired skill files when their package template no longer
 test('repair removes an exact legacy Claude rule pointer for a custom harness directory', () => {
   const workspace = initWorkspace('claude', ['--harness-dir', 'ai-harness', '--rules', 'none']);
   const target = path.join(workspace, '.claude', 'rules', 'niuma-common.md');
-  const { renderLegacyClaudeRulePointer } = require('../src/scaffold/rules-adapters-writer');
+  const { renderLegacyClaudeRulePointer } = require('../../src/scaffold/rules-adapters-writer');
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.writeFileSync(target, renderLegacyClaudeRulePointer('ai-harness', 'common'), 'utf8');
 

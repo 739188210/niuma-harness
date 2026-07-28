@@ -28,10 +28,10 @@ const {
   run,
   snapshotTree,
   tempDir,
-} = require('./support/helpers');
-const { getDefaultRulesForAgent, normalizeRules, normalizeRulesOut, normalizeSelectedRules } = require('../src/rule/catalog');
-const { getSkillFiles, normalizeSkills } = require('../src/skill/catalog');
-const { initWorkspace } = require('./support/cli-fixtures');
+} = require('./helpers');
+const { getDefaultRulesForAgent, normalizeRules, normalizeRulesOut, normalizeSelectedRules } = require('../../src/rule/catalog');
+const { getSkillFiles, normalizeSkills } = require('../../src/skill/catalog');
+const { initWorkspace } = require('./cli-fixtures');
 
 const agentCases = [
   { agent: 'claude', entryFiles: ['CLAUDE.md'], absentEntryFiles: ['AGENTS.md'] },

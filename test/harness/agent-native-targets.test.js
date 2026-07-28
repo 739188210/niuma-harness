@@ -1,5 +1,5 @@
 const test = require('node:test');
-const { assert } = require('./support/helpers');
+const { assert } = require('../support/helpers');
 const {
   getAllEntryFiles,
   getAllKnownRuleTargetRoots,
@@ -15,7 +15,7 @@ const {
   getSkillTargetRootsForAgent,
   getSupportedAgents,
   isRuleArtifactManagedByAdapter,
-} = require('../src/harness/agent-native-targets');
+} = require('../../src/harness/agent-native-targets');
 
 test('agent-native targets declare the supported surface matrix', () => {
   assert.deepStrictEqual(getSupportedAgents(), ['claude', 'codex', 'opencode', 'multi']);

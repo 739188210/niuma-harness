@@ -1,5 +1,5 @@
 const test = require('node:test');
-const { assert, fs, path, run, tempDir } = require('./support/helpers');
+const { assert, fs, path, run, tempDir } = require('../support/helpers');
 
 test('help documents repair options without force flags', () => {
   const result = run(['--help']);

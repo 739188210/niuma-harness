@@ -1,8 +1,8 @@
 const test = require('node:test');
-const { parseArgs } = require('../src/cli/args');
-const { runRepair } = require('../src/repair/index');
-const { applyRepairPlan, rollback: realRollback } = require('../src/repair/apply');
-const { copyNodeNoFollow, verifyNodeCopy } = require('../src/repair/backup');
+const { parseArgs } = require('../../src/cli/args');
+const { runRepair } = require('../../src/repair/index');
+const { applyRepairPlan, rollback: realRollback } = require('../../src/repair/apply');
+const { copyNodeNoFollow, verifyNodeCopy } = require('../../src/repair/backup');
 const {
   allCommandFiles,
   assert,
@@ -11,7 +11,7 @@ const {
   run,
   snapshotTree,
   tempDir,
-} = require('./support/helpers');
+} = require('../support/helpers');
 
 function initDamagedWorkspace() {
   const workspace = tempDir();

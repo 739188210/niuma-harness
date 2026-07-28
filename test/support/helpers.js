@@ -18,10 +18,10 @@ const { renderSkillArtifacts } = require('../../src/skill/artifacts');
 const { createTemplateVariables } = require('../../src/harness/template-variables');
 const { getAvailableSkillDirs, getSkillTargetRootsForAgent } = require('../../src/skill/catalog');
 
-const root = path.resolve(__dirname, '..');
+const root = path.resolve(__dirname, '..', '..');
 const node = process.execPath;
 const bin = path.join(root, 'bin', 'niuma-harness.js');
-const interactiveCli = path.join(root, 'test', 'interactive-cli.js');
+const interactiveCli = path.join(root, 'test', 'cli', 'interactive-cli.js');
 const allCommandFiles = getAvailableCommandFiles();
 const allRuleDirs = getAvailableRuleDirs();
 const allSkillDirs = getAvailableSkillDirs();

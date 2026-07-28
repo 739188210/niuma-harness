@@ -24,7 +24,7 @@ const {
   readJson,
   run,
   tempDir,
-} = require('./scaffold-fixtures');
+} = require('../support/init-fixtures');
 
 test('agent-native command files are installed for supported agents', () => {
   for (const scenario of [
