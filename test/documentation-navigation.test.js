@@ -6,7 +6,7 @@ const {
   read,
   run,
   tempDir,
-} = require('./init-fixtures');
+} = require('./scaffold-fixtures');
 
 const NAVIGATION_BEGIN = '<!-- niuma-navigation:begin -->';
 const NAVIGATION_END = '<!-- niuma-navigation:end -->';

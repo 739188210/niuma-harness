@@ -1,6 +1,6 @@
 // 共享校验 command-derived skill 和 native skill 的 Markdown metadata。
 const fs = require('fs');
-const { parseMarkdownFrontmatter } = require('../frontmatter');
+const { parseMarkdownFrontmatter } = require('../command/frontmatter');
 const { addError, addOk } = require('./result');
 
 function isRegularFile(filePath) {

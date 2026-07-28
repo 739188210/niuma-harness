@@ -1,8 +1,8 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const { digestBytes } = require('../artifact-ledger');
-const { assertNoSymlinkInPath, safeResolveInside } = require('../fs-safe');
+const { digestBytes } = require('../artifact/ledger');
+const { assertNoSymlinkInPath, safeResolveInside } = require('../infrastructure/fs-safe');
 const { inspectNode } = require('./planner');
 
 function createRepairIdentity(now = new Date()) {

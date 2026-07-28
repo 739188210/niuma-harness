@@ -2,7 +2,7 @@ const assert = require('assert');
 const path = require('path');
 const test = require('node:test');
 
-const { renderRuleArtifacts } = require('../src/rule-artifacts');
+const { renderRuleArtifacts } = require('../src/rule/artifacts');
 
 function createDependencies() {
   const templateDir = '/package/templates';

@@ -10,7 +10,7 @@ const {
   readTextTree,
   run,
   tempDir,
-} = require('./init-fixtures');
+} = require('./scaffold-fixtures');
 
 
 for (const scenario of agentCases.filter((entry) => entry.agent === 'codex' || entry.agent === 'opencode')) {

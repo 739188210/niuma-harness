@@ -1,21 +1,21 @@
 // Rule files are ownership-tracked artifacts. Plan every canonical file before any scaffold mutation.
 const fs = require('fs');
 const path = require('path');
-const { renderRuleArtifacts } = require('../rule-artifacts');
+const { renderRuleArtifacts } = require('../rule/artifacts');
 const {
   digestBytes,
   findArtifactRecord,
   validateArtifactRecords,
-} = require('../artifact-ledger');
+} = require('../artifact/ledger');
 const {
   inspectFileTarget,
   removeEmptyDirsUntil,
   removeFile,
   safeResolveInside,
   writeFile,
-} = require('../fs-safe');
-const { getAllKnownRuleTargetRoots } = require('../agent-native-targets');
-const { getAvailableRuleDirs } = require('../rules');
+} = require('../infrastructure/fs-safe');
+const { getAllKnownRuleTargetRoots } = require('../harness/agent-native-targets');
+const { getAvailableRuleDirs } = require('../rule/catalog');
 
 function prepareRulePlan(context) {
   const availableRules = getAvailableRuleDirs(context.manifest.rulesRoot);

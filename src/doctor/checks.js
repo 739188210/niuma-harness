@@ -1,12 +1,12 @@
 // doctor 的高层检查编排：字段校验后委托 core/rules 子检查。
 const path = require('path');
-const { getEntryFilesForAgent, normalizeAgent } = require('../agents');
-const { getRuleAdapterTargetsForAgent } = require('../agent-native-targets');
-const { formatCommands, getDefaultCommandsForAgent } = require('../commands');
-const { formatRules, normalizeConcreteRules } = require('../rules');
-const { formatSkills, normalizeConcreteSkills } = require('../skills');
+const { getEntryFilesForAgent, normalizeAgent } = require('../harness/agents');
+const { getRuleAdapterTargetsForAgent } = require('../harness/agent-native-targets');
+const { formatCommands, getDefaultCommandsForAgent } = require('../command/catalog');
+const { formatRules, normalizeConcreteRules } = require('../rule/catalog');
+const { formatSkills, normalizeConcreteSkills } = require('../skill/catalog');
 const { loadManifest } = require('../generator/template-manifest');
-const { assertWorkDirBinding, getRuntimeLayout } = require('../runtime-layout');
+const { assertWorkDirBinding, getRuntimeLayout } = require('../harness/runtime-layout');
 const { addError, addOk } = require('./result');
 const { checkManagedContentIntegrity } = require('./integrity-checks');
 const {

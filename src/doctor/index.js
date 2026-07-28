@@ -1,16 +1,16 @@
 // doctor 的顶层编排层；具体检查逻辑放在 src/doctor/ 子模块中。
 const path = require('path');
-const { assertNoSymlinkInPath, canonicalizeWorkspacePath } = require('./fs-safe');
-const { STATUS_FILE } = require('./harness-status');
-const { checkRegularFile } = require('./doctor/core-checks');
-const { checkHarness } = require('./doctor/checks');
-const { createResult, addError } = require('./doctor/result');
-const { printDoctorResult } = require('./doctor/report');
-const { locateStatusFile, readStatus } = require('./doctor/status');
+const { assertNoSymlinkInPath, canonicalizeWorkspacePath } = require('../infrastructure/fs-safe');
+const { STATUS_FILE } = require('../harness/manifest');
+const { checkRegularFile } = require('./core-checks');
+const { checkHarness } = require('./checks');
+const { createResult, addError } = require('./result');
+const { printDoctorResult } = require('./report');
+const { locateStatusFile, readStatus } = require('./status');
 const {
   findCompetingHarnesses,
   formatCompetingHarnessError,
-} = require('./workspace-harnesses');
+} = require('../harness/workspace-harnesses');
 
 function runDoctor(options) {
   const result = inspectHarness(options);

@@ -1,10 +1,10 @@
 // commands 分发模型：从 templates/commands 发现命令源模板，并映射到各 agent 的原生产物。
 const fs = require('fs');
 const path = require('path');
-const { getCommandTargetsForAgent } = require('./agent-native-targets');
+const { getCommandTargetsForAgent } = require('../harness/agent-native-targets');
 const { parseMarkdownFrontmatter } = require('./frontmatter');
 
-const ROOT_DIR = path.resolve(__dirname, '..');
+const ROOT_DIR = path.resolve(__dirname, '..', '..');
 const TEMPLATE_DIR = path.join(ROOT_DIR, 'templates');
 const DEFAULT_COMMANDS_ROOT = 'commands';
 

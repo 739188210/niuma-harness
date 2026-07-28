@@ -1,7 +1,7 @@
 // 多模块拓扑：只从明确的根声明读取候选；所有模块写入范围须经 CLI 显式选择或 TTY 确认。
 const fs = require('fs');
 const path = require('path');
-const { assertNoSymlinkInPath, safeResolveInside, validateRelativePath } = require('./fs-safe');
+const { assertNoSymlinkInPath, safeResolveInside, validateRelativePath } = require('../infrastructure/fs-safe');
 
 const REGISTRY_FILE = 'modules.json';
 const TOPOLOGY_VERSION = 1;

@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const test = require('node:test');
-const { assert, run } = require('./helpers');
+const { assert, run } = require('./support/helpers');
 
 test('README documents only retained CLI commands and doctor health checks', () => {
   const readme = fs.readFileSync(path.join(__dirname, '..', 'README.md'), 'utf8');

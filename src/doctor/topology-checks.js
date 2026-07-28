@@ -1,12 +1,12 @@
 const fs = require('fs');
 const path = require('path');
-const { digestBytes } = require('../artifact-ledger');
-const { getEntryFilesForAgent } = require('../agents');
-const { assertNoSymlinkInPath, safeResolveInside } = require('../fs-safe');
-const { renderModuleSupplement } = require('../module-entry-renderer');
-const { parseRegistry, REGISTRY_FILE, sameModules, validateTopologyShape } = require('../topology');
-const { analyzeModuleBlock, sliceMarkedBlock, MODULE_BEGIN, MODULE_END } = require('../contract');
-const { renderTopologyRoute } = require('../scaffold/topology-writer');
+const { digestBytes } = require('../artifact/ledger');
+const { getEntryFilesForAgent } = require('../harness/agents');
+const { assertNoSymlinkInPath, safeResolveInside } = require('../infrastructure/fs-safe');
+const { renderModuleSupplement } = require('../harness/module-entry-renderer');
+const { parseRegistry, REGISTRY_FILE, sameModules, validateTopologyShape } = require('../harness/topology');
+const { analyzeModuleBlock, sliceMarkedBlock, MODULE_BEGIN, MODULE_END } = require('../harness/contract');
+const { renderTopologyRoute } = require('../harness/topology-route');
 const { addError, addOk } = require('./result');
 
 function checkTopology(context) {

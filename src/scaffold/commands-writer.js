@@ -1,20 +1,20 @@
 // 将当前 command 产物和退出 agent 的已登记产物一起预检，再统一应用。
 const fs = require('fs');
 const path = require('path');
-const { renderCommandArtifacts } = require('../command-artifacts');
-const { getCommandArtifactDescriptors, getCommandTargetsForAgent } = require('../commands');
+const { renderCommandArtifacts } = require('../command/artifacts');
+const { getCommandArtifactDescriptors, getCommandTargetsForAgent } = require('../command/catalog');
 const {
   digestBytes,
   findArtifactRecord,
   validateArtifactRecords,
-} = require('../artifact-ledger');
+} = require('../artifact/ledger');
 const {
   inspectFileTarget,
   removeEmptyDirsUntil,
   removeFile,
   safeResolveInside,
   writeFile,
-} = require('../fs-safe');
+} = require('../infrastructure/fs-safe');
 
 function prepareCommandPlan(context) {
   const { commands, manifest, options, previousStatus } = context;

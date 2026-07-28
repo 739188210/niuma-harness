@@ -1,6 +1,6 @@
 // 最后写入生成态 manifest.json，doctor 后续依赖它判断 harness 形状。
-const { STATUS_FILE, createStatus } = require('../harness-status');
-const { inspectFileTarget, safeResolveInside, writeFile } = require('../fs-safe');
+const { STATUS_FILE, createStatus } = require('../harness/manifest');
+const { inspectFileTarget, safeResolveInside, writeFile } = require('../infrastructure/fs-safe');
 
 function prepareStatusPlan(context) {
   const statusPath = safeResolveInside(context.targetDir, STATUS_FILE, 'status target');

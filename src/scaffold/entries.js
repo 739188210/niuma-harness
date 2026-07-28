@@ -1,21 +1,21 @@
 // 写入当前 agent 入口、退休旧入口契约，并处理普通模板文件。
 const fs = require('fs');
-const { getEntryFilesForAgent } = require('../agents');
-const { digestBytes } = require('../artifact-ledger');
+const { getEntryFilesForAgent } = require('../harness/agents');
+const { digestBytes } = require('../artifact/ledger');
 const {
   inspectFileTarget,
   removeFile,
   safeResolveInside,
   writeFile,
-} = require('../fs-safe');
-const { renderEntry } = require('../entry-renderer');
+} = require('../infrastructure/fs-safe');
+const { renderEntry } = require('../harness/entry-renderer');
 const { renderTemplate } = require('../generator/template-renderer');
 const {
   analyzeContractBlock,
   removeContractBlock,
   sliceContractBlock,
   replaceContractBlock,
-} = require('../contract');
+} = require('../harness/contract');
 
 function prepareFilePlan(context) {
   assertFreshGuideTargetsAvailable(context);

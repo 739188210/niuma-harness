@@ -2,40 +2,40 @@
 const fs = require('fs');
 const path = require('path');
 
-const { getEntryFilesForAgent, normalizeAgent } = require('./agents');
-const { canonicalizeWorkspacePath } = require('./fs-safe');
+const { getEntryFilesForAgent, normalizeAgent } = require('../harness/agents');
+const { canonicalizeWorkspacePath } = require('../infrastructure/fs-safe');
 const {
   formatCommands,
   getAvailableCommandFiles,
   getCommandId,
   getDefaultCommandsForAgent,
   normalizeConcreteCommands,
-} = require('./commands');
-const { formatRules, getAvailableRuleDirs, normalizeConcreteRules } = require('./rules');
+} = require('../command/catalog');
+const { formatRules, getAvailableRuleDirs, normalizeConcreteRules } = require('../rule/catalog');
 const {
   formatSkills,
   getAvailableSkillDirs,
   normalizeConcreteSkills,
-} = require('./skills');
-const { loadManifest, validateManifest } = require('./generator/template-manifest');
-const { createDirectories, prepareDirectoryPlan } = require('./scaffold/directories');
-const { prepareFilePlan, writeFilePlan } = require('./scaffold/entries');
-const { getModuleSupplementRecords, prepareModuleEntryPlan, writeModuleEntryPlan } = require('./scaffold/module-entries');
-const { prepareTopologyPlan, writeTopologyPlan } = require('./scaffold/topology-writer');
-const { resolveTopology } = require('./topology');
-const { prepareCommandPlan, writeCommandFiles } = require('./scaffold/commands-writer');
-const { STATUS_FILE } = require('./harness-status');
-const { validateArtifactRecords } = require('./artifact-ledger');
-const { prepareRuleAdapterPlan, writeRuleAdapterFiles } = require('./scaffold/rules-adapters-writer');
-const { prepareRulePlan, writeRuleFiles } = require('./scaffold/rules-writer');
-const { prepareSkillPlan, writeSkillFiles } = require('./scaffold/skills-writer');
-const { prepareStatusPlan, writeStatusFile } = require('./scaffold/status-writer');
-const { createTemplateVariables } = require('./template-variables');
-const { getRuntimeLayout } = require('./runtime-layout');
+} = require('../skill/catalog');
+const { loadManifest, validateManifest } = require('../generator/template-manifest');
+const { createDirectories, prepareDirectoryPlan } = require('./directories');
+const { prepareFilePlan, writeFilePlan } = require('./entries');
+const { getModuleSupplementRecords, prepareModuleEntryPlan, writeModuleEntryPlan } = require('./module-entries');
+const { prepareTopologyPlan, writeTopologyPlan } = require('./topology-writer');
+const { resolveTopology } = require('../harness/topology');
+const { prepareCommandPlan, writeCommandFiles } = require('./commands-writer');
+const { STATUS_FILE } = require('../harness/manifest');
+const { validateArtifactRecords } = require('../artifact/ledger');
+const { prepareRuleAdapterPlan, writeRuleAdapterFiles } = require('./rules-adapters-writer');
+const { prepareRulePlan, writeRuleFiles } = require('./rules-writer');
+const { prepareSkillPlan, writeSkillFiles } = require('./skills-writer');
+const { prepareStatusPlan, writeStatusFile } = require('./status-writer');
+const { createTemplateVariables } = require('../harness/template-variables');
+const { getRuntimeLayout } = require('../harness/runtime-layout');
 const {
   findCompetingHarnesses,
   formatCompetingHarnessError,
-} = require('./workspace-harnesses');
+} = require('../harness/workspace-harnesses');
 
 // 通过统一 context 串联各个步骤，避免 runInit 重新堆成长方法。
 function runInit(options) {
@@ -157,7 +157,7 @@ function readPreviousStatus(targetDir, harnessDir, availableCommands, availableS
     throw new Error(`invalid previous ${STATUS_FILE}: skills must be canonical`);
   }
   if (status.schemaVersion >= 3) {
-    const { validateTopologyShape } = require('./topology');
+    const { validateTopologyShape } = require('../harness/topology');
     try {
       validateTopologyShape(status.topology, status.moduleSupplements);
     } catch (error) {

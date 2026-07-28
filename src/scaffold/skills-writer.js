@@ -1,15 +1,15 @@
 // Skill 文件作为 ledger-owned artifacts 写入；移除必须有精确 ownership 证据。
 const fs = require('fs');
 const path = require('path');
-const { digestBytes, findArtifactRecord, validateArtifactRecords } = require('../artifact-ledger');
-const { renderAllSkillArtifacts, renderSkillArtifacts } = require('../skill-artifacts');
+const { digestBytes, findArtifactRecord, validateArtifactRecords } = require('../artifact/ledger');
+const { renderAllSkillArtifacts, renderSkillArtifacts } = require('../skill/artifacts');
 const {
   inspectFileTarget,
   removeEmptyDirsUntil,
   removeFile,
   safeResolveInside,
   writeFile,
-} = require('../fs-safe');
+} = require('../infrastructure/fs-safe');
 
 function prepareSkillPlan(context) {
   const current = renderSkillArtifacts(

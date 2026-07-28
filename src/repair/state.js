@@ -1,19 +1,19 @@
 const fs = require('fs');
 const path = require('path');
-const { getEntryFilesForAgent, normalizeAgent } = require('../agents');
-const { digestBytes, validateArtifactRecords } = require('../artifact-ledger');
-const { renderCommandArtifacts } = require('../command-artifacts');
-const { renderRuleArtifacts } = require('../rule-artifacts');
-const { renderSkillArtifacts } = require('../skill-artifacts');
-const { canonicalizeWorkspacePath } = require('../fs-safe');
-const { getAvailableCommandFiles, getDefaultCommandsForAgent } = require('../commands');
-const { getAvailableRuleDirs, getDefaultRulesForAgent, normalizeConcreteRules } = require('../rules');
-const { getAvailableSkillDirs, normalizeConcreteSkills } = require('../skills');
+const { getEntryFilesForAgent, normalizeAgent } = require('../harness/agents');
+const { digestBytes, validateArtifactRecords } = require('../artifact/ledger');
+const { renderCommandArtifacts } = require('../command/artifacts');
+const { renderRuleArtifacts } = require('../rule/artifacts');
+const { renderSkillArtifacts } = require('../skill/artifacts');
+const { canonicalizeWorkspacePath } = require('../infrastructure/fs-safe');
+const { getAvailableCommandFiles, getDefaultCommandsForAgent } = require('../command/catalog');
+const { getAvailableRuleDirs, getDefaultRulesForAgent, normalizeConcreteRules } = require('../rule/catalog');
+const { getAvailableSkillDirs, normalizeConcreteSkills } = require('../skill/catalog');
 const { loadManifest, validateManifest } = require('../generator/template-manifest');
-const { createTemplateVariables } = require('../template-variables');
-const { assertWorkDirBinding, getRuntimeLayout } = require('../runtime-layout');
-const { hasDamagedHarnessStructure, scanWorkspaceHarnesses } = require('../workspace-harnesses');
-const { validateTopologyShape } = require('../topology');
+const { createTemplateVariables } = require('../harness/template-variables');
+const { assertWorkDirBinding, getRuntimeLayout } = require('../harness/runtime-layout');
+const { hasDamagedHarnessStructure, scanWorkspaceHarnesses } = require('../harness/workspace-harnesses');
+const { validateTopologyShape } = require('../harness/topology');
 
 async function resolveRepairState(options, chooseAgent) {
   const target = canonicalizeWorkspacePath(options.targetDir || '.');
@@ -275,7 +275,7 @@ function resolveRules(options, parsed, agent, available) {
   if (parsed.usable) return { source: 'manifest', value: parsed.rules };
   if (options.rulesOutProvided) return { source: 'explicit', value: options.rules };
   if (options.rulesProvided) {
-    const { normalizeSelectedRules } = require('../rules');
+    const { normalizeSelectedRules } = require('../rule/catalog');
     return { source: 'explicit', value: normalizeSelectedRules(options.rules, available) };
   }
   if (parsed.rules) return { source: 'manifest', value: parsed.rules };

@@ -4,13 +4,13 @@ const path = require('path');
 const { parseArgs } = require('./args');
 const { getHelpText } = require('./help');
 const { chooseAgent, chooseDiscoveredModules } = require('./prompts');
-const { resolveTopology } = require('./topology');
-const { canonicalizeWorkspacePath } = require('./fs-safe');
-const { normalizeSelectedRules, getDefaultRulesForAgent } = require('./rules');
-const { runDoctor } = require('./doctor');
-const { runInit } = require('./scaffold');
-const { runRepair } = require('./repair');
-const { STATUS_FILE } = require('./harness-status');
+const { resolveTopology } = require('../harness/topology');
+const { canonicalizeWorkspacePath } = require('../infrastructure/fs-safe');
+const { normalizeSelectedRules, getDefaultRulesForAgent } = require('../rule/catalog');
+const { runDoctor } = require('../doctor/index');
+const { runInit } = require('../scaffold/index');
+const { runRepair } = require('../repair/index');
+const { STATUS_FILE } = require('../harness/manifest');
 
 function finalizeRules(options) {
   if (options.rulesOut) {

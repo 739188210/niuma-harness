@@ -1,7 +1,7 @@
 // 生成态 artifact ownership ledger：统一校验目标路径、摘要和记录合并。
 const crypto = require('crypto');
 const path = require('path');
-const { validateRelativePath } = require('./fs-safe');
+const { validateRelativePath } = require('../infrastructure/fs-safe');
 
 const DIGEST_PATTERN = /^sha256:[0-9a-f]{64}$/;
 const ARTIFACT_KINDS = new Set(['command', 'rule', 'skill']);

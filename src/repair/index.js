@@ -1,15 +1,15 @@
-const { inspectHarness } = require('./doctor');
-const { chooseAgent, confirmRepair } = require('./prompts');
-const { applyRepairPlan, rollback } = require('./repair/apply');
+const { inspectHarness } = require('../doctor/index');
+const { chooseAgent, confirmRepair } = require('../cli/prompts');
+const { applyRepairPlan, rollback } = require('./apply');
 const {
   createRepairIdentity,
   createVerifiedBackup,
   resolveBackupRoot,
   revalidateOperations,
-} = require('./repair/backup');
-const { createRepairPlan } = require('./repair/planner');
-const { printRepairPlan, printRepairSuccess } = require('./repair/report');
-const { resolveRepairState } = require('./repair/state');
+} = require('./backup');
+const { createRepairPlan } = require('./planner');
+const { printRepairPlan, printRepairSuccess } = require('./report');
+const { resolveRepairState } = require('./state');
 
 async function runRepair(options, dependencies = {}) {
   const now = dependencies.now ? dependencies.now() : new Date();

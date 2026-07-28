@@ -1,19 +1,19 @@
 const path = require('path');
-const { getAllEntryFiles, getEntryFilesForAgent } = require('../agents');
+const { getAllEntryFiles, getEntryFilesForAgent } = require('../harness/agents');
 const {
   getAllRuleAdapterTargets,
   isRuleArtifactManagedByAdapter,
-} = require('../agent-native-targets');
-const { digestBytes, validateArtifactRecords } = require('../artifact-ledger');
-const { renderCommandArtifacts } = require('../command-artifacts');
-const { renderRuleArtifacts } = require('../rule-artifacts');
-const { getAvailableRuleDirs, getRuleAdapterTargetsForAgent } = require('../rules');
-const { getAvailableSkillDirs } = require('../skills');
-const { renderSkillArtifacts } = require('../skill-artifacts');
-const { createStatus } = require('../harness-status');
-const { createTemplateVariables } = require('../template-variables');
+} = require('../harness/agent-native-targets');
+const { digestBytes, validateArtifactRecords } = require('../artifact/ledger');
+const { renderCommandArtifacts } = require('../command/artifacts');
+const { renderRuleArtifacts } = require('../rule/artifacts');
+const { getAvailableRuleDirs, getRuleAdapterTargetsForAgent } = require('../rule/catalog');
+const { getAvailableSkillDirs } = require('../skill/catalog');
+const { renderSkillArtifacts } = require('../skill/artifacts');
+const { createStatus } = require('../harness/manifest');
+const { createTemplateVariables } = require('../harness/template-variables');
 const { renderTemplate } = require('../generator/template-renderer');
-const { renderTopologyRoute } = require('../scaffold/topology-writer');
+const { renderTopologyRoute } = require('../harness/topology-route');
 
 function createDesiredState(input) {
   const { agent, commands, harnessDir, manifest, runtimeLayout, rules, skills, topology = { mode: 'single', modules: [] }, moduleSupplements = [], workspaceDir } = input;
@@ -51,7 +51,7 @@ function createDesiredState(input) {
   }
 
   const activeEntries = getEntryFilesForAgent(agent);
-  const { renderEntry } = require('../entry-renderer');
+  const { renderEntry } = require('../harness/entry-renderer');
   for (const entry of activeEntries) {
     files.push(descriptor(workspaceDir, path.join(workspaceDir, entry), renderEntry(agent, entry, rules, harnessDir, workDirectory, manifest.rulesRoot, topology), 'entry', 'entry'));
   }

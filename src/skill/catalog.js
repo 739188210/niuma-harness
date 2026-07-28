@@ -4,10 +4,10 @@ const path = require('path');
 const {
   getAllSkillTargetRoots,
   getSkillTargetRootsForAgent,
-} = require('./agent-native-targets');
-const { listFilesRecursive } = require('./fs-safe');
+} = require('../harness/agent-native-targets');
+const { listFilesRecursive } = require('../infrastructure/fs-safe');
 
-const ROOT_DIR = path.resolve(__dirname, '..');
+const ROOT_DIR = path.resolve(__dirname, '..', '..');
 const TEMPLATE_DIR = path.join(ROOT_DIR, 'templates');
 const DEFAULT_SKILLS_ROOT = 'skills';
 const DEFAULT_SKILLS_SELECTION = 'all';

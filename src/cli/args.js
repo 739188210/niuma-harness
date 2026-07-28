@@ -1,7 +1,7 @@
 // CLI 参数解析层：只负责把 argv 变成规范化 options。
-const { normalizeAgent } = require('./agents');
-const { normalizeRules, normalizeRulesOut } = require('./rules');
-const { normalizeSkills } = require('./skills');
+const { normalizeAgent } = require('../harness/agents');
+const { normalizeRules, normalizeRulesOut } = require('../rule/catalog');
+const { normalizeSkills } = require('../skill/catalog');
 
 // 解析阶段会规范化 agent/rules，并读取本地规则目录来校验选择值。
 function parseArgs(argv) {

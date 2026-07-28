@@ -5,7 +5,7 @@ const {
   findArtifactRecord,
   mergeArtifactRecords,
   validateArtifactRecords,
-} = require('../src/artifact-ledger');
+} = require('../src/artifact/ledger');
 
 function record(target, digest = digestBytes(Buffer.from(target))) {
   return {

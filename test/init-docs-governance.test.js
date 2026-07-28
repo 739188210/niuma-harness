@@ -12,7 +12,7 @@ const {
   read,
   run,
   tempDir,
-} = require('./init-fixtures');
+} = require('./scaffold-fixtures');
 
 test('generated docs route durable decisions without taking ownership of project ADRs', () => {
   const workspace = tempDir();

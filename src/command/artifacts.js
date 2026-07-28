@@ -3,9 +3,9 @@ const {
   getCommandArtifactDescriptors,
   getCommandsRootPath,
   parseCommandSpec,
-} = require('./commands');
-const { TEMPLATE_DIR } = require('./generator/template-manifest');
-const { renderTemplate } = require('./generator/template-renderer');
+} = require('./catalog');
+const { TEMPLATE_DIR } = require('../generator/template-manifest');
+const { renderTemplate } = require('../generator/template-renderer');
 
 function renderCommandArtifacts(agent, commands, commandsRoot, variables) {
   const commandsRootPath = getCommandsRootPath(commandsRoot);

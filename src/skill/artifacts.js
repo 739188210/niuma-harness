@@ -1,14 +1,14 @@
 // Skill 文件也作为可验证的 artifact 管理，避免仅按已知路径删除用户内容。
 const path = require('path');
-const { digestBytes } = require('./artifact-ledger');
+const { digestBytes } = require('../artifact/ledger');
 const {
   getAvailableSkillDirs,
   getAllSkillTargetRoots,
   getSkillFiles,
   getSkillTargetRootsForAgent,
-} = require('./skills');
-const { TEMPLATE_DIR } = require('./generator/template-manifest');
-const { renderTemplate } = require('./generator/template-renderer');
+} = require('./catalog');
+const { TEMPLATE_DIR } = require('../generator/template-manifest');
+const { renderTemplate } = require('../generator/template-renderer');
 
 function renderSkillArtifacts(agent, skills, skillsRoot, variables) {
   return renderSkillArtifactsForRoots(

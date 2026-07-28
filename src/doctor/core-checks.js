@@ -1,11 +1,11 @@
 // doctor 的通用文件/目录检查，以及入口文件、核心文档和 workDir 校验。
 const fs = require('fs');
 const path = require('path');
-const { getAllEntryFiles, getEntryFilesForAgent } = require('../agents');
-const { assertNoSymlinkInPath, safeResolveInside } = require('../fs-safe');
-const { resolveRuntimePaths } = require('../runtime-layout');
-const { renderEntry } = require('../entry-renderer');
-const { analyzeContractBlock, sliceContractBlock } = require('../contract');
+const { getAllEntryFiles, getEntryFilesForAgent } = require('../harness/agents');
+const { assertNoSymlinkInPath, safeResolveInside } = require('../infrastructure/fs-safe');
+const { resolveRuntimePaths } = require('../harness/runtime-layout');
+const { renderEntry } = require('../harness/entry-renderer');
+const { analyzeContractBlock, sliceContractBlock } = require('../harness/contract');
 const { addError, addOk } = require('./result');
 
 // 入口文件在 workspace 根（harness 目录的父级），不在 harness root。

@@ -4,7 +4,7 @@ const {
   getAvailableSkillDirs,
   getSkillFiles,
   getSkillTargetRootsForAgent,
-} = require('../skills');
+} = require('../skill/catalog');
 const { checkDirectory, checkRegularFile } = require('./core-checks');
 const { checkMarkdownMetadata, isRegularFile } = require('./markdown-checks');
 

@@ -12,7 +12,7 @@ const {
   read,
   run,
   tempDir,
-} = require('./init-fixtures');
+} = require('./scaffold-fixtures');
 
 test('init claude: entry at workspace root, harness content under harness/', () => {
   const workspace = initWorkspace('claude');

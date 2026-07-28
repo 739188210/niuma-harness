@@ -10,7 +10,7 @@ const {
   run,
   snapshotTree,
   tempDir,
-} = require('./helpers');
+} = require('./support/helpers');
 
 function assertFreshFailureLeavesNoChanges(agent, setup, extraArgs = []) {
   const workspace = tempDir();

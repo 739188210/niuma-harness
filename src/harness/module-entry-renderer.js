@@ -1,5 +1,5 @@
 const path = require('path');
-const { renderTemplate } = require('./generator/template-renderer');
+const { renderTemplate } = require('../generator/template-renderer');
 
 function renderModuleSupplement(module, entryFile, workspaceDir, harnessDir, agent) {
   const modulePath = path.join(workspaceDir, ...module.root.split('/'));

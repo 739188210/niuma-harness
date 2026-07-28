@@ -1,13 +1,13 @@
 const fs = require('fs');
 const path = require('path');
-const { renderCommandArtifacts } = require('../command-artifacts');
-const { assertNoSymlinkInPath, safeResolveInside } = require('../fs-safe');
-const { renderRuleArtifacts } = require('../rule-artifacts');
+const { renderCommandArtifacts } = require('../command/artifacts');
+const { assertNoSymlinkInPath, safeResolveInside } = require('../infrastructure/fs-safe');
+const { renderRuleArtifacts } = require('../rule/artifacts');
 const { TEMPLATE_DIR } = require('../generator/template-manifest');
 const { renderTemplate } = require('../generator/template-renderer');
-const { getAvailableRuleDirs, getRuleAdapterTargetsForAgent } = require('../rules');
-const { getSkillFiles, getSkillTargetRootsForAgent } = require('../skills');
-const { createTemplateVariables } = require('../template-variables');
+const { getAvailableRuleDirs, getRuleAdapterTargetsForAgent } = require('../rule/catalog');
+const { getSkillFiles, getSkillTargetRootsForAgent } = require('../skill/catalog');
+const { createTemplateVariables } = require('../harness/template-variables');
 const { addError, addOk } = require('./result');
 
 function checkManagedContentIntegrity(context) {

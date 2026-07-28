@@ -1,7 +1,7 @@
 const { getRuleEntryInjectionForAgent } = require('./agent-native-targets');
-const { renderCodexRulesBlock } = require('./rule-artifacts');
+const { renderCodexRulesBlock } = require('../rule/artifacts');
 const { createTemplateVariables } = require('./template-variables');
-const { renderTemplate } = require('./generator/template-renderer');
+const { renderTemplate } = require('../generator/template-renderer');
 
 function renderEntry(agent, entryFile, rules, harnessDir, workDirectory, rulesRoot, topology = { mode: 'single', modules: [] }) {
   const variables = createTemplateVariables({ agent, harnessDir }, workDirectory);

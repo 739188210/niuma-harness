@@ -85,15 +85,15 @@ Do not run `init .` in this repo root; use a temp directory.
 
 ## Architecture
 
-Dependency-free CommonJS Node CLI. `bin/niuma-harness.js` invokes `main()` from `src/cli.js`; commands are `init`, `doctor`, `check` (alias of `doctor`), and `repair`. The main flow is:
+Dependency-free CommonJS Node CLI. `bin/niuma-harness.js` invokes `main()` from `src/cli/index.js`; commands are `init`, `doctor`, `check` (alias of `doctor`), and `repair`. The main flow is:
 
-1. `src/args.js` parses CLI flags and normalizes agent, rule, and skill selections. `src/commands.js` separately discovers command templates and maps them to agent-native artifacts.
-2. `src/cli.js` fills a missing `--agent` via `src/prompts.js` in TTY mode, finalizes default/agent rules, then dispatches.
-3. `src/generator/` owns the package-template manifest and rendering primitives. `src/scaffold.js` builds the init context from them and preflights ownership-sensitive plans before writing. It applies directories, entry/core files, canonical rules, native rule adapters, skills, and command artifacts through `src/scaffold/*`, then writes the generated `harness/manifest.json` last via `src/scaffold/status-writer.js`.
-4. `src/doctor.js` locates generated `manifest.json`, then `src/doctor/checks.js` validates the harness root, workspace `agent-work/`, entry contract integrity, selected rules, skills, commands, and required docs.
-5. `src/repair.js` is the recovery path for unhealthy or drifted installed state, not a force mode for init. It builds canonical desired state through `src/repair/desired-state.js`, prints the complete plan, creates and verifies permanent no-follow backups under `.niuma-harness/repairs/`, revalidates observations, applies with the manifest last, runs Doctor, and performs best-effort synchronous rollback on validation failure. Focused stages live under `src/repair/`.
+1. `src/cli/args.js` parses CLI flags and normalizes agent, rule, and skill selections. `src/command/catalog.js` separately discovers command templates and maps them to agent-native artifacts.
+2. `src/cli/index.js` fills a missing `--agent` via `src/cli/prompts.js` in TTY mode, finalizes default/agent rules, then dispatches.
+3. `src/generator/` owns the package-template manifest and rendering primitives. `src/scaffold/index.js` builds the init context from them and preflights ownership-sensitive plans before writing. It applies directories, entry/core files, canonical rules, native rule adapters, skills, and command artifacts through `src/scaffold/*`, then writes the generated `harness/manifest.json` last via `src/scaffold/status-writer.js`.
+4. `src/doctor/index.js` locates generated `manifest.json`, then `src/doctor/checks.js` validates the harness root, workspace `agent-work/`, entry contract integrity, selected rules, skills, commands, and required docs.
+5. `src/repair/index.js` is the recovery path for unhealthy or drifted installed state, not a force mode for init. It builds canonical desired state through `src/repair/desired-state.js`, prints the complete plan, creates and verifies permanent no-follow backups under `.niuma-harness/repairs/`, revalidates observations, applies with the manifest last, runs Doctor, and performs best-effort synchronous rollback on validation failure. Focused stages live under `src/repair/`.
 
-`src/fs-safe.js` centralizes path confinement and symlink refusal for scaffold writes/removals. `src/contract.js` owns the managed contract markers and replacement helpers used by both entry merging and doctor integrity checks.
+`src/infrastructure/fs-safe.js` centralizes path confinement and symlink refusal for scaffold writes/removals. `src/harness/contract.js` owns the managed contract markers and replacement helpers used by both entry merging and doctor integrity checks.
 
 ## Init write model
 

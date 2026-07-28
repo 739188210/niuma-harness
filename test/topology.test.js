@@ -12,7 +12,7 @@ const {
   runInteractive,
   snapshotTree,
   tempDir,
-} = require('./helpers');
+} = require('./support/helpers');
 
 function seedWorkspace() {
   const workspace = tempDir();

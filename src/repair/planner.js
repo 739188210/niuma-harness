@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { digestBytes, validateArtifactRecords } = require('../artifact-ledger');
+const { digestBytes, validateArtifactRecords } = require('../artifact/ledger');
 const {
   CONTRACT_BEGIN,
   CONTRACT_END,
@@ -8,23 +8,23 @@ const {
   removeContractBlock,
   sliceContractBlock,
   replaceContractBlock,
-} = require('../contract');
-const { getCommandArtifactDescriptors } = require('../commands');
+} = require('../harness/contract');
+const { getCommandArtifactDescriptors } = require('../command/catalog');
 const {
   getLegacyClaudeRulePointerTarget,
   getLegacyRuleTargetRootsForAgent,
   getRuleTargetRootsForAgent,
-} = require('../agent-native-targets');
-const { getAvailableRuleDirs } = require('../rules');
-const { renderAllSkillArtifacts } = require('../skill-artifacts');
-const { renderLegacyClaudeRulePointer } = require('../scaffold/rules-adapters-writer');
+} = require('../harness/agent-native-targets');
+const { getAvailableRuleDirs } = require('../rule/catalog');
+const { renderAllSkillArtifacts } = require('../skill/artifacts');
+const { renderLegacyClaudeRulePointer } = require('../rule/legacy-claude-pointer');
 const {
   assertNoLossyJsonNumbers,
   reconcileOpenCodeInstructions,
-} = require('../opencode-instructions');
+} = require('../rule/opencode-instructions');
 const { createDesiredState } = require('./desired-state');
-const { analyzeModuleBlock, MODULE_BEGIN, MODULE_END } = require('../contract');
-const { parseRegistry, sameModules } = require('../topology');
+const { analyzeModuleBlock, MODULE_BEGIN, MODULE_END } = require('../harness/contract');
+const { parseRegistry, sameModules } = require('../harness/topology');
 
 function createRepairPlan(state, backupRoot) {
   const desired = createDesiredState({
@@ -101,7 +101,7 @@ function addTopologyDiagnostics(collector, state) {
   for (const record of status.moduleSupplements) {
     let targetPath;
     try {
-      const { safeResolveInside, assertNoSymlinkInPath } = require('../fs-safe');
+      const { safeResolveInside, assertNoSymlinkInPath } = require('../infrastructure/fs-safe');
       targetPath = safeResolveInside(state.workspaceDir, record.target, 'module supplement target');
       assertNoSymlinkInPath(targetPath);
     } catch (error) {
@@ -251,8 +251,8 @@ function planEntries(collector, desired, state) {
 }
 
 function isGeneratedInactiveEntry(existing, entry, desired, state) {
-  const { renderEntry } = require('../entry-renderer');
-  const { getEntryFilesForAgent } = require('../agents');
+  const { renderEntry } = require('../harness/entry-renderer');
+  const { getEntryFilesForAgent } = require('../harness/agents');
   return ['claude', 'codex', 'opencode', 'multi'].some((agent) => {
     if (!getEntryFilesForAgent(agent).includes(entry)) return false;
     const canonical = renderEntry(
@@ -334,7 +334,7 @@ function isCanonicalPriorRuleRecord(record, state) {
 }
 
 function renderAllRuleArtifacts(desired, state) {
-  const { renderRuleArtifacts } = require('../rule-artifacts');
+  const { renderRuleArtifacts } = require('../rule/artifacts');
   return renderRuleArtifacts(state.selections.agent, desired.availableRules, state.manifest.rulesRoot, desired.variables);
 }
 

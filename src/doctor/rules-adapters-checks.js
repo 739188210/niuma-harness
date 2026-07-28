@@ -5,11 +5,11 @@ const path = require('path');
 const {
   getAllRuleAdapterTargets,
   isRuleArtifactManagedByAdapter,
-} = require('../agent-native-targets');
-const { renderRuleArtifacts } = require('../rule-artifacts');
-const { getRuleAdapterTargetsForAgent } = require('../rules');
-const { safeResolveInside } = require('../fs-safe');
-const { createTemplateVariables } = require('../template-variables');
+} = require('../harness/agent-native-targets');
+const { renderRuleArtifacts } = require('../rule/artifacts');
+const { getRuleAdapterTargetsForAgent } = require('../rule/catalog');
+const { safeResolveInside } = require('../infrastructure/fs-safe');
+const { createTemplateVariables } = require('../harness/template-variables');
 const { addError, addOk } = require('./result');
 
 function checkRuleAdapterFiles(context) {

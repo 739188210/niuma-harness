@@ -1,10 +1,10 @@
 // 模块入口仅管理其独立 supplement 区块，始终保留区块外的项目内容。
 const fs = require('fs');
 const path = require('path');
-const { getEntryFilesForAgent } = require('../agents');
-const { digestBytes } = require('../artifact-ledger');
-const { inspectFileTarget, removeFile, safeResolveInside, writeFile } = require('../fs-safe');
-const { renderModuleSupplement } = require('../module-entry-renderer');
+const { getEntryFilesForAgent } = require('../harness/agents');
+const { digestBytes } = require('../artifact/ledger');
+const { inspectFileTarget, removeFile, safeResolveInside, writeFile } = require('../infrastructure/fs-safe');
+const { renderModuleSupplement } = require('../harness/module-entry-renderer');
 const {
   analyzeModuleBlock,
   removeMarkedBlock,
@@ -12,7 +12,7 @@ const {
   sliceMarkedBlock,
   MODULE_BEGIN,
   MODULE_END,
-} = require('../contract');
+} = require('../harness/contract');
 
 function prepareModuleEntryPlan(context) {
   const previous = context.previousStatus && Array.isArray(context.previousStatus.moduleSupplements)

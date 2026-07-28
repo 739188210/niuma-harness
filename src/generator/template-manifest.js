@@ -1,8 +1,8 @@
 // 读取并校验包内 templates/manifest.json，确保模板声明不能越界。
 const fs = require('fs');
 const path = require('path');
-const { safeResolveInside, validateRelativePath } = require('../fs-safe');
-const { getRuntimeLayout } = require('../runtime-layout');
+const { safeResolveInside, validateRelativePath } = require('../infrastructure/fs-safe');
+const { getRuntimeLayout } = require('../harness/runtime-layout');
 
 const ROOT_DIR = path.resolve(__dirname, '..', '..');
 const TEMPLATE_DIR = path.join(ROOT_DIR, 'templates');

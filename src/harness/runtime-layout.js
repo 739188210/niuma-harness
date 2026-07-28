@@ -1,5 +1,5 @@
 // workspace 级运行期目录的唯一 layout contract；不信任生成态 manifest 自报的路径。
-const { assertNoSymlinkInPath, safeResolveInside, validateRelativePath } = require('./fs-safe');
+const { assertNoSymlinkInPath, safeResolveInside, validateRelativePath } = require('../infrastructure/fs-safe');
 
 const DEFAULT_WORK_DIRECTORY = 'agent-work';
 const TASKS_DIRECTORY = 'tasks';

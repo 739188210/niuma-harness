@@ -1,4 +1,4 @@
-const { assert, run, tempDir } = require('../helpers');
+const { assert, run, tempDir } = require('./helpers');
 
 function resultOutput(result) {
   return [result.stdout, result.stderr].filter(Boolean).join('\n');

@@ -13,7 +13,7 @@ const {
   run,
   tempDir,
   updateManifest,
-} = require('./helpers');
+} = require('./support/helpers');
 
 const primaryCommand = allCommandFiles[0];
 const primaryCommandId = getCommandId(primaryCommand);

@@ -1,5 +1,5 @@
 const readline = require('readline');
-const { normalizeAgent } = require('./agents');
+const { normalizeAgent } = require('../harness/agents');
 
 function ask(question) {
   const rl = readline.createInterface({

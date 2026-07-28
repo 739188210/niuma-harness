@@ -1,5 +1,5 @@
 // 创建 harness 内目录和 workspace 级运行期目录。
-const { ensureDir, inspectDirectoryTarget, safeResolveInside } = require('../fs-safe');
+const { ensureDir, inspectDirectoryTarget, safeResolveInside } = require('../infrastructure/fs-safe');
 
 function prepareDirectoryPlan(context) {
   const { manifest, runtimeLayout, targetDir, workspaceDir } = context;

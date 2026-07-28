@@ -9,14 +9,14 @@ const {
   getCommandId,
   getCommandTargetsForAgent,
   getDefaultCommandsForAgent,
-} = require('../src/commands');
-const { getAvailableRuleDirs, getDefaultRulesForAgent } = require('../src/rules');
-const { renderCommandArtifacts } = require('../src/command-artifacts');
-const { digestBytes } = require('../src/artifact-ledger');
-const { renderRuleArtifacts } = require('../src/rule-artifacts');
-const { renderSkillArtifacts } = require('../src/skill-artifacts');
-const { createTemplateVariables } = require('../src/template-variables');
-const { getAvailableSkillDirs, getSkillTargetRootsForAgent } = require('../src/skills');
+} = require('../../src/command/catalog');
+const { getAvailableRuleDirs, getDefaultRulesForAgent } = require('../../src/rule/catalog');
+const { renderCommandArtifacts } = require('../../src/command/artifacts');
+const { digestBytes } = require('../../src/artifact/ledger');
+const { renderRuleArtifacts } = require('../../src/rule/artifacts');
+const { renderSkillArtifacts } = require('../../src/skill/artifacts');
+const { createTemplateVariables } = require('../../src/harness/template-variables');
+const { getAvailableSkillDirs, getSkillTargetRootsForAgent } = require('../../src/skill/catalog');
 
 const root = path.resolve(__dirname, '..');
 const node = process.execPath;

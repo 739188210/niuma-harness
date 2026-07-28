@@ -1,12 +1,12 @@
 // 校验 schema-2 artifact ledger、当前 command 覆盖和每个已登记文件的精确摘要。
 const fs = require('fs');
 const path = require('path');
-const { getCommandArtifactDescriptors } = require('../commands');
-const { digestBytes, findArtifactRecord, validateArtifactRecords } = require('../artifact-ledger');
-const { assertNoSymlinkInPath, safeResolveInside } = require('../fs-safe');
-const { renderRuleArtifacts } = require('../rule-artifacts');
-const { renderSkillArtifacts } = require('../skill-artifacts');
-const { createTemplateVariables } = require('../template-variables');
+const { getCommandArtifactDescriptors } = require('../command/catalog');
+const { digestBytes, findArtifactRecord, validateArtifactRecords } = require('../artifact/ledger');
+const { assertNoSymlinkInPath, safeResolveInside } = require('../infrastructure/fs-safe');
+const { renderRuleArtifacts } = require('../rule/artifacts');
+const { renderSkillArtifacts } = require('../skill/artifacts');
+const { createTemplateVariables } = require('../harness/template-variables');
 const { addError, addOk } = require('./result');
 
 function checkArtifactFiles(context) {

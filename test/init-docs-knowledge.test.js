@@ -12,7 +12,7 @@ const {
   read,
   run,
   tempDir,
-} = require('./init-fixtures');
+} = require('./scaffold-fixtures');
 
 test('generated docs prioritize task facts and route context reading by need', () => {
   const workspace = tempDir();

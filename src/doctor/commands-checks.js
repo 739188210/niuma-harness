@@ -4,7 +4,7 @@ const {
   getAvailableCommandFiles,
   getCommandId,
   getCommandTargetsForAgent,
-} = require('../commands');
+} = require('../command/catalog');
 const { checkDirectory, checkRegularFile } = require('./core-checks');
 const { checkMarkdownMetadata, isRegularFile } = require('./markdown-checks');
 const { addError } = require('./result');

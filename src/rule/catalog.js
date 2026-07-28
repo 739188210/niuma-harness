@@ -6,9 +6,9 @@ const {
   getRuleAdapterTargetsForAgent,
   getRuleEntryInjectionForAgent,
   getRuleTargetRootsForAgent,
-} = require('./agent-native-targets');
+} = require('../harness/agent-native-targets');
 
-const ROOT_DIR = path.resolve(__dirname, '..');
+const ROOT_DIR = path.resolve(__dirname, '..', '..');
 const TEMPLATE_DIR = path.join(ROOT_DIR, 'templates');
 const DEFAULT_RULES_ROOT = 'rules';
 const DEFAULT_RULES_SELECTION = 'common';

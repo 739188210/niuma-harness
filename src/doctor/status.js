@@ -1,7 +1,7 @@
 // 定位并读取生成态 manifest.json；不在这里做字段语义校验。
 const fs = require('fs');
 const path = require('path');
-const { STATUS_FILE } = require('../harness-status');
+const { STATUS_FILE } = require('../harness/manifest');
 const { addError } = require('./result');
 
 function locateStatusFile(targetDir, harnessDir) {

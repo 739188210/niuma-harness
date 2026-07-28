@@ -1,10 +1,10 @@
 const path = require('path');
 
-const { digestBytes } = require('./artifact-ledger');
-const { listFilesRecursive } = require('./fs-safe');
-const { getAvailableRuleDirs, getRuleTargetRootsForAgent, getRulesRootPath } = require('./rules');
-const { TEMPLATE_DIR } = require('./generator/template-manifest');
-const { renderTemplate } = require('./generator/template-renderer');
+const { digestBytes } = require('../artifact/ledger');
+const { listFilesRecursive } = require('../infrastructure/fs-safe');
+const { getAvailableRuleDirs, getRuleTargetRootsForAgent, getRulesRootPath } = require('./catalog');
+const { TEMPLATE_DIR } = require('../generator/template-manifest');
+const { renderTemplate } = require('../generator/template-renderer');
 
 function renderRuleArtifacts(agent, rules, rulesRoot, variables, dependencies = {}) {
   const availableRules = (dependencies.getAvailableRuleDirs || getAvailableRuleDirs)(rulesRoot);

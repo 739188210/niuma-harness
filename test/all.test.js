@@ -1,4 +1,4 @@
-require('./temp-cleanup.test');
+require('./support/temp-cleanup.test');
 require('./fs-safe.test');
 require('./runtime-layout.test');
 require('./artifact-ledger.test');
