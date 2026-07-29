@@ -10,9 +10,7 @@ const {
   getLegacyClaudeRulePointerTarget,
   getLegacyRuleTargetRootsForAgent,
   getRuleAdapterTargetsForAgent,
-  getRuleEntryInjectionForAgent,
   getRuleTargetRootsForAgent,
-  getStandaloneRuleTargetRootsForAgent,
   getSkillTargetRootsForAgent,
   getSupportedAgents,
   isRuleArtifactManagedByAdapter,
@@ -29,6 +27,7 @@ test('agent-native targets declare the supported surface matrix', () => {
   assert.deepStrictEqual(getAllKnownRuleTargetRoots(), [
     '.claude/rules',
     '.claude/rules/niuma',
+    '.codex/harness-rules',
     '.opencode/rules',
     '.opencode/rules/niuma',
   ]);
@@ -53,27 +52,14 @@ test('agent-native targets declare the supported surface matrix', () => {
   ]);
 
   assert.deepStrictEqual(getRuleTargetRootsForAgent('claude'), ['.claude/rules']);
-  assert.deepStrictEqual(getRuleTargetRootsForAgent('codex'), []);
+  assert.deepStrictEqual(getRuleTargetRootsForAgent('codex'), ['.codex/harness-rules']);
   assert.deepStrictEqual(getRuleTargetRootsForAgent('opencode'), ['.opencode/rules']);
-  assert.deepStrictEqual(getRuleTargetRootsForAgent('multi'), ['.claude/rules', '.opencode/rules']);
-  assert.deepStrictEqual(getStandaloneRuleTargetRootsForAgent('claude'), ['.claude/rules']);
-  assert.deepStrictEqual(getStandaloneRuleTargetRootsForAgent('codex'), ['.codex/rules']);
-  assert.deepStrictEqual(getStandaloneRuleTargetRootsForAgent('opencode'), ['.opencode/rules']);
-  assert.deepStrictEqual(getStandaloneRuleTargetRootsForAgent('multi'), ['.claude/rules', '.codex/rules', '.opencode/rules']);
+  assert.deepStrictEqual(getRuleTargetRootsForAgent('multi'), ['.claude/rules', '.codex/harness-rules', '.opencode/rules']);
   assert.deepStrictEqual(getLegacyRuleTargetRootsForAgent('multi'), [
     '.claude/rules/niuma',
     '.opencode/rules/niuma',
   ]);
 
-  assert.strictEqual(getRuleEntryInjectionForAgent('claude'), null);
-  assert.deepStrictEqual(getRuleEntryInjectionForAgent('codex'), {
-    entryFile: 'AGENTS.md',
-    renderer: 'codex-rules',
-  });
-  assert.deepStrictEqual(getRuleEntryInjectionForAgent('multi'), {
-    entryFile: 'AGENTS.md',
-    renderer: 'codex-rules',
-  });
   assert.deepStrictEqual(getSkillTargetRootsForAgent('multi'), [
     '.claude/skills',
     '.agents/skills',

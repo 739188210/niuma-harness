@@ -299,12 +299,12 @@ test('agent switch removes an untouched retired entry', () => {
   assertFile(path.join(workspace, 'CLAUDE.md'));
 });
 
-test('agent switch removes an untouched nested Codex rules retired entry', () => {
+test('agent switch removes an untouched Codex-guided retired entry', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'multi', '--skills', 'none']);
   assert.strictEqual(result.status, 0, result.stderr);
   const retired = path.join(workspace, 'AGENTS.md');
-  assert.match(read(retired), /<!-- niuma-harness:codex-rules begin -->/);
+  assert.match(read(retired), /Codex engineering rules/);
 
   result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);

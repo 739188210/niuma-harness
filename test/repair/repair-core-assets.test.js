@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 const {
   assert,
-  assertTreeUnchanged,
   read,
   run,
   snapshotTree,
@@ -32,36 +31,20 @@ test('repair restores core drift without planning or mutating assets', () => {
   assert.strictEqual(run(['doctor', workspace]).status, 0);
 });
 
-test('repair preserves a valid Codex rules region byte-for-byte while restoring contract drift', () => {
+test('repair restores Codex contract drift without managing independent rule assets', () => {
   const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'codex', '--rules', 'none', '--skills', 'none']);
+  let result = run(['init', workspace, '--agent', 'codex', '--rules', 'common', '--skills', 'none']);
   assert.strictEqual(result.status, 0, result.stderr);
   const entryPath = path.join(workspace, 'AGENTS.md');
-  let entry = read(entryPath).replace('Operating Loop', 'Operating Loop (drifted)');
-  entry = entry.replace(
-    '<!-- niuma-harness:codex-rules end -->',
-    '### local/example.md\n\nKeep these exact bytes.\n<!-- niuma-harness:codex-rules end -->'
-  );
-  fs.writeFileSync(entryPath, entry, 'utf8');
-  const regionBefore = read(entryPath).match(/<!-- niuma-harness:codex-rules begin -->[\s\S]*?<!-- niuma-harness:codex-rules end -->/)[0];
+  const rulesRoot = path.join(workspace, '.codex', 'harness-rules');
+  fs.writeFileSync(entryPath, read(entryPath).replace('Operating Loop', 'Operating Loop (drifted)'), 'utf8');
+  fs.writeFileSync(path.join(rulesRoot, 'common', 'testing.md'), 'local Codex rule\n', 'utf8');
+  fs.writeFileSync(path.join(rulesRoot, 'local.md'), 'extra asset\n', 'utf8');
+  const assetsBefore = snapshotTree(rulesRoot);
 
   result = run(['repair', workspace, '-y']);
   assert.strictEqual(result.status, 0, result.stderr);
-  const repaired = read(entryPath);
-  assert.doesNotMatch(repaired, /Operating Loop \(drifted\)/);
-  assert.strictEqual(repaired.match(/<!-- niuma-harness:codex-rules begin -->[\s\S]*?<!-- niuma-harness:codex-rules end -->/)[0], regionBefore);
-});
-
-test('repair rejects an old Codex contract without a rules region without mutation', () => {
-  const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'codex', '--rules', 'none', '--skills', 'none']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const entryPath = path.join(workspace, 'AGENTS.md');
-  fs.writeFileSync(entryPath, read(entryPath).replace(/\n*<!-- niuma-harness:codex-rules begin -->[\s\S]*?<!-- niuma-harness:codex-rules end -->/, ''), 'utf8');
-  const before = snapshotTree(workspace);
-
-  result = run(['repair', workspace, '-y']);
-  assert.notStrictEqual(result.status, 0);
-  assert.match(result.stderr, /Codex rules region.*missing.*incompatible/);
-  assertTreeUnchanged(workspace, before);
+  assert.doesNotMatch(read(entryPath), /Operating Loop \(drifted\)/);
+  assert.deepStrictEqual(snapshotTree(rulesRoot), assetsBefore);
+  assert.strictEqual(run(['doctor', workspace]).status, 0);
 });

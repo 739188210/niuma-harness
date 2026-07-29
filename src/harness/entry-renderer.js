@@ -4,8 +4,27 @@ const { renderTemplate } = require('../generator/template-renderer');
 function renderEntry(agent, entryFile, harnessDir, workDirectory, topology = { mode: 'single', modules: [] }) {
   const variables = createTemplateVariables({ agent, harnessDir }, workDirectory);
   const hasModules = Array.isArray(topology && topology.modules) && topology.modules.length > 0;
-  Object.assign(variables, entryTopologyGuidance(hasModules, harnessDir));
+  Object.assign(variables, entryTopologyGuidance(hasModules, harnessDir), {
+    ENTRY_CODEX_RULES_GUIDANCE: codexRulesGuidance(agent, entryFile),
+  });
   return renderTemplate('entry/entry.md', variables);
+}
+
+function codexRulesGuidance(agent, entryFile) {
+  if (entryFile !== 'AGENTS.md' || (agent !== 'codex' && agent !== 'multi')) return '';
+  return [
+    '',
+    '## Codex engineering rules',
+    '',
+    'For every engineering modification, first read each existing file in .codex/harness-rules/common/. Then read every existing applicable rule file under .codex/harness-rules/:',
+    '- typescript/ for TypeScript, JavaScript, Node, frontend logic, and related configuration;',
+    '- web/ for pages, components, styles, interactions, browser performance, and frontend security;',
+    '- java/ for Java, JVM, Maven, and Gradle changes;',
+    '- python/ for Python changes;',
+    '- fastapi/ for FastAPI APIs, routes, schemas, and server-side work.',
+    '',
+    'For cross-domain changes or uncertain applicability, read all existing potentially applicable rule files before editing. Do not assume a rule directory or file exists.',
+  ].join('\n');
 }
 
 function entryTopologyGuidance(hasModules, harnessDir) {

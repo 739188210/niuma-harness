@@ -9,7 +9,6 @@ const {
   assertDir,
   assertFile,
   assertManifest,
-  assertNoCodexRulesDir,
   assertNoPath,
   assertOpenCodeRulesInstruction,
   assertRuleDirs,
@@ -52,8 +51,8 @@ test('default rules include common engineering rules', () => {
       assertOpenCodeRulesInstruction(workspace, 'harness', expectedRules);
     }
     if (scenario.agent === 'codex' || scenario.agent === 'multi') {
-      assert.match(read(path.join(workspace, 'AGENTS.md')), /Selected engineering rules/);
-      assertNoCodexRulesDir(workspace);
+      assertFile(path.join(workspace, '.codex', 'harness-rules', 'common', 'testing.md'));
+      assert.match(read(path.join(workspace, 'AGENTS.md')), /Codex engineering rules/);
     }
     assertManifest(path.join(harnessRoot, 'manifest.json'), {
       agent: scenario.agent,
@@ -66,7 +65,7 @@ test('default rules include common engineering rules', () => {
 test('generated common testing rules require practical TDD across agent surfaces', () => {
   for (const scenario of [
     { agent: 'claude', rulePath: ['.claude', 'rules', 'common', 'testing.md'] },
-    { agent: 'codex', rulePath: ['AGENTS.md'] },
+    { agent: 'codex', rulePath: ['.codex', 'harness-rules', 'common', 'testing.md'] },
     { agent: 'opencode', rulePath: ['.opencode', 'rules', 'common', 'testing.md'] },
   ]) {
     const workspace = tempDir();
@@ -78,9 +77,7 @@ test('generated common testing rules require practical TDD across agent surfaces
     assert.match(rule, /RED → same-target GREEN → optional REFACTOR/);
     assert.match(rule, /does not replace test-first work when that protocol applies/);
     assert.match(rule, /Valid alternatives must be declared before implementation/);
-    if (scenario.agent !== 'codex') {
-      assert.doesNotMatch(rule, /testing preferences|lightweight preference layer/i);
-    }
+    assert.doesNotMatch(rule, /testing preferences|lightweight preference layer/i);
     if (scenario.agent === 'opencode') {
       assertOpenCodeRulesInstruction(workspace, 'ai-harness', ['common']);
     }

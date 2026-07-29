@@ -47,7 +47,7 @@ Continue only when the next step is safe and useful; otherwise report and ask. F
 
 ## Depth is on-demand
 
-The loop above is all that stays in context. Each phase names the one file to open when it needs detail. Follow only the relevant independently installed engineering rules. Full loop spec: `{{HARNESS_DIR}}/docs/layers/07-loop.md`.
+The loop above is all that stays in context. Each phase names the one file to open when it needs detail. Follow only the relevant independently installed engineering rules. Full loop spec: `{{HARNESS_DIR}}/docs/layers/07-loop.md`.{{ENTRY_CODEX_RULES_GUIDANCE}}
 <!-- niuma-harness:contract end -->
 
 # Project overrides

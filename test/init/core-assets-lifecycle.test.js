@@ -1,7 +1,6 @@
 const test = require('node:test');
 const {
   assert,
-  assertTreeUnchanged,
   path,
   read,
   readJson,
@@ -42,48 +41,39 @@ test('re-run init refreshes core while preserving independent assets', () => {
 });
 
 for (const agent of ['codex', 'multi']) {
-  test(`first ${agent} init creates one empty Codex rules region when rules are none`, () => {
+  test(`first ${agent} init writes no Codex rule assets when rules are none`, () => {
     const workspace = tempDir();
     const result = run(['init', workspace, '--agent', agent, '--rules', 'none', '--skills', 'none']);
     assert.strictEqual(result.status, 0, result.stderr);
 
     const entry = read(path.join(workspace, 'AGENTS.md'));
-    assert.strictEqual((entry.match(/niuma-harness:codex-rules begin/g) || []).length, 1);
-    assert.strictEqual((entry.match(/niuma-harness:codex-rules end/g) || []).length, 1);
-    assert.doesNotMatch(entry, /Selected engineering rules/);
+    assert.match(entry, /Codex engineering rules/);
+    assert.doesNotMatch(entry, /Selected engineering rules|niuma-harness:codex-rules/);
+    assert.strictEqual(snapshotTree(path.join(workspace, '.codex', 'harness-rules')), null);
   });
 }
 
 for (const agent of ['codex', 'multi']) {
-  test(`re-run ${agent} init preserves the complete Codex rules region byte-for-byte and entry content outside the contract`, () => {
+  test(`re-run ${agent} init preserves independent Codex rules and entry content outside the contract`, () => {
     const workspace = tempDir();
     let result = run(['init', workspace, '--agent', agent, '--rules', 'common', '--skills', 'none']);
     assert.strictEqual(result.status, 0, result.stderr);
+    const rulesRoot = path.join(workspace, '.codex', 'harness-rules');
+    fsWrite(path.join(rulesRoot, 'common', 'testing.md'), 'local Codex rule\n');
+    fsWrite(path.join(rulesRoot, 'local.md'), 'extra asset\n');
+    const assetsBefore = snapshotTree(rulesRoot);
     const entryPath = path.join(workspace, 'AGENTS.md');
     fsWrite(entryPath, `${read(entryPath)}\n# Project override\nKeep this.\n`);
-    const regionBefore = read(entryPath).match(/<!-- niuma-harness:codex-rules begin -->[\s\S]*?<!-- niuma-harness:codex-rules end -->/)[0];
 
     result = run(['init', workspace]);
     assert.strictEqual(result.status, 0, result.stderr);
+    assert.deepStrictEqual(snapshotTree(rulesRoot), assetsBefore);
     const entry = read(entryPath);
-    assert.strictEqual(entry.match(/<!-- niuma-harness:codex-rules begin -->[\s\S]*?<!-- niuma-harness:codex-rules end -->/)[0], regionBefore);
     assert.match(entry, /# Project override\nKeep this\./);
+    assert.match(entry, /Codex engineering rules/);
+    assert.doesNotMatch(entry, /niuma-harness:codex-rules/);
   });
 }
-
-test('re-run init rejects an old Codex contract without a rules region without mutation', () => {
-  const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'codex', '--rules', 'none', '--skills', 'none']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const entryPath = path.join(workspace, 'AGENTS.md');
-  fsWrite(entryPath, read(entryPath).replace(/\n*<!-- niuma-harness:codex-rules begin -->[\s\S]*?<!-- niuma-harness:codex-rules end -->/, ''));
-  const before = snapshotTree(workspace);
-
-  result = run(['init', workspace]);
-  assert.notStrictEqual(result.status, 0);
-  assert.match(result.stderr, /Codex rules region.*missing.*incompatible/);
-  assertTreeUnchanged(workspace, before);
-});
 
 test('missing manifest performs fresh init and installs selected assets', () => {
   const workspace = tempDir();

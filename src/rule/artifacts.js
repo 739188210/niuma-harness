@@ -48,34 +48,6 @@ function renderRuleArtifacts(agent, rules, rulesRoot, variables, dependencies = 
   return artifacts.sort((left, right) => left.target.localeCompare(right.target));
 }
 
-function renderCodexRuleSections(rules, rulesRoot, variables, dependencies = {}) {
-  const availableRules = (dependencies.getAvailableRuleDirs || getAvailableRuleDirs)(rulesRoot);
-  const getRootPath = dependencies.getRulesRootPath || getRulesRootPath;
-  const listFiles = dependencies.listFilesRecursive || listFilesRecursive;
-  const render = dependencies.renderTemplate || renderTemplate;
-  const templateDir = dependencies.TEMPLATE_DIR || TEMPLATE_DIR;
-  const selected = [...rules].sort((left, right) => left.localeCompare(right));
-  const sections = [];
-  for (const rule of selected) {
-    if (!availableRules.includes(rule)) throw new Error(`unknown rule directory: ${rule}`);
-    const ruleRoot = path.join(getRootPath(rulesRoot), rule);
-    for (const sourcePath of listFiles(ruleRoot)) {
-      const relativePath = path.relative(ruleRoot, sourcePath).split(path.sep).join('/');
-      const source = path.relative(templateDir, sourcePath).split(path.sep).join('/');
-      const id = `${rule}/${relativePath}`;
-      sections.push({ id, content: `### ${id}\n\n${render(source, variables).trim()}` });
-    }
-  }
-  return sections;
-}
-
-function renderCodexRulesBlock(rules, rulesRoot, variables, dependencies = {}) {
-  const sections = renderCodexRuleSections(rules, rulesRoot, variables, dependencies);
-  return sections.length === 0 ? '' : `\n\n## Selected engineering rules\n\n${sections.map((section) => section.content).join('\n\n')}`;
-}
-
 module.exports = {
   renderRuleArtifacts,
-  renderCodexRuleSections,
-  renderCodexRulesBlock,
 };

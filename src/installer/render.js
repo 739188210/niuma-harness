@@ -6,7 +6,7 @@ const { normalizeInstallerAssetNames } = require('./catalog');
 
 const INSTALLER_TEMPLATE_VARIABLES = {
   HARNESS_DIR: 'harness',
-  CODEX_RULES: '',
+  ENTRY_CODEX_RULES_GUIDANCE: '',
   ENTRY_CONTEXT_TOPOLOGY_GUIDANCE: '',
   ENTRY_MEMORY_SCOPE_GUIDANCE: '',
   ENTRY_RED_LINE_MEMORY_GUIDANCE: '',

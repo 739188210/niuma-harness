@@ -19,7 +19,9 @@ function createDependencies() {
       return rulesRootPath;
     },
     getRuleTargetRootsForAgent(agent) {
-      return agent === 'claude' ? ['.claude/rules'] : ['.opencode/rules'];
+      if (agent === 'claude') return ['.claude/rules'];
+      if (agent === 'codex') return ['.codex/harness-rules'];
+      return ['.opencode/rules'];
     },
     listFilesRecursive(directory) {
       if (directory.endsWith(path.join('rules', 'common'))) {
@@ -93,6 +95,24 @@ test('uses the native target root for rule artifact targets', () => {
     [
       '.opencode/rules/common/coding-style.md',
       '.opencode/rules/common/testing.md',
+    ]
+  );
+});
+
+test('uses the Codex harness rules root for rule artifact targets', () => {
+  const artifacts = renderRuleArtifacts(
+    'codex',
+    ['common'],
+    'rules',
+    { HARNESS_DIR: 'tooling/niuma' },
+    createDependencies()
+  );
+
+  assert.deepStrictEqual(
+    artifacts.map((artifact) => artifact.target),
+    [
+      '.codex/harness-rules/common/coding-style.md',
+      '.codex/harness-rules/common/testing.md',
     ]
   );
 });

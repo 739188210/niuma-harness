@@ -4,8 +4,6 @@ const CONTRACT_BEGIN = '<!-- niuma-harness:contract begin';
 const CONTRACT_END = '<!-- niuma-harness:contract end -->';
 const MODULE_BEGIN = '<!-- niuma-harness:module-supplement begin';
 const MODULE_END = '<!-- niuma-harness:module-supplement end -->';
-const CODEX_RULES_BEGIN = '<!-- niuma-harness:codex-rules begin -->';
-const CODEX_RULES_END = '<!-- niuma-harness:codex-rules end -->';
 
 function analyzeMarkedBlock(content, beginMarker, endMarker) {
   const begins = findAll(content, beginMarker);
@@ -58,33 +56,6 @@ function analyzeModuleBlock(content) {
   return analyzeMarkedBlock(content, MODULE_BEGIN, MODULE_END);
 }
 
-function analyzeCodexRulesRegion(content) {
-  return analyzeMarkedBlock(content, CODEX_RULES_BEGIN, CODEX_RULES_END);
-}
-
-function sliceCodexRulesRegion(content) {
-  const analysis = analyzeCodexRulesRegion(content);
-  return analysis.status === 'valid' ? analysis.block : null;
-}
-
-function replaceCodexRulesRegion(content, region) {
-  const analysis = analyzeCodexRulesRegion(content);
-  return analysis.status === 'valid' ? content.slice(0, analysis.begin) + region + content.slice(analysis.end) : null;
-}
-
-function removeCodexRulesRegion(content) {
-  const analysis = analyzeCodexRulesRegion(content);
-  return analysis.status === 'valid' ? content.slice(0, analysis.begin) + content.slice(analysis.end) : content;
-}
-
-function normalizeContractForCoreComparison(content) {
-  const analysis = analyzeCodexRulesRegion(content);
-  if (analysis.status !== 'valid') return content;
-  const before = content.slice(0, analysis.begin).replace(/\s+$/u, '');
-  const after = content.slice(analysis.end).replace(/^\s*/u, '');
-  return `${before}\n${after}`;
-}
-
 // 提取唯一且完整的契约块；其他状态返回 null。
 function sliceContractBlock(content) {
   const analysis = analyzeContractBlock(content);
@@ -110,23 +81,16 @@ function removeContractBlock(content) {
 }
 
 module.exports = {
-  CODEX_RULES_BEGIN,
-  CODEX_RULES_END,
   CONTRACT_BEGIN,
   MODULE_BEGIN,
   MODULE_END,
-  analyzeCodexRulesRegion,
   analyzeContractBlock,
   analyzeMarkedBlock,
   analyzeModuleBlock,
-  sliceCodexRulesRegion,
   sliceContractBlock,
   sliceMarkedBlock,
-  replaceCodexRulesRegion,
   replaceContractBlock,
   replaceMarkedBlock,
-  normalizeContractForCoreComparison,
-  removeCodexRulesRegion,
   removeContractBlock,
   removeMarkedBlock,
 };

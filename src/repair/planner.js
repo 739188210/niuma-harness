@@ -12,8 +12,6 @@ const {
   sliceContractBlock,
   replaceContractBlock,
 } = require('../harness/contract');
-const { getRuleEntryInjectionForAgent } = require('../harness/agent-native-targets');
-const { isGeneratedCodexEntry, preserveCodexRulesRegion } = require('../rule/codex-entry-rules');
 const { createDesiredState } = require('./desired-state');
 const { parseRegistry, sameModules } = require('../harness/topology');
 
@@ -196,18 +194,7 @@ function planEntries(collector, desired, state) {
     let code = 'drift';
     let message = analysis.status === 'valid' ? 'entry contract differs from canonical content' : `entry contract state is ${analysis.status}`;
     if (analysis.status === 'valid') {
-      try {
-        const existingBlock = sliceContractBlock(existing);
-        const nextBlock = getRuleEntryInjectionForAgent(state.selections.agent)?.entryFile === entry
-          ? preserveCodexRulesRegion(block, existingBlock, 'repair the entry')
-          : block;
-        next = replaceContractBlock(existing, nextBlock);
-      } catch (error) {
-        code = 'incompatible-codex-rules-region';
-        message = error.message;
-        collector.add('entry', code, targetPath, message);
-        continue;
-      }
+      next = replaceContractBlock(existing, block);
     } else if (analysis.status === 'missing') next = `${block}\n\n${existing}`;
     else { next = canonical; code = 'ambiguous-markers'; }
     if (next !== existing) {
@@ -246,13 +233,6 @@ function planEntries(collector, desired, state) {
 function isGeneratedInactiveEntry(existing, entry, desired, state) {
   const { renderEntry } = require('../harness/entry-renderer');
   const { getEntryFilesForAgent } = require('../harness/agents');
-  if (isGeneratedCodexEntry(existing, renderEntry, {
-    entryFile: entry,
-    harnessDir: state.harnessDir,
-    topology: desired.status.topology,
-    variables: desired.variables,
-    workDirectory: state.runtimeLayout.workDirectory,
-  })) return true;
   return ['claude', 'codex', 'opencode', 'multi'].some((agent) => {
     if (!getEntryFilesForAgent(agent).includes(entry)) return false;
     const canonical = renderEntry(

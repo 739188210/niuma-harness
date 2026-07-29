@@ -65,17 +65,17 @@ test('install-command renders one selected command for every multi native target
   assert.ok(targets(artifacts).every((target) => target.includes('dev-check')));
 });
 
-test('install-rule uses init-native Codex rule rendering without standalone files', () => {
+test('install-rule renders Codex rules into the standalone harness directory', () => {
   const artifacts = renderInstallerArtifacts({ type: 'rule', agent: 'codex', names: ['common'] });
-  assert.deepStrictEqual(artifacts, []);
+  assert.ok(artifacts.some((item) => item.target === '.codex/harness-rules/common/testing.md'));
+  assert.ok(artifacts.every((item) => item.target.startsWith('.codex/harness-rules/common/')));
 });
 
-test('install-rule uses init-native Claude and OpenCode roots for multi', () => {
+test('install-rule uses native rule roots for every multi surface', () => {
   const artifacts = renderInstallerArtifacts({ type: 'rule', agent: 'multi', names: ['common'] });
-  for (const root of ['.claude/rules', '.opencode/rules']) {
+  for (const root of ['.claude/rules', '.codex/harness-rules', '.opencode/rules']) {
     assert.ok(artifacts.some((item) => item.target.startsWith(`${root}/common/`)));
   }
-  assert.ok(artifacts.every((item) => !item.target.startsWith('.codex/rules/')));
   assert.ok(artifacts.every((item) => !item.target.endsWith('AGENTS.md')));
 });
 

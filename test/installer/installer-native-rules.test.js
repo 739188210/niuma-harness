@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const {
   assert,
+  assertFile,
   assertNoPath,
   assertTreeUnchanged,
   read,
@@ -24,49 +25,32 @@ function installRule(workspace, agentChoice, ruleChoice, confirmation = '') {
   return runInteractive(['install-rule'], `${agentChoice}\n${ruleChoice}\n${confirmation}`, { cwd: workspace });
 }
 
-test('install-rule refuses platforms without no-follow support before modifying a Codex contract', { skip: supportsNoFollow ? false : 'O_NOFOLLOW is unavailable' }, () => {
-  const workspace = initWorkspace('codex', ['--rules', 'none']);
+test('install-rule writes standalone Codex rules without modifying AGENTS.md', { skip: supportsNoFollow ? false : 'O_NOFOLLOW is unavailable' }, () => {
+  const workspace = tempDir();
   const entryPath = path.join(workspace, 'AGENTS.md');
-  fs.appendFileSync(entryPath, '\n# Project overrides\nKeep this text.\n', 'utf8');
-  const before = read(entryPath).split('<!-- niuma-harness:contract end -->')[1];
+  fs.writeFileSync(entryPath, '# Project instructions\nKeep this text.\n', 'utf8');
+  const entryBefore = read(entryPath);
 
   const result = installRule(workspace, '2', '1', 'y');
 
   assert.strictEqual(result.status, 0, result.stderr);
-  const entry = read(entryPath);
-  assert.match(entry, /## Selected engineering rules/);
-  assert.match(entry, /### common\/coding-style\.md/);
-  assert.match(entry, /### common\/testing\.md/);
-  assert.strictEqual(entry.split('<!-- niuma-harness:contract end -->')[1], before);
-  assertNoPath(path.join(workspace, '.codex', 'rules'));
+  assertFile(path.join(workspace, '.codex', 'harness-rules', 'common', 'coding-style.md'));
+  assertFile(path.join(workspace, '.codex', 'harness-rules', 'common', 'testing.md'));
+  assert.strictEqual(read(entryPath), entryBefore);
 
   const repeat = installRule(workspace, '2', '1', 'y');
   assert.strictEqual(repeat.status, 0, repeat.stderr);
-  assert.strictEqual((read(entryPath).match(/### common\/testing\.md/g) || []).length, 1);
+  assert.strictEqual(read(entryPath), entryBefore);
 });
 
-test('install-rule rejects missing Codex contract without writes', { skip: supportsNoFollow ? false : 'O_NOFOLLOW is unavailable' }, () => {
+test('install-rule creates standalone Codex rules without a Harness contract', { skip: supportsNoFollow ? false : 'O_NOFOLLOW is unavailable' }, () => {
   const workspace = tempDir();
-  const before = snapshotTree(workspace);
 
   const result = installRule(workspace, '2', '1', 'y');
 
-  assert.notStrictEqual(result.status, 0);
-  assert.match(result.stderr, /AGENTS\.md has no Niuma contract.*Run init first/);
-  assertTreeUnchanged(workspace, before);
-});
-
-test('install-rule rejects an old Codex contract without a rules region without writes', { skip: supportsNoFollow ? false : 'O_NOFOLLOW is unavailable' }, () => {
-  const workspace = initWorkspace('codex', ['--rules', 'none']);
-  const entryPath = path.join(workspace, 'AGENTS.md');
-  fs.writeFileSync(entryPath, read(entryPath).replace(/\n*<!-- niuma-harness:codex-rules begin -->[\s\S]*?<!-- niuma-harness:codex-rules end -->/, ''), 'utf8');
-  const before = snapshotTree(workspace);
-
-  const result = installRule(workspace, '2', '1', 'y');
-
-  assert.notStrictEqual(result.status, 0);
-  assert.match(result.stderr, /Codex rules region is missing and incompatible/);
-  assertTreeUnchanged(workspace, before);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertFile(path.join(workspace, '.codex', 'harness-rules', 'common', 'security.md'));
+  assertNoPath(path.join(workspace, 'AGENTS.md'));
 });
 
 test('install-rule appends OpenCode paths without changing unrelated configuration', { skip: supportsNoFollow ? false : 'O_NOFOLLOW is unavailable' }, () => {
@@ -117,10 +101,10 @@ test('install-rule applies multi-agent native adapters together', { skip: suppor
   const result = installRule(workspace, '4', '1', 'y');
 
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.match(read(path.join(workspace, 'AGENTS.md')), /### common\/testing\.md/);
   assert.ok(fs.existsSync(path.join(workspace, '.claude', 'rules', 'common', 'testing.md')));
+  assert.ok(fs.existsSync(path.join(workspace, '.codex', 'harness-rules', 'common', 'testing.md')));
   assert.ok(fs.existsSync(path.join(workspace, '.opencode', 'rules', 'common', 'testing.md')));
-  assertNoPath(path.join(workspace, '.codex', 'rules'));
+  assert.doesNotMatch(read(path.join(workspace, 'AGENTS.md')), /Selected engineering rules|niuma-harness:codex-rules/);
   const config = JSON.parse(read(path.join(workspace, 'opencode.json')));
   assert.ok(config.instructions.includes('.opencode/rules/common/testing.md'));
 });

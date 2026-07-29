@@ -105,13 +105,26 @@ test('doctor rejects a drifted inactive entry contract', () => {
   expectDoctorError(workspace, /stale contract zone in AGENTS\.md/);
 });
 
-test('direct doctor ignores an inactive entry contract owned by another harness directory', () => {
+test('direct doctor ignores inactive entry contracts owned by another harness directory', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'claude', '--harness-dir', 'ai-harness', '--rules', 'none', '--skills', 'none']);
   assert.strictEqual(result.status, 0, result.stderr);
   const otherHarnessEntry = read(path.join(workspace, 'CLAUDE.md'))
     .replaceAll('ai-harness/', 'harness/');
   fs.writeFileSync(path.join(workspace, 'AGENTS.md'), otherHarnessEntry, 'utf8');
+  result = doctor(path.join(workspace, 'ai-harness'));
+  assert.strictEqual(result.status, 0, result.stdout);
+});
+
+test('direct doctor ignores an inactive Codex entry contract owned by another harness directory', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'claude', '--harness-dir', 'ai-harness', '--rules', 'none', '--skills', 'none']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const codexWorkspace = tempDir();
+  result = run(['init', codexWorkspace, '--agent', 'codex', '--harness-dir', 'harness', '--rules', 'none', '--skills', 'none']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  fs.writeFileSync(path.join(workspace, 'AGENTS.md'), read(path.join(codexWorkspace, 'AGENTS.md')), 'utf8');
+
   result = doctor(path.join(workspace, 'ai-harness'));
   assert.strictEqual(result.status, 0, result.stdout);
 });

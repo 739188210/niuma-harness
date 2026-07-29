@@ -9,13 +9,6 @@ const {
   writeFile,
 } = require('../infrastructure/fs-safe');
 const { renderEntry } = require('../harness/entry-renderer');
-const { getRuleEntryInjectionForAgent } = require('../harness/agent-native-targets');
-const {
-  appendCodexRuleSections,
-  isGeneratedCodexEntry,
-  preserveCodexRulesRegion,
-  withEmptyCodexRulesRegion,
-} = require('../rule/codex-entry-rules');
 const { renderTemplate } = require('../generator/template-renderer');
 const {
   analyzeContractBlock,
@@ -63,16 +56,7 @@ function prepareEntryPlan(context) {
     );
     const freshBlock = sliceContractBlock(freshFull);
     if (!freshBlock) throw new Error('entry template is missing a valid contract zone');
-    const ruleInjection = getRuleEntryInjectionForAgent(context.options.agent);
-    const block = ruleInjection && entryFile === ruleInjection.entryFile
-      ? (!context.previousStatus
-        ? appendCodexRuleSections(withEmptyCodexRulesRegion(freshBlock), context.options.rules, context.variables)
-        : withEmptyCodexRulesRegion(freshBlock))
-      : freshBlock;
-    const full = ruleInjection && entryFile === ruleInjection.entryFile
-      ? replaceContractBlock(freshFull, block)
-      : freshFull;
-    return prepareEntryWrite(context.workspaceDir, entryFile, full, block, Boolean(ruleInjection && entryFile === ruleInjection.entryFile));
+    return prepareEntryWrite(context.workspaceDir, entryFile, freshFull, freshBlock);
   });
   if (!context.previousStatus) {
     return current;
@@ -85,7 +69,7 @@ function prepareEntryPlan(context) {
   return [...retired, ...current];
 }
 
-function prepareEntryWrite(workspaceDir, entryFile, freshFull, freshBlock, preservesCodexRules = false) {
+function prepareEntryWrite(workspaceDir, entryFile, freshFull, freshBlock) {
   const targetPath = safeResolveInside(workspaceDir, entryFile, 'entry target');
   if (!inspectFileTarget(targetPath)) {
     return { action: 'create', content: freshFull, kind: 'write', targetPath };
@@ -96,11 +80,7 @@ function prepareEntryWrite(workspaceDir, entryFile, freshFull, freshBlock, prese
   const block = eol === '\r\n' ? freshBlock.replace(/\n/g, '\r\n') : freshBlock;
   const analysis = analyzeContractBlock(existing);
   if (analysis.status === 'valid') {
-    const existingBlock = sliceContractBlock(existing);
-    const nextBlock = preservesCodexRules
-      ? preserveCodexRulesRegion(block, existingBlock, 're-initialize the entry')
-      : block;
-    return { action: 'refresh', content: replaceContractBlock(existing, nextBlock), kind: 'write', targetPath };
+    return { action: 'refresh', content: replaceContractBlock(existing, block), kind: 'write', targetPath };
   }
   if (analysis.status === 'missing') {
     return { action: 'merge', content: `${block}${eol}${eol}${existing}`, kind: 'write', targetPath };
@@ -123,14 +103,7 @@ function prepareEntryRetirement(context, entryFile) {
     context.workDirectory,
     context.previousStatus.topology
   );
-  const generatedCodexEntry = isGeneratedCodexEntry(existing, renderEntry, {
-    entryFile,
-    harnessDir: context.options.harnessDir,
-    topology: context.previousStatus.topology,
-    variables: context.variables,
-    workDirectory: context.workDirectory,
-  });
-  if (existing === previousFull || generatedCodexEntry) {
+  if (existing === previousFull) {
     return { action: 'remove', kind: 'retire-entry', observedDigest, targetPath };
   }
 

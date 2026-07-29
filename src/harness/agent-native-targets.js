@@ -17,9 +17,8 @@ const AGENT_NATIVE_TARGETS = {
     commands: [{ kind: 'codex-skill-command', root: '.agents/skills' }],
     rules: {
       adapters: [],
-      entryInjection: { entryFile: 'AGENTS.md', renderer: 'codex-rules' },
       legacyRoots: [],
-      roots: [],
+      roots: ['.codex/harness-rules'],
     },
     skills: ['.agents/skills'],
   },
@@ -51,9 +50,8 @@ const AGENT_NATIVE_TARGETS = {
         kind: 'opencode-instructions',
         ruleRoot: '.opencode/rules',
       }],
-      entryInjection: { entryFile: 'AGENTS.md', renderer: 'codex-rules' },
       legacyRoots: ['.claude/rules/niuma', '.opencode/rules/niuma'],
-      roots: ['.claude/rules', '.opencode/rules'],
+      roots: ['.claude/rules', '.codex/harness-rules', '.opencode/rules'],
     },
     skills: ['.claude/skills', '.agents/skills', '.opencode/skills'],
   },
@@ -77,17 +75,6 @@ function getCommandTargetsForAgent(agent) {
 
 function getRuleTargetRootsForAgent(agent) {
   return [...getProfile(agent).rules.roots];
-}
-
-function getStandaloneRuleTargetRootsForAgent(agent) {
-  const roots = {
-    claude: ['.claude/rules'],
-    codex: ['.codex/rules'],
-    opencode: ['.opencode/rules'],
-    multi: ['.claude/rules', '.codex/rules', '.opencode/rules'],
-  };
-  if (!roots[agent]) throw new Error(`Unsupported agent: ${agent}`);
-  return [...roots[agent]];
 }
 
 function getLegacyRuleTargetRootsForAgent(agent) {
@@ -117,11 +104,6 @@ function getAllRuleAdapterTargets() {
     }
   }
   return targets;
-}
-
-function getRuleEntryInjectionForAgent(agent) {
-  const injection = getProfile(agent).rules.entryInjection;
-  return injection ? copyTarget(injection) : null;
 }
 
 function getSkillTargetRootsForAgent(agent) {
@@ -171,9 +153,7 @@ module.exports = {
   getLegacyClaudeRulePointerTarget,
   getLegacyRuleTargetRootsForAgent,
   getRuleAdapterTargetsForAgent,
-  getRuleEntryInjectionForAgent,
   getRuleTargetRootsForAgent,
-  getStandaloneRuleTargetRootsForAgent,
   getSkillTargetRootsForAgent,
   getSupportedAgents,
   isRuleArtifactManagedByAdapter,

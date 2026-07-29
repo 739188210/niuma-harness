@@ -1,16 +1,22 @@
 # Core Harness / agent asset lifecycle split
 
-## Context
+## Status
 
-The completed installer work made rules, skills, and commands explicit agent assets. `install-rule` now uses agent-native integration: Codex rule text is embedded in `AGENTS.md`, and OpenCode rule paths are added to `opencode.json.instructions`. However, the current schema-v4 manifest, re-run `init`, `doctor`, and `repair` still treat rules, skills, commands, artifact digests, and OpenCode paths as one Niuma-managed lifecycle. This causes independent installer changes to conflict with Doctor and makes an unrelated core Harness update fail on user-customized assets.
+**Completed and verified.**
 
-This change establishes a strict boundary: the Harness core is managed, validated, upgraded, and repaired; agent assets are bootstrapped on fresh init or installed explicitly, but are otherwise outside re-run init / Doctor / Repair ownership.
+This document records the final behavior of the core/asset lifecycle split. It replaces the earlier implementation plan; requirements in that plan that conflict with this document were intentionally superseded during implementation.
 
-## Confirmed behavior
+## Result
 
-### Core domain
+Niuma Harness now separates its managed **core** from agent-native **assets**:
 
-Managed by re-run `init`, `doctor`, `repair`, and the generated manifest:
+- The Harness core is initialized, re-initialized, checked by Doctor, and repaired by Repair.
+- Agent assets are installed during first initialization or through explicit `install-rule`, `install-skill`, and `install-command` commands.
+- Later `init`, Doctor, and Repair do not take ownership of assets.
+
+## Core domain
+
+Managed by re-run `init`, Doctor, Repair, and the generated manifest:
 
 - Harness root docs/directories and tool-managed core templates;
 - runtime `agent-work/` layout and README;
@@ -18,9 +24,9 @@ Managed by re-run `init`, `doctor`, `repair`, and the generated manifest:
 - topology route and module-supplement ownership state;
 - core manifest identity and metadata.
 
-### Asset domain
+## Asset domain
 
-Created during fresh init or via `install-rule`, `install-skill`, and `install-command`; not recorded in the new manifest and not managed by re-run `init`, Doctor, or Repair:
+Created during first init or via `install-rule`, `install-skill`, and `install-command`. These are independent from re-run init, Doctor, and Repair, and are absent from the v5 manifest:
 
 - native rule files (`.claude/rules/**`, `.opencode/rules/**`);
 - native skills (`.claude/skills/**`, `.agents/skills/**`, `.opencode/skills/**`);
@@ -28,156 +34,100 @@ Created during fresh init or via `install-rule`, `install-skill`, and `install-c
 - `opencode.json.instructions` and all other OpenCode user configuration;
 - asset content, presence/absence, local modifications, and installer backups.
 
-### Codex exception: embedded rules
+Re-run init, Doctor, and Repair do not read, compare, validate, create, refresh, delete, back up, restore, or block on these asset states.
 
-Codex/multi rules live inside `AGENTS.md` rather than a rule-file tree. They are an asset region nested inside the outer Niuma contract.
+## Manifest routing and schema
 
-- `install-rule` owns the nested region and may add selected rule sections.
-- `doctor` ignores the nested region when checking the core contract.
-- `repair` preserves a valid nested region byte-for-byte while repairing core contract content.
-- **re-run `init` intentionally resets the outer Niuma contract and clears embedded Codex rules.**
-- Re-run preserves `AGENTS.md` content outside the outer contract, all native assets, and `opencode.json`.
+`harness/manifest.json` determines the init lifecycle route:
 
-## Implementation plan
+- **Missing manifest:** first initialization. It creates Harness core plus selected rules, skills, and commands.
+- **Existing parseable v2–v5 manifest:** core-only re-init. It refreshes only core files and rewrites the manifest as schema v5 on success.
+- **Existing invalid manifest:** init fails before agent prompting/default selection, topology discovery, asset planning, or any workspace write. It never falls back to first-init behavior.
 
-### 1. Introduce schema-v5 core manifest primitives
+Schema v5 records core state only:
 
-**Files:** `src/harness/manifest.js`, shared callers in scaffold/Doctor/Repair.
-
-- Change `createStatus()` to emit schema v5:
-
-  ```json
-  {
-    "schemaVersion": 5,
-    "agent": "...",
-    "harnessDir": "harness",
-    "workDir": "agent-work",
-    "entryFiles": ["..."],
-    "topology": { "mode": "single", "modules": [] },
-    "moduleSupplements": [],
-    "createdBy": "niuma-harness",
-    "createdAt": "..."
-  }
-  ```
-
-- Remove `rules`, `skills`, `commands`, `artifacts`, and `openCodeInstructions` from newly generated manifests.
-- Add a shared core-manifest parser/normalizer used by scaffold, Doctor, and Repair:
-  - accept v2–v5;
-  - validate only core identity, agent, entry files, work directory, and topology/module fields;
-  - default v2 to root-only topology and no module supplements;
-  - ignore all v2–v4 asset fields even if missing, malformed, stale, or inconsistent;
-  - reject v1 and malformed core fields;
-  - reject a v5 manifest that retains any legacy asset-ownership key, preventing a false v5 core/asset hybrid.
-- Preserve a valid legacy `createdAt` on migration where current behavior requires it; write v5 only through successful init/Repair status updates.
-
-### 2. Delimit Codex rules as a nested asset region
-
-**Files:** `src/harness/contract.js`, `src/harness/entry-renderer.js`, `templates/entry/entry.md`, `src/rule/artifacts.js`, `src/installer/rule-adapters.js`.
-
-- Keep current outer `niuma-harness:contract` markers unchanged.
-- Add nested markers inside the outer contract:
-
-  ```md
-  <!-- niuma-harness:codex-rules begin -->
-  ## Selected engineering rules
-  ...
-  <!-- niuma-harness:codex-rules end -->
-  ```
-
-- Extend contract utilities with strict nested-region analysis, slicing, replacement, removal, and a `normalizeContractForCoreComparison()` helper.
-- Make canonical `renderEntry()` render only the stable operating-loop core contract; it must no longer derive content from a rule selection or emit `CODEX_RULES`.
-- Update the entry template text to describe installed rules generically without claiming they are part of the core managed contract.
-- Update installer rule integration to create/replace a deterministic marked region, merge selected section IDs without duplicates, and preserve installer transaction/no-follow guarantees.
-- Define a conservative legacy bridge:
-  - Core Doctor can strip a recognizable trailing unmarked legacy `## Selected engineering rules` block for v2–v4 contract comparison.
-  - `install-rule` migrates only an unambiguous canonical legacy block into the nested region; malformed/ambiguous user content fails safely rather than being adopted.
-
-### 3. Split init into fresh bootstrap and existing-Harness core sync
-
-**Files:** `src/cli/index.js`, `src/cli/args.js`, `src/scaffold/index.js`, `src/scaffold/status-writer.js`, `src/scaffold/entries.js`, fresh-bootstrap asset planning modules, CLI help/docs.
-
-- Determine mode using the shared core-manifest reader before choosing asset behavior:
-  - no recognized manifest → fresh bootstrap;
-  - recognized v2–v5 core manifest → core-only re-run;
-  - damaged/untrusted recognized Harness state → preserve the existing stop-and-direct-to-Repair safety boundary.
-- Fresh init:
-  - retains agent/rule/skill/command selection behavior;
-  - preflights core plus selected asset surfaces before writing;
-  - creates asset files and adapters using a no-ledger bootstrap plan with existing safe path/conflict primitives;
-  - writes v5 manifest last, without asset records;
-  - writes Codex selected rules into the new nested region only after the core entry exists.
-- Re-run init:
-  - updates core templates, topology derivatives, entry core contracts, module supplements, and schema-v5 status only;
-  - does not call rule/skill/command writers or OpenCode adapter writers;
-  - does not inspect, recreate, refresh, adopt, delete, validate, or digest asset files/configuration;
-  - retains asset roots and `opencode.json` byte-for-byte;
-  - intentionally replaces the outer `AGENTS.md` contract with canonical core content, clearing any nested or legacy embedded Codex rule content while retaining entry content outside the contract;
-  - migrates valid v2–v4 core state to v5 without mutating legacy asset paths.
-- On re-run, reject `--rules`, `--rules-out`, and `--skills` with an actionable message directing users to `install-*`; do not silently ignore them.
-- Allow agent selection to be inferred from a healthy existing manifest when omitted on re-run; retain explicit `--agent` as a core entry/metadata change. Fresh non-TTY init still requires `--agent`.
-- Agent switching on re-run updates only the core entry contract and v5 metadata; it never creates/removes native assets.
-
-### 4. Reduce Doctor to core-only validation
-
-**Files:** `src/doctor/checks.js`, `src/doctor/core-checks.js`, `src/doctor/integrity-checks.js`; retire or detach asset-only checker imports/modules as appropriate.
-
-- Accept v2–v5 via the shared core parser.
-- Retain: manifest discovery/path safety, competing Harness detection, core identity, work-dir binding, agent/entry file validation, outer contract structure, core template/docs integrity, topology/module checks, and runtime layout.
-- Remove normal-path validation of rules, skills, commands, asset ledger records, OpenCode ownership, native adapters, package asset content, asset frontmatter, and selected/unselected asset surfaces.
-- Compare entry contracts after removing the nested Codex asset region (and the safe legacy compatibility payload), so asset changes do not create core drift.
-- Treat malformed nested Codex-region markers as opaque asset state if the outer contract remains structurally valid.
-- Doctor remains read-only and does not migrate v2–v4 manifests itself.
-
-### 5. Reduce Repair to core-only recovery
-
-**Files:** `src/repair/state.js`, `src/repair/desired-state.js`, `src/repair/planner.js`, `src/repair/index.js`, `src/repair/report.js`.
-
-- Reuse the shared core parser; remove rule/skill/command recovery selections, package asset rendering, artifact-ledger validation, and OpenCode ownership handling.
-- Build desired state only for core docs/directories, runtime templates, topology derivations, entry core contracts, inactive entry cleanup, and v5 manifest.
-- Remove asset plan phases: rules, OpenCode updates, stale adapters, stale skills, stale commands, and asset-specific unresolved blockers.
-- Repair plans/backups/rollbacks must omit asset paths entirely. Asset drift or missing assets yields no repair action and does not block a core repair.
-- Entry repair rules:
-  - valid outer contract + valid nested rules region → preserve nested region bytes while updating core portions;
-  - valid outer contract + missing/malformed nested region → preserve that opaque region state and repair only core content;
-  - missing outer contract → add canonical core contract while leaving the prior file as free content; do not infer assets;
-  - malformed outer contract that would require destructive replacement while containing recognizable embedded asset content → stop with a manual-resolution error rather than silently destroying assets.
-- Successful Repair of a valid legacy core manifest writes v5 status last and leaves all legacy assets untouched.
-- Keep backup-first planning, revalidation, post-apply Doctor, and rollback guarantees for core paths.
-
-### 6. Replace obsolete tests and document the lifecycle
-
-**Tests:** `test/support/helpers.js`, `test/init/*`, `test/harness/agent-switch.test.js`, `test/doctor/*`, `test/repair/*`, `test/installer/*`, aggregators.
-
-- Update helpers from v2–v4 mixed-ledger manifest assertions to v5 core-manifest assertions; add clear legacy-manifest fixture builders and separate core/asset snapshot helpers.
-- Add fresh-init tests for v5 core manifest plus bootstrap assets.
-- Add re-run tests proving that modified/missing rules, skills, commands, and OpenCode configuration remain unchanged, while core drift is refreshed.
-- Add v2/v3/v4 migration cases where legacy asset fields are absent/malformed/stale but core sync/Doctor/Repair still work and produce v5 only through init/Repair.
-- Replace old re-init asset convergence, asset deletion, drift rejection, and ledger-refresh tests with independent installer coverage and core-only preservation cases.
-- Replace Doctor asset-ledger tests with core-only and legacy compatibility checks.
-- Replace Repair asset restoration/removal tests with assertions that core repair does not list, back up, mutate, or block on asset paths.
-- Add nested Codex region tests: fresh init, deterministic installer merge, legacy conversion, Doctor ignore behavior, Repair preservation, and intentional re-run clearing.
-- Update `README.md`, repo `CLAUDE.md`, and `src/cli/help.js` to state:
-  - fresh init bootstraps assets;
-  - re-run init synchronizes core only and clears embedded Codex rules;
-  - `install-*` owns ongoing asset changes;
-  - Doctor/Repair are core-only;
-  - v2–v4 manifests migrate to v5 through init/Repair;
-  - installers still require `O_NOFOLLOW` capability for mutations.
-
-## Verification
-
-Run in sequence:
-
-```sh
-node --test test/installer/installer-native-rules.test.js
-npm run test:init
-npm run test:doctor
-npm run test:repair
-node --test test/cli/help.test.js
-npm test
-npm run pack:dry
-git diff --check
-git status --short
+```json
+{
+  "schemaVersion": 5,
+  "agent": "...",
+  "harnessDir": "harness",
+  "workDir": "agent-work",
+  "entryFiles": ["..."],
+  "topology": { "mode": "single", "modules": [] },
+  "moduleSupplements": [],
+  "createdBy": "niuma-harness",
+  "createdAt": "..."
+}
 ```
 
-Use copied-package fixtures to prove package template upgrades affect core re-run content but never modify independent assets. Confirm existing staged `extends/` files remain untouched and unstaged changes are limited to this lifecycle work.
+The historical keys `rules`, `skills`, `commands`, `artifacts`, and `openCodeInstructions` are not owned by v5. Parseable v2–v4 manifests remain eligible for core-only re-init even if their legacy asset fields are missing, stale, or malformed. A v5 manifest retaining any legacy asset-ownership key is rejected as an invalid hybrid.
+
+## Codex independent rule directory
+
+Codex and multi-agent rule files are independent assets under:
+
+```text
+.codex/harness-rules/<rule>/<relative-path>
+```
+
+- First Codex/multi init and `install-rule` use the same file-artifact renderer and write the same directory layout.
+- Generated Codex/multi `AGENTS.md` contains fixed guidance: read existing `common` rules for every engineering change, then the existing applicable language/domain rule files before editing.
+- Re-init and Repair refresh only the outer core contract; they preserve `.codex/harness-rules/**` byte-for-byte because it is an independent asset surface.
+- Doctor validates the ordinary outer `AGENTS.md` contract and does not inspect Codex rule files.
+- No migration, preservation, validation, or compatibility behavior exists for old embedded Codex rule regions.
+
+## Re-init, Doctor, and Repair
+
+### Re-init
+
+For an existing valid manifest, re-init:
+
+- refreshes core templates, topology-derived state, entry contracts, module supplements, and v5 core manifest state;
+- preserves native asset surfaces and `opencode.json` byte-for-byte;
+- preserves `AGENTS.md` content outside the managed outer contract;
+- preserves independent `.codex/harness-rules/**` assets byte-for-byte without reading them;
+- rejects first-init-only asset options (`--rules`, `--rules-out`, and `--skills`) and directs users to `install-*` commands.
+
+### Doctor
+
+Doctor validates core state only: manifest/core identity, workspace runtime layout, entry contract structure, topology/module state, and required core documentation. It does not report independent rule, skill, command, adapter, artifact-ledger, or OpenCode configuration drift.
+
+For Codex/multi, Doctor validates the same ordinary managed `AGENTS.md` contract as other entry files; the fixed Codex rule-reading guidance is core content, while `.codex/harness-rules/**` remains outside Doctor ownership.
+
+### Repair
+
+Repair plans, backs up, modifies, restores, and validates core paths only. Independent assets—including `opencode.json`—do not appear in its plan or backups and never block core repair.
+
+When repairing an active Codex/multi entry, Repair restores the ordinary core contract containing fixed rule-reading guidance. It does not inspect, preserve, back up, or modify `.codex/harness-rules/**`.
+
+## Installer safety boundary
+
+Asset installers retain their existing no-follow leaf-open protection and require an OS/Node runtime with `O_NOFOLLOW`; unavailable support causes installation to fail before planning, backups, or writes.
+
+They are intended for a trusted workspace. They do not provide a workspace lock or complete cross-process TOCTOU protection against a malicious concurrent process replacing parent directories or regular files.
+
+## Completed implementation
+
+- `src/cli/index.js`: strict manifest route; competing Harness detection precedes manifest parsing.
+- `src/harness/manifest.js`: schema v5 core-only parsing and legacy v2–v4 core normalization.
+- `src/harness/agent-native-targets.js` and `src/rule/artifacts.js`: Codex/multi rule artifacts route to `.codex/harness-rules/` through the shared file renderer.
+- `src/scaffold/entries.js` and `src/installer/rule-adapters.js`: first init and `install-rule` use independent file assets; only OpenCode retains an instruction adapter.
+- `src/doctor/core-checks.js`: core-only outer contract validation with no Codex rule-asset checks.
+- `src/repair/desired-state.js`, `src/repair/planner.js`, `src/repair/state.js`, and `src/repair/index.js`: core-only repair with ordinary Codex/multi entry contracts.
+- Obsolete Doctor/Repair asset lifecycle modules and tests removed; retained tests rewritten around core-only ownership.
+- `README.md`, root `CLAUDE.md`, and CLI help updated to state the final lifecycle and security boundary.
+
+## Verification completed
+
+```text
+npm test
+350 passed, 0 failed, 1 skipped
+
+npm run pack:dry
+passed
+
+git diff --check
+passed
+```
+
+No commit, push, merge, or pull request was requested or created.

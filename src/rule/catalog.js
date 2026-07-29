@@ -4,7 +4,6 @@ const path = require('path');
 const {
   getLegacyRuleTargetRootsForAgent,
   getRuleAdapterTargetsForAgent,
-  getRuleEntryInjectionForAgent,
   getRuleTargetRootsForAgent,
 } = require('../harness/agent-native-targets');
 
@@ -154,7 +153,6 @@ module.exports = {
   normalizeConcreteRules,
   getDefaultRulesForAgent,
   getRuleAdapterTargetsForAgent,
-  getRuleEntryInjectionForAgent,
   getRuleTargetRootsForAgent,
   getLegacyRuleTargetRootsForAgent,
   normalizeSelectedRules,

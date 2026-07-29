@@ -225,10 +225,10 @@ test('repair removes untouched generated-only inactive entry', () => {
   assertNoPath(inactive);
 });
 
-test('repair removes an untouched nested Codex rules inactive entry', () => {
+test('repair removes an untouched Codex-guided inactive entry', () => {
   const workspace = initWorkspace('multi');
   const inactive = path.join(workspace, 'AGENTS.md');
-  assert.match(read(inactive), /<!-- niuma-harness:codex-rules begin -->/);
+  assert.match(read(inactive), /Codex engineering rules/);
   const manifestPath = path.join(workspace, 'harness', 'manifest.json');
   const manifest = readJson(manifestPath);
   manifest.agent = 'claude';

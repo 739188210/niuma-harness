@@ -40,12 +40,14 @@ test('entry file carries the operating contract zone', () => {
   assert.doesNotMatch(body, /\(depth: `docs\//, 'entry depth links must not use workspace-root docs paths');
 });
 
-test('multi mode adds Codex rules only to AGENTS.md', () => {
+test('multi mode adds Codex rule guidance only to AGENTS.md', () => {
   const workspace = initWorkspace('multi');
   const claude = read(path.join(workspace, 'CLAUDE.md'));
   const agents = read(path.join(workspace, 'AGENTS.md'));
-  assert.doesNotMatch(claude, /^## Selected engineering rules$/m);
-  assert.match(agents, /^## Selected engineering rules$/m);
+  assert.doesNotMatch(claude, /Codex engineering rules/);
+  assert.match(agents, /## Codex engineering rules/);
+  assert.match(agents, /\.codex\/harness-rules\//);
+  assert.doesNotMatch(agents, /Selected engineering rules|niuma-harness:codex-rules/);
 });
 
 test('init produces parity scaffold across supported agents', () => {
@@ -69,7 +71,9 @@ test('all agent entries retain the shared operating contract', () => {
       assert.match(entry, /<!-- niuma-harness:contract begin/);
       assert.match(entry, /<!-- niuma-harness:contract end/);
       if (entryFile === 'AGENTS.md' && (scenario.agent === 'codex' || scenario.agent === 'multi')) {
-        assert.match(entry, /^## Selected engineering rules$/m);
+        assert.match(entry, /## Codex engineering rules/);
+        assert.match(entry, /\.codex\/harness-rules\/common\//);
+        assert.doesNotMatch(entry, /Selected engineering rules|niuma-harness:codex-rules/);
       }
     }
   }
