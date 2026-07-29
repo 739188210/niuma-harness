@@ -2,13 +2,10 @@ const fs = require('fs');
 const path = require('path');
 const { digestBytes } = require('../infrastructure/content-digest');
 const {
-  CODEX_RULES_BEGIN,
-  CODEX_RULES_END,
-  analyzeCodexRulesRegion,
   analyzeContractBlock,
-  replaceCodexRulesRegion,
   replaceContractBlock,
 } = require('../harness/contract');
+const { appendCodexRuleSections } = require('../rule/codex-entry-rules');
 const {
   getRuleAdapterTargetsForAgent,
   getRuleEntryInjectionForAgent,
@@ -16,7 +13,6 @@ const {
 } = require('../harness/agent-native-targets');
 const { safeResolveInside } = require('../infrastructure/fs-safe');
 const { readRegularFileNoFollow } = require('./safe-fs');
-const { renderCodexRuleSections } = require('../rule/artifacts');
 const {
   readOpenCodeConfig,
   reconcileOpenCodeInstructions,
@@ -66,35 +62,6 @@ function prepareCodexEntryArtifact({ workspaceDir, rules, variables, entryFile }
     throw new Error(`Cannot install Codex rules because ${entryFile} has an invalid Niuma contract. Run init first.`);
   }
   return artifact('rule-adapter', 'installer/codex-rules-contract', entryFile, content);
-}
-
-function appendCodexRuleSections(block, rules, variables) {
-  const region = analyzeCodexRulesRegion(block);
-  if (!['missing', 'valid'].includes(region.status)) {
-    throw new Error(`Cannot install Codex rules because the nested rules region is invalid (${region.status}).`);
-  }
-  const sections = renderCodexRuleSections(rules, undefined, variables);
-  const eol = block.includes('\r\n') ? '\r\n' : '\n';
-  const existingIds = new Set();
-  if (region.status === 'valid') {
-    for (const match of region.block.matchAll(/^### ([^\r\n]+)\s*$/gmu)) {
-      if (existingIds.has(match[1])) throw new Error(`Cannot install Codex rules because the nested rules region contains duplicate section ${match[1]}.`);
-      existingIds.add(match[1]);
-    }
-  }
-  const missing = sections.filter((section) => !existingIds.has(section.id));
-  if (missing.length === 0) return block;
-  const contents = missing.map((section) => section.content.replace(/\n/g, eol)).join(`${eol}${eol}`);
-  if (region.status === 'valid') {
-    const endIndex = region.block.lastIndexOf(CODEX_RULES_END);
-    const nextRegion = `${region.block.slice(0, endIndex)}${eol}${eol}${contents}${eol}${CODEX_RULES_END}`;
-    return replaceCodexRulesRegion(block, nextRegion);
-  }
-  const contractEnd = '<!-- niuma-harness:contract end -->';
-  const endIndex = block.lastIndexOf(contractEnd);
-  if (endIndex < 0) throw new Error('Cannot install Codex rules because the Niuma contract end marker is missing.');
-  const nextRegion = `${CODEX_RULES_BEGIN}${eol}## Selected engineering rules${eol}${eol}${contents}${eol}${CODEX_RULES_END}`;
-  return `${block.slice(0, endIndex)}${eol}${eol}${nextRegion}${eol}${block.slice(endIndex)}`;
 }
 
 function prepareOpenCodeConfigArtifact({ workspaceDir, configFile, expectedPaths }) {

@@ -43,18 +43,6 @@ test('mixed opencode instructions on fresh init leave workspace unchanged', () =
   assert.match(result.stderr, /instructions must be an array of strings/);
 });
 
-test('agent switch preserves scalar OpenCode instructions after managed paths are absent', () => {
-  const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'opencode']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const configPath = path.join(workspace, 'opencode.json');
-  fs.writeFileSync(configPath, '{"instructions":"docs/rules.md"}\n', 'utf8');
-
-  result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assert.strictEqual(fs.readFileSync(configPath, 'utf8'), '{"instructions":"docs/rules.md"}\n');
-});
-
 test('invalid entry leaves workspace unchanged', () => {
   const result = assertFreshFailureLeavesNoChanges('claude', (workspace) => {
     fs.writeFileSync(path.join(workspace, 'CLAUDE.md'), '<!-- niuma-harness:contract begin -->\n', 'utf8');
@@ -166,32 +154,6 @@ test('malformed retired entry leaves workspace unchanged', () => {
   result = run(['init', workspace, '--agent', 'claude']);
   assert.notStrictEqual(result.status, 0);
   assert.match(result.stderr, /cannot retire AGENTS\.md/);
-  assertTreeUnchanged(workspace, before);
-});
-
-test('drifted retired command leaves workspace unchanged', () => {
-  const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'multi']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const target = path.join(workspace, '.opencode', 'commands', 'dev-check.md');
-  fs.appendFileSync(target, 'drift\n', 'utf8');
-  const before = snapshotTree(workspace);
-  result = run(['init', workspace, '--agent', 'claude']);
-  assert.notStrictEqual(result.status, 0);
-  assert.match(result.stderr, /owned command artifact drifted/);
-  assertTreeUnchanged(workspace, before);
-});
-
-test('drifted retired engineering rule leaves workspace unchanged', () => {
-  const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'multi', '--rules', 'all']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const target = path.join(workspace, '.claude', 'rules', 'web', 'testing.md');
-  fs.appendFileSync(target, 'drift\n', 'utf8');
-  const before = snapshotTree(workspace);
-  result = run(['init', workspace, '--agent', 'claude', '--rules', 'common']);
-  assert.notStrictEqual(result.status, 0);
-  assert.match(result.stderr, /owned rule artifact drifted/);
   assertTreeUnchanged(workspace, before);
 });
 

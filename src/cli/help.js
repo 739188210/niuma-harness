@@ -10,9 +10,9 @@ function getHelpText() {
 Init options:
   --agent <name>         claude | codex | opencode | multi
   --harness-dir <name>   Harness name for first init or same-name re-init; not migration
-  --rules <selection>    Fresh init only: all | none | <rule-dir>[,...]
-  --rules-out <dirs>     Fresh init only: exclude rule dirs from all available rules
-  --skills <selection>   Fresh init only: all | none | <skill>[,...], default: all
+  --rules <selection>    First init only: all | none | <rule-dir>[,...]
+  --rules-out <dirs>     First init only: exclude rule dirs from all available rules
+  --skills <selection>   First init only: all | none | <skill>[,...], default: all
   --topology <mode>      single | discover; single disables auto-discovery, discover reads root declarations
   --modules <paths>      Explicit comma-separated existing module roots; bypasses auto-discovery
   --dry-run              Print planned actions without writing files
@@ -33,8 +33,8 @@ Asset install options:
 Asset install commands require an interactive terminal, install in the current working directory,
 and prompt for an agent each time. They require OS/Node O_NOFOLLOW support and fail before writes if it
 is unavailable. install-rule follows native rule adapters: Codex/multi require an existing Niuma AGENTS.md
-contract; OpenCode/multi update opencode.json.instructions. They do not initialize or modify Harness docs,
-manifest state, or task data.
+contract; OpenCode/multi update opencode.json.instructions. Assets do not initialize or modify Harness docs,
+manifest state, or task data, and do not participate in init, Doctor, or Repair lifecycle management.
 
 Global options:
   -h, --help             Show help

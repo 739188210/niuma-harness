@@ -14,6 +14,10 @@ const { runAssetInstall } = require('../installer/index');
 const { STATUS_FILE, parseCoreManifest } = require('../harness/manifest');
 const { loadManifest } = require('../generator/template-manifest');
 const { getRuntimeLayout } = require('../harness/runtime-layout');
+const {
+  findCompetingHarnesses,
+  formatCompetingHarnessError,
+} = require('../harness/workspace-harnesses');
 
 function finalizeRules(options) {
   if (options.rulesOut) {
@@ -30,14 +34,28 @@ function finalizeRules(options) {
 
 function readExistingCoreManifest(workspaceDir, harnessDir) {
   const statusPath = path.join(workspaceDir, harnessDir, STATUS_FILE);
-  if (!fs.existsSync(statusPath) || !fs.lstatSync(statusPath).isFile()) return null;
+  let stat;
   try {
-    return parseCoreManifest(JSON.parse(fs.readFileSync(statusPath, 'utf8')), {
+    stat = fs.lstatSync(statusPath);
+  } catch (error) {
+    if (error.code === 'ENOENT') return null;
+    throw new Error(`cannot inspect previous ${STATUS_FILE}: ${error.message}`);
+  }
+  if (!stat.isFile()) throw new Error(`Path exists but is not a regular file: ${statusPath}`);
+
+  let status;
+  try {
+    status = JSON.parse(fs.readFileSync(statusPath, 'utf8'));
+  } catch (error) {
+    throw new Error(`invalid previous ${STATUS_FILE}: ${error.message}`);
+  }
+  try {
+    return parseCoreManifest(status, {
       harnessDir,
       runtimeLayout: getRuntimeLayout(loadManifest()),
     });
-  } catch {
-    return null;
+  } catch (error) {
+    throw new Error(`invalid previous ${STATUS_FILE}: ${error.message}`);
   }
 }
 
@@ -67,6 +85,10 @@ async function main(argv) {
 
   if (options.command === 'init') {
     const workspaceDir = canonicalizeWorkspacePath(options.targetDir || '.');
+    const conflicts = findCompetingHarnesses(workspaceDir, options.harnessDir);
+    if (conflicts.length > 0) {
+      throw new Error(formatCompetingHarnessError(workspaceDir, options.harnessDir, conflicts));
+    }
     const previousCore = readExistingCoreManifest(workspaceDir, options.harnessDir);
     if (previousCore && (options.rulesProvided || options.rulesOutProvided || options.skillsProvided)) {
       throw new Error('Asset selection options are only valid for fresh init. Use install-rule, install-skill, or install-command for an existing Harness.');

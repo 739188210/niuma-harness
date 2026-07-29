@@ -119,46 +119,6 @@ test('revalidates a canonical rule plan using item target paths', () => {
   }]));
 });
 
-test('re-init refreshes managed rules from a copied package upgrade', () => {
-  const cliRoot = copyCliPackage();
-  const workspace = tempDir();
-  const initArgs = ['init', workspace, '--agent', 'claude'];
-  let result = runWithCliRoot(cliRoot, initArgs);
-  assert.strictEqual(result.status, 0, result.stderr);
-
-  const harnessRoot = path.join(workspace, 'harness');
-  const generatedRule = path.join(workspace, '.claude', 'rules', 'common', 'testing.md');
-  const manifestPath = path.join(harnessRoot, 'manifest.json');
-  const commandRoot = path.join(workspace, '.claude', 'commands');
-  const commandTree = snapshotTree(commandRoot);
-  const previousRule = read(generatedRule);
-  const previousManifest = JSON.parse(read(manifestPath));
-  const previousRecord = previousManifest.artifacts.find((record) => record.target === '.claude/rules/common/testing.md');
-  const previousCommandRecords = previousManifest.artifacts.filter((record) => record.kind === 'command');
-  assert.ok(previousRule.length > 0, 'generated common testing rule should have content');
-  assert.ok(previousRecord, 'generated common testing rule should have an artifact record');
-  assert.strictEqual(previousRecord.digest, digestBytes(fs.readFileSync(generatedRule)));
-
-  const upgradedRule = '# Updated common testing rule\n\nUse the copied package upgrade.\n';
-  fs.writeFileSync(path.join(cliRoot, 'templates', 'rules', 'common', 'testing.md'), upgradedRule, 'utf8');
-
-  result = runWithCliRoot(cliRoot, initArgs);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assert.strictEqual(read(generatedRule), upgradedRule);
-  assertTreeUnchanged(commandRoot, commandTree);
-
-  const upgradedManifest = JSON.parse(read(manifestPath));
-  const upgradedRecord = upgradedManifest.artifacts.find((record) => record.target === '.claude/rules/common/testing.md');
-  const upgradedCommandRecords = upgradedManifest.artifacts.filter((record) => record.kind === 'command');
-  assert.ok(upgradedRecord, 'upgraded common testing rule should have an artifact record');
-  assert.notStrictEqual(upgradedRecord.digest, previousRecord.digest);
-  assert.strictEqual(upgradedRecord.digest, digestBytes(fs.readFileSync(generatedRule)));
-  assert.deepStrictEqual(upgradedCommandRecords, previousCommandRecords);
-
-  const doctor = runWithCliRoot(cliRoot, ['doctor', workspace]);
-  assert.strictEqual(doctor.status, 0, doctor.stderr);
-});
-
 test('--rules none installs no rule files', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude', '--rules', 'none']);
@@ -178,66 +138,6 @@ test('--rules none installs no rule files', () => {
   assert.strictEqual(doctor.status, 0, doctor.stderr);
 });
 
-test('re-init rejects drifted selected rule files and leaves the workspace unchanged', () => {
-  const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const ruleFile = path.join(workspace, '.claude', 'rules', 'common', 'testing.md');
-  fs.writeFileSync(ruleFile, 'custom rule\n', 'utf8');
-  const before = snapshotTree(workspace);
-
-  result = run(['init', workspace, '--agent', 'claude']);
-  assert.notStrictEqual(result.status, 0);
-  assert.match(result.stderr, /owned rule artifact drifted/);
-  assert.match(result.stderr, /repair --dry-run/);
-  assertTreeUnchanged(workspace, before);
-});
-
-test('re-init converges rules from common to none', () => {
-  const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const harnessRoot = path.join(workspace, 'harness');
-  assertRuleDirs(harnessRoot, expectedDefaultRules('claude'));
-  const localRule = path.join(workspace, '.claude', 'rules', 'common', 'local.md');
-  fs.writeFileSync(localRule, 'local rule\n', 'utf8');
-
-  result = run(['init', workspace, '--agent', 'claude', '--rules', 'none']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assert.strictEqual(read(localRule), 'local rule\n');
-  assertNoPath(path.join(workspace, '.claude', 'rules', 'common', 'testing.md'));
-  assertClaudeRulePointers(workspace, 'harness', []);
-  assertManifest(path.join(harnessRoot, 'manifest.json'), {
-    agent: 'claude',
-    rules: [],
-    entryFiles: ['CLAUDE.md'],
-  });
-  const doctor = run(['doctor', workspace]);
-  assert.strictEqual(doctor.status, 0, doctor.stderr);
-});
-
-if (allRuleDirs.length > 1) {
-  test('--rules all then a specific rule converges on re-init', () => {
-    const workspace = tempDir();
-    const selectedRule = allRuleDirs.includes('java') ? 'java' : allRuleDirs.find((rule) => rule !== 'common');
-    const expectedRules = normalizeRules(selectedRule, allRuleDirs);
-    let result = run(['init', workspace, '--agent', 'claude', '--rules', 'all']);
-    assert.strictEqual(result.status, 0, result.stderr);
-    const harnessRoot = path.join(workspace, 'harness');
-    assertRuleDirs(harnessRoot, allRuleDirs);
-
-    result = run(['init', workspace, '--agent', 'claude', '--rules', selectedRule]);
-    assert.strictEqual(result.status, 0, result.stderr);
-    assertRuleDirs(harnessRoot, expectedRules);
-    assertManifest(path.join(harnessRoot, 'manifest.json'), {
-      agent: 'claude',
-      rules: expectedRules,
-      entryFiles: ['CLAUDE.md'],
-    });
-    const doctor = run(['doctor', workspace]);
-    assert.strictEqual(doctor.status, 0, doctor.stderr);
-  });
-}
 
 for (const scenario of [
   { rules: 'common', expected: normalizeRules('common', allRuleDirs) },

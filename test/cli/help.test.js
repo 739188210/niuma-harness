@@ -14,7 +14,7 @@ test('README documents retained CLI commands, doctor health checks, and asset in
   assert.match(readme, /## Doctor/);
 });
 
-test('README documents interactive current-directory asset installers', () => {
+test('README documents interactive current-directory asset installers independent from the core lifecycle', () => {
   const readme = fs.readFileSync(path.join(__dirname, '..', '..', 'README.md'), 'utf8');
   for (const command of ['install-skill', 'install-rule', 'install-command']) {
     assert.match(readme, new RegExp(`niuma-harness ${command} \\[names\\.\\.\\.\\]`));
@@ -22,7 +22,12 @@ test('README documents interactive current-directory asset installers', () => {
   assert.match(readme, /current working directory/i);
   assert.match(readme, /interactive terminal/i);
   assert.match(readme, /does not initialize or update.*Harness/i);
+  assert.match(readme, /do not participate in init, Doctor, or Repair/i);
+  assert.match(readme, /trusted workspace/i);
+  assert.match(readme, /complete cross-process TOCTOU protection/i);
   assert.match(readme, /\.niuma-harness\/asset-installs/i);
+  assert.doesNotMatch(readme, /schema-4 manifest/i);
+  assert.doesNotMatch(readme, /asset state drift/i);
   assert.doesNotMatch(readme, /install-skill \[target\]/);
   assert.doesNotMatch(readme, /install-rule .*--agent/);
   assert.doesNotMatch(readme, /install-command .*--target/);
@@ -44,7 +49,8 @@ test('--help shows init, doctor, repair, asset installers, and no removed comman
   assert.match(result.stdout, /interactive terminal/i);
   assert.match(result.stdout, /--rules-out/);
   assert.match(result.stdout, /--skills/);
-  assert.match(result.stdout, /named selections automatically include common/);
+  assert.match(result.stdout, /First init only/);
+  assert.match(result.stdout, /do not participate in init, Doctor, or Repair/i);
 });
 
 test('init --help shows --agent', () => {

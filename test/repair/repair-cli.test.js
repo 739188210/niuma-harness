@@ -23,7 +23,7 @@ test('repair requires -y in non-TTY mode when changes exist', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
-  fs.appendFileSync(path.join(workspace, '.claude', 'commands', 'dev-check.md'), 'drift');
+  fs.appendFileSync(path.join(workspace, 'harness', 'docs', 'layers', '01-context.md'), 'drift');
   result = run(['repair', workspace]);
   assert.notStrictEqual(result.status, 0);
   assert.match(result.stdout, /Found 1 issue/);

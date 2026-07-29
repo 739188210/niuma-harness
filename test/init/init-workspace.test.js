@@ -3,6 +3,7 @@ const {
   assert,
   assertClaudeRulePointers,
   assertDir,
+  assertTreeUnchanged,
   assertFile,
   assertManifest,
   assertNoCodexRulesDir,
@@ -16,6 +17,7 @@ const {
   read,
   readJson,
   run,
+  snapshotTree,
   tempDir,
 } = require('../support/init-fixtures');
 
@@ -297,6 +299,19 @@ test('agent switch removes an untouched retired entry', () => {
   assertFile(path.join(workspace, 'CLAUDE.md'));
 });
 
+test('agent switch removes an untouched nested Codex rules retired entry', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'multi', '--skills', 'none']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const retired = path.join(workspace, 'AGENTS.md');
+  assert.match(read(retired), /<!-- niuma-harness:codex-rules begin -->/);
+
+  result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertNoPath(retired);
+  assertFile(path.join(workspace, 'CLAUDE.md'));
+});
+
 test('agent switch removes only the retired contract when user content exists', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'multi']);
@@ -381,17 +396,70 @@ test('multi re-init validates every entry before modifying either entry', () => 
   assert.strictEqual(read(agentsEntry), invalidAgents, 'invalid entry should not be modified');
 });
 
-test('init rejects an unsupported existing manifest before modifying the workspace', () => {
-  const workspace = tempDir();
-  const manifestPath = path.join(workspace, 'harness', 'manifest.json');
-  fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
-  fs.writeFileSync(manifestPath, '{"schemaVersion":1}\n', 'utf8');
-  const result = run(['init', workspace, '--agent', 'claude']);
-  assert.notStrictEqual(result.status, 0, 'schemaVersion 1 should not be adopted');
-  assert.match(result.stderr, /schemaVersion 2, 3, or 4 ownership data is required/);
-  assert.strictEqual(read(manifestPath), '{"schemaVersion":1}\n');
-  assertNoPath(path.join(workspace, 'CLAUDE.md'));
-});
+for (const scenario of [
+  {
+    name: 'a directory',
+    create: (manifestPath) => fs.mkdirSync(manifestPath),
+    error: /Path exists but is not a regular file/,
+  },
+  {
+    name: 'a symlink',
+    create: (manifestPath) => {
+      const target = path.join(path.dirname(manifestPath), 'outside-manifest.json');
+      fs.writeFileSync(target, '{}\n', 'utf8');
+      fs.symlinkSync(target, manifestPath, 'file');
+    },
+    error: /Path exists but is not a regular file/,
+  },
+  {
+    name: 'invalid JSON',
+    create: (manifestPath) => fs.writeFileSync(manifestPath, '{bad json\n', 'utf8'),
+    error: /invalid previous manifest\.json: /,
+  },
+  {
+    name: 'an invalid schema',
+    create: (manifestPath) => fs.writeFileSync(manifestPath, '{"schemaVersion":1}\n', 'utf8'),
+    error: /invalid previous manifest\.json: unsupported schemaVersion: 1/,
+  },
+  {
+    name: 'a v5 manifest with legacy asset ownership fields',
+    create: (manifestPath) => fs.writeFileSync(manifestPath, `${JSON.stringify({
+      schemaVersion: 5,
+      agent: 'claude',
+      harnessDir: 'harness',
+      workDir: 'agent-work',
+      entryFiles: ['CLAUDE.md'],
+      topology: { mode: 'single', modules: [] },
+      moduleSupplements: [],
+      createdBy: 'niuma-harness',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      rules: [],
+    }, null, 2)}\n`, 'utf8'),
+    error: /invalid previous manifest\.json: schemaVersion 5 must not contain asset ownership fields: rules/,
+  },
+]) {
+  test(`existing manifest that is ${scenario.name} fails before agent selection or any write`, (t) => {
+    const workspace = tempDir();
+    const manifestPath = path.join(workspace, 'harness', 'manifest.json');
+    fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
+    try {
+      scenario.create(manifestPath);
+    } catch (error) {
+      if (scenario.name === 'a symlink') {
+        t.skip(`file links unavailable: ${error.code || error.message}`);
+        return;
+      }
+      throw error;
+    }
+    const before = snapshotTree(workspace);
+
+    const result = run(['init', workspace]);
+    assert.notStrictEqual(result.status, 0, `invalid ${scenario.name} should be rejected`);
+    assert.match(result.stderr, scenario.error);
+    assert.doesNotMatch(result.stderr, /Missing --agent/);
+    assertTreeUnchanged(workspace, before);
+  });
+}
 
 test('re-init refreshes tool-managed files', () => {
   const workspace = tempDir();

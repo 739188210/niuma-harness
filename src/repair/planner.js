@@ -1,29 +1,20 @@
 const fs = require('fs');
 const path = require('path');
-const { digestBytes, validateArtifactRecords } = require('../artifact/ledger');
+const { digestBytes } = require('../artifact/ledger');
 const {
   CONTRACT_BEGIN,
   CONTRACT_END,
   analyzeContractBlock,
+  analyzeModuleBlock,
+  MODULE_BEGIN,
+  MODULE_END,
   removeContractBlock,
   sliceContractBlock,
   replaceContractBlock,
 } = require('../harness/contract');
-const { getCommandArtifactDescriptors } = require('../command/catalog');
-const {
-  getLegacyClaudeRulePointerTarget,
-  getLegacyRuleTargetRootsForAgent,
-  getRuleTargetRootsForAgent,
-} = require('../harness/agent-native-targets');
-const { getAvailableRuleDirs } = require('../rule/catalog');
-const { renderAllSkillArtifacts } = require('../skill/artifacts');
-const { renderLegacyClaudeRulePointer } = require('../rule/legacy-claude-pointer');
-const {
-  assertNoLossyJsonNumbers,
-  reconcileOpenCodeInstructions,
-} = require('../rule/opencode-instructions');
+const { getRuleEntryInjectionForAgent } = require('../harness/agent-native-targets');
+const { isGeneratedCodexEntry, preserveCodexRulesRegion } = require('../rule/codex-entry-rules');
 const { createDesiredState } = require('./desired-state');
-const { analyzeModuleBlock, MODULE_BEGIN, MODULE_END } = require('../harness/contract');
 const { parseRegistry, sameModules } = require('../harness/topology');
 
 function createRepairPlan(state, backupRoot) {
@@ -203,11 +194,24 @@ function planEntries(collector, desired, state) {
     const analysis = analyzeContractBlock(existing);
     let next;
     let code = 'drift';
-    if (analysis.status === 'valid') next = replaceContractBlock(existing, block);
-    else if (analysis.status === 'missing') next = `${block}\n\n${existing}`;
+    let message = analysis.status === 'valid' ? 'entry contract differs from canonical content' : `entry contract state is ${analysis.status}`;
+    if (analysis.status === 'valid') {
+      try {
+        const existingBlock = sliceContractBlock(existing);
+        const nextBlock = getRuleEntryInjectionForAgent(state.selections.agent)?.entryFile === entry
+          ? preserveCodexRulesRegion(block, existingBlock, 'repair the entry')
+          : block;
+        next = replaceContractBlock(existing, nextBlock);
+      } catch (error) {
+        code = 'incompatible-codex-rules-region';
+        message = error.message;
+        collector.add('entry', code, targetPath, message);
+        continue;
+      }
+    } else if (analysis.status === 'missing') next = `${block}\n\n${existing}`;
     else { next = canonical; code = 'ambiguous-markers'; }
     if (next !== existing) {
-      collector.add('entry', code, targetPath, analysis.status === 'valid' ? 'entry contract differs from canonical content' : `entry contract state is ${analysis.status}`, {
+      collector.add('entry', code, targetPath, message, {
         action: 'write-file', content: Buffer.from(next, 'utf8'), expectedType: 'file', observed, requiresBackup: true,
       });
     }
@@ -242,6 +246,13 @@ function planEntries(collector, desired, state) {
 function isGeneratedInactiveEntry(existing, entry, desired, state) {
   const { renderEntry } = require('../harness/entry-renderer');
   const { getEntryFilesForAgent } = require('../harness/agents');
+  if (isGeneratedCodexEntry(existing, renderEntry, {
+    entryFile: entry,
+    harnessDir: state.harnessDir,
+    topology: desired.status.topology,
+    variables: desired.variables,
+    workDirectory: state.runtimeLayout.workDirectory,
+  })) return true;
   return ['claude', 'codex', 'opencode', 'multi'].some((agent) => {
     if (!getEntryFilesForAgent(agent).includes(entry)) return false;
     const canonical = renderEntry(
@@ -253,214 +264,6 @@ function isGeneratedInactiveEntry(existing, entry, desired, state) {
     );
     return normalizeEol(existing) === normalizeEol(canonical);
   });
-}
-
-function planRules(collector, desired, state) {
-  const previous = readArtifactRecords(state.manifestInfo.value);
-  const previousByTarget = new Map(previous.filter((record) => record.kind === 'rule')
-    .map((record) => [record.target, record]));
-  const selectedTargets = new Set(desired.ruleArtifacts.map((artifact) => artifact.target));
-  const canonicalByTarget = new Map(renderAllRuleArtifacts(desired, state)
-    .map((artifact) => [artifact.target, artifact]));
-
-  for (const artifact of desired.ruleArtifacts) {
-    const observed = inspectNode(artifact.targetPath);
-    const record = previousByTarget.get(artifact.target);
-    const canonical = Buffer.from(artifact.content, 'utf8');
-    const canonicalOnDisk = observed.type === 'file' && observed.digest === artifact.digest;
-    const validRecord = record && record.source === artifact.source && record.digest === artifact.digest;
-    if (canonicalOnDisk) continue;
-    if (observed.type === 'missing' || observed.type === 'blocked') {
-      collector.add('rules', 'missing', artifact.targetPath, 'selected managed rule is missing', {
-        action: 'write-file', content: canonical, expectedType: 'file', observed: { type: 'missing' }, requiresBackup: false,
-      });
-      continue;
-    }
-    const legacy = !validRecord;
-    collector.add('rules', observed.type === 'file' ? 'drift' : 'type-conflict', artifact.targetPath,
-      legacy ? 'modified legacy rule differs from canonical content' : 'owned rule artifact differs from canonical content', {
-        action: observed.type === 'file' ? 'write-file' : 'replace-file', content: canonical, expectedType: 'file', observed, requiresBackup: true,
-      });
-  }
-
-  const staleCandidates = previous.filter((item) => item.kind === 'rule' && !selectedTargets.has(item.target));
-  for (const candidate of staleCandidates) {
-    const canonical = canonicalByTarget.get(candidate.target);
-    const currentCanonical = canonical && candidate.kind === canonical.kind && candidate.source === canonical.source
-      && candidate.target === canonical.target;
-    const removedPackageCanonical = !canonical && isCanonicalPriorRuleRecord(candidate, state);
-    if (!currentCanonical && !removedPackageCanonical) continue;
-    const targetPath = path.join(state.workspaceDir, ...candidate.target.split('/'));
-    const observed = inspectNode(targetPath);
-    if (observed.type === 'file' && observed.digest === candidate.digest) {
-      collector.add('rules', 'stale-rule', targetPath, removedPackageCanonical
-        ? 'obsolete exact-owned rule package template was removed'
-        : 'deselected ledger-owned rule file remains', {
-        action: 'remove-node', expectedType: 'absent', observed, requiresBackup: true,
-      });
-    } else if (removedPackageCanonical && observed.type !== 'missing') {
-      collector.add('rules', 'stale-rule-drift', targetPath, 'drifted obsolete rule is preserved and requires manual resolution');
-    }
-  }
-}
-
-function isCanonicalPriorRuleRecord(record, state) {
-  const sourcePrefix = 'rules/';
-  const targetPrefixes = [
-    `${state.harnessDir}/docs/rules/`,
-    ...getRuleTargetRootsForAgent(state.selections.agent).map((root) => `${root}/`),
-    ...getLegacyRuleTargetRootsForAgent(state.selections.agent).map((root) => `${root}/`),
-  ];
-  if (!record.source.startsWith(sourcePrefix)) return false;
-  const sourceSuffix = record.source.slice(sourcePrefix.length);
-  const targetPrefix = targetPrefixes.find((prefix) => record.target.startsWith(prefix));
-  if (!targetPrefix || sourceSuffix !== record.target.slice(targetPrefix.length)) return false;
-  const rule = sourceSuffix.split('/')[0];
-  return Boolean(rule) && state.manifestInfo.value && Array.isArray(state.manifestInfo.value.rules)
-    && state.manifestInfo.value.rules.includes(rule);
-}
-
-function renderAllRuleArtifacts(desired, state) {
-  const { renderRuleArtifacts } = require('../rule/artifacts');
-  return renderRuleArtifacts(state.selections.agent, desired.availableRules, state.manifest.rulesRoot, desired.variables);
-}
-
-function readArtifactRecords(manifest) {
-  try {
-    return validateArtifactRecords(manifest && manifest.artifacts);
-  } catch {
-    return [];
-  }
-}
-
-function planOpenCode(collector, desired, state) {
-  const targetPath = path.join(state.workspaceDir, desired.openCode.target);
-  const observed = inspectNode(targetPath);
-  if (observed.type === 'missing') {
-    if (desired.openCode.paths.length > 0) {
-      const content = Buffer.from(`${JSON.stringify({ instructions: desired.openCode.paths }, null, 2)}\n`);
-      collector.add('adapters', 'missing', targetPath, 'OpenCode config with managed rule paths is missing', {
-        action: 'write-file', content, expectedType: 'file', observed, requiresBackup: false,
-      });
-    }
-    return;
-  }
-  if (observed.type !== 'file') {
-    const value = desired.openCode.paths.length > 0 ? { instructions: desired.openCode.paths } : {};
-    collector.add('adapters', 'type-conflict', targetPath, `expected OpenCode config file, found ${observed.type}`, {
-      action: 'replace-file', content: Buffer.from(`${JSON.stringify(value, null, 2)}\n`), expectedType: 'file', observed, requiresBackup: true,
-    });
-    return;
-  }
-
-  const raw = fs.readFileSync(targetPath, 'utf8');
-  let config;
-  try {
-    assertNoLossyJsonNumbers(raw);
-    config = JSON.parse(raw);
-  } catch (error) {
-    collector.add('adapters', 'invalid-json', targetPath, error.message || 'OpenCode config is invalid JSON and cannot be safely merged');
-    return;
-  }
-  if (!config || Array.isArray(config) || typeof config !== 'object') {
-    collector.add('adapters', 'type-conflict', targetPath, 'OpenCode config must contain a JSON object');
-    return;
-  }
-
-  let next;
-  let nextOwnedPaths;
-  let code = 'drift';
-  let message = 'OpenCode managed rule paths differ';
-  try {
-    const reconciled = reconcileOpenCodeInstructions(
-      config,
-      desired.openCode.paths,
-      state.selections.openCodeInstructions || []
-    );
-    next = reconciled.config;
-    nextOwnedPaths = reconciled.ownedPaths;
-  } catch (error) {
-    if (desired.openCode.paths.length === 0) {
-      return;
-    }
-    next = { ...config, instructions: desired.openCode.paths };
-    nextOwnedPaths = desired.openCode.paths;
-    code = 'invalid-instructions';
-    message = error.message;
-  }
-  desired.status.openCodeInstructions = nextOwnedPaths;
-  const content = `${JSON.stringify(next, null, 2)}\n`;
-  if (content !== raw) {
-    collector.add('adapters', code, targetPath, message, {
-      action: 'write-file', content: Buffer.from(content), expectedType: 'file', observed, requiresBackup: true,
-    });
-  }
-}
-
-function planUnselectedAdapters(collector, desired, state) {
-  const selected = new Set(state.selections.rules);
-  for (const rule of getAvailableRuleDirs(state.manifest.rulesRoot)) {
-    if (selected.has(rule)) continue;
-    const target = getLegacyClaudeRulePointerTarget(rule);
-    const targetPath = path.join(state.workspaceDir, ...target.split('/'));
-    const observed = inspectNode(targetPath);
-    const canonicalDigest = digestBytes(renderLegacyClaudeRulePointer(state.harnessDir, rule));
-    if (observed.type === 'file' && observed.digest === canonicalDigest) {
-      collector.add('adapters', 'stale-adapter', targetPath, 'exact legacy Claude rule pointer remains', {
-        action: 'remove-node', expectedType: 'absent', observed, requiresBackup: true,
-      });
-    }
-  }
-}
-
-function planStaleSkillArtifacts(collector, desired, state) {
-  const previous = readArtifactRecords(state.manifestInfo.value)
-    .filter((record) => record.kind === 'skill');
-  if (previous.length === 0) return;
-  const activeTargets = new Set(desired.skillArtifacts.map((artifact) => artifact.target));
-  const canonicalByTarget = new Map(renderAllSkillArtifacts(state.manifest.skillsRoot, desired.variables)
-    .map((artifact) => [artifact.target, artifact]));
-
-  for (const record of previous) {
-    if (activeTargets.has(record.target)) continue;
-    const canonical = canonicalByTarget.get(record.target);
-    if (!canonical || canonical.kind !== record.kind || canonical.source !== record.source
-        || canonical.digest !== record.digest) continue;
-    const targetPath = path.join(state.workspaceDir, ...record.target.split('/'));
-    const observed = inspectNode(targetPath);
-    if (observed.type === 'file' && observed.digest === record.digest) {
-      collector.add('skills', 'stale-skill', targetPath, 'inactive ledger-owned skill artifact remains', {
-        action: 'remove-node', expectedType: 'absent', observed, requiresBackup: true,
-      });
-    } else if (observed.type !== 'missing') {
-      collector.add('skills', 'stale-skill-drift', targetPath, 'drifted or unsafe stale skill artifact is preserved');
-    }
-  }
-}
-
-function planStaleCommands(collector, desired, state) {
-  const previousManifest = state.manifestInfo.value;
-  if (!previousManifest || !previousManifest.agent || !Array.isArray(previousManifest.commands)) return;
-  let canonical;
-  try {
-    canonical = new Map(getCommandArtifactDescriptors(previousManifest.agent, previousManifest.commands)
-      .map((descriptor) => [descriptor.target, descriptor]));
-  } catch {
-    return;
-  }
-  const active = new Set(desired.artifacts.map((item) => item.target));
-  for (const record of readArtifactRecords(previousManifest)) {
-    if (record.kind !== 'command' || active.has(record.target)) continue;
-    const descriptor = canonical.get(record.target);
-    if (!descriptor || descriptor.kind !== record.kind || descriptor.source !== record.source) continue;
-    const targetPath = path.join(state.workspaceDir, ...record.target.split('/'));
-    const observed = inspectNode(targetPath);
-    if (observed.type === 'file' && observed.digest === record.digest) {
-      collector.add('commands', 'stale-command', targetPath, 'inactive ledger-owned command artifact remains', {
-        action: 'remove-node', expectedType: 'absent', observed, requiresBackup: true,
-      });
-    }
-  }
 }
 
 function planManifest(collector, desired, state) {

@@ -181,7 +181,7 @@ test('explicit modules initialize root routing and local supplements', () => {
   const moduleEntry = read(path.join(workspace, 'apps', 'admin', 'CLAUDE.md'));
   assert.match(moduleEntry, /\[\`?AGENTS\.md\`?\]\(AGENTS\.md\)/);
   assert.match(moduleEntry, /canonical source for module-local responsibilities/i);
-  assert.strictEqual(readJson(path.join(harness, 'manifest.json')).schemaVersion, 4);
+  assert.strictEqual(readJson(path.join(harness, 'manifest.json')).schemaVersion, 5);
   const doctor = run(['doctor', workspace]);
   assert.strictEqual(doctor.status, 0, doctor.stdout || doctor.stderr);
 });
@@ -481,6 +481,7 @@ test('repair preserves valid topology when unrelated manifest selections are inv
 
   const manifestPath = path.join(workspace, 'harness', 'manifest.json');
   const before = readJson(manifestPath);
+  before.schemaVersion = 4;
   before.commands = [];
   fs.writeFileSync(manifestPath, `${JSON.stringify(before, null, 2)}\n`, 'utf8');
 
@@ -498,6 +499,7 @@ test('schema-3 topology corruption produces Doctor diagnostics without crashing'
   assert.strictEqual(result.status, 0, result.stderr);
   const manifestPath = path.join(workspace, 'harness', 'manifest.json');
   const manifest = readJson(manifestPath);
+  manifest.schemaVersion = 3;
   manifest.topology.modules = [null];
   fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
   result = run(['doctor', workspace]);

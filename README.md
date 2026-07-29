@@ -4,7 +4,7 @@ Initialize and check a 7-layer AI engineering harness for a project workspace.
 
 Niuma Harness generates a documentation scaffold plus an entry file (`CLAUDE.md` / `AGENTS.md`) that carries a distilled operating loop — agents follow it automatically every session. The scaffold helps AI coding tools understand project context, policies, workflows, observation checks, recovery paths, memory rules, loop behavior, and task notes, and writes a `manifest.json` for later health checks.
 
-Re-running `init` is safe and idempotent: it refreshes tool-managed files, preserves your own content, and merges the operating loop into an existing entry file.
+Re-running `init` is safe and idempotent: it refreshes the generated Harness core, preserves your own content, preserves independently installed assets, and merges the operating loop into an existing entry file.
 
 ## Quick start
 
@@ -48,9 +48,9 @@ niuma-harness install-command [names...]
 
 Each command asks for the target agent. With no names it lists available package assets for multi-selection. Asset installation never reads or updates `harness/manifest.json`, Harness docs, project context, or task material.
 
-Existing files with different contents are shown as conflicts. Enter `y` to back them up under `.niuma-harness/asset-installs/` and overwrite them; any other response cancels the whole installation. `--dry-run` prints the plan without writing files. These commands require an interactive terminal and an OS/Node runtime with `O_NOFOLLOW`; when that atomic no-follow capability is unavailable, installation fails before planning, backups, or writes rather than following a potentially swapped link.
+Existing files with different contents are shown as conflicts. Enter `y` to back them up under `.niuma-harness/asset-installs/` and overwrite them; any other response cancels the whole installation. `--dry-run` prints the plan without writing files. These commands require an interactive terminal and an OS/Node runtime with `O_NOFOLLOW`; when that capability is unavailable, installation fails before planning, backups, or writes. They are intended for a trusted workspace whose paths are not being concurrently modified by an adversarial process: they do not provide a workspace lock or complete cross-process TOCTOU protection for parent-directory or regular-file replacement races.
 
-`install-rule` follows the selected agent's native rule surface: Claude writes `.claude/rules/`; Codex appends selected rules to an existing Niuma contract in `AGENTS.md`; OpenCode writes `.opencode/rules/` and appends paths to `opencode.json.instructions`; `multi` applies all relevant surfaces. Codex and multi require a valid Niuma `AGENTS.md` contract (run `init` first). Existing OpenCode configuration must be a JSON object with string-array `instructions`, if present. Installer changes do not update the current schema-4 manifest, so `doctor` can report asset state drift until the planned core-only Doctor lifecycle update lands.
+`install-rule` follows the selected agent's native rule surface: Claude writes `.claude/rules/`; Codex appends selected rules to an existing Niuma contract in `AGENTS.md`; OpenCode writes `.opencode/rules/` and appends paths to `opencode.json.instructions`; `multi` applies all relevant surfaces. Codex and multi require a valid Niuma `AGENTS.md` contract (run `init` first). Existing OpenCode configuration must be a JSON object with string-array `instructions`, if present. Installed assets are independent from the generated Harness core: they do not participate in init, Doctor, or Repair lifecycle management.
 
 ### Init options
 
@@ -184,23 +184,12 @@ The layer files describe what each layer must do. Engineering standards are inst
 
 ## Manifest
 
-`manifest.json` records the expected harness shape for later checks:
+`manifest.json` records the generated Harness core for later checks. Schema 5 owns the Harness directory, agent, entry files, and topology; independently installed rules, commands, skills, adapters, and local configuration are outside its lifecycle:
 
 ```json
 {
-  "schemaVersion": 3,
+  "schemaVersion": 5,
   "agent": "claude",
-  "rules": ["common"],
-  "skills": ["database-readonly", "zentao-bug-workflow"],
-  "commands": ["dev-check.md", "dev-summary.md", "git-status.md", "git-submit-idea.md", "git-sync.md", "glab-projects.md"],
-  "artifacts": [
-    {
-      "kind": "command",
-      "source": "commands/dev-check.md",
-      "target": ".claude/commands/dev-check.md",
-      "digest": "sha256:<64 lowercase hex characters>"
-    }
-  ],
   "harnessDir": "harness",
   "workDir": "agent-work",
   "entryFiles": ["CLAUDE.md"],
@@ -211,20 +200,11 @@ The layer files describe what each layer must do. Engineering standards are inst
 }
 ```
 
-This project-level `manifest.json` is generated inside the harness root and is **regenerated on every successful `init`** so it reflects the latest parameters. Schema version 3 retains the generic artifact ownership ledger for native command artifacts and selected canonical rule files, and records normalized module topology plus module supplement ownership. Schema version 2 root-only manifests remain readable for compatibility. Each record stores its kind, template source, workspace-relative target, and SHA-256 digest of the exact generated bytes, for example:
+This project-level `manifest.json` is generated inside the harness root and is **regenerated on every successful `init`** so it reflects the latest core parameters. Schema 5 records normalized module topology and module supplement ownership; it does not record native rules, commands, skills, or adapters. Schema versions 2–4 remain readable for migration to the core-only lifecycle.
 
-```json
-{
-  "kind": "rule",
-  "source": "rules/common/testing.md",
-  "target": ".claude/rules/common/testing.md",
-  "digest": "sha256:<exact-byte digest>"
-}
-```
+It is separate from the package-internal `templates/manifest.json` used by the CLI to know which core template files to copy. The project-level manifest is authoritative ownership and history state only for the installed Harness core. Rules, commands, skills, adapters, and local configuration remain independent assets. This release does not use signatures or an external trust store.
 
-It is separate from the package-internal `templates/manifest.json` used by the CLI to know which template files to copy. The project-level manifest is authoritative ownership and history state for that installed harness. Coordinated edits to both an artifact and its recorded digest are treated as an explicit project-state change and are outside Niuma's integrity guarantees; this release does not use signatures or an external trust store.
-
-Schema version 1 is intentionally unsupported. `init` will not adopt existing files from an old or malformed manifest, and `doctor` accepts schema version 2 or 3.
+Schema version 1 is intentionally unsupported. `init` will not adopt existing files from an old or malformed manifest, and `doctor` accepts schema versions 2–5.
 
 ## Re-running init (upgrade behavior)
 
@@ -235,11 +215,11 @@ Schema version 1 is intentionally unsupported. `init` will not adopt existing fi
 | **Entry** (`CLAUDE.md` / `AGENTS.md`) | Merged: if the contract block is present it is refreshed; otherwise the block is inserted at the top. Your existing content is always preserved. |
 | **Tool-managed** (layers, process playbooks, policy, index, README.md, `agent-work/README.md`) | Refreshed from the template. |
 | **User-maintained** (`project-context.md`) | Preserved if it exists; created from the template only when absent. |
-| Native Markdown rules | Claude files under `.claude/rules/` and OpenCode files under `.opencode/rules/` are Niuma-managed. On re-init, clean ledger-owned files refresh from the package; drifted or unowned occupied targets stop before mutation and direct you to `repair --dry-run`. Deselect removes only unchanged ledger-owned files; unknown local files survive. Codex receives the selected Markdown content through the managed `AGENTS.md` contract. |
-| Native command artifacts (`.claude/commands/`, `.agents/skills/<command-id>/`, `.opencode/commands/`) | Refreshed only when the schema-2 ledger proves ownership and the current exact-byte digest has not drifted. Occupied unowned or locally modified targets stop `init` before scaffold writes. Unknown user-created files are left untouched. |
+| Native Markdown rules | Installed on first init or through `install-rule`, then left unchanged by re-init, Doctor, and Repair. Claude uses `.claude/rules/`; OpenCode uses `.opencode/rules/`; Codex receives selected Markdown content through the managed `AGENTS.md` region. |
+| Native command artifacts (`.claude/commands/`, `.agents/skills/<command-id>/`, `.opencode/commands/`) | Installed on first init or through `install-command`, then left unchanged by re-init, Doctor, and Repair. Unknown user-created files are also left untouched. |
 | `manifest.json` | Regenerated every time. |
 
-Rules follow the current init parameters: re-running with a new `--agent`, `--rules`, or `--rules-out` selection converges native rule files and the Codex entry contract to the new final set. Direct edits to generated rule files are unsupported in this release; use `repair --dry-run` to inspect recovery before `repair` backs up and restores canonical content. There is no rule override layer.
+Rules are selected only during first init or by `install-rule`. Re-init preserves existing native rule files and the Codex rules region; Doctor and Repair leave all rule assets unchanged. Direct edits to generated rule files are unsupported in this release, and there is no rule override layer.
 
 Built-in command workflows are single-sourced from `templates/commands/*.md`. `init` wraps that same workflow content for each supported agent surface:
 
@@ -252,13 +232,13 @@ Built-in command workflows are single-sourced from `templates/commands/*.md`. `i
 
 For Codex, command-derived skills are command artifacts, not native skill templates from `templates/skills/`. Do not duplicate command workflows under `templates/skills/`; update the source file in `templates/commands/` instead.
 
-Before any scaffold mutation, `init` renders and preflights the complete command artifact set. A missing target can be created; an existing target can be refreshed only when its ledger record matches and its current digest equals the previously recorded digest. Missing owned files may be recreated. `--dry-run` performs the same ownership checks without writing.
+First init installs command artifacts selected for the agent. Afterwards, use `install-command` to add package commands; re-init, Doctor, and Repair leave command artifacts unchanged.
 
 A workspace may contain only one recognizable Niuma harness. `init` scans direct child directories for Niuma-owned `manifest.json` files without following sibling directory or manifest symlinks. If a harness exists under another name, normal init and `--dry-run` stop before planning or mutation. `--harness-dir` does not move, merge, adopt, or delete an existing harness; resolve duplicate directories explicitly or re-run with the unique existing directory name. Workspace-mode `doctor` reports competing harnesses, while pointing `doctor` directly at a harness root checks only that root.
 
 `init` and `doctor` canonicalize the target before establishing the workspace boundary. This accepts standard filesystem aliases such as macOS `/var/...` → `/private/var/...`, a workspace symlink/junction, and a missing workspace below an aliased existing parent. After that boundary is established, Niuma still refuses symlinks, junctions, and dangling links in paths it reads, writes, or removes inside the canonical workspace. Competing-harness discovery still does not follow sibling directory or manifest links.
 
-Re-running with a different agent in the same workspace and `--harness-dir` converges agent-native surfaces. Retired command artifacts and deselected rule files are removed only when canonical targets, ledger ownership, and the recorded digest all match; the new ledger contains only current artifacts. Retired entry files lose only their Niuma contract unless the whole file is the untouched generated entry. Retired skill roots lose only package-known files from the previous selection; local configuration and unknown files remain. Ambiguous contracts, drifted artifacts, invalid target types, and internal symlinks stop during preflight. The implementation revalidates destructive plans before applying them, but it does not provide cross-process TOCTOU protection, a workspace lock, or crash-proof rollback for filesystem failures.
+Re-running with a different agent in the same workspace and `--harness-dir` refreshes the core and converges active and retired entry contracts without changing agent-native rule, command, or skill assets. Retired entry files lose only their Niuma contract unless the whole file is the untouched generated entry. Ambiguous contracts, invalid target types, and internal symlinks stop during preflight. The implementation revalidates destructive plans before applying them, but it does not provide cross-process TOCTOU protection, a workspace lock, or crash-proof rollback for filesystem failures.
 
 ## Repair
 
@@ -282,11 +262,11 @@ Before the first source mutation, every affected existing target is copied and v
     <original workspace-relative paths>
 ```
 
-Regular files are byte-verified, directories preserve their complete contents, and symlink nodes are backed up without following or modifying their targets. Repair then regenerates canonical managed content, rebuilds the schema-2 command-and-rule ledger and manifest, and runs Doctor. Doctor exact-validates package descriptors, ledger records, and disk bytes for selected managed rules. Exit code `0` means Doctor passed; backups are retained permanently for manual recovery.
+Regular files are byte-verified, directories preserve their complete contents, and symlink nodes are backed up without following or modifying their targets. Repair then regenerates canonical core content, rebuilds the core-only manifest, and runs Doctor. Rules, commands, skills, adapters, and their configuration are not planned, backed up, restored, or validated by Repair or Doctor. Exit code `0` means Doctor passed; backups are retained permanently for manual recovery.
 
-For ambiguous active entry markers, the whole original file is backed up and a clean canonical file is generated. Invalid active `opencode.json.instructions` values are backed up before Repair replaces only that field with the selected canonical rule-file path array while preserving other parseable configuration fields. For an ambiguous inactive entry, repair backs up the whole file and neutralizes only the Niuma marker text so recoverable free content remains. Repair does not guess how to reconstruct ambiguous managed/free entry boundaries; the complete original remains in the backup.
+For ambiguous active entry markers, the whole original file is backed up and a clean canonical file is generated. For an ambiguous inactive entry, Repair backs up the whole file and neutralizes only the Niuma marker text so recoverable free content remains. Repair does not guess how to reconstruct ambiguous managed/free entry boundaries; the complete original remains in the backup.
 
-If a valid generated manifest exists, its agent/rules/skills selections are retained. If the manifest is unusable, interactive repair asks for the agent when needed; non-interactive `-y` requires `--agent`. `--rules`, `--rules-out`, and `--skills` may provide recovery selections in that damaged-state case. With multiple harness roots, select one explicitly using `--harness-dir`; repair does not migrate or merge competing harnesses.
+If a valid generated manifest exists, Repair retains its core agent and topology state. If the manifest is unusable, interactive Repair asks for the agent when needed; non-interactive `-y` requires `--agent`. `--rules`, `--rules-out`, and `--skills` are first-init selections and do not drive recovery. With multiple harness roots, select one explicitly using `--harness-dir`; Repair does not migrate or merge competing harnesses.
 
 Repair does not provide `--force` or `--include-*` bypasses. It is backup-first and performs best-effort synchronous rollback, but it does not claim cross-process locking or crash-safe transactions.
 
@@ -357,7 +337,7 @@ npx niuma-harness init . --agent claude --rules-out common
 
 ## Skills selection
 
-Skills are optional native `SKILL.md` packages copied from `templates/skills/`. They default to `all`; use `--skills none` to skip native skill installation. This selection does not control command-derived Codex skills generated from `templates/commands/*.md`.
+Skills are optional native `SKILL.md` packages copied from `templates/skills/` during first init. They default to `all`; use `--skills none` to skip native skill installation. Use `install-skill` to add package skills later. This selection does not control command-derived Codex skills generated from `templates/commands/*.md`.
 
 ```bash
 npx niuma-harness init . --agent claude
@@ -375,13 +355,13 @@ Installed skill targets depend on the selected agent:
 | `opencode` | `.opencode/skills/<skill>/` |
 | `multi` | all three roots |
 
-Re-running `init` converges known skills in the current agent's target roots: files listed under `templates/skills/<skill>/` are installed, refreshed, or removed with the selected skill, while unknown user-created files are left untouched. A skill may distribute an example configuration and instruct the user to create a separate local runtime file; because that local file is not part of the template list, re-init and deselection preserve it.
+Re-init, Doctor, and Repair preserve all skill files in the current agent's target roots. A skill may distribute an example configuration and instruct the user to create a separate local runtime file; both that configuration and installed skill files remain independent from the Harness core lifecycle.
 
 ## Doctor integrity boundary
 
-`doctor` does not treat generated `harness/manifest.json` as an unrestricted source of truth. It binds `createdBy`, the actual harness directory, package-defined `workDir`, agent-derived entry files, and package-and-agent-derived command selection. It then exact-compares tool-managed core/work templates, selected skill package files, Claude rule pointers, expected Niuma-managed OpenCode rule-file path entries, and current package-rendered command artifacts.
+`doctor` does not treat generated `harness/manifest.json` as an unrestricted source of truth. It binds `createdBy`, the actual harness directory, package-defined `workDir`, agent-derived entry files, and normalized topology. It then exact-compares tool-managed core and work templates.
 
-The integrity boundary intentionally excludes user-maintained `project-context.md`, entry content outside the managed contract, local runtime files such as `zentao.config.json`, unknown files, and OpenCode fields or instructions outside the Niuma-managed block. Selected generated rule artifacts are included: Doctor exact-validates their package descriptor, ledger record, and disk bytes. `rules` and `skills` remain manifest selections, so explicit `--rules none` and `--rules-out` exclusions retain their existing semantics.
+The integrity boundary intentionally excludes user-maintained `project-context.md`, entry content outside the managed contract, independently installed rules, commands, skills, adapters, local runtime files such as `zentao.config.json`, unknown files, and OpenCode configuration. Doctor does not validate asset package descriptors, asset bytes, or native instruction references.
 
 ## Development
 

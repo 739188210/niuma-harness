@@ -15,6 +15,10 @@ function init(workspace, agent = 'claude', extra = []) {
   return run(['init', workspace, '--agent', agent, '--rules', 'none', '--skills', 'none', ...extra]);
 }
 
+function reinit(workspace, agent = 'claude', extra = []) {
+  return run(['init', workspace, '--agent', agent, ...extra]);
+}
+
 function writeManifestCandidate(workspace, name, content) {
   const root = path.join(workspace, name);
   fs.mkdirSync(root, { recursive: true });
@@ -36,7 +40,7 @@ test('custom harness supports same-name re-init and agent switch', () => {
   const workspace = tempDir();
   let result = init(workspace, 'claude', ['--harness-dir', 'ai-harness']);
   assert.strictEqual(result.status, 0, result.stderr);
-  result = init(workspace, 'codex', ['--harness-dir', 'ai-harness']);
+  result = reinit(workspace, 'codex', ['--harness-dir', 'ai-harness']);
   assert.strictEqual(result.status, 0, result.stderr);
   result = run(['doctor', workspace, '--harness-dir', 'ai-harness']);
   assert.strictEqual(result.status, 0, result.stdout);

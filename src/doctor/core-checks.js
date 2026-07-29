@@ -5,7 +5,13 @@ const { getAllEntryFiles, getEntryFilesForAgent } = require('../harness/agents')
 const { assertNoSymlinkInPath, safeResolveInside } = require('../infrastructure/fs-safe');
 const { resolveRuntimePaths } = require('../harness/runtime-layout');
 const { renderEntry } = require('../harness/entry-renderer');
-const { analyzeContractBlock, normalizeContractForCoreComparison, sliceContractBlock } = require('../harness/contract');
+const {
+  analyzeCodexRulesRegion,
+  analyzeContractBlock,
+  normalizeContractForCoreComparison,
+  sliceContractBlock,
+} = require('../harness/contract');
+const { getRuleEntryInjectionForAgent } = require('../harness/agent-native-targets');
 const { addError, addOk } = require('./result');
 
 // 入口文件在 workspace 根（harness 目录的父级），不在 harness root。
@@ -127,6 +133,13 @@ function checkEntryContractIntegrity(context) {
       addError(result, error);
       continue;
     }
+    if (getRuleEntryInjectionForAgent(agent)?.entryFile === entryFile) {
+      const rulesError = codexRulesRegionError(analyzeCodexRulesRegion(analysis.block).status, entryFile);
+      if (rulesError) {
+        addError(result, rulesError);
+        continue;
+      }
+    }
 
     // 比对前归一化换行符：用户文件可能被 git autocrlf 或编辑器转成 CRLF，避免误报 drift。
     const normalize = (value) => value.replace(/\r\n/g, '\n');
@@ -145,6 +158,17 @@ function contractAnalysisError(status, entryFile) {
     'missing-end': `contract zone end marker missing in ${entryFile}`,
     multiple: `multiple contract zones in ${entryFile}`,
     'out-of-order': `contract zone markers out of order in ${entryFile}`,
+  };
+  return messages[status] || null;
+}
+
+function codexRulesRegionError(status, entryFile) {
+  const messages = {
+    missing: `Codex rules region missing in ${entryFile}`,
+    'missing-begin': `Codex rules region begin marker missing in ${entryFile}`,
+    'missing-end': `Codex rules region end marker missing in ${entryFile}`,
+    multiple: `multiple Codex rules regions in ${entryFile}`,
+    'out-of-order': `Codex rules region markers out of order in ${entryFile}`,
   };
   return messages[status] || null;
 }

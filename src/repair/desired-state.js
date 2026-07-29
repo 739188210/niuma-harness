@@ -4,6 +4,8 @@ const { createStatus } = require('../harness/manifest');
 const { createTemplateVariables } = require('../harness/template-variables');
 const { renderTemplate } = require('../generator/template-renderer');
 const { renderTopologyRoute } = require('../harness/topology-route');
+const { withEmptyCodexRulesRegion } = require('../rule/codex-entry-rules');
+const { getRuleEntryInjectionForAgent } = require('../harness/agent-native-targets');
 
 function createDesiredState(input) {
   const { agent, harnessDir, manifest, runtimeLayout, topology = { mode: 'single', modules: [] }, moduleSupplements = [], workspaceDir } = input;
@@ -42,8 +44,16 @@ function createDesiredState(input) {
 
   const activeEntries = getEntryFilesForAgent(agent);
   const { renderEntry } = require('../harness/entry-renderer');
+  const codexEntry = getRuleEntryInjectionForAgent(agent)?.entryFile;
   for (const entry of activeEntries) {
-    files.push(descriptor(workspaceDir, path.join(workspaceDir, entry), renderEntry(agent, entry, harnessDir, workDirectory, topology), 'entry', 'entry'));
+    const content = renderEntry(agent, entry, harnessDir, workDirectory, topology);
+    files.push(descriptor(
+      workspaceDir,
+      path.join(workspaceDir, entry),
+      entry === codexEntry ? withEmptyCodexRulesRegion(content) : content,
+      'entry',
+      'entry'
+    ));
   }
 
   const status = createStatus({

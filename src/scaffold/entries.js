@@ -10,7 +10,12 @@ const {
 } = require('../infrastructure/fs-safe');
 const { renderEntry } = require('../harness/entry-renderer');
 const { getRuleEntryInjectionForAgent } = require('../harness/agent-native-targets');
-const { appendCodexRuleSections } = require('../installer/rule-adapters');
+const {
+  appendCodexRuleSections,
+  isGeneratedCodexEntry,
+  preserveCodexRulesRegion,
+  withEmptyCodexRulesRegion,
+} = require('../rule/codex-entry-rules');
 const { renderTemplate } = require('../generator/template-renderer');
 const {
   analyzeContractBlock,
@@ -58,14 +63,16 @@ function prepareEntryPlan(context) {
     );
     const freshBlock = sliceContractBlock(freshFull);
     if (!freshBlock) throw new Error('entry template is missing a valid contract zone');
-    const ruleInjection = !context.previousStatus && getRuleEntryInjectionForAgent(context.options.agent);
+    const ruleInjection = getRuleEntryInjectionForAgent(context.options.agent);
     const block = ruleInjection && entryFile === ruleInjection.entryFile
-      ? appendCodexRuleSections(freshBlock, context.options.rules, context.variables)
+      ? (!context.previousStatus
+        ? appendCodexRuleSections(withEmptyCodexRulesRegion(freshBlock), context.options.rules, context.variables)
+        : withEmptyCodexRulesRegion(freshBlock))
       : freshBlock;
     const full = ruleInjection && entryFile === ruleInjection.entryFile
       ? replaceContractBlock(freshFull, block)
       : freshFull;
-    return prepareEntryWrite(context.workspaceDir, entryFile, full, block);
+    return prepareEntryWrite(context.workspaceDir, entryFile, full, block, Boolean(ruleInjection && entryFile === ruleInjection.entryFile));
   });
   if (!context.previousStatus) {
     return current;
@@ -74,21 +81,11 @@ function prepareEntryPlan(context) {
   const active = new Set(currentEntries);
   const retired = getEntryFilesForAgent(context.previousStatus.agent)
     .filter((entryFile) => !active.has(entryFile))
-    .map((entryFile) => prepareEntryRetirement(
-      context.workspaceDir,
-      entryFile,
-      renderEntry(
-        context.previousStatus.agent,
-        entryFile,
-        context.options.harnessDir,
-        context.workDirectory,
-        context.previousStatus.topology
-      )
-    ));
+    .map((entryFile) => prepareEntryRetirement(context, entryFile));
   return [...retired, ...current];
 }
 
-function prepareEntryWrite(workspaceDir, entryFile, freshFull, freshBlock) {
+function prepareEntryWrite(workspaceDir, entryFile, freshFull, freshBlock, preservesCodexRules = false) {
   const targetPath = safeResolveInside(workspaceDir, entryFile, 'entry target');
   if (!inspectFileTarget(targetPath)) {
     return { action: 'create', content: freshFull, kind: 'write', targetPath };
@@ -99,7 +96,11 @@ function prepareEntryWrite(workspaceDir, entryFile, freshFull, freshBlock) {
   const block = eol === '\r\n' ? freshBlock.replace(/\n/g, '\r\n') : freshBlock;
   const analysis = analyzeContractBlock(existing);
   if (analysis.status === 'valid') {
-    return { action: 'refresh', content: replaceContractBlock(existing, block), kind: 'write', targetPath };
+    const existingBlock = sliceContractBlock(existing);
+    const nextBlock = preservesCodexRules
+      ? preserveCodexRulesRegion(block, existingBlock, 're-initialize the entry')
+      : block;
+    return { action: 'refresh', content: replaceContractBlock(existing, nextBlock), kind: 'write', targetPath };
   }
   if (analysis.status === 'missing') {
     return { action: 'merge', content: `${block}${eol}${eol}${existing}`, kind: 'write', targetPath };
@@ -107,15 +108,29 @@ function prepareEntryWrite(workspaceDir, entryFile, freshFull, freshBlock) {
   throw new Error(contractMergeError(analysis.status, entryFile));
 }
 
-function prepareEntryRetirement(workspaceDir, entryFile, previousFull) {
-  const targetPath = safeResolveInside(workspaceDir, entryFile, 'retired entry target');
+function prepareEntryRetirement(context, entryFile) {
+  const targetPath = safeResolveInside(context.workspaceDir, entryFile, 'retired entry target');
   if (!inspectFileTarget(targetPath)) {
     return { action: 'skip', kind: 'retire-entry', observedDigest: null, targetPath };
   }
 
   const existing = fs.readFileSync(targetPath, 'utf8');
   const observedDigest = digestBytes(existing);
-  if (existing === previousFull) {
+  const previousFull = renderEntry(
+    context.previousStatus.agent,
+    entryFile,
+    context.options.harnessDir,
+    context.workDirectory,
+    context.previousStatus.topology
+  );
+  const generatedCodexEntry = isGeneratedCodexEntry(existing, renderEntry, {
+    entryFile,
+    harnessDir: context.options.harnessDir,
+    topology: context.previousStatus.topology,
+    variables: context.variables,
+    workDirectory: context.workDirectory,
+  });
+  if (existing === previousFull || generatedCodexEntry) {
     return { action: 'remove', kind: 'retire-entry', observedDigest, targetPath };
   }
 

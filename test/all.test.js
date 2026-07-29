@@ -4,7 +4,6 @@ require('./harness/runtime-layout.test');
 require('./artifact/artifact-ledger.test');
 require('./artifact/rule-artifacts.test');
 require('./harness/agent-native-targets.test');
-require('./harness/agent-switch.test');
 require('./harness/workspace-harness-conflict.test');
 require('./init.test');
 require('./doctor.test');

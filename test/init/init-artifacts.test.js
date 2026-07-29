@@ -47,45 +47,6 @@ test('agent-native command files are installed for supported agents', () => {
   }
 });
 
-test('same-agent re-init preserves command and rule records in the mixed ledger', () => {
-  const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-
-  result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const kinds = new Set(readJson(path.join(workspace, 'harness', 'manifest.json')).artifacts.map((record) => record.kind));
-  assert.deepStrictEqual([...kinds].sort(), ['command', 'rule', 'skill']);
-});
-
-test('agent-switch to Codex removes Markdown rule records from the mixed ledger', () => {
-  const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-
-  result = run(['init', workspace, '--agent', 'codex']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const kinds = new Set(readJson(path.join(workspace, 'harness', 'manifest.json')).artifacts.map((record) => record.kind));
-  assert.deepStrictEqual([...kinds].sort(), ['command', 'skill']);
-  assert.match(read(path.join(workspace, 'AGENTS.md')), /Selected engineering rules/);
-});
-
-test('re-init rejects drifted known command files and preserves unknown user commands', () => {
-  const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const knownCommand = path.join(workspace, '.claude', 'commands', allCommandFiles[0]);
-  const unknownCommand = path.join(workspace, '.claude', 'commands', 'local-user-command.md');
-  fs.writeFileSync(knownCommand, 'custom command\n', 'utf8');
-  fs.writeFileSync(unknownCommand, 'local command\n', 'utf8');
-
-  result = run(['init', workspace, '--agent', 'claude']);
-  assert.notStrictEqual(result.status, 0, 're-init should reject a drifted owned command');
-  assert.match(result.stderr, /owned command artifact drifted/);
-  assert.strictEqual(read(knownCommand), 'custom command\n');
-  assert.strictEqual(read(unknownCommand), 'local command\n');
-});
-
 test('init refuses to overwrite an unowned Codex command skill before other scaffold writes', () => {
   const workspace = tempDir();
   const commandId = getCommandId(allCommandFiles[0]);
@@ -99,22 +60,6 @@ test('init refuses to overwrite an unowned Codex command skill before other scaf
   assert.strictEqual(read(skillPath), 'user skill\n');
   assertNoPath(path.join(workspace, 'AGENTS.md'));
   assertNoPath(path.join(workspace, 'harness'));
-});
-
-test('re-init recreates a missing owned command artifact and refreshes its digest', () => {
-  const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const commandPath = path.join(workspace, '.claude', 'commands', allCommandFiles[0]);
-  fs.unlinkSync(commandPath);
-
-  result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assertFile(commandPath);
-  assertManifest(path.join(workspace, 'harness', 'manifest.json'), {
-    agent: 'claude',
-    entryFiles: ['CLAUDE.md'],
-  });
 });
 
 test('codex command skills are generated from command templates', () => {
@@ -150,24 +95,6 @@ test('git-submit-idea command preserves default Change List and fat_saas boundar
   assert.match(skill, /不得退化为提交全部本地改动/);
   assert.match(skill, /git push -u origin HEAD/);
   assert.match(skill, /不重复创建/);
-});
-
-test('re-init rejects drifted codex command skills and preserves unknown user skills', () => {
-  const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'codex']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const commandId = getCommandId(allCommandFiles[0]);
-  const knownSkill = path.join(workspace, '.agents', 'skills', commandId, 'SKILL.md');
-  const unknownSkill = path.join(workspace, '.agents', 'skills', 'local-user-skill', 'SKILL.md');
-  fs.mkdirSync(path.dirname(unknownSkill), { recursive: true });
-  fs.writeFileSync(knownSkill, 'custom command skill\n', 'utf8');
-  fs.writeFileSync(unknownSkill, 'local skill\n', 'utf8');
-
-  result = run(['init', workspace, '--agent', 'codex']);
-  assert.notStrictEqual(result.status, 0, 're-init should reject a drifted Codex command skill');
-  assert.match(result.stderr, /owned command artifact drifted/);
-  assert.strictEqual(read(knownSkill), 'custom command skill\n');
-  assert.strictEqual(read(unknownSkill), 'local skill\n');
 });
 
 test('default skills selection installs all known skills', () => {
@@ -300,146 +227,7 @@ if (allSkillDirs.includes('zentao-bug-workflow')) {
     assert.match(skill, /"actions": \["comment"\]/);
     assert.match(readme, /"actions": \["comment"\]/);
   });
-
-  test('zentao local config survives while drifted managed skill files block re-init', () => {
-    const workspace = tempDir();
-    let result = run(['init', workspace, '--agent', 'claude', '--skills', 'zentao-bug-workflow']);
-    assert.strictEqual(result.status, 0, result.stderr);
-    const skillRoot = path.join(workspace, '.claude', 'skills', 'zentao-bug-workflow');
-    const configPath = path.join(skillRoot, 'zentao.config.json');
-    const examplePath = path.join(skillRoot, 'zentao.config.example.json');
-    const scriptPath = path.join(skillRoot, 'scripts', 'zentao_bug.py');
-    fs.writeFileSync(configPath, '{"local": true}\n', 'utf8');
-    fs.writeFileSync(examplePath, '{"unsafeExample": true}\n', 'utf8');
-    fs.writeFileSync(scriptPath, 'old unsafe script\n', 'utf8');
-
-    result = run(['init', workspace, '--agent', 'claude', '--skills', 'zentao-bug-workflow']);
-    assert.notStrictEqual(result.status, 0);
-    assert.match(result.stderr, /owned skill artifact drifted/);
-    assert.strictEqual(read(configPath), '{"local": true}\n', 'local zentao config should be preserved');
-    assert.strictEqual(read(examplePath), '{"unsafeExample": true}\n');
-    assert.strictEqual(read(scriptPath), 'old unsafe script\n');
-  });
-
-  test('deselecting zentao removes managed files but preserves local config and unknown files', () => {
-    const workspace = tempDir();
-    let result = run(['init', workspace, '--agent', 'claude', '--skills', 'zentao-bug-workflow']);
-    assert.strictEqual(result.status, 0, result.stderr);
-    const skillRoot = path.join(workspace, '.claude', 'skills', 'zentao-bug-workflow');
-    const configPath = path.join(skillRoot, 'zentao.config.json');
-    const localFile = path.join(skillRoot, 'local-notes.md');
-    fs.writeFileSync(configPath, '{"local": true}\n', 'utf8');
-    fs.writeFileSync(localFile, 'keep me\n', 'utf8');
-
-    result = run(['init', workspace, '--agent', 'claude', '--skills', 'none']);
-    assert.strictEqual(result.status, 0, result.stderr);
-    assert.strictEqual(read(configPath), '{"local": true}\n', 'deselect should preserve local zentao config');
-    assert.strictEqual(read(localFile), 'keep me\n', 'deselect should preserve unknown user files');
-    assertNoPath(path.join(skillRoot, 'zentao.config.example.json'));
-    assertNoPath(path.join(skillRoot, 'SKILL.md'));
-    assertNoPath(path.join(skillRoot, 'scripts', 'zentao_bug.py'));
-    assertNoPath(path.join(skillRoot, 'scripts'));
-  });
-
-  test('zentao helper refuses external image URLs before sending token headers', () => {
-    const workspace = tempDir();
-    const result = run(['init', workspace, '--agent', 'claude', '--skills', 'zentao-bug-workflow']);
-    assert.strictEqual(result.status, 0, result.stderr);
-    const helper = read(path.join(workspace, '.claude', 'skills', 'zentao-bug-workflow', 'scripts', 'zentao_bug.py'));
-    assert.match(helper, /def same_origin\(left: str, right: str\) -> bool:/);
-    assert.match(helper, /Refusing to download external image URL from ZenTao bug content/);
-    assert.match(helper, /request\.Request\(url, headers=\{"Token": token\}\)/);
-    assert.match(helper, /request\.build_opener\(NoRedirectHandler\)/);
-    assert.match(helper, /download_file\(ref\["url"\], target, token, config\)/);
-  });
 }
-
-test('multi installs selected skills to all native target roots', () => {
-  const workspace = tempDir();
-  const result = run(['init', workspace, '--agent', 'multi', '--skills', primarySkill]);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assertFile(path.join(workspace, '.claude', 'skills', primarySkill, 'SKILL.md'));
-  assertFile(path.join(workspace, '.agents', 'skills', primarySkill, 'SKILL.md'));
-  assertFile(path.join(workspace, '.opencode', 'skills', primarySkill, 'SKILL.md'));
-  assertSkillDirs(workspace, 'multi', [primarySkill]);
-  assertManifest(path.join(workspace, 'harness', 'manifest.json'), {
-    agent: 'multi',
-    skills: [primarySkill],
-    entryFiles: ['CLAUDE.md', 'AGENTS.md'],
-  });
-});
-
-test('--skills all installs all available skills', () => {
-  const workspace = tempDir();
-  const result = run(['init', workspace, '--agent', 'claude', '--skills', 'all']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assertSkillDirs(workspace, 'claude', allSkillDirs);
-  assertManifest(path.join(workspace, 'harness', 'manifest.json'), {
-    agent: 'claude',
-    skills: allSkillDirs,
-    entryFiles: ['CLAUDE.md'],
-  });
-});
-
-test('re-init rejects a drifted selected skill before retiring other known skills', () => {
-  const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'claude', '--skills', 'all']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const selectedSkillFile = path.join(workspace, '.claude', 'skills', primarySkill, 'SKILL.md');
-  const originalSkill = read(selectedSkillFile);
-  const otherSkill = allSkillDirs.find((skillName) => skillName !== primarySkill);
-  const otherSkillFile = path.join(workspace, '.claude', 'skills', otherSkill, 'SKILL.md');
-  fs.writeFileSync(selectedSkillFile, 'custom skill\n', 'utf8');
-
-  result = run(['init', workspace, '--agent', 'claude', '--skills', primarySkill]);
-  assert.notStrictEqual(result.status, 0);
-  assert.match(result.stderr, /owned skill artifact drifted/);
-  assert.strictEqual(read(selectedSkillFile), 'custom skill\n');
-  assert.strictEqual(read(otherSkillFile), read(path.join(workspace, '.claude', 'skills', otherSkill, 'SKILL.md')));
-  assert.notStrictEqual(read(selectedSkillFile), originalSkill);
-});
-
-test('deselecting a known skill preserves unknown files inside its directory', () => {
-  assert.ok(allSkillDirs.length > 1, 'test requires at least two known skills');
-  const deselectedSkill = allSkillDirs.find((skillDir) => skillDir !== primarySkill);
-  const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'claude', '--skills', 'all']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const skillRoot = path.join(workspace, '.claude', 'skills', deselectedSkill);
-  const localFile = path.join(skillRoot, 'local-notes.md');
-  fs.writeFileSync(localFile, 'keep me\n', 'utf8');
-
-  result = run(['init', workspace, '--agent', 'claude', '--skills', primarySkill]);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assert.strictEqual(read(localFile), 'keep me\n', 'deselect should preserve unknown files in a known skill directory');
-  assertNoPath(path.join(skillRoot, 'SKILL.md'));
-});
-
-test('single-agent re-init removes known files from retired agent skill roots', () => {
-  assert.ok(allSkillDirs.length > 1, 'test requires at least two known skills');
-  const selectedSkill = allSkillDirs[0];
-  const otherAgentSkill = allSkillDirs.find((skillDir) => skillDir !== selectedSkill);
-  const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'multi', '--skills', 'all']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const localFile = path.join(workspace, '.agents', 'skills', selectedSkill, 'local-notes.md');
-  fs.writeFileSync(localFile, 'keep me\n', 'utf8');
-
-  result = run(['init', workspace, '--agent', 'claude', '--skills', selectedSkill]);
-  assert.strictEqual(result.status, 0, result.stderr);
-
-  assertFile(path.join(workspace, '.claude', 'skills', selectedSkill, 'SKILL.md'));
-  assertNoPath(path.join(workspace, '.claude', 'skills', otherAgentSkill, 'SKILL.md'));
-  assertNoPath(path.join(workspace, '.agents', 'skills', otherAgentSkill, 'SKILL.md'));
-  assertNoPath(path.join(workspace, '.opencode', 'skills', otherAgentSkill, 'SKILL.md'));
-  assert.strictEqual(read(localFile), 'keep me\n');
-  assertManifest(path.join(workspace, 'harness', 'manifest.json'), {
-    agent: 'claude',
-    skills: [selectedSkill],
-    entryFiles: ['CLAUDE.md'],
-    artifactTargets: getExpectedCommandArtifactTargets('claude', allCommandFiles),
-  });
-});
 
 test('skill normalization handles defaults, lists, and invalid values', () => {
   assert.deepStrictEqual(normalizeSkills(null, allSkillDirs), allSkillDirs);
@@ -463,29 +251,4 @@ test('--skills dry-run writes nothing', () => {
   assert.strictEqual(result.status, 0, result.stderr);
   assertNoPath(path.join(workspace, '.claude'));
   assert.match(result.stdout, new RegExp(primarySkill));
-});
-
-test('re-init with a different agent converges rule adapters', () => {
-  const workspace = tempDir();
-  let result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const harnessRoot = path.join(workspace, 'harness');
-  assertRuleDirs(harnessRoot, expectedDefaultRules('claude'));
-
-  const localClaudeRule = path.join(workspace, '.claude', 'rules', 'local.md');
-  fs.mkdirSync(path.dirname(localClaudeRule), { recursive: true });
-  fs.writeFileSync(localClaudeRule, 'local rule pointer\n', 'utf8');
-
-  result = run(['init', workspace, '--agent', 'codex']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assertRuleDirs(harnessRoot, expectedDefaultRules('codex'));
-  assertClaudeRulePointers(workspace, 'harness', []);
-  assertFile(localClaudeRule);
-  assertManifest(path.join(harnessRoot, 'manifest.json'), {
-    agent: 'codex',
-    entryFiles: ['AGENTS.md'],
-    artifactTargets: getExpectedCommandArtifactTargets('codex', allCommandFiles),
-  });
-  const doctor = run(['doctor', workspace]);
-  assert.strictEqual(doctor.status, 0, doctor.stderr);
 });

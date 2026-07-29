@@ -32,13 +32,36 @@ test('repair restores core drift without planning or mutating assets', () => {
   assert.strictEqual(run(['doctor', workspace]).status, 0);
 });
 
-test('repair rejects asset recovery flags before mutation', () => {
+test('repair preserves a valid Codex rules region byte-for-byte while restoring contract drift', () => {
   const workspace = tempDir();
-  const result = run(['init', workspace, '--agent', 'claude', '--rules', 'none', '--skills', 'none']);
+  let result = run(['init', workspace, '--agent', 'codex', '--rules', 'none', '--skills', 'none']);
   assert.strictEqual(result.status, 0, result.stderr);
+  const entryPath = path.join(workspace, 'AGENTS.md');
+  let entry = read(entryPath).replace('Operating Loop', 'Operating Loop (drifted)');
+  entry = entry.replace(
+    '<!-- niuma-harness:codex-rules end -->',
+    '### local/example.md\n\nKeep these exact bytes.\n<!-- niuma-harness:codex-rules end -->'
+  );
+  fs.writeFileSync(entryPath, entry, 'utf8');
+  const regionBefore = read(entryPath).match(/<!-- niuma-harness:codex-rules begin -->[\s\S]*?<!-- niuma-harness:codex-rules end -->/)[0];
+
+  result = run(['repair', workspace, '-y']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const repaired = read(entryPath);
+  assert.doesNotMatch(repaired, /Operating Loop \(drifted\)/);
+  assert.strictEqual(repaired.match(/<!-- niuma-harness:codex-rules begin -->[\s\S]*?<!-- niuma-harness:codex-rules end -->/)[0], regionBefore);
+});
+
+test('repair rejects an old Codex contract without a rules region without mutation', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'codex', '--rules', 'none', '--skills', 'none']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const entryPath = path.join(workspace, 'AGENTS.md');
+  fs.writeFileSync(entryPath, read(entryPath).replace(/\n*<!-- niuma-harness:codex-rules begin -->[\s\S]*?<!-- niuma-harness:codex-rules end -->/, ''), 'utf8');
   const before = snapshotTree(workspace);
-  const repair = run(['repair', workspace, '--rules', 'common']);
-  assert.notStrictEqual(repair.status, 0);
-  assert.match(repair.stderr, /repair does not manage rules or skills/);
+
+  result = run(['repair', workspace, '-y']);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stderr, /Codex rules region.*missing.*incompatible/);
   assertTreeUnchanged(workspace, before);
 });

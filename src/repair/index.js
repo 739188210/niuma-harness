@@ -29,13 +29,16 @@ async function runRepair(options, dependencies = {}) {
   if (plan.issues.length === 0 || options.dryRun) {
     return;
   }
-  const unresolved = plan.issues.filter((issue) => issue.code === 'invalid-topology-state'
+  const unresolved = plan.issues.filter((issue) => issue.code === 'incompatible-codex-rules-region'
+    || issue.code === 'invalid-topology-state'
     || issue.code === 'module-registry-missing'
     || issue.code === 'module-registry-invalid'
     || issue.code === 'module-registry-drift'
     || issue.code === 'module-supplement-missing'
     || issue.code === 'module-supplement-drift');
   if (unresolved.length > 0) {
+    const codexRegion = unresolved.find((issue) => issue.code === 'incompatible-codex-rules-region');
+    if (codexRegion) throw new Error(codexRegion.message);
     throw new Error(`Repair cannot safely resolve user-owned or drifted obsolete artifacts: ${unresolved.map((issue) => issue.path).join(', ')}`);
   }
   const confirmed = options.yes || await (dependencies.confirmRepair || confirmRepair)();

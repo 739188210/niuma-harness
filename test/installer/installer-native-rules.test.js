@@ -56,6 +56,19 @@ test('install-rule rejects missing Codex contract without writes', { skip: suppo
   assertTreeUnchanged(workspace, before);
 });
 
+test('install-rule rejects an old Codex contract without a rules region without writes', { skip: supportsNoFollow ? false : 'O_NOFOLLOW is unavailable' }, () => {
+  const workspace = initWorkspace('codex', ['--rules', 'none']);
+  const entryPath = path.join(workspace, 'AGENTS.md');
+  fs.writeFileSync(entryPath, read(entryPath).replace(/\n*<!-- niuma-harness:codex-rules begin -->[\s\S]*?<!-- niuma-harness:codex-rules end -->/, ''), 'utf8');
+  const before = snapshotTree(workspace);
+
+  const result = installRule(workspace, '2', '1', 'y');
+
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stderr, /Codex rules region is missing and incompatible/);
+  assertTreeUnchanged(workspace, before);
+});
+
 test('install-rule appends OpenCode paths without changing unrelated configuration', { skip: supportsNoFollow ? false : 'O_NOFOLLOW is unavailable' }, () => {
   const workspace = tempDir();
   const configPath = path.join(workspace, 'opencode.json');

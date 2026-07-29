@@ -111,3 +111,46 @@ test('doctor fails when the entry contains multiple contract zones', () => {
   assert.match(result.stdout, /multiple contract zones in CLAUDE\.md/);
 });
 
+test('doctor accepts Codex rule content but requires one valid nested region', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'codex', '--rules', 'none']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  const entryPath = path.join(workspace, 'AGENTS.md');
+  fs.writeFileSync(entryPath, read(entryPath).replace(
+    '<!-- niuma-harness:codex-rules end -->',
+    '### local/example.md\n\nUser-managed text.\n<!-- niuma-harness:codex-rules end -->'
+  ), 'utf8');
+
+  const result = run(['doctor', workspace]);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.match(result.stdout, /contract intact in AGENTS\.md/);
+});
+
+test('doctor rejects a Codex contract with a missing nested rules region', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'codex', '--rules', 'none']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  const entryPath = path.join(workspace, 'AGENTS.md');
+  fs.writeFileSync(entryPath, read(entryPath).replace(/\n*<!-- niuma-harness:codex-rules begin -->[\s\S]*?<!-- niuma-harness:codex-rules end -->/, ''), 'utf8');
+
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stdout, /Codex rules region missing in AGENTS\.md/);
+});
+
+test('doctor rejects duplicate Codex nested rules markers', () => {
+  const workspace = tempDir();
+  const init = run(['init', workspace, '--agent', 'codex', '--rules', 'none']);
+  assert.strictEqual(init.status, 0, init.stderr);
+  const entryPath = path.join(workspace, 'AGENTS.md');
+  const entry = read(entryPath);
+  fs.writeFileSync(entryPath, entry.replace(
+    '<!-- niuma-harness:codex-rules end -->',
+    '<!-- niuma-harness:codex-rules end -->\n<!-- niuma-harness:codex-rules begin -->\n<!-- niuma-harness:codex-rules end -->'
+  ), 'utf8');
+
+  const result = run(['doctor', workspace]);
+  assert.notStrictEqual(result.status, 0);
+  assert.match(result.stdout, /multiple Codex rules regions in AGENTS\.md/);
+});
+

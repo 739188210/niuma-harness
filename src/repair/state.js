@@ -59,6 +59,15 @@ function parseRepairCoreState(value, harnessDir, runtimeLayout) {
     const parsed = parseCoreManifest(value, { harnessDir, runtimeLayout });
     return { ...parsed, errors: [], topologyInvalid: false, usable: true };
   } catch (error) {
+    const recovered = recoverCoreWithoutTopology(value, harnessDir, runtimeLayout);
+    if (recovered) {
+      return {
+        ...recovered,
+        errors: [error.message],
+        topologyInvalid: true,
+        usable: false,
+      };
+    }
     return {
       agent: null,
       errors: [error.message],
@@ -67,6 +76,19 @@ function parseRepairCoreState(value, harnessDir, runtimeLayout) {
       topologyInvalid: false,
       usable: false,
     };
+  }
+}
+
+function recoverCoreWithoutTopology(value, harnessDir, runtimeLayout) {
+  if (value.schemaVersion < 3) return null;
+  try {
+    return parseCoreManifest({
+      ...value,
+      topology: { mode: 'single', modules: [] },
+      moduleSupplements: [],
+    }, { harnessDir, runtimeLayout });
+  } catch {
+    return null;
   }
 }
 

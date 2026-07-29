@@ -4,7 +4,6 @@ const { runRepair } = require('../../src/repair/index');
 const { applyRepairPlan, rollback: realRollback } = require('../../src/repair/apply');
 const { copyNodeNoFollow, verifyNodeCopy } = require('../../src/repair/backup');
 const {
-  allCommandFiles,
   assert,
   fs,
   path,
@@ -17,7 +16,7 @@ function initDamagedWorkspace() {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
-  fs.appendFileSync(path.join(workspace, '.claude', 'commands', allCommandFiles[0]), 'drift\n');
+  fs.appendFileSync(path.join(workspace, 'harness', 'docs', 'layers', '01-context.md'), 'drift\n');
   return workspace;
 }
 
@@ -311,7 +310,7 @@ test('repair backup failure prevents later stages and leaves the source tree unc
 test('repair revalidation failure retains a verified backup without applying changes', async () => {
   const workspace = initDamagedWorkspace();
   const repairId = '20260712T000000Z-revalidate';
-  const damagedCommand = path.join(workspace, '.claude', 'commands', allCommandFiles[0]);
+  const damagedCommand = path.join(workspace, 'harness', 'docs', 'layers', '01-context.md');
   const stages = [];
   const originalLog = console.log;
   console.log = () => {};
@@ -339,7 +338,7 @@ test('repair revalidation failure retains a verified backup without applying cha
   }
 
   const backupRoot = path.join(fs.realpathSync(workspace), '.niuma-harness', 'repairs', repairId);
-  const backedUpCommand = path.join(backupRoot, 'files', '.claude', 'commands', allCommandFiles[0]);
+  const backedUpCommand = path.join(backupRoot, 'files', 'harness', 'docs', 'layers', '01-context.md');
   assert.deepStrictEqual(stages, ['revalidate']);
   assert.deepStrictEqual(fs.readFileSync(damagedCommand), fs.readFileSync(backedUpCommand));
   assert.ok(fs.existsSync(path.join(backupRoot, 'repair-manifest.json')));
@@ -376,14 +375,14 @@ test('repair apply failure stops orchestration before Doctor, rollback, and succ
   assert.deepStrictEqual(stages, ['backup', 'revalidate', 'apply']);
 });
 
-test('repair Doctor failure restores the original rule and manifest while retaining the permanent backup', async () => {
+test('repair Doctor failure restores the original core file and manifest while retaining the permanent backup', async () => {
   const workspace = initDamagedWorkspace();
   const manifestPath = path.join(workspace, 'harness', 'manifest.json');
   const manifestBytes = fs.readFileSync(manifestPath);
-  const rulePath = path.join(workspace, '.claude', 'rules', 'common', 'testing.md');
-  fs.writeFileSync(rulePath, 'damaged rule before repair\n');
+  const rulePath = path.join(workspace, 'harness', 'docs', 'layers', '01-context.md');
+  fs.writeFileSync(rulePath, 'damaged core file before repair\n');
   const ruleBytes = fs.readFileSync(rulePath);
-  const repairId = '20260712T000000Z-rule-doctor';
+  const repairId = '20260712T000000Z-core-doctor';
   const originalLog = console.log;
   console.log = () => {};
 
@@ -403,14 +402,14 @@ test('repair Doctor failure restores the original rule and manifest while retain
   const backupRoot = path.join(fs.realpathSync(workspace), '.niuma-harness', 'repairs', repairId);
   assert.deepStrictEqual(fs.readFileSync(rulePath), ruleBytes);
   assert.deepStrictEqual(fs.readFileSync(manifestPath), manifestBytes);
-  assert.deepStrictEqual(fs.readFileSync(path.join(backupRoot, 'files', '.claude', 'rules', 'common', 'testing.md')), ruleBytes);
+  assert.deepStrictEqual(fs.readFileSync(path.join(backupRoot, 'files', 'harness', 'docs', 'layers', '01-context.md')), ruleBytes);
   assert.ok(fs.existsSync(path.join(backupRoot, 'repair-manifest.json')));
 });
 
-test('repair Doctor failure restores the original command and retains the permanent backup', async () => {
+test('repair Doctor failure restores the original core file and retains the permanent backup', async () => {
   const workspace = initDamagedWorkspace();
   const repairId = '20260712T000000Z-doctor';
-  const damagedCommand = path.join(workspace, '.claude', 'commands', allCommandFiles[0]);
+  const damagedCommand = path.join(workspace, 'harness', 'docs', 'layers', '01-context.md');
   const damagedBytes = fs.readFileSync(damagedCommand);
   const rollbackCalls = [];
   const stages = [];
