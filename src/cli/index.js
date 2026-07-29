@@ -10,6 +10,7 @@ const { normalizeSelectedRules, getDefaultRulesForAgent } = require('../rule/cat
 const { runDoctor } = require('../doctor/index');
 const { runInit } = require('../scaffold/index');
 const { runRepair } = require('../repair/index');
+const { runAssetInstall } = require('../installer/index');
 const { STATUS_FILE } = require('../harness/manifest');
 
 function finalizeRules(options) {
@@ -36,6 +37,16 @@ async function main(argv) {
 
   if (options.help || !options.command) {
     console.log(getHelpText());
+    return;
+  }
+
+  if (['install-skill', 'install-rule', 'install-command'].includes(options.command)) {
+    await runAssetInstall({
+      type: options.command.slice('install-'.length),
+      names: options.assetNames,
+      workspaceDir: canonicalizeWorkspacePath(process.cwd()),
+      dryRun: options.dryRun,
+    });
     return;
   }
 
@@ -71,7 +82,7 @@ async function main(argv) {
     return;
   }
 
-  throw new Error(`Unknown command: ${options.command}. Use "init", "doctor", or "repair".`);
+  throw new Error(`Unknown command: ${options.command}. Use "init", "doctor", "repair", or an asset install command.`);
 }
 
 module.exports = {

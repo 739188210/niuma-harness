@@ -79,6 +79,17 @@ function getRuleTargetRootsForAgent(agent) {
   return [...getProfile(agent).rules.roots];
 }
 
+function getStandaloneRuleTargetRootsForAgent(agent) {
+  const roots = {
+    claude: ['.claude/rules'],
+    codex: ['.codex/rules'],
+    opencode: ['.opencode/rules'],
+    multi: ['.claude/rules', '.codex/rules', '.opencode/rules'],
+  };
+  if (!roots[agent]) throw new Error(`Unsupported agent: ${agent}`);
+  return [...roots[agent]];
+}
+
 function getLegacyRuleTargetRootsForAgent(agent) {
   return [...getProfile(agent).rules.legacyRoots];
 }
@@ -162,6 +173,7 @@ module.exports = {
   getRuleAdapterTargetsForAgent,
   getRuleEntryInjectionForAgent,
   getRuleTargetRootsForAgent,
+  getStandaloneRuleTargetRootsForAgent,
   getSkillTargetRootsForAgent,
   getSupportedAgents,
   isRuleArtifactManagedByAdapter,

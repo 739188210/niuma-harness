@@ -3,11 +3,19 @@ const { normalizeAgent } = require('../harness/agents');
 const { normalizeRules, normalizeRulesOut } = require('../rule/catalog');
 const { normalizeSkills } = require('../skill/catalog');
 
+const ASSET_INSTALL_COMMANDS = new Set([
+  'install-skill',
+  'install-rule',
+  'install-command',
+]);
+
 // 解析阶段会规范化 agent/rules，并读取本地规则目录来校验选择值。
 function parseArgs(argv) {
   const options = {
     command: null,
     targetDir: null,
+    assetNames: [],
+    assetInstall: false,
     agent: null,
     agentProvided: false,
     rules: null,
@@ -69,6 +77,12 @@ function parseArgs(argv) {
 
     if (!options.command) {
       options.command = arg;
+      options.assetInstall = ASSET_INSTALL_COMMANDS.has(arg);
+      continue;
+    }
+
+    if (ASSET_INSTALL_COMMANDS.has(options.command)) {
+      options.assetNames.push(arg);
       continue;
     }
 
@@ -80,17 +94,19 @@ function parseArgs(argv) {
     throw new Error(`Unexpected argument: ${arg}`);
   }
 
-  options.agent = normalizeAgent(options.agent);
-  if (options.rulesOut) {
-    if (options.rulesProvided) {
-      throw new Error('--rules and --rules-out cannot be used together.');
+  if (!ASSET_INSTALL_COMMANDS.has(options.command)) {
+    options.agent = normalizeAgent(options.agent);
+    if (options.rulesOut) {
+      if (options.rulesProvided) {
+        throw new Error('--rules and --rules-out cannot be used together.');
+      }
+      options.rules = normalizeRulesOut(options.rulesOut);
+    } else if (options.rulesProvided) {
+      options.rules = normalizeRules(options.rules);
     }
-    options.rules = normalizeRulesOut(options.rulesOut);
-  } else if (options.rulesProvided) {
-    options.rules = normalizeRules(options.rules);
+    options.skills = normalizeSkills(options.skills);
+    options.harnessDir = normalizeHarnessDir(options.harnessDir);
   }
-  options.skills = normalizeSkills(options.skills);
-  options.harnessDir = normalizeHarnessDir(options.harnessDir);
   validateCommandOptions(options);
 
   return options;
@@ -173,6 +189,15 @@ function splitLongOption(arg) {
 }
 
 function validateCommandOptions(options) {
+  if (ASSET_INSTALL_COMMANDS.has(options.command)) {
+    if (options.agentProvided || options.rulesProvided || options.rulesOutProvided
+        || options.skillsProvided || options.harnessDirProvided || options.yes
+        || options.backupDirProvided || options.topologyProvided || options.modulesProvided) {
+      throw new Error(`${options.command} only supports --dry-run.`);
+    }
+    return;
+  }
+
   if (options.command !== 'init' && (options.topologyProvided || options.modulesProvided)) {
     throw new Error('--topology and --modules are only available for init.');
   }

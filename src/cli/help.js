@@ -3,6 +3,9 @@ function getHelpText() {
   niuma-harness init [target] [options]
   niuma-harness doctor [target] [options]
   niuma-harness repair [target] [options]
+  niuma-harness install-skill [names...] [--dry-run]
+  niuma-harness install-rule [names...] [--dry-run]
+  niuma-harness install-command [names...] [--dry-run]
 
 Init options:
   --agent <name>         claude | codex | opencode | multi
@@ -27,6 +30,12 @@ Repair options:
   --dry-run              Print all issues and actions without writing
   -y, --yes              Print the plan and skip confirmation
 
+Asset install options:
+  --dry-run              Show the current-directory asset plan without writing
+
+Asset install commands require an interactive terminal, install in the current working directory,
+and prompt for an agent each time. They do not initialize or modify Harness docs, entry files, or task data.
+
 Global options:
   -h, --help             Show help
 
@@ -44,7 +53,9 @@ Examples:
   niuma-harness init . --agent multi --modules apps/admin,services/orders
   niuma-harness doctor .
   niuma-harness repair . --dry-run
-  niuma-harness repair . -y`;
+  niuma-harness repair . -y
+  niuma-harness install-skill
+  niuma-harness install-rule common,typescript`;
 }
 
 module.exports = {

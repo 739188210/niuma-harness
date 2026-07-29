@@ -1,15 +1,10 @@
 // 生成态 artifact ownership ledger：统一校验目标路径、摘要和记录合并。
-const crypto = require('crypto');
 const path = require('path');
+const { digestBytes } = require('../infrastructure/content-digest');
 const { validateRelativePath } = require('../infrastructure/fs-safe');
 
 const DIGEST_PATTERN = /^sha256:[0-9a-f]{64}$/;
 const ARTIFACT_KINDS = new Set(['command', 'rule', 'skill']);
-
-function digestBytes(value) {
-  const bytes = Buffer.isBuffer(value) ? value : Buffer.from(value, 'utf8');
-  return `sha256:${crypto.createHash('sha256').update(bytes).digest('hex')}`;
-}
 
 function validateArtifactRecords(records) {
   if (!Array.isArray(records)) {

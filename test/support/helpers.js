@@ -36,16 +36,16 @@ const layerMemos = [
   'docs/layers/07-loop.md',
 ];
 
-function run(args) {
+function run(args, options = {}) {
   return spawnSync(node, [bin, ...args], {
-    cwd: root,
+    cwd: options.cwd || root,
     encoding: 'utf8',
   });
 }
 
-function runInteractive(args, input = '') {
+function runInteractive(args, input = '', options = {}) {
   return spawnSync(node, [interactiveCli, ...args], {
-    cwd: root,
+    cwd: options.cwd || root,
     encoding: 'utf8',
     input,
   });

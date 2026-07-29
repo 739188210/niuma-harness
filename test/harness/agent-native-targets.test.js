@@ -12,6 +12,7 @@ const {
   getRuleAdapterTargetsForAgent,
   getRuleEntryInjectionForAgent,
   getRuleTargetRootsForAgent,
+  getStandaloneRuleTargetRootsForAgent,
   getSkillTargetRootsForAgent,
   getSupportedAgents,
   isRuleArtifactManagedByAdapter,
@@ -55,6 +56,10 @@ test('agent-native targets declare the supported surface matrix', () => {
   assert.deepStrictEqual(getRuleTargetRootsForAgent('codex'), []);
   assert.deepStrictEqual(getRuleTargetRootsForAgent('opencode'), ['.opencode/rules']);
   assert.deepStrictEqual(getRuleTargetRootsForAgent('multi'), ['.claude/rules', '.opencode/rules']);
+  assert.deepStrictEqual(getStandaloneRuleTargetRootsForAgent('claude'), ['.claude/rules']);
+  assert.deepStrictEqual(getStandaloneRuleTargetRootsForAgent('codex'), ['.codex/rules']);
+  assert.deepStrictEqual(getStandaloneRuleTargetRootsForAgent('opencode'), ['.opencode/rules']);
+  assert.deepStrictEqual(getStandaloneRuleTargetRootsForAgent('multi'), ['.claude/rules', '.codex/rules', '.opencode/rules']);
   assert.deepStrictEqual(getLegacyRuleTargetRootsForAgent('multi'), [
     '.claude/rules/niuma',
     '.opencode/rules/niuma',

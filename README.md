@@ -31,7 +31,26 @@ The generated Markdown is an agent-facing behavioral contract. `doctor` checks i
 niuma-harness init [target] [options]
 niuma-harness repair [target] [options]
 niuma-harness doctor [target] [options]
+niuma-harness install-skill [names...]
+niuma-harness install-rule [names...]
+niuma-harness install-command [names...]
 ```
+
+## Install assets
+
+Use these interactive commands from the project directory to install package assets. Each command does not initialize or update a Harness:
+
+```bash
+niuma-harness install-skill [names...]
+niuma-harness install-rule [names...]
+niuma-harness install-command [names...]
+```
+
+Each command asks for the target agent. With no names it lists available package assets for multi-selection. It only writes the selected asset type to the current working directory; it does not read or update `harness/manifest.json`, entry contracts, Harness docs, project context, or task material.
+
+Existing files with different contents are shown as conflicts. Enter `y` to back them up under `.niuma-harness/asset-installs/` and overwrite them; any other response cancels the whole installation. `--dry-run` prints the plan without writing files. These commands require an interactive terminal.
+
+`install-rule` writes standalone rule files to `.claude/rules/`, `.codex/rules/`, or `.opencode/rules/`. It does not update `AGENTS.md` or `opencode.json`.
 
 ### Init options
 
