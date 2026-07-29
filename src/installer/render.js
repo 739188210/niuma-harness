@@ -1,12 +1,7 @@
-const path = require('path');
 const { digestBytes } = require('../infrastructure/content-digest');
 const { renderCommandArtifacts } = require('../command/artifacts');
-const { renderTemplate } = require('../generator/template-renderer');
-const { TEMPLATE_DIR } = require('../infrastructure/template-paths');
-const { getStandaloneRuleTargetRootsForAgent } = require('../harness/agent-native-targets');
-const { listFilesRecursive } = require('../infrastructure/fs-safe');
-const { getAvailableRuleDirs, getRulesRootPath } = require('../rule/catalog');
 const { renderSkillArtifacts } = require('../skill/artifacts');
+const { renderRuleArtifacts } = require('../rule/artifacts');
 const { normalizeInstallerAssetNames } = require('./catalog');
 
 const INSTALLER_TEMPLATE_VARIABLES = {
@@ -27,36 +22,11 @@ function renderInstallerArtifacts({ type, agent, names, variables = {} }) {
   } else if (type === 'skill') {
     artifacts = renderSkillArtifacts(agent, selected, undefined, templateVariables);
   } else if (type === 'rule') {
-    artifacts = renderStandaloneRuleArtifacts(agent, selected, templateVariables);
+    artifacts = renderRuleArtifacts(agent, selected, undefined, templateVariables);
   } else {
     throw new Error(`Unknown asset type: ${type}`);
   }
   return normalizeArtifacts(artifacts);
-}
-
-function renderStandaloneRuleArtifacts(agent, rules, variables) {
-  const available = getAvailableRuleDirs();
-  const rootPath = getRulesRootPath();
-  const targetRoots = getStandaloneRuleTargetRootsForAgent(agent);
-  const artifacts = [];
-  for (const rule of [...rules].sort((left, right) => left.localeCompare(right))) {
-    if (!available.includes(rule)) throw new Error(`Unknown rule: ${rule}`);
-    const ruleRoot = path.join(rootPath, rule);
-    for (const sourcePath of listFilesRecursive(ruleRoot)) {
-      const relativePath = path.relative(ruleRoot, sourcePath).split(path.sep).join('/');
-      const source = path.relative(TEMPLATE_DIR, sourcePath).split(path.sep).join('/');
-      const content = renderTemplate(source, variables);
-      for (const targetRoot of targetRoots) {
-        artifacts.push({
-          kind: 'rule',
-          source,
-          target: path.posix.join(targetRoot, rule, relativePath),
-          content,
-        });
-      }
-    }
-  }
-  return artifacts;
 }
 
 function normalizeArtifacts(artifacts) {

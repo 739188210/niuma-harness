@@ -29,12 +29,9 @@ const { parseRegistry, sameModules } = require('../harness/topology');
 function createRepairPlan(state, backupRoot) {
   const desired = createDesiredState({
     agent: state.selections.agent,
-    commands: state.selections.commands,
     harnessDir: state.harnessDir,
     manifest: state.manifest,
     runtimeLayout: state.runtimeLayout,
-    rules: state.selections.rules,
-    skills: state.selections.skills,
     topology: state.selections.topologyInvalid ? { mode: 'single', modules: [] } : state.selections.topology,
     moduleSupplements: state.selections.topologyInvalid ? [] : state.selections.moduleSupplements,
     workspaceDir: state.workspaceDir,
@@ -51,14 +48,6 @@ function createRepairPlan(state, backupRoot) {
     planDesiredFile(collector, file, { preserveRegular: file.ownership === 'user' });
   }
   planEntries(collector, desired, state);
-  planRules(collector, desired, state);
-  planOpenCode(collector, desired, state);
-  for (const file of desired.files.filter((item) => item.domain === 'adapters' || item.domain === 'skills' || item.domain === 'commands')) {
-    planDesiredFile(collector, file);
-  }
-  planUnselectedAdapters(collector, desired, state);
-  planStaleSkillArtifacts(collector, desired, state);
-  planStaleCommands(collector, desired, state);
   planManifest(collector, desired, state);
 
   addTopologyDiagnostics(collector, state);
@@ -258,10 +247,8 @@ function isGeneratedInactiveEntry(existing, entry, desired, state) {
     const canonical = renderEntry(
       agent,
       entry,
-      state.selections.rules,
       state.harnessDir,
       state.runtimeLayout.workDirectory,
-      state.manifest.rulesRoot,
       desired.status.topology
     );
     return normalizeEol(existing) === normalizeEol(canonical);

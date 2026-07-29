@@ -11,7 +11,9 @@ const { runDoctor } = require('../doctor/index');
 const { runInit } = require('../scaffold/index');
 const { runRepair } = require('../repair/index');
 const { runAssetInstall } = require('../installer/index');
-const { STATUS_FILE } = require('../harness/manifest');
+const { STATUS_FILE, parseCoreManifest } = require('../harness/manifest');
+const { loadManifest } = require('../generator/template-manifest');
+const { getRuntimeLayout } = require('../harness/runtime-layout');
 
 function finalizeRules(options) {
   if (options.rulesOut) {
@@ -24,6 +26,19 @@ function finalizeRules(options) {
   }
 
   options.rules = getDefaultRulesForAgent(options.agent);
+}
+
+function readExistingCoreManifest(workspaceDir, harnessDir) {
+  const statusPath = path.join(workspaceDir, harnessDir, STATUS_FILE);
+  if (!fs.existsSync(statusPath) || !fs.lstatSync(statusPath).isFile()) return null;
+  try {
+    return parseCoreManifest(JSON.parse(fs.readFileSync(statusPath, 'utf8')), {
+      harnessDir,
+      runtimeLayout: getRuntimeLayout(loadManifest()),
+    });
+  } catch {
+    return null;
+  }
 }
 
 function shouldDiscoverTopology(options, workspaceDir) {
@@ -51,9 +66,15 @@ async function main(argv) {
   }
 
   if (options.command === 'init') {
-    options.agent = await chooseAgent(options.agent);
-    finalizeRules(options);
     const workspaceDir = canonicalizeWorkspacePath(options.targetDir || '.');
+    const previousCore = readExistingCoreManifest(workspaceDir, options.harnessDir);
+    if (previousCore && (options.rulesProvided || options.rulesOutProvided || options.skillsProvided)) {
+      throw new Error('Asset selection options are only valid for fresh init. Use install-rule, install-skill, or install-command for an existing Harness.');
+    }
+    options.agent = previousCore && !options.agent ? previousCore.agent : await chooseAgent(options.agent);
+    if (!previousCore) finalizeRules(options);
+    else options.rules = [];
+
     if (shouldDiscoverTopology(options, workspaceDir)) {
       const explicitDiscovery = options.topology === 'discover';
       const discovered = resolveTopology(workspaceDir, { ...options, topology: 'discover' });

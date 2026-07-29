@@ -1,12 +1,9 @@
-// doctor 的高层检查编排：字段校验后委托 core/rules 子检查。
+// doctor 的高层检查编排：只验证 Harness 核心状态，不接管 agent assets。
 const path = require('path');
-const { getEntryFilesForAgent, normalizeAgent } = require('../harness/agents');
-const { getRuleAdapterTargetsForAgent } = require('../harness/agent-native-targets');
-const { formatCommands, getDefaultCommandsForAgent } = require('../command/catalog');
-const { formatRules, normalizeConcreteRules } = require('../rule/catalog');
-const { formatSkills, normalizeConcreteSkills } = require('../skill/catalog');
+const { normalizeAgent } = require('../harness/agents');
 const { loadManifest } = require('../generator/template-manifest');
-const { assertWorkDirBinding, getRuntimeLayout } = require('../harness/runtime-layout');
+const { parseCoreManifest } = require('../harness/manifest');
+const { getRuntimeLayout } = require('../harness/runtime-layout');
 const { addError, addOk } = require('./result');
 const { checkManagedContentIntegrity } = require('./integrity-checks');
 const {
@@ -15,212 +12,57 @@ const {
   checkEntryFiles,
   checkWorkDir,
 } = require('./core-checks');
-const { checkArtifactFiles } = require('./artifacts-checks');
 const { checkTopology } = require('./topology-checks');
-const { checkCommandFiles, getAvailableCommands } = require('./commands-checks');
-const { checkRuleAdapterFiles } = require('./rules-adapters-checks');
-const { getAvailableRules } = require('./rules-checks');
-const { checkSkillFiles, getAvailableSkills } = require('./skills-checks');
 
-// 保持检查顺序稳定：先 schema/字段，再文件结构，最后 workspace workDir。
 function checkHarness(harnessRoot, status, result) {
   const context = createCheckContext(harnessRoot, status, result);
-  checkSchemaVersion(context);
-  checkCreatedBy(context);
-  checkHarnessDir(context);
-  checkWorkDirBinding(context);
-  checkAgent(context);
-  checkRules(context);
-  checkSkills(context);
-  checkCommands(context);
-  checkArtifactFiles(context);
-  checkOpenCodeInstructionOwnership(context);
+  checkCoreManifest(context);
   checkEntryFiles(context);
   checkEntryContractIntegrity(context);
   checkCoreDocs(context);
   checkTopology(context);
-  checkRuleAdapterFiles(context);
-  checkSkillFiles(context);
-  checkCommandFiles(context);
   checkManagedContentIntegrity(context);
   checkWorkDir(context);
 }
 
 function createCheckContext(harnessRoot, status, result) {
   const templateManifest = loadManifest();
-  const runtimeLayout = getRuntimeLayout(templateManifest);
   return {
     agent: null,
-    artifacts: null,
-    availableCommands: getAvailableCommands(templateManifest.commandsRoot),
-    availableRules: getAvailableRules(templateManifest.rulesRoot),
-    availableSkills: getAvailableSkills(templateManifest.skillsRoot),
-    commands: null,
     harnessRoot,
     result,
-    rules: null,
-    runtimeLayout,
-    skills: null,
+    runtimeLayout: getRuntimeLayout(templateManifest),
     status,
     templateManifest,
     workspaceRoot: path.dirname(harnessRoot),
   };
 }
 
-function checkSchemaVersion(context) {
-  const { result, status } = context;
-  if (![2, 3, 4].includes(status.schemaVersion)) {
-    addError(result, `unsupported schemaVersion: ${status.schemaVersion}`);
-    return;
-  }
-
-  addOk(result, `schemaVersion ${status.schemaVersion}`);
-}
-
-function checkCreatedBy(context) {
-  const { result, status } = context;
-  if (status.createdBy !== 'niuma-harness') {
-    addError(result, 'createdBy must be niuma-harness');
-    return;
-  }
-  addOk(result, 'createdBy niuma-harness');
-}
-
-function checkHarnessDir(context) {
-  const { harnessRoot, result, status } = context;
-  const expected = path.basename(harnessRoot);
-  if (status.harnessDir !== expected) {
-    addError(result, `harnessDir must match actual harness root: ${expected}`);
-    return;
-  }
-  addOk(result, `harnessDir ${expected}`);
-}
-
-function checkWorkDirBinding(context) {
-  const { result, runtimeLayout, status } = context;
-  if (!status.workDir) {
-    addError(result, 'missing workDir');
-    return;
-  }
+function checkCoreManifest(context) {
+  const { harnessRoot, result, runtimeLayout, status } = context;
+  let parsed;
   try {
-    assertWorkDirBinding(status.workDir, runtimeLayout);
+    parsed = parseCoreManifest(status, {
+      harnessDir: path.basename(harnessRoot),
+      runtimeLayout,
+    });
   } catch (error) {
     addError(result, error.message);
     return;
   }
+  context.agent = parsed.agent;
+  context.status = {
+    ...status,
+    ...parsed,
+    entryFiles: parsed.entryFiles,
+    topology: parsed.topology,
+    moduleSupplements: parsed.moduleSupplements,
+  };
+  addOk(result, `schemaVersion ${parsed.schemaVersion}`);
+  addOk(result, 'createdBy niuma-harness');
+  addOk(result, `harnessDir ${path.basename(harnessRoot)}`);
   addOk(result, `workDir binding ${runtimeLayout.workDirectory}`);
-}
-
-function checkAgent(context) {
-  const { result, status } = context;
-  if (!status.agent) {
-    addError(result, 'missing agent');
-    return;
-  }
-
-  context.agent = normalizeStatusField(result, () => normalizeAgent(status.agent), 'agent');
-  if (context.agent) {
-    addOk(result, `agent ${context.agent}`);
-  }
-}
-
-// manifest 中保存的是最终安装的规则目录数组，不保存原始 CLI 参数。
-function checkRules(context) {
-  checkConcreteArrayField(context, 'rules', context.availableRules, normalizeConcreteRules, formatRules);
-}
-
-function checkSkills(context) {
-  checkConcreteArrayField(context, 'skills', context.availableSkills, normalizeConcreteSkills, formatSkills);
-}
-
-function checkCommands(context) {
-  const { agent, availableCommands, result, status } = context;
-  if (!Object.prototype.hasOwnProperty.call(status, 'commands')) {
-    addError(result, 'missing commands');
-    return;
-  }
-  if (!Array.isArray(status.commands)) {
-    addError(result, 'commands must be an array');
-    return;
-  }
-  if (!agent) {
-    return;
-  }
-  const expected = getDefaultCommandsForAgent(agent, availableCommands);
-  if (!sameStringArray(status.commands, expected)) {
-    addError(result, `invalid commands: must match package and agent ${agent}: ${formatCommands(expected)}`);
-    return;
-  }
-  context.commands = expected;
-  addOk(result, `commands ${formatCommands(expected)}`);
-}
-
-function checkOpenCodeInstructionOwnership(context) {
-  const { result, status } = context;
-  if (!Object.prototype.hasOwnProperty.call(status, 'openCodeInstructions')) {
-    addError(result, 'missing openCodeInstructions');
-    return;
-  }
-  if (!Array.isArray(status.openCodeInstructions)
-      || status.openCodeInstructions.some((item) => typeof item !== 'string')) {
-    addError(result, 'openCodeInstructions must be an array of strings');
-    return;
-  }
-  const ruleTargets = new Set((context.artifacts || [])
-    .filter((item) => item.kind === 'rule')
-    .map((item) => item.target));
-  for (const item of status.openCodeInstructions) {
-    if (!ruleTargets.has(item)) {
-      addError(result, `openCodeInstructions contains unowned path ${item}`);
-      return;
-    }
-  }
-  if (!context.agent) {
-    return;
-  }
-  const openCodeActive = getRuleAdapterTargetsForAgent(context.agent)
-    .some((target) => target.kind === 'opencode-instructions');
-  if (!openCodeActive && status.openCodeInstructions.length > 0) {
-    addError(result, 'openCodeInstructions must be empty for the active agent');
-    return;
-  }
-  addOk(result, `openCodeInstructions ${status.openCodeInstructions.length}`);
-}
-
-function checkConcreteArrayField(context, field, available, normalize, format) {
-  const { result, status } = context;
-  if (!Object.prototype.hasOwnProperty.call(status, field)) {
-    addError(result, `missing ${field}`);
-    return;
-  }
-
-  if (!Array.isArray(status[field])) {
-    addError(result, `${field} must be an array`);
-    return;
-  }
-
-  context[field] = normalizeStatusField(
-    result,
-    () => normalize(status[field], available, field),
-    field
-  );
-
-  if (context[field]) {
-    addOk(result, `${field} ${format(context[field])}`);
-  }
-}
-
-function sameStringArray(left, right) {
-  return left.length === right.length && left.every((value, index) => value === right[index]);
-}
-
-function normalizeStatusField(result, normalize, label) {
-  try {
-    return normalize();
-  } catch (error) {
-    addError(result, `invalid ${label}: ${error.message}`);
-    return null;
-  }
+  addOk(result, `agent ${parsed.agent}`);
 }
 
 module.exports = {

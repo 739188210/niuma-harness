@@ -20,6 +20,8 @@ const {
   restoreAssetInstallBackup,
 } = require('../../src/installer/backup');
 const { applyAssetInstallPlan } = require('../../src/installer/apply');
+const supportsNoFollow = Boolean(fs.constants.O_NOFOLLOW);
+const noFollowTest = supportsNoFollow ? test : test.skip;
 
 function artifact(target, content) {
   return {
@@ -31,7 +33,7 @@ function artifact(target, content) {
   };
 }
 
-test('a create-only selected skill installs directly without a backup', () => {
+noFollowTest('a create-only selected skill installs directly without a backup', () => {
   const workspace = tempDir();
   const result = runInteractive(['install-skill', 'database-readonly'], '1\n', { cwd: workspace });
 
@@ -42,7 +44,7 @@ test('a create-only selected skill installs directly without a backup', () => {
 });
 
 for (const answer of ['n', ' y ', 'y ']) {
-  test(`conflicts cancel without writes unless confirmation is exactly y (${JSON.stringify(answer)})`, () => {
+  noFollowTest(`conflicts cancel without writes unless confirmation is exactly y (${JSON.stringify(answer)})`, () => {
     const workspace = tempDir();
     const target = path.join(workspace, '.claude', 'skills', 'database-readonly', 'SKILL.md');
     fs.mkdirSync(path.dirname(target), { recursive: true });
@@ -60,7 +62,7 @@ for (const answer of ['n', ' y ', 'y ']) {
   });
 }
 
-test('dry-run prints CREATE and CONFLICT without prompting or writing', () => {
+noFollowTest('dry-run prints CREATE and CONFLICT without prompting or writing', () => {
   const workspace = tempDir();
   const conflict = path.join(workspace, '.claude', 'commands', 'dev-check.md');
   fs.mkdirSync(path.dirname(conflict), { recursive: true });
@@ -77,7 +79,7 @@ test('dry-run prints CREATE and CONFLICT without prompting or writing', () => {
   assertTreeUnchanged(workspace, before);
 });
 
-test('confirmed conflicts are backed up at matching relative paths before overwrite', () => {
+noFollowTest('confirmed conflicts are backed up at matching relative paths before overwrite', () => {
   const workspace = tempDir();
   const target = '.claude/skills/example/SKILL.md';
   const targetPath = path.join(workspace, ...target.split('/'));
@@ -94,7 +96,7 @@ test('confirmed conflicts are backed up at matching relative paths before overwr
   assert.match(path.relative(path.join(workspace, '.niuma-harness', 'asset-installs'), backup.backupRoot), /^[^/]+$/);
 });
 
-test('create race after revalidation fails without deleting the external target', () => {
+noFollowTest('create race after revalidation fails without deleting the external target', () => {
   const workspace = tempDir();
   const createdTarget = '.claude/skills/example/a-created.md';
   const racedTarget = '.claude/skills/example/z-raced.md';
@@ -130,7 +132,7 @@ test('create race after revalidation fails without deleting the external target'
   assert.strictEqual(read(racedPath), 'external bytes\n');
 });
 
-test('partial create write failure preserves an unconfirmed target', () => {
+noFollowTest('partial create write failure preserves an unconfirmed target', () => {
   const workspace = tempDir();
   const createTarget = '.claude/skills/example/partial.md';
   const createPath = path.join(workspace, ...createTarget.split('/'));
@@ -151,7 +153,7 @@ test('partial create write failure preserves an unconfirmed target', () => {
   assert.strictEqual(read(createPath), 'partial bytes\n');
 });
 
-test('write failure restores both overwritten and not-yet-overwritten conflicts', () => {
+noFollowTest('write failure restores both overwritten and not-yet-overwritten conflicts', () => {
   const workspace = tempDir();
   const firstConflict = '.claude/skills/example/a-first.md';
   const secondConflict = '.claude/skills/example/z-second.md';
@@ -183,7 +185,7 @@ test('write failure restores both overwritten and not-yet-overwritten conflicts'
   assertFile(path.join(backupRoot, ...secondConflict.split('/')));
 });
 
-test('backup copy failure preserves workspace targets and leaves created parent directories', () => {
+noFollowTest('backup copy failure preserves workspace targets and leaves created parent directories', () => {
   const workspace = tempDir();
   const target = '.claude/skills/example/SKILL.md';
   const targetPath = path.join(workspace, ...target.split('/'));
@@ -206,7 +208,7 @@ test('backup copy failure preserves workspace targets and leaves created parent 
   assertDir(backupParent);
 });
 
-test('backup verification failure and preflight target changes leave targets byte-identical', () => {
+noFollowTest('backup verification failure and preflight target changes leave targets byte-identical', () => {
   const workspace = tempDir();
   const target = '.claude/skills/example/SKILL.md';
   const targetPath = path.join(workspace, ...target.split('/'));
@@ -224,7 +226,7 @@ test('backup verification failure and preflight target changes leave targets byt
   assert.strictEqual(read(targetPath), 'user bytes\n');
 });
 
-test('backup and restore reject symlink paths and restore reports individual failures', () => {
+noFollowTest('backup and restore reject symlink paths and restore reports individual failures', () => {
   const workspace = tempDir();
   const target = '.claude/skills/example/SKILL.md';
   const targetPath = path.join(workspace, ...target.split('/'));
@@ -240,7 +242,7 @@ test('backup and restore reject symlink paths and restore reports individual fai
   assert.match(result.failures[0].message, /unsafe|symlink|regular file/i);
 });
 
-test('final create rejects a target swapped to a symlink immediately before its FD open', () => {
+noFollowTest('final create rejects a target swapped to a symlink immediately before its FD open', () => {
   const workspace = tempDir();
   const target = '.claude/skills/example/SKILL.md';
   const targetPath = path.join(workspace, ...target.split('/'));
@@ -264,7 +266,7 @@ test('final create rejects a target swapped to a symlink immediately before its 
   assert.ok(fs.lstatSync(targetPath).isSymbolicLink());
 });
 
-test('backup creation rejects a backup leaf swapped to a symlink before FD open', () => {
+noFollowTest('backup creation rejects a backup leaf swapped to a symlink before FD open', () => {
   const workspace = tempDir();
   const target = '.claude/skills/example/SKILL.md';
   const targetPath = path.join(workspace, ...target.split('/'));
@@ -289,7 +291,7 @@ test('backup creation rejects a backup leaf swapped to a symlink before FD open'
   assert.strictEqual(read(targetPath), 'user bytes\n');
 });
 
-test('backup verification rejects a backup leaf swapped to a symlink before no-follow read', () => {
+noFollowTest('backup verification rejects a backup leaf swapped to a symlink before no-follow read', () => {
   const workspace = tempDir();
   const target = '.claude/skills/example/SKILL.md';
   const targetPath = path.join(workspace, ...target.split('/'));
@@ -315,7 +317,7 @@ test('backup verification rejects a backup leaf swapped to a symlink before no-f
   assert.strictEqual(read(targetPath), 'user bytes\n');
 });
 
-test('rollback refuses a replaced backup parent and does not overwrite the conflict target', () => {
+noFollowTest('rollback refuses a replaced backup parent and does not overwrite the conflict target', () => {
   const workspace = tempDir();
   const target = '.claude/skills/example/SKILL.md';
   const targetPath = path.join(workspace, ...target.split('/'));

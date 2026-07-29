@@ -72,7 +72,14 @@ function inspectTarget(workspaceDir, target) {
   try {
     stat = fs.lstatSync(targetPath);
   } catch (error) {
-    if (error.code === 'ENOENT') return { type: 'missing' };
+    if (error.code === 'ENOENT') {
+      try {
+        fs.statSync(targetPath);
+      } catch (probeError) {
+        if (probeError.code === 'ENOTDIR') return { type: 'unsafe' };
+      }
+      return { type: 'missing' };
+    }
     if (error.code === 'ENOTDIR') return { type: 'unsafe' };
     throw error;
   }
@@ -103,6 +110,13 @@ function findUnsafeParent(workspaceDir, targetPath) {
       throw error;
     }
     if (stat.isSymbolicLink() || !stat.isDirectory()) return current;
+    try {
+      const resolved = fs.statSync(current);
+      if (!resolved.isDirectory()) return current;
+    } catch (error) {
+      if (error.code === 'ENOTDIR') return current;
+      throw error;
+    }
   }
   return null;
 }

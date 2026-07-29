@@ -10,7 +10,7 @@ const {
 } = require('../harness/agent-native-targets');
 const { getAvailableRuleDirs, getRuleAdapterTargetsForAgent } = require('../rule/catalog');
 const {
-  assertNoLossyJsonNumbers,
+  readOpenCodeConfig,
   reconcileOpenCodeInstructions,
   sameJsonValue,
 } = require('../rule/opencode-instructions');
@@ -51,8 +51,7 @@ function prepareRuleAdapterPlan(context) {
     const existing = fs.readFileSync(configPath, 'utf8');
     const hasOwnedPath = ownedPaths.some((item) => existing.includes(item));
     if (expectedPaths.length > 0 || hasOwnedPath) {
-      assertNoLossyJsonNumbers(existing);
-      const config = readOpenCodeConfig(configPath);
+      const config = readOpenCodeConfig(existing);
       const reconciled = reconcileOpenCodeInstructions(config, expectedPaths, ownedPaths);
       nextOwnedPaths = reconciled.ownedPaths;
       if (!sameJsonValue(reconciled.config, config)) {
@@ -104,22 +103,6 @@ function writeOpenCodeRulesInstruction(context) {
 
 function getOpenCodeConfigPath(context, target) {
   return safeResolveInside(context.workspaceDir, target.file, 'opencode config');
-}
-
-function readOpenCodeConfig(configPath) {
-  const content = fs.readFileSync(configPath, 'utf8');
-  let config;
-  try {
-    config = JSON.parse(content);
-  } catch (error) {
-    throw new Error(`Cannot update opencode.json because it is not valid JSON: ${error.message}`);
-  }
-
-  if (!config || Array.isArray(config) || typeof config !== 'object') {
-    throw new Error('Cannot update opencode.json because it must contain a JSON object.');
-  }
-
-  return config;
 }
 
 module.exports = {

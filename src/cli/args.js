@@ -220,6 +220,10 @@ function validateCommandOptions(options) {
     return;
   }
 
+  if (options.command === 'repair' && (options.rulesProvided || options.rulesOutProvided || options.skillsProvided)) {
+    throw new Error('repair does not manage rules or skills; use install-rule or install-skill.');
+  }
+
   if (options.command !== 'repair'
       && (options.yes || options.backupDirProvided)) {
     throw new Error('--yes and --backup-dir are only available for repair.');

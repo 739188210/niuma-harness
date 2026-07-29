@@ -24,7 +24,7 @@ const { getModuleSupplementRecords, prepareModuleEntryPlan, writeModuleEntryPlan
 const { prepareTopologyPlan, writeTopologyPlan } = require('./topology-writer');
 const { resolveTopology } = require('../harness/topology');
 const { prepareCommandPlan, writeCommandFiles } = require('./commands-writer');
-const { STATUS_FILE } = require('../harness/manifest');
+const { STATUS_FILE, parseCoreManifest } = require('../harness/manifest');
 const { validateArtifactRecords } = require('../artifact/ledger');
 const { prepareRuleAdapterPlan, writeRuleAdapterFiles } = require('./rules-adapters-writer');
 const { prepareRulePlan, writeRuleFiles } = require('./rules-writer');
@@ -45,10 +45,12 @@ function runInit(options) {
   writeTopologyPlan(context);
   writeFilePlan(context);
   writeModuleEntryPlan(context);
-  writeRuleFiles(context);
-  writeRuleAdapterFiles(context);
-  writeSkillFiles(context);
-  writeCommandFiles(context);
+  if (!context.previousStatus) {
+    writeRuleFiles(context);
+    writeRuleAdapterFiles(context);
+    writeSkillFiles(context);
+    writeCommandFiles(context);
+  }
   writeStatusFile(context);
   printDone();
 }
@@ -66,13 +68,7 @@ function createInitContext(options) {
   const availableCommands = getAvailableCommandFiles(manifest.commandsRoot);
   assertCommandSkillIdsAvailable(availableCommands, getAvailableSkillDirs(manifest.skillsRoot));
   const commands = getDefaultCommandsForAgent(options.agent, availableCommands);
-  const previousStatus = readPreviousStatus(
-    targetDir,
-    options.harnessDir,
-    availableCommands,
-    getAvailableSkillDirs(manifest.skillsRoot),
-    getAvailableRuleDirs(manifest.rulesRoot)
-  );
+  const previousStatus = readPreviousStatus(targetDir, options.harnessDir, runtimeLayout);
   const topology = options.resolvedTopology || resolveTopology(workspaceDir, options);
   const context = {
     commands,
@@ -87,36 +83,39 @@ function createInitContext(options) {
     workDirectory: runtimeLayout.workDirectory,
     workspaceDir,
   };
-  const preparedCommands = prepareCommandPlan(context);
-  context.commandPlan = preparedCommands.plan;
-  const preparedRules = prepareRulePlan(context);
-  context.rulePlan = preparedRules.plan;
-  const preparedSkills = prepareSkillPlan(context);
-  context.skillPlan = preparedSkills.plan;
-  context.artifacts = validateArtifactRecords([
-    ...preparedCommands.artifacts,
-    ...preparedRules.artifacts,
-    ...preparedSkills.artifacts,
-  ]);
+  if (!previousStatus) {
+    const preparedCommands = prepareCommandPlan(context);
+    context.commandPlan = preparedCommands.plan;
+    const preparedRules = prepareRulePlan(context);
+    context.rulePlan = preparedRules.plan;
+    const preparedSkills = prepareSkillPlan(context);
+    context.skillPlan = preparedSkills.plan;
+    context.artifacts = validateArtifactRecords([
+      ...preparedCommands.artifacts,
+      ...preparedRules.artifacts,
+      ...preparedSkills.artifacts,
+    ]);
+  } else {
+    context.commandPlan = [];
+    context.rulePlan = [];
+    context.skillPlan = [];
+    context.artifacts = [];
+  }
   context.directoryPlan = prepareDirectoryPlan(context);
   context.topologyPlan = prepareTopologyPlan(context);
   context.filePlan = prepareFilePlan(context);
   context.moduleEntryPlan = prepareModuleEntryPlan(context);
   context.moduleSupplements = getModuleSupplementRecords(context.moduleEntryPlan);
-  context.ruleAdapterPlan = prepareRuleAdapterPlan(context);
+  context.ruleAdapterPlan = previousStatus ? { expectedOpenCodePaths: [] } : prepareRuleAdapterPlan(context);
   context.statusPlan = prepareStatusPlan(context);
   return context;
 }
 
-function readPreviousStatus(targetDir, harnessDir, availableCommands, availableSkills, availableRules) {
+function readPreviousStatus(targetDir, harnessDir, runtimeLayout) {
   const statusPath = path.join(targetDir, STATUS_FILE);
-  if (!fs.existsSync(statusPath)) {
-    return null;
-  }
+  if (!fs.existsSync(statusPath)) return null;
   const stat = fs.lstatSync(statusPath);
-  if (!stat.isFile()) {
-    throw new Error(`Path exists but is not a regular file: ${statusPath}`);
-  }
+  if (!stat.isFile()) throw new Error(`Path exists but is not a regular file: ${statusPath}`);
 
   let status;
   try {
@@ -124,77 +123,11 @@ function readPreviousStatus(targetDir, harnessDir, availableCommands, availableS
   } catch (error) {
     throw new Error(`invalid previous ${STATUS_FILE}: ${error.message}`);
   }
-  if (!status || Array.isArray(status) || typeof status !== 'object') {
-    throw new Error(`invalid previous ${STATUS_FILE}: expected a JSON object`);
-  }
-  if (![2, 3, 4].includes(status.schemaVersion) || status.createdBy !== 'niuma-harness') {
-    throw new Error(`unsupported previous ${STATUS_FILE}; schemaVersion 2, 3, or 4 ownership data is required`);
-  }
-  if (status.harnessDir !== harnessDir) {
-    throw new Error(`invalid previous ${STATUS_FILE}: harnessDir must be ${harnessDir}`);
-  }
-
-  let agent;
-  let commands;
-  let skills;
   try {
-    agent = normalizeAgent(status.agent);
-    commands = normalizeConcreteCommands(status.commands, availableCommands, 'previous commands');
-    skills = normalizeConcreteSkills(status.skills, availableSkills, 'previous skills');
+    return parseCoreManifest(status, { harnessDir, runtimeLayout });
   } catch (error) {
     throw new Error(`invalid previous ${STATUS_FILE}: ${error.message}`);
   }
-  if (!agent) {
-    throw new Error(`invalid previous ${STATUS_FILE}: missing agent`);
-  }
-  if (!sameStringArray(status.entryFiles, getEntryFilesForAgent(agent))) {
-    throw new Error(`invalid previous ${STATUS_FILE}: entryFiles must match agent ${agent}`);
-  }
-  if (!sameStringArray(status.commands, commands)) {
-    throw new Error(`invalid previous ${STATUS_FILE}: commands must be canonical`);
-  }
-  if (!sameStringArray(status.skills, skills)) {
-    throw new Error(`invalid previous ${STATUS_FILE}: skills must be canonical`);
-  }
-  if (status.schemaVersion >= 3) {
-    const { validateTopologyShape } = require('../harness/topology');
-    try {
-      validateTopologyShape(status.topology, status.moduleSupplements);
-    } catch (error) {
-      throw new Error(`invalid previous ${STATUS_FILE}: ${error.message}`);
-    }
-  }
-
-  const artifacts = validateArtifactRecords(status.artifacts);
-  const rules = normalizeConcreteRules(status.rules, availableRules, 'previous rules');
-  const openCodeInstructions = status.openCodeInstructions === undefined
-    ? []
-    : validateOpenCodeInstructionOwnership(status.openCodeInstructions, artifacts);
-
-  return {
-    agent,
-    schemaVersion: status.schemaVersion,
-    artifacts,
-    commands,
-    moduleSupplements: status.schemaVersion >= 3 && Array.isArray(status.moduleSupplements) ? status.moduleSupplements : [],
-    topology: status.schemaVersion >= 3 ? status.topology : { mode: 'single', modules: [] },
-    openCodeInstructions,
-    rules,
-    skills,
-  };
-}
-
-function validateOpenCodeInstructionOwnership(value, artifacts) {
-  if (!Array.isArray(value) || value.some((item) => typeof item !== 'string')) {
-    throw new Error(`invalid previous ${STATUS_FILE}: openCodeInstructions must be an array of strings`);
-  }
-  const ruleTargets = new Set(artifacts.filter((item) => item.kind === 'rule').map((item) => item.target));
-  for (const item of value) {
-    if (!ruleTargets.has(item)) {
-      throw new Error(`invalid previous ${STATUS_FILE}: openCodeInstructions contains unowned path ${item}`);
-    }
-  }
-  return [...value];
 }
 
 function assertNoCompetingHarnesses(workspaceDir, harnessDir) {

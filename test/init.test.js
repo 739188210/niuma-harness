@@ -5,5 +5,6 @@ require('./init/documentation-navigation.test');
 require('./init/init-agents.test');
 require('./init/init-rules.test');
 require('./init/init-artifacts.test');
+require('./init/core-assets-lifecycle.test');
 require('./init/init-workspace.test');
 require('./init/init-preflight.test');

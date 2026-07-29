@@ -38,7 +38,7 @@ niuma-harness install-command [names...]
 
 ## Install assets
 
-Use these interactive commands from the project directory to install package assets. Each command does not initialize or update a Harness:
+Use these interactive commands from the current working directory (project directory) to install package assets. Each command does not initialize or update a Harness:
 
 ```bash
 niuma-harness install-skill [names...]
@@ -46,11 +46,11 @@ niuma-harness install-rule [names...]
 niuma-harness install-command [names...]
 ```
 
-Each command asks for the target agent. With no names it lists available package assets for multi-selection. It only writes the selected asset type to the current working directory; it does not read or update `harness/manifest.json`, entry contracts, Harness docs, project context, or task material.
+Each command asks for the target agent. With no names it lists available package assets for multi-selection. Asset installation never reads or updates `harness/manifest.json`, Harness docs, project context, or task material.
 
-Existing files with different contents are shown as conflicts. Enter `y` to back them up under `.niuma-harness/asset-installs/` and overwrite them; any other response cancels the whole installation. `--dry-run` prints the plan without writing files. These commands require an interactive terminal.
+Existing files with different contents are shown as conflicts. Enter `y` to back them up under `.niuma-harness/asset-installs/` and overwrite them; any other response cancels the whole installation. `--dry-run` prints the plan without writing files. These commands require an interactive terminal and an OS/Node runtime with `O_NOFOLLOW`; when that atomic no-follow capability is unavailable, installation fails before planning, backups, or writes rather than following a potentially swapped link.
 
-`install-rule` writes standalone rule files to `.claude/rules/`, `.codex/rules/`, or `.opencode/rules/`. It does not update `AGENTS.md` or `opencode.json`.
+`install-rule` follows the selected agent's native rule surface: Claude writes `.claude/rules/`; Codex appends selected rules to an existing Niuma contract in `AGENTS.md`; OpenCode writes `.opencode/rules/` and appends paths to `opencode.json.instructions`; `multi` applies all relevant surfaces. Codex and multi require a valid Niuma `AGENTS.md` contract (run `init` first). Existing OpenCode configuration must be a JSON object with string-array `instructions`, if present. Installer changes do not update the current schema-4 manifest, so `doctor` can report asset state drift until the planned core-only Doctor lifecycle update lands.
 
 ### Init options
 

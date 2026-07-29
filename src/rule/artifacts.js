@@ -48,7 +48,7 @@ function renderRuleArtifacts(agent, rules, rulesRoot, variables, dependencies = 
   return artifacts.sort((left, right) => left.target.localeCompare(right.target));
 }
 
-function renderCodexRulesBlock(rules, rulesRoot, variables, dependencies = {}) {
+function renderCodexRuleSections(rules, rulesRoot, variables, dependencies = {}) {
   const availableRules = (dependencies.getAvailableRuleDirs || getAvailableRuleDirs)(rulesRoot);
   const getRootPath = dependencies.getRulesRootPath || getRulesRootPath;
   const listFiles = dependencies.listFilesRecursive || listFilesRecursive;
@@ -62,13 +62,20 @@ function renderCodexRulesBlock(rules, rulesRoot, variables, dependencies = {}) {
     for (const sourcePath of listFiles(ruleRoot)) {
       const relativePath = path.relative(ruleRoot, sourcePath).split(path.sep).join('/');
       const source = path.relative(templateDir, sourcePath).split(path.sep).join('/');
-      sections.push(`### ${rule}/${relativePath}\n\n${render(source, variables).trim()}`);
+      const id = `${rule}/${relativePath}`;
+      sections.push({ id, content: `### ${id}\n\n${render(source, variables).trim()}` });
     }
   }
-  return sections.length === 0 ? '' : `\n\n## Selected engineering rules\n\n${sections.join('\n\n')}`;
+  return sections;
+}
+
+function renderCodexRulesBlock(rules, rulesRoot, variables, dependencies = {}) {
+  const sections = renderCodexRuleSections(rules, rulesRoot, variables, dependencies);
+  return sections.length === 0 ? '' : `\n\n## Selected engineering rules\n\n${sections.map((section) => section.content).join('\n\n')}`;
 }
 
 module.exports = {
   renderRuleArtifacts,
+  renderCodexRuleSections,
   renderCodexRulesBlock,
 };

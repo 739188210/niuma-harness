@@ -36,7 +36,7 @@ test('installer modules use neutral digest and template-path utilities', () => {
     assert.match(source, /\.\.\/infrastructure\/content-digest/);
   }
   assert.doesNotMatch(renderSource, /\.\.\/generator\/template-manifest/);
-  assert.match(renderSource, /\.\.\/infrastructure\/template-paths/);
+  assert.match(renderSource, /\.\.\/rule\/artifacts/);
 });
 
 test('installer catalog exposes sorted canonical names and command ids', () => {
@@ -65,17 +65,17 @@ test('install-command renders one selected command for every multi native target
   assert.ok(targets(artifacts).every((target) => target.includes('dev-check')));
 });
 
-test('install-rule renders standalone codex rule files without rendering an entry contract', () => {
+test('install-rule uses init-native Codex rule rendering without standalone files', () => {
   const artifacts = renderInstallerArtifacts({ type: 'rule', agent: 'codex', names: ['common'] });
-  assert.ok(artifacts.some((item) => item.target === '.codex/rules/common/testing.md'));
-  assert.ok(artifacts.every((item) => !item.target.endsWith('AGENTS.md')));
+  assert.deepStrictEqual(artifacts, []);
 });
 
-test('install-rule renders all three standalone roots for multi', () => {
+test('install-rule uses init-native Claude and OpenCode roots for multi', () => {
   const artifacts = renderInstallerArtifacts({ type: 'rule', agent: 'multi', names: ['common'] });
-  for (const root of ['.claude/rules', '.codex/rules', '.opencode/rules']) {
+  for (const root of ['.claude/rules', '.opencode/rules']) {
     assert.ok(artifacts.some((item) => item.target.startsWith(`${root}/common/`)));
   }
+  assert.ok(artifacts.every((item) => !item.target.startsWith('.codex/rules/')));
   assert.ok(artifacts.every((item) => !item.target.endsWith('AGENTS.md')));
 });
 

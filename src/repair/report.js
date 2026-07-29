@@ -3,8 +3,6 @@ function printRepairPlan(plan) {
   console.log(`Workspace: ${plan.state.workspaceDir}`);
   console.log(`Harness: ${plan.state.targetDir}`);
   console.log(`Agent: ${plan.selections.agent} (${plan.selections.agentSource})`);
-  console.log(`Rules: ${formatList(plan.selections.rules)} (${plan.selections.rulesSource})`);
-  console.log(`Skills: ${formatList(plan.selections.skills)} (${plan.selections.skillsSource})`);
   console.log(`Backup: ${plan.backupRoot}`);
   console.log('');
   if (plan.issues.length === 0) {
@@ -41,10 +39,6 @@ function formatAction(action) {
   if (action === 'replace-file') return 'REPLACE';
   if (action === 'remove-node') return 'REMOVE';
   return action.toUpperCase();
-}
-
-function formatList(values) {
-  return values.length === 0 ? 'none' : values.join(',');
 }
 
 module.exports = { printRepairPlan, printRepairSuccess };

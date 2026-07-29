@@ -1,3 +1,21 @@
+function readOpenCodeConfig(content) {
+  assertNoLossyJsonNumbers(content);
+  let config;
+  try {
+    config = JSON.parse(content);
+  } catch (error) {
+    throw new Error(`Cannot update opencode.json because it is not valid JSON: ${error.message}`);
+  }
+  if (!config || Array.isArray(config) || typeof config !== 'object') {
+    throw new Error('Cannot update opencode.json because it must contain a JSON object.');
+  }
+  if (config.instructions !== undefined
+      && (!Array.isArray(config.instructions) || config.instructions.some((item) => typeof item !== 'string'))) {
+    throw new Error('Cannot update opencode.json because instructions must be an array of strings.');
+  }
+  return config;
+}
+
 function reconcileOpenCodeInstructions(config, expectedPaths, previouslyOwnedPaths) {
   const instructions = config.instructions;
   if (instructions !== undefined
@@ -76,6 +94,7 @@ function sameJsonValue(left, right) {
 
 module.exports = {
   assertNoLossyJsonNumbers,
+  readOpenCodeConfig,
   reconcileOpenCodeInstructions,
   sameJsonValue,
 };

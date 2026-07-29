@@ -4,8 +4,12 @@ const path = require('path');
 const NO_FOLLOW = fs.constants.O_NOFOLLOW;
 const OPEN_RACE_CODES = new Set(['EEXIST', 'ELOOP', 'ENOENT', 'ENOTDIR']);
 
-function writeRegularFileNoFollow({ workspaceDir, filePath, content, mode, label, beforeOpen, afterWrite }) {
+function assertNoFollowAvailable(label = 'asset installation') {
   if (!NO_FOLLOW) throw new Error(`O_NOFOLLOW is unavailable; refusing ${label}`);
+}
+
+function writeRegularFileNoFollow({ workspaceDir, filePath, content, mode, label, beforeOpen, afterWrite }) {
+  assertNoFollowAvailable(label);
   const parents = prepareSafeParents(workspaceDir, filePath, label);
   assertExpectedLeaf(filePath, mode, label);
   if (beforeOpen) beforeOpen({ filePath, parents });
@@ -30,7 +34,7 @@ function writeRegularFileNoFollow({ workspaceDir, filePath, content, mode, label
 }
 
 function readRegularFileNoFollow({ workspaceDir, filePath, label, beforeRead }) {
-  if (!NO_FOLLOW) throw new Error(`O_NOFOLLOW is unavailable; refusing ${label}`);
+  assertNoFollowAvailable(label);
   const parents = prepareSafeParents(workspaceDir, filePath, label, { createParents: false });
   assertExpectedLeaf(filePath, 'read', label);
   if (beforeRead) beforeRead({ filePath, parents });
@@ -154,6 +158,7 @@ function tryLstat(filePath) {
 }
 
 module.exports = {
+  assertNoFollowAvailable,
   readRegularFileNoFollow,
   removeCreatedFileNoFollow,
   writeRegularFileNoFollow,

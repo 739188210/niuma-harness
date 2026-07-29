@@ -8,10 +8,9 @@ function prepareStatusPlan(context) {
   return {
     action: exists ? 'overwrite' : 'create',
     content: `${JSON.stringify(createStatus({
-      ...context.options,
-      artifacts: context.artifacts,
-      commands: context.commands,
-      openCodeInstructions: context.ruleAdapterPlan.expectedOpenCodePaths,
+      agent: context.options.agent,
+      createdAt: context.previousStatus && context.previousStatus.createdAt,
+      harnessDir: context.options.harnessDir,
       topology: context.topology,
       moduleSupplements: context.moduleSupplements,
     }, context.runtimeLayout), null, 2)}\n`,

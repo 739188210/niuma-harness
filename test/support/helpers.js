@@ -153,19 +153,14 @@ function expectedDefaultCommands(agent) {
 function assertManifest(filePath, expected) {
   assertFile(filePath);
   const manifest = readJson(filePath);
-  assert.ok([2, 3, 4].includes(manifest.schemaVersion), 'manifest schemaVersion should be supported');
+  assert.strictEqual(manifest.schemaVersion, 5, 'manifest should use core-only schemaVersion 5');
   assert.strictEqual(manifest.agent, expected.agent);
-  assert.deepStrictEqual(manifest.rules, expected.rules || expectedDefaultRules(expected.agent));
-  assert.deepStrictEqual(manifest.skills, expected.skills || allSkillDirs);
-  assert.deepStrictEqual(manifest.commands, expected.commands || expectedDefaultCommands(expected.agent));
   assert.strictEqual(manifest.harnessDir, expected.harnessDir || 'harness');
   assert.strictEqual(manifest.workDir, expected.workDir || 'agent-work');
   assert.deepStrictEqual(manifest.entryFiles, expected.entryFiles);
-  const expectedOpenCode = (expected.agent === 'opencode' || expected.agent === 'multi')
-    ? getExpectedRuleArtifactTargets('opencode', manifest.rules, manifest.harnessDir)
-    : [];
-  assert.deepStrictEqual(manifest.openCodeInstructions, expectedOpenCode);
-  assertArtifactRecords(filePath, manifest, expected.agent, manifest.commands, expected.artifactTargets);
+  for (const field of ['rules', 'skills', 'commands', 'artifacts', 'openCodeInstructions']) {
+    assert.ok(!Object.prototype.hasOwnProperty.call(manifest, field), `manifest must not own ${field}`);
+  }
   assert.strictEqual(manifest.createdBy, 'niuma-harness');
   assert.ok(!Number.isNaN(Date.parse(manifest.createdAt)), 'createdAt should be an ISO date');
 }

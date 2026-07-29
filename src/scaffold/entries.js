@@ -9,6 +9,8 @@ const {
   writeFile,
 } = require('../infrastructure/fs-safe');
 const { renderEntry } = require('../harness/entry-renderer');
+const { getRuleEntryInjectionForAgent } = require('../harness/agent-native-targets');
+const { appendCodexRuleSections } = require('../installer/rule-adapters');
 const { renderTemplate } = require('../generator/template-renderer');
 const {
   analyzeContractBlock,
@@ -50,15 +52,20 @@ function prepareEntryPlan(context) {
     const freshFull = renderEntry(
       context.options.agent,
       entryFile,
-      context.options.rules,
       context.options.harnessDir,
       context.workDirectory,
-      context.manifest.rulesRoot,
       context.topology
     );
     const freshBlock = sliceContractBlock(freshFull);
     if (!freshBlock) throw new Error('entry template is missing a valid contract zone');
-    return prepareEntryWrite(context.workspaceDir, entryFile, freshFull, freshBlock);
+    const ruleInjection = !context.previousStatus && getRuleEntryInjectionForAgent(context.options.agent);
+    const block = ruleInjection && entryFile === ruleInjection.entryFile
+      ? appendCodexRuleSections(freshBlock, context.options.rules, context.variables)
+      : freshBlock;
+    const full = ruleInjection && entryFile === ruleInjection.entryFile
+      ? replaceContractBlock(freshFull, block)
+      : freshFull;
+    return prepareEntryWrite(context.workspaceDir, entryFile, full, block);
   });
   if (!context.previousStatus) {
     return current;
@@ -73,10 +80,8 @@ function prepareEntryPlan(context) {
       renderEntry(
         context.previousStatus.agent,
         entryFile,
-        context.previousStatus.rules || [],
         context.options.harnessDir,
         context.workDirectory,
-        context.manifest.rulesRoot,
         context.previousStatus.topology
       )
     ));

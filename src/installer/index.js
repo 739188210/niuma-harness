@@ -5,7 +5,8 @@ const {
   confirmAssetOverwrite,
 } = require('../cli/prompts');
 const { getAssetLabel, getAvailableAssetNames, normalizeInstallerAssetNames } = require('./catalog');
-const { renderInstallerArtifacts } = require('./render');
+const { INSTALLER_TEMPLATE_VARIABLES, renderInstallerArtifacts } = require('./render');
+const { prepareRuleAdapterArtifacts } = require('./rule-adapters');
 const {
   createAssetInstallPlan,
   formatAssetInstallPlan,
@@ -14,6 +15,7 @@ const {
 } = require('./plan');
 const { createAssetInstallBackup, verifyAssetInstallBackup } = require('./backup');
 const { applyAssetInstallPlan } = require('./apply');
+const { assertNoFollowAvailable } = require('./safe-fs');
 
 async function runAssetInstall({ type, names, workspaceDir, dryRun }) {
   const label = getAssetLabel(type);
@@ -28,7 +30,17 @@ async function runAssetInstall({ type, names, workspaceDir, dryRun }) {
       return { status: 'cancelled' };
     }
 
+    assertNoFollowAvailable('asset installation');
     const artifacts = renderInstallerArtifacts({ type, agent, names: selectedNames });
+    if (type === 'rule') {
+      artifacts.push(...prepareRuleAdapterArtifacts({
+        workspaceDir,
+        agent,
+        rules: selectedNames,
+        ruleArtifacts: artifacts,
+        variables: INSTALLER_TEMPLATE_VARIABLES,
+      }));
+    }
     const plan = createAssetInstallPlan({ workspaceDir, artifacts });
     if (hasUnsafeTargets(plan)) {
       throw new Error(`Unsafe targets in install plan:\n${formatAssetInstallPlan({ type, plan })}`);

@@ -13,5 +13,6 @@ require('./cli/help.test');
 require('./installer/installer-cli.test');
 require('./installer/installer-prompts.test');
 require('./installer/installer-assets.test');
+require('./installer/installer-native-rules.test');
 require('./installer/installer-safety.test');
 require('./topology.test');

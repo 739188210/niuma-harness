@@ -5,7 +5,7 @@ const { getAllEntryFiles, getEntryFilesForAgent } = require('../harness/agents')
 const { assertNoSymlinkInPath, safeResolveInside } = require('../infrastructure/fs-safe');
 const { resolveRuntimePaths } = require('../harness/runtime-layout');
 const { renderEntry } = require('../harness/entry-renderer');
-const { analyzeContractBlock, sliceContractBlock } = require('../harness/contract');
+const { analyzeContractBlock, normalizeContractForCoreComparison, sliceContractBlock } = require('../harness/contract');
 const { addError, addOk } = require('./result');
 
 // 入口文件在 workspace 根（harness 目录的父级），不在 harness root。
@@ -38,10 +38,8 @@ function checkInactiveEntryContracts(context, activeEntries) {
   ].map((topology) => sliceContractBlock(renderEntry(
     'claude',
     'CLAUDE.md',
-    [],
     harnessDir,
     context.runtimeLayout.workDirectory,
-    context.templateManifest.rulesRoot,
     topology
   )).replace(/\r\n/g, '\n'));
   const uniqueCanonicalBlocks = [...new Set(canonicalBlocks)];
@@ -110,10 +108,8 @@ function checkEntryContractIntegrity(context) {
     const canonicalBlock = sliceContractBlock(renderEntry(
       agent,
       entryFile,
-      context.rules || [],
       harnessDir,
       context.runtimeLayout.workDirectory,
-      context.templateManifest.rulesRoot,
       status.topology
     ));
     if (!canonicalBlock) {
@@ -134,7 +130,7 @@ function checkEntryContractIntegrity(context) {
 
     // 比对前归一化换行符：用户文件可能被 git autocrlf 或编辑器转成 CRLF，避免误报 drift。
     const normalize = (value) => value.replace(/\r\n/g, '\n');
-    if (normalize(analysis.block) !== normalize(canonicalBlock)) {
+    if (normalize(normalizeContractForCoreComparison(analysis.block)) !== normalize(canonicalBlock)) {
       addError(result, `contract zone drifted in ${entryFile}`);
       continue;
     }
