@@ -99,7 +99,7 @@ Dependency-free CommonJS Node CLI. `bin/niuma-harness.js` invokes `main()` from 
 
 `init` is idempotent; there is no `--force`.
 
-- **Entry files** are agent-derived, not listed in `templates/manifest.json`: `claude` writes `CLAUDE.md`, `codex`/`opencode` write `AGENTS.md`, and `multi` writes both. `src/scaffold/entries.js` preserves all content outside the managed contract block.
+- **Entry files** are agent-derived, not listed in `templates/manifest.json`: `claude` writes a full `CLAUDE.md`, `codex`/`opencode` write a full `AGENTS.md`, and `multi` writes a full `AGENTS.md` plus a `CLAUDE.md` pointer to it. `src/scaffold/entries.js` preserves all content outside the managed contract block.
 - **Harness docs** are driven by `templates/manifest.json`. Tool-managed templates refresh on each init; `managed: "user"` files (`docs/project-context.md`, `docs/automation/automation-intent.md`) are created only when missing.
 - **Rules** flow from `templates/rules/<name>/` to agent-native surfaces: `.claude/rules/`, `.agents/harness-rules/`, and `.opencode/rules/` with exact selected rule-file paths in the OpenCode `opencode.json.instructions` array. Codex/multi `AGENTS.md` provides fixed guidance to read applicable installed Codex rules before editing. Rules are installed only on first init or through `install-rule`; re-init preserves them. Direct edits and rule override layers are unsupported.
 - **Commands** are single-sourced from `templates/commands/*.md` and rendered per agent: Claude slash commands, Codex command-derived skills, and OpenCode commands. They are installed only on first init or through `install-command`; re-init preserves them.

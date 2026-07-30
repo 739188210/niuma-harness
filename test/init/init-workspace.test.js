@@ -289,14 +289,41 @@ test('existing root entry gets the contract merged in (user content preserved)',
   assert.ok(body.endsWith('my project notes\n'), 'user content should be preserved after the contract block');
 });
 
-test('agent switch removes an untouched retired entry', () => {
+test('agent switch from multi to claude replaces the pointer with a full contract', () => {
   const workspace = tempDir();
   let result = run(['init', workspace, '--agent', 'multi']);
   assert.strictEqual(result.status, 0, result.stderr);
+  const claudeEntry = path.join(workspace, 'CLAUDE.md');
+  assert.match(read(claudeEntry), /Niuma Harness — Claude Pointer/);
+
   result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   assertNoPath(path.join(workspace, 'AGENTS.md'));
-  assertFile(path.join(workspace, 'CLAUDE.md'));
+  assertFile(claudeEntry);
+  assert.match(read(claudeEntry), /Niuma Harness — Operating Loop/);
+  assert.doesNotMatch(read(claudeEntry), /Niuma Harness — Claude Pointer/);
+});
+
+test('agent switch from multi to Codex retires the Claude pointer', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'multi']);
+  assert.strictEqual(result.status, 0, result.stderr);
+
+  result = run(['init', workspace, '--agent', 'codex']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertNoPath(path.join(workspace, 'CLAUDE.md'));
+  assert.match(read(path.join(workspace, 'AGENTS.md')), /Codex engineering rules/);
+});
+
+test('agent switch from multi to OpenCode retires the Claude pointer', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'multi']);
+  assert.strictEqual(result.status, 0, result.stderr);
+
+  result = run(['init', workspace, '--agent', 'opencode']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assertNoPath(path.join(workspace, 'CLAUDE.md'));
+  assert.doesNotMatch(read(path.join(workspace, 'AGENTS.md')), /Codex engineering rules/);
 });
 
 test('agent switch removes an untouched Codex-guided retired entry', () => {

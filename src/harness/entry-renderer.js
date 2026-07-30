@@ -7,7 +7,10 @@ function renderEntry(agent, entryFile, harnessDir, workDirectory, topology = { m
   Object.assign(variables, entryTopologyGuidance(hasModules, harnessDir), {
     ENTRY_CODEX_RULES_GUIDANCE: codexRulesGuidance(agent, entryFile),
   });
-  return renderTemplate('entry/entry.md', variables);
+  const template = agent === 'multi' && entryFile === 'CLAUDE.md'
+    ? 'entry/claude-pointer.md'
+    : 'entry/entry.md';
+  return renderTemplate(template, variables);
 }
 
 function codexRulesGuidance(agent, entryFile) {

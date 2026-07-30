@@ -40,11 +40,15 @@ test('entry file carries the operating contract zone', () => {
   assert.doesNotMatch(body, /\(depth: `docs\//, 'entry depth links must not use workspace-root docs paths');
 });
 
-test('multi mode adds Codex rule guidance only to AGENTS.md', () => {
+test('multi mode makes AGENTS.md the complete entry and CLAUDE.md its pointer', () => {
   const workspace = initWorkspace('multi');
   const claude = read(path.join(workspace, 'CLAUDE.md'));
   const agents = read(path.join(workspace, 'AGENTS.md'));
+  assert.match(claude, /Niuma Harness — Claude Pointer/);
+  assert.match(claude, /read the root \[`AGENTS\.md`\]\(AGENTS\.md\)/);
+  assert.doesNotMatch(claude, /Niuma Harness — Operating Loop/);
   assert.doesNotMatch(claude, /Codex engineering rules/);
+  assert.match(agents, /Niuma Harness — Operating Loop/);
   assert.match(agents, /## Codex engineering rules/);
   assert.match(agents, /\.agents\/harness-rules\//);
   assert.doesNotMatch(agents, /Selected engineering rules|niuma-harness:codex-rules/);
@@ -67,9 +71,15 @@ test('all agent entries retain the shared operating contract', () => {
 
     for (const entryFile of scenario.entryFiles) {
       const entry = read(path.join(workspace, entryFile));
-      assert.match(entry, /Niuma Harness — Operating Loop/);
       assert.match(entry, /<!-- niuma-harness:contract begin/);
       assert.match(entry, /<!-- niuma-harness:contract end/);
+      if (scenario.agent === 'multi' && entryFile === 'CLAUDE.md') {
+        assert.match(entry, /Niuma Harness — Claude Pointer/);
+        assert.match(entry, /read the root \[`AGENTS\.md`\]\(AGENTS\.md\)/);
+        assert.doesNotMatch(entry, /Niuma Harness — Operating Loop/);
+        continue;
+      }
+      assert.match(entry, /Niuma Harness — Operating Loop/);
       if (entryFile === 'AGENTS.md' && (scenario.agent === 'codex' || scenario.agent === 'multi')) {
         assert.match(entry, /## Codex engineering rules/);
         assert.match(entry, /\.agents\/harness-rules\/common\//);

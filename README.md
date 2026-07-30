@@ -105,7 +105,7 @@ npx niuma-harness doctor ./workspace --harness-dir ai-harness
 | `claude` | `CLAUDE.md` | `common` | Markdown files under `.claude/rules/` |
 | `codex` | `AGENTS.md` | `common` | Markdown files under `.agents/harness-rules/`; `AGENTS.md` directs Codex to read applicable files |
 | `opencode` | `AGENTS.md` | `common` | Markdown files under `.opencode/rules/`, listed in `opencode.json.instructions` |
-| `multi` | `CLAUDE.md` and `AGENTS.md` | `common` | all applicable adapters |
+| `multi` | `AGENTS.md` full contract; `CLAUDE.md` pointer | `common` | all applicable adapters |
 
 ## Generated structure
 
@@ -162,7 +162,7 @@ Runtime task records live under the workspace-level `agent-work/` directory.
 
 When the selected Harness directory has no existing `manifest.json`, an interactive normal `init` discovers bounded module candidates from root Maven, Gradle, npm-workspace, or pnpm-workspace declarations, lists them, and requires confirmation before writing. Declining leaves the workspace unchanged: no Harness or module files are written. A normal non-interactive `init` remains root-only for scripts and CI. Use `--topology single` to explicitly stay root-only in an interactive terminal, `--modules` to explicitly select module roots, or `--topology discover --dry-run` to preview candidates only. Discovery never recursively scans arbitrary folders, runs project commands, or follows symlinks.
 
-A confirmed or explicitly selected multi-module initialization keeps one root Harness and creates project-maintained `harness/modules.json`, generated `harness/docs/module-topology.md`, and concise local `CLAUDE.md` / `AGENTS.md` supplements for selected modules. Newly created module entries include an empty user-/Agent-maintained module knowledge skeleton outside the Niuma marker; `init` never infers project facts for it. Existing module entries preserve their content outside the marker and are not force-restructured to add that skeleton. Root policy remains additive; module files cannot weaken it. Doctor checks topology and supplements; Repair deliberately does not rewrite module-local files.
+A confirmed or explicitly selected multi-module initialization keeps one root Harness and creates project-maintained `harness/modules.json`, generated `harness/docs/module-topology.md`, and concise local `CLAUDE.md` / `AGENTS.md` supplements for selected modules. In multi mode, the root and each module use `AGENTS.md` as the complete entry while `CLAUDE.md` points to it. Newly created module entries include an empty user-/Agent-maintained module knowledge skeleton outside the Niuma marker; `init` never infers project facts for it. Existing module entries preserve their content outside the marker and are not force-restructured to add that skeleton. Root policy remains additive; module files cannot weaken it. Doctor checks topology and supplements; Repair deliberately does not rewrite module-local files.
 
 `modules.json` uses `schemaVersion: 1` and a `modules` array. Each module needs an explicit `id` containing only letters, digits, `.`, `_`, or `-`; `kind` is optional and follows the same token rule. `root` remains a workspace-relative module directory subject to path and symlink checks. After a project-maintained registry change, run normal `init` to adopt it. If Repair finds an invalid registry or one that differs from installed topology, it reports the issue and stops without rewriting the registry or other files.
 
@@ -212,7 +212,7 @@ Schema version 1 is intentionally unsupported. `init` will not adopt existing fi
 
 | File | On re-init |
 |---|---|
-| **Entry** (`CLAUDE.md` / `AGENTS.md`) | Merged: if the contract block is present it is refreshed; otherwise the block is inserted at the top. Your existing content is always preserved. |
+| **Entry** (`CLAUDE.md` / `AGENTS.md`) | Merged: if the contract block is present it is refreshed; otherwise the block is inserted at the top. In multi mode, `AGENTS.md` is the full contract and `CLAUDE.md` is its pointer. Your existing content is always preserved. |
 | **Tool-managed** (layers, process playbooks, policy, index, README.md, `agent-work/README.md`) | Refreshed from the template. |
 | **User-maintained** (`project-context.md`) | Preserved if it exists; created from the template only when absent. |
 | Native Markdown rules | Installed on first init or through `install-rule`, then left unchanged by re-init, Doctor, and Repair. Claude uses `.claude/rules/`; Codex uses `.agents/harness-rules/`; OpenCode uses `.opencode/rules/`. Codex/multi `AGENTS.md` provides fixed guidance to read applicable installed Codex rule files. |
