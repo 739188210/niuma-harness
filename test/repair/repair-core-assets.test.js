@@ -36,7 +36,7 @@ test('repair restores Codex contract drift without managing independent rule ass
   let result = run(['init', workspace, '--agent', 'codex', '--rules', 'common', '--skills', 'none']);
   assert.strictEqual(result.status, 0, result.stderr);
   const entryPath = path.join(workspace, 'AGENTS.md');
-  const rulesRoot = path.join(workspace, '.codex', 'harness-rules');
+  const rulesRoot = path.join(workspace, '.agents', 'harness-rules');
   fs.writeFileSync(entryPath, read(entryPath).replace('Operating Loop', 'Operating Loop (drifted)'), 'utf8');
   fs.writeFileSync(path.join(rulesRoot, 'common', 'testing.md'), 'local Codex rule\n', 'utf8');
   fs.writeFileSync(path.join(rulesRoot, 'local.md'), 'extra asset\n', 'utf8');

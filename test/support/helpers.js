@@ -269,7 +269,7 @@ function assertNoOpenCodeManagedRulesInstruction(workspaceRoot, harnessDir = 'ha
 }
 
 function assertNoCodexRulesDir(workspaceRoot) {
-  assertNoPath(path.join(workspaceRoot, '.codex', 'rules'));
+  assertNoPath(path.join(workspaceRoot, '.agents', 'harness-rules'));
 }
 
 function escapeRegExp(value) {

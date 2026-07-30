@@ -50,7 +50,7 @@ Each command asks for the target agent. With no names it lists available package
 
 Existing files with different contents are shown as conflicts. Enter `y` to back them up under `.niuma-harness/asset-installs/` and overwrite them; any other response cancels the whole installation. `--dry-run` prints the plan without writing files. These commands require an interactive terminal and an OS/Node runtime with `O_NOFOLLOW`; when that capability is unavailable, installation fails before planning, backups, or writes. They are intended for a trusted workspace whose paths are not being concurrently modified by an adversarial process: they do not provide a workspace lock or complete cross-process TOCTOU protection for parent-directory or regular-file replacement races.
 
-`install-rule` follows the selected agent's native rule surface: Claude writes `.claude/rules/`; Codex writes `.codex/harness-rules/`; OpenCode writes `.opencode/rules/` and appends paths to `opencode.json.instructions`; `multi` applies all relevant surfaces. Generated Codex/multi `AGENTS.md` contracts direct Codex to read existing applicable `.codex/harness-rules/` files before editing, but rule installation itself does not require or modify `AGENTS.md`. Existing OpenCode configuration must be a JSON object with string-array `instructions`, if present. Installed assets are independent from the generated Harness core: they do not participate in init, Doctor, or Repair lifecycle management.
+`install-rule` follows the selected agent's native rule surface: Claude writes `.claude/rules/`; Codex writes `.agents/harness-rules/`; OpenCode writes `.opencode/rules/` and appends paths to `opencode.json.instructions`; `multi` applies all relevant surfaces. Generated Codex/multi `AGENTS.md` contracts direct Codex to read existing applicable `.agents/harness-rules/` files before editing, but rule installation itself does not require or modify `AGENTS.md`. Existing OpenCode configuration must be a JSON object with string-array `instructions`, if present. Installed assets are independent from the generated Harness core: they do not participate in init, Doctor, or Repair lifecycle management.
 
 ### Init options
 
@@ -103,7 +103,7 @@ npx niuma-harness doctor ./workspace --harness-dir ai-harness
 | Agent | Generated entry file | Default rules | Native rules adapter |
 |---|---|---|---|
 | `claude` | `CLAUDE.md` | `common` | Markdown files under `.claude/rules/` |
-| `codex` | `AGENTS.md` | `common` | Markdown files under `.codex/harness-rules/`; `AGENTS.md` directs Codex to read applicable files |
+| `codex` | `AGENTS.md` | `common` | Markdown files under `.agents/harness-rules/`; `AGENTS.md` directs Codex to read applicable files |
 | `opencode` | `AGENTS.md` | `common` | Markdown files under `.opencode/rules/`, listed in `opencode.json.instructions` |
 | `multi` | `CLAUDE.md` and `AGENTS.md` | `common` | all applicable adapters |
 
@@ -215,11 +215,11 @@ Schema version 1 is intentionally unsupported. `init` will not adopt existing fi
 | **Entry** (`CLAUDE.md` / `AGENTS.md`) | Merged: if the contract block is present it is refreshed; otherwise the block is inserted at the top. Your existing content is always preserved. |
 | **Tool-managed** (layers, process playbooks, policy, index, README.md, `agent-work/README.md`) | Refreshed from the template. |
 | **User-maintained** (`project-context.md`) | Preserved if it exists; created from the template only when absent. |
-| Native Markdown rules | Installed on first init or through `install-rule`, then left unchanged by re-init, Doctor, and Repair. Claude uses `.claude/rules/`; Codex uses `.codex/harness-rules/`; OpenCode uses `.opencode/rules/`. Codex/multi `AGENTS.md` provides fixed guidance to read applicable installed Codex rule files. |
+| Native Markdown rules | Installed on first init or through `install-rule`, then left unchanged by re-init, Doctor, and Repair. Claude uses `.claude/rules/`; Codex uses `.agents/harness-rules/`; OpenCode uses `.opencode/rules/`. Codex/multi `AGENTS.md` provides fixed guidance to read applicable installed Codex rule files. |
 | Native command artifacts (`.claude/commands/`, `.agents/skills/<command-id>/`, `.opencode/commands/`) | Installed on first init or through `install-command`, then left unchanged by re-init, Doctor, and Repair. Unknown user-created files are also left untouched. |
 | `manifest.json` | Regenerated every time. |
 
-Rules are selected only during first init or by `install-rule`. Re-init, Doctor, and Repair leave all native rule assets—including `.codex/harness-rules/**`—unchanged. Direct edits to generated rule files are unsupported in this release, and there is no rule override layer.
+Rules are selected only during first init or by `install-rule`. Re-init, Doctor, and Repair leave all native rule assets—including `.agents/harness-rules/**`—unchanged. Direct edits to generated rule files are unsupported in this release, and there is no rule override layer.
 
 Built-in command workflows are single-sourced from `templates/commands/*.md`. `init` wraps that same workflow content for each supported agent surface:
 
@@ -294,7 +294,7 @@ templates/rules/*  ->  agent-native Markdown rule surfaces
 `templates/rules/*` is the package canonical source. Its rendered files are Niuma-managed artifacts in native tool surfaces:
 
 - `claude` writes Markdown files under `.claude/rules/<rule>/`.
-- `codex` writes selected Markdown rule files under `.codex/harness-rules/<rule>/`; its managed `AGENTS.md` contract directs Codex to read existing applicable rule files before editing. It does not generate `.codex/rules` engineering rules.
+- `codex` writes selected Markdown rule files under `.agents/harness-rules/<rule>/`; its managed `AGENTS.md` contract directs Codex to read existing applicable rule files before editing. It does not generate rules under `.codex/`.
 - `opencode` writes Markdown files under `.opencode/rules/<rule>/` and places those exact paths in the `opencode.json.instructions` string array. OpenCode treats them as additional instruction files alongside `AGENTS.md`; user paths, globs, URLs, and unrelated config fields remain outside Niuma ownership.
 
 All available rule directories are lightweight engineering preferences. `common` is the base selection: it is installed when `--rules` is omitted and automatically included with every ordinary named `--rules` selection. `all` and `none` are standalone selectors.

@@ -27,7 +27,7 @@ test('agent-native targets declare the supported surface matrix', () => {
   assert.deepStrictEqual(getAllKnownRuleTargetRoots(), [
     '.claude/rules',
     '.claude/rules/niuma',
-    '.codex/harness-rules',
+    '.agents/harness-rules',
     '.opencode/rules',
     '.opencode/rules/niuma',
   ]);
@@ -52,9 +52,9 @@ test('agent-native targets declare the supported surface matrix', () => {
   ]);
 
   assert.deepStrictEqual(getRuleTargetRootsForAgent('claude'), ['.claude/rules']);
-  assert.deepStrictEqual(getRuleTargetRootsForAgent('codex'), ['.codex/harness-rules']);
+  assert.deepStrictEqual(getRuleTargetRootsForAgent('codex'), ['.agents/harness-rules']);
   assert.deepStrictEqual(getRuleTargetRootsForAgent('opencode'), ['.opencode/rules']);
-  assert.deepStrictEqual(getRuleTargetRootsForAgent('multi'), ['.claude/rules', '.codex/harness-rules', '.opencode/rules']);
+  assert.deepStrictEqual(getRuleTargetRootsForAgent('multi'), ['.claude/rules', '.agents/harness-rules', '.opencode/rules']);
   assert.deepStrictEqual(getLegacyRuleTargetRootsForAgent('multi'), [
     '.claude/rules/niuma',
     '.opencode/rules/niuma',

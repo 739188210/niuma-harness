@@ -23,7 +23,7 @@ test('README documents interactive current-directory asset installers independen
   assert.match(readme, /interactive terminal/i);
   assert.match(readme, /does not initialize or update.*Harness/i);
   assert.match(readme, /do not participate in init, Doctor, or Repair/i);
-  assert.match(readme, /\.codex\/harness-rules\//);
+  assert.match(readme, /\.agents\/harness-rules\//);
   assert.match(readme, /does not require or modify `AGENTS\.md`/i);
   assert.doesNotMatch(readme, /Codex appends selected rules/i);
   assert.doesNotMatch(readme, /Codex rules region/i);
@@ -55,7 +55,7 @@ test('--help shows init, doctor, repair, asset installers, and no removed comman
   assert.match(result.stdout, /--skills/);
   assert.match(result.stdout, /First init only/);
   assert.match(result.stdout, /do not participate in init, Doctor, or Repair/i);
-  assert.match(result.stdout, /\.codex\/harness-rules\//);
+  assert.match(result.stdout, /\.agents\/harness-rules\//);
   assert.doesNotMatch(result.stdout, /require an existing Niuma AGENTS\.md/i);
 });
 

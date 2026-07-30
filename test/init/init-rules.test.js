@@ -51,7 +51,7 @@ test('default rules include common engineering rules', () => {
       assertOpenCodeRulesInstruction(workspace, 'harness', expectedRules);
     }
     if (scenario.agent === 'codex' || scenario.agent === 'multi') {
-      assertFile(path.join(workspace, '.codex', 'harness-rules', 'common', 'testing.md'));
+      assertFile(path.join(workspace, '.agents', 'harness-rules', 'common', 'testing.md'));
       assert.match(read(path.join(workspace, 'AGENTS.md')), /Codex engineering rules/);
     }
     assertManifest(path.join(harnessRoot, 'manifest.json'), {
@@ -65,7 +65,7 @@ test('default rules include common engineering rules', () => {
 test('generated common testing rules require practical TDD across agent surfaces', () => {
   for (const scenario of [
     { agent: 'claude', rulePath: ['.claude', 'rules', 'common', 'testing.md'] },
-    { agent: 'codex', rulePath: ['.codex', 'harness-rules', 'common', 'testing.md'] },
+    { agent: 'codex', rulePath: ['.agents', 'harness-rules', 'common', 'testing.md'] },
     { agent: 'opencode', rulePath: ['.opencode', 'rules', 'common', 'testing.md'] },
   ]) {
     const workspace = tempDir();

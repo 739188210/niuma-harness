@@ -112,7 +112,7 @@ test('discovery treats case-distinct harness directories according to the platfo
   assert.notStrictEqual(result.status, 0);
   if (process.platform === 'win32') {
     assert.doesNotMatch(result.stderr, /competing Niuma harnesses found/);
-    assert.match(result.stderr, /unsupported previous manifest\.json/);
+    assert.match(result.stderr, /invalid previous manifest\.json: unsupported schemaVersion/);
   } else {
     assert.match(result.stderr, /- Harness/);
   }

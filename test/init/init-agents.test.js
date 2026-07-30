@@ -46,7 +46,7 @@ test('multi mode adds Codex rule guidance only to AGENTS.md', () => {
   const agents = read(path.join(workspace, 'AGENTS.md'));
   assert.doesNotMatch(claude, /Codex engineering rules/);
   assert.match(agents, /## Codex engineering rules/);
-  assert.match(agents, /\.codex\/harness-rules\//);
+  assert.match(agents, /\.agents\/harness-rules\//);
   assert.doesNotMatch(agents, /Selected engineering rules|niuma-harness:codex-rules/);
 });
 
@@ -72,7 +72,7 @@ test('all agent entries retain the shared operating contract', () => {
       assert.match(entry, /<!-- niuma-harness:contract end/);
       if (entryFile === 'AGENTS.md' && (scenario.agent === 'codex' || scenario.agent === 'multi')) {
         assert.match(entry, /## Codex engineering rules/);
-        assert.match(entry, /\.codex\/harness-rules\/common\//);
+        assert.match(entry, /\.agents\/harness-rules\/common\//);
         assert.doesNotMatch(entry, /Selected engineering rules|niuma-harness:codex-rules/);
       }
     }

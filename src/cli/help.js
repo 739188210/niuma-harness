@@ -32,7 +32,7 @@ Asset install options:
 
 Asset install commands require an interactive terminal, install in the current working directory,
 and prompt for an agent each time. They require OS/Node O_NOFOLLOW support and fail before writes if it
-is unavailable. install-rule writes Codex rules under .codex/harness-rules/; OpenCode/multi update
+is unavailable. install-rule writes Codex rules under .agents/harness-rules/; OpenCode/multi update
 opencode.json.instructions. Assets do not initialize or modify Harness docs, manifest state, or task data,
 and do not participate in init, Doctor, or Repair lifecycle management.
 

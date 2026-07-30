@@ -1,3 +1,4 @@
+const fs = require('fs');
 const test = require('node:test');
 const {
   assert,
@@ -49,7 +50,7 @@ for (const agent of ['codex', 'multi']) {
     const entry = read(path.join(workspace, 'AGENTS.md'));
     assert.match(entry, /Codex engineering rules/);
     assert.doesNotMatch(entry, /Selected engineering rules|niuma-harness:codex-rules/);
-    assert.strictEqual(snapshotTree(path.join(workspace, '.codex', 'harness-rules')), null);
+    assert.strictEqual(snapshotTree(path.join(workspace, '.agents', 'harness-rules')), null);
   });
 }
 
@@ -58,7 +59,7 @@ for (const agent of ['codex', 'multi']) {
     const workspace = tempDir();
     let result = run(['init', workspace, '--agent', agent, '--rules', 'common', '--skills', 'none']);
     assert.strictEqual(result.status, 0, result.stderr);
-    const rulesRoot = path.join(workspace, '.codex', 'harness-rules');
+    const rulesRoot = path.join(workspace, '.agents', 'harness-rules');
     fsWrite(path.join(rulesRoot, 'common', 'testing.md'), 'local Codex rule\n');
     fsWrite(path.join(rulesRoot, 'local.md'), 'extra asset\n');
     const assetsBefore = snapshotTree(rulesRoot);
@@ -74,6 +75,27 @@ for (const agent of ['codex', 'multi']) {
     assert.doesNotMatch(entry, /niuma-harness:codex-rules/);
   });
 }
+
+test('re-run Codex init leaves the former rule root untouched without migration', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'codex', '--rules', 'common', '--skills', 'none']);
+  assert.strictEqual(result.status, 0, result.stderr);
+
+  const formerRulesRoot = path.join(workspace, '.codex', 'harness-rules');
+  fs.mkdirSync(path.join(formerRulesRoot, 'common'), { recursive: true });
+  fsWrite(path.join(formerRulesRoot, 'common', 'testing.md'), 'former Codex rule\n');
+  const formerAssetsBefore = snapshotTree(formerRulesRoot);
+  const currentRulesRoot = path.join(workspace, '.agents', 'harness-rules');
+  const currentAssetsBefore = snapshotTree(currentRulesRoot);
+
+  result = run(['init', workspace]);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.deepStrictEqual(snapshotTree(formerRulesRoot), formerAssetsBefore);
+  assert.deepStrictEqual(snapshotTree(currentRulesRoot), currentAssetsBefore);
+  const entry = read(path.join(workspace, 'AGENTS.md'));
+  assert.match(entry, /\.agents\/harness-rules\//);
+  assert.doesNotMatch(entry, /\.codex\/harness-rules\//);
+});
 
 test('missing manifest performs fresh init and installs selected assets', () => {
   const workspace = tempDir();

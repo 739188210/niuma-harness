@@ -34,8 +34,8 @@ test('install-rule writes standalone Codex rules without modifying AGENTS.md', {
   const result = installRule(workspace, '2', '1', 'y');
 
   assert.strictEqual(result.status, 0, result.stderr);
-  assertFile(path.join(workspace, '.codex', 'harness-rules', 'common', 'coding-style.md'));
-  assertFile(path.join(workspace, '.codex', 'harness-rules', 'common', 'testing.md'));
+  assertFile(path.join(workspace, '.agents', 'harness-rules', 'common', 'coding-style.md'));
+  assertFile(path.join(workspace, '.agents', 'harness-rules', 'common', 'testing.md'));
   assert.strictEqual(read(entryPath), entryBefore);
 
   const repeat = installRule(workspace, '2', '1', 'y');
@@ -49,7 +49,7 @@ test('install-rule creates standalone Codex rules without a Harness contract', {
   const result = installRule(workspace, '2', '1', 'y');
 
   assert.strictEqual(result.status, 0, result.stderr);
-  assertFile(path.join(workspace, '.codex', 'harness-rules', 'common', 'security.md'));
+  assertFile(path.join(workspace, '.agents', 'harness-rules', 'common', 'security.md'));
   assertNoPath(path.join(workspace, 'AGENTS.md'));
 });
 
@@ -102,7 +102,7 @@ test('install-rule applies multi-agent native adapters together', { skip: suppor
 
   assert.strictEqual(result.status, 0, result.stderr);
   assert.ok(fs.existsSync(path.join(workspace, '.claude', 'rules', 'common', 'testing.md')));
-  assert.ok(fs.existsSync(path.join(workspace, '.codex', 'harness-rules', 'common', 'testing.md')));
+  assert.ok(fs.existsSync(path.join(workspace, '.agents', 'harness-rules', 'common', 'testing.md')));
   assert.ok(fs.existsSync(path.join(workspace, '.opencode', 'rules', 'common', 'testing.md')));
   assert.doesNotMatch(read(path.join(workspace, 'AGENTS.md')), /Selected engineering rules|niuma-harness:codex-rules/);
   const config = JSON.parse(read(path.join(workspace, 'opencode.json')));

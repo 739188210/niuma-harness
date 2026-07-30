@@ -18,7 +18,7 @@ const AGENT_NATIVE_TARGETS = {
     rules: {
       adapters: [],
       legacyRoots: [],
-      roots: ['.codex/harness-rules'],
+      roots: ['.agents/harness-rules'],
     },
     skills: ['.agents/skills'],
   },
@@ -51,7 +51,7 @@ const AGENT_NATIVE_TARGETS = {
         ruleRoot: '.opencode/rules',
       }],
       legacyRoots: ['.claude/rules/niuma', '.opencode/rules/niuma'],
-      roots: ['.claude/rules', '.codex/harness-rules', '.opencode/rules'],
+      roots: ['.claude/rules', '.agents/harness-rules', '.opencode/rules'],
     },
     skills: ['.claude/skills', '.agents/skills', '.opencode/skills'],
   },

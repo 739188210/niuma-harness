@@ -16,7 +16,7 @@ function codexRulesGuidance(agent, entryFile) {
     '',
     '## Codex engineering rules',
     '',
-    'For every engineering modification, first read each existing file in .codex/harness-rules/common/. Then read every existing applicable rule file under .codex/harness-rules/:',
+    'For every engineering modification, first read each existing file in .agents/harness-rules/common/. Then read every existing applicable rule file under .agents/harness-rules/:',
     '- typescript/ for TypeScript, JavaScript, Node, frontend logic, and related configuration;',
     '- web/ for pages, components, styles, interactions, browser performance, and frontend security;',
     '- java/ for Java, JVM, Maven, and Gradle changes;',

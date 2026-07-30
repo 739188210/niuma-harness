@@ -115,7 +115,7 @@ test('doctor ignores independently installed Codex rule assets', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'codex', '--rules', 'common']);
   assert.strictEqual(init.status, 0, init.stderr);
-  const rulePath = path.join(workspace, '.codex', 'harness-rules', 'common', 'testing.md');
+  const rulePath = path.join(workspace, '.agents', 'harness-rules', 'common', 'testing.md');
   fs.writeFileSync(rulePath, 'local Codex rule change\n', 'utf8');
 
   const result = run(['doctor', workspace]);

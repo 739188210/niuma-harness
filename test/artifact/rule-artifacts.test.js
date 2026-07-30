@@ -20,7 +20,7 @@ function createDependencies() {
     },
     getRuleTargetRootsForAgent(agent) {
       if (agent === 'claude') return ['.claude/rules'];
-      if (agent === 'codex') return ['.codex/harness-rules'];
+      if (agent === 'codex') return ['.agents/harness-rules'];
       return ['.opencode/rules'];
     },
     listFilesRecursive(directory) {
@@ -99,7 +99,7 @@ test('uses the native target root for rule artifact targets', () => {
   );
 });
 
-test('uses the Codex harness rules root for rule artifact targets', () => {
+test('uses the Codex agent rules root for rule artifact targets', () => {
   const artifacts = renderRuleArtifacts(
     'codex',
     ['common'],
@@ -111,8 +111,8 @@ test('uses the Codex harness rules root for rule artifact targets', () => {
   assert.deepStrictEqual(
     artifacts.map((artifact) => artifact.target),
     [
-      '.codex/harness-rules/common/coding-style.md',
-      '.codex/harness-rules/common/testing.md',
+      '.agents/harness-rules/common/coding-style.md',
+      '.agents/harness-rules/common/testing.md',
     ]
   );
 });

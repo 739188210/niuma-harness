@@ -67,12 +67,12 @@ The historical keys `rules`, `skills`, `commands`, `artifacts`, and `openCodeIns
 Codex and multi-agent rule files are independent assets under:
 
 ```text
-.codex/harness-rules/<rule>/<relative-path>
+.agents/harness-rules/<rule>/<relative-path>
 ```
 
 - First Codex/multi init and `install-rule` use the same file-artifact renderer and write the same directory layout.
 - Generated Codex/multi `AGENTS.md` contains fixed guidance: read existing `common` rules for every engineering change, then the existing applicable language/domain rule files before editing.
-- Re-init and Repair refresh only the outer core contract; they preserve `.codex/harness-rules/**` byte-for-byte because it is an independent asset surface.
+- Re-init and Repair refresh only the outer core contract; they preserve `.agents/harness-rules/**` byte-for-byte because it is an independent asset surface.
 - Doctor validates the ordinary outer `AGENTS.md` contract and does not inspect Codex rule files.
 - No migration, preservation, validation, or compatibility behavior exists for old embedded Codex rule regions.
 
@@ -85,20 +85,20 @@ For an existing valid manifest, re-init:
 - refreshes core templates, topology-derived state, entry contracts, module supplements, and v5 core manifest state;
 - preserves native asset surfaces and `opencode.json` byte-for-byte;
 - preserves `AGENTS.md` content outside the managed outer contract;
-- preserves independent `.codex/harness-rules/**` assets byte-for-byte without reading them;
+- preserves independent `.agents/harness-rules/**` assets byte-for-byte without reading them;
 - rejects first-init-only asset options (`--rules`, `--rules-out`, and `--skills`) and directs users to `install-*` commands.
 
 ### Doctor
 
 Doctor validates core state only: manifest/core identity, workspace runtime layout, entry contract structure, topology/module state, and required core documentation. It does not report independent rule, skill, command, adapter, artifact-ledger, or OpenCode configuration drift.
 
-For Codex/multi, Doctor validates the same ordinary managed `AGENTS.md` contract as other entry files; the fixed Codex rule-reading guidance is core content, while `.codex/harness-rules/**` remains outside Doctor ownership.
+For Codex/multi, Doctor validates the same ordinary managed `AGENTS.md` contract as other entry files; the fixed Codex rule-reading guidance is core content, while `.agents/harness-rules/**` remains outside Doctor ownership.
 
 ### Repair
 
 Repair plans, backs up, modifies, restores, and validates core paths only. Independent assets—including `opencode.json`—do not appear in its plan or backups and never block core repair.
 
-When repairing an active Codex/multi entry, Repair restores the ordinary core contract containing fixed rule-reading guidance. It does not inspect, preserve, back up, or modify `.codex/harness-rules/**`.
+When repairing an active Codex/multi entry, Repair restores the ordinary core contract containing fixed rule-reading guidance. It does not inspect, preserve, back up, or modify `.agents/harness-rules/**`.
 
 ## Installer safety boundary
 
@@ -110,7 +110,7 @@ They are intended for a trusted workspace. They do not provide a workspace lock 
 
 - `src/cli/index.js`: strict manifest route; competing Harness detection precedes manifest parsing.
 - `src/harness/manifest.js`: schema v5 core-only parsing and legacy v2–v4 core normalization.
-- `src/harness/agent-native-targets.js` and `src/rule/artifacts.js`: Codex/multi rule artifacts route to `.codex/harness-rules/` through the shared file renderer.
+- `src/harness/agent-native-targets.js` and `src/rule/artifacts.js`: Codex/multi rule artifacts route to `.agents/harness-rules/` through the shared file renderer.
 - `src/scaffold/entries.js` and `src/installer/rule-adapters.js`: first init and `install-rule` use independent file assets; only OpenCode retains an instruction adapter.
 - `src/doctor/core-checks.js`: core-only outer contract validation with no Codex rule-asset checks.
 - `src/repair/desired-state.js`, `src/repair/planner.js`, `src/repair/state.js`, and `src/repair/index.js`: core-only repair with ordinary Codex/multi entry contracts.
