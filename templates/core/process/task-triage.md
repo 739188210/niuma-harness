@@ -18,7 +18,7 @@ Classify the request, load the minimum relevant context, identify policy risks, 
 | --- | --- | --- |
 | The next action is not trivial read-only work, or it touches security, data, permissions, public APIs, dependencies, releases, destructive effects, or unclear risk. | `{{HARNESS_DIR}}/docs/policy/action-boundary.md`; read `{{HARNESS_DIR}}/docs/layers/02-policy.md` when needed. | Check Policy before acting. |
 | Declared modules, task paths, or current evidence indicate cross-module work. | `{{HARNESS_DIR}}/docs/module-topology.md`, then only affected module supplements and current module files. | Read affected cross-module verification triggers. |
-| A recurring scenario or known trap may apply. | Search and read only relevant active records under `{{HARNESS_DIR}}/docs/experience/`, then re-check their source of truth. | Experience is guidance, never current fact. |
+| A comparable scenario, known trap, or explicit Experience reference may apply. | Search and read only relevant active records under `{{HARNESS_DIR}}/docs/experience/`, then re-check their source of truth. | Experience is guidance, never current fact or action authorization. |
 | Work is blocked, cross-session, delegated, parallel, changing scope, or cannot safely resume from current files alone. | `agent-work/README.md`; for a named resume follow `{{HARNESS_DIR}}/docs/layers/07-loop.md`. | Decide whether status tracking is needed; do not create files merely for format. |
 
 ## Required checklist

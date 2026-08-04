@@ -16,8 +16,9 @@ test('generated docs keep experience project-maintained and decoupled from retir
   const h = path.join(workspace, 'harness');
   const guide = read(path.join(h, 'docs', 'experience', 'README.md'));
   assert.match(guide, /^# Experience Library$/m);
-  assert.match(guide, /Do not create a record for every task/);
-  assert.match(guide, /raw task note, one-off failure, temporary log/);
+  assert.match(guide, /A first verified discovery may be recorded immediately/);
+  assert.match(guide, /Do not create a record merely to close a task/);
+  assert.match(guide, /One-off failures, raw logs, temporary debugging traces/);
   assert.match(guide, /Individual experience records are project-maintained/);
   assert.match(guide, /## Origin \(optional\)/);
   assert.doesNotMatch(guide, /ADR|verification\.md|evidenceIds/);
@@ -38,9 +39,28 @@ test('generated docs define optional Harness feedback without an execution-recor
   const entry = read(path.join(workspace, 'CLAUDE.md'));
   assert.doesNotMatch(entry, /structured execution record|task-execution-record|evidence links/);
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
-  assert.match(workReadme, /optional feedback about this Harness/);
+  assert.match(workReadme, /optional feedback about Harness protocol or documentation friction/);
+  assert.match(workReadme, /project technical discoveries belong in task state, project context, or Experience instead/);
+  assert.match(workReadme, /Why this belongs to Harness feedback rather than project context or Experience/);
   assert.match(workReadme, /Its absence never blocks task execution, recovery, or completion/);
   assert.doesNotMatch(workReadme, /required structured execution record|verification\.md/);
+});
+
+test('generated Memory layer routes discoveries to one primary destination', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+  const memory = read(path.join(h, 'docs', 'layers', '06-memory.md'));
+  assert.match(memory, /## Finding routing/);
+  assert.match(memory, /status\.md.*final response for Direct work/);
+  assert.match(memory, /docs\/project-context\.md/);
+  assert.match(memory, /docs\/experience\/<topic>\.md/);
+  assert.match(memory, /harness-feedback\.md/);
+  assert.match(memory, /A first verified discovery may qualify; repetition is not required/);
+  assert.match(memory, /does not mean every first discovery must become Experience/);
+  assert.match(memory, /An experience record is guidance, not action authorization/);
+  assert.match(memory, /re-check its Source of truth and classify the current action under Policy/);
 });
 
 test('generated feature and process docs define optional pre-work plans', () => {

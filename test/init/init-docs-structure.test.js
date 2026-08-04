@@ -246,7 +246,7 @@ test('generated docs define task state ownership boundaries', () => {
   assert.match(loopMemo, /active task owner/);
 
   const memoryMemo = read(path.join(h, 'docs', 'layers', '06-memory.md'));
-  assert.match(memoryMemo, /Task-local state stays in `agent-work\/tasks\/<task-name>\/`/);
+  assert.match(memoryMemo, /For status-tracked work, task-local state stays in `agent-work\/tasks\/<task-name>\/status\.md`/);
   assert.match(memoryMemo, /Module-local durable facts belong in the affected module entry's marker-external knowledge area/);
   assert.match(memoryMemo, /Root or cross-module durable facts belong in `harness\/docs\/project-context\.md`/);
   assert.match(memoryMemo, /Approval blockers and risks are task-local until resolved/);

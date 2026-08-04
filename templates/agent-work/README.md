@@ -86,7 +86,7 @@ Create other files only when they add information that cannot stay concise in `s
 
 - `context.md`: verified current facts, constraints, assumptions, and open questions. Do not use it for implementation steps or raw command output.
 - `notes.md`: temporary investigation notes, failed attempts, candidate approaches, candidate reusable experience, and handoff details. It is not a current-state or verification authority.
-- `harness-feedback.md`: optional feedback about this Harness. Create it only when the task exposes helpful guidance, ambiguity, conflict, friction, unnecessary cost, or a missing instruction in the Harness documents.
+- `harness-feedback.md`: optional feedback about Harness protocol or documentation friction. Create it only when the task exposes helpful guidance, ambiguity, conflict, friction, unnecessary cost, or a missing instruction in the Harness documents; project technical discoveries belong in task state, project context, or Experience instead.
 
 A Harness feedback file is free Markdown. Keep it focused on:
 
@@ -98,6 +98,7 @@ A Harness feedback file is free Markdown. Keep it focused on:
 - Observed help, ambiguity, or friction:
 - Actual impact on execution:
 - Suggested documentation improvement:
+- Why this belongs to Harness feedback rather than project context or Experience:
 ```
 
 Do not use `harness-feedback.md` as a task plan, status ledger, evidence log, authorization ledger, scope ledger, or completion report. Its absence never blocks task execution, recovery, or completion.
