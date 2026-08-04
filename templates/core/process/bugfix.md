@@ -10,7 +10,7 @@ Repair the smallest relevant cause of a defect and verify the corrected behavior
 
 ## Required artifact/checklist
 
-Before reporting completion, make sure the task record or final response includes:
+Before reporting completion, make sure `status.md` for status-tracked work or the final response for Direct work includes:
 
 - Symptom, expected behavior, and current behavior.
 - Reproduction signal before the fix, or explicit reason reproduction was not achieved.

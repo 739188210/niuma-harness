@@ -6,24 +6,23 @@ Define what an AI agent should preserve for future work and what should remain t
 
 ## When to use
 
-Use this layer after discovering verified stable facts, after finishing multi-step tasks, when project notes are outdated, or when a recurring lesson would help future agents.
+Use this layer after discovering verified stable facts, after finishing status-tracked tasks, when project notes are outdated, or when a recurring lesson would help future agents.
 
 ## Agent protocol
 
 1. Separate stable project facts from temporary task observations, and verify facts against current files or user confirmation before preserving them.
-2. Task-local state stays in `agent-work/tasks/<task-name>/`. This includes progress ledgers, task notes, temporary investigation details, unresolved approval blockers, risks, and verification summaries. Keep other task-local investigation details in the workspace-level `agent-work/` directory or the current task record. Treat `agent-work/tasks/<task-name>/status.md` as task-local operational state; its minimum fields are defined by `{{HARNESS_DIR}}/docs/layers/07-loop.md`.
-3. When updating user-managed `{{HARNESS_DIR}}/docs/project-context.md`, record only verified durable facts, and only when the task verifies them and they have durable value. Give each fact scope a source, scope, and freshness boundary, including a `Refresh when` condition, when useful. When that condition applies or current evidence conflicts, refresh only the task-relevant scope from current sources; preserve unrelated project-maintained content. Current workspace evidence always overrides the index.
-4. Route durable, reusable facts by scope. Module-local durable facts belong in the affected module entry's marker-external knowledge area only after verification against current files or user confirmation. Root or cross-module durable facts belong in `{{HARNESS_DIR}}/docs/project-context.md`, under the most suitable existing heading and the same standard. A durable fact is reusable across multiple tasks and does not depend on one task's temporary outcome; for example, build/test commands, architecture, module ownership, or external constraints. Task-specific findings stay in `agent-work/`.
-5. When a project uses `Task fact routing`, update it only when the task-to-heading mapping changes. Keep it a compact locator: do not put source trees, test inventories, raw command output, temporary investigation, task state, or module-local details there; current evidence must still be rechecked.
-6. Put important long-lived decision rationale in project-maintained records under `{{HARNESS_DIR}}/docs/decisions/` when future work must understand why a durable direction was chosen. A decision record explains why a direction was chosen; it does not replace verified facts, current files, or task evidence.
-7. Put verified reusable experience with clear applicability and invalidation conditions in project-maintained records under `{{HARNESS_DIR}}/docs/experience/`; it is neither a stable fact nor a decision rationale. Promote it only after verification and condensation from task-local evidence, and state its scope, applicability, source of truth, last verification, and invalidation conditions.
-8. Do not create an ADR, experience record, or project-context update merely to close a task. Promote only material with real long-term value; one-off root causes, raw logs, temporary failures, and unverified guesses remain task-local.
-9. When an ADR or experience record is created from a task, it may link the task path, relevant success criteria, verification evidence IDs, and a current source-of-truth recheck. Those links are locators, not substitutes for current evidence or durable facts.
-10. Approval blockers and risks are task-local until resolved. Move them into durable project context only when they become verified recurring constraints.
-11. Do not store secrets, private data, or unverified guesses.
+2. Task-local state stays in `agent-work/tasks/<task-name>/`. This includes progress ledgers, temporary investigation details, unresolved approval blockers, risks, actual observations, and handoff state. Treat `agent-work/tasks/<task-name>/status.md` as task-local operational state; its minimum fields are defined by `{{HARNESS_DIR}}/docs/layers/07-loop.md`.
+3. When updating user-managed `{{HARNESS_DIR}}/docs/project-context.md`, record only verified durable facts with durable value. Give each fact scope a source, scope, and freshness boundary, including a `Refresh when` condition when useful. Current workspace evidence always overrides the index.
+4. Route durable facts by scope. Module-local durable facts belong in the affected module entry's marker-external knowledge area only after verification. Root or cross-module durable facts belong in `{{HARNESS_DIR}}/docs/project-context.md` under the most suitable existing heading.
+5. When a project uses `Task fact routing`, update it only when the task-to-heading mapping changes. Keep it a compact locator; do not put source trees, test inventories, raw command output, temporary investigation, task state, or module-local details there.
+6. Put verified reusable experience with clear applicability and invalidation conditions in project-maintained records under `{{HARNESS_DIR}}/docs/experience/`. It is neither a stable fact nor task execution state. Promote it only after verification and condensation from task-local observations, and state its scope, applicability, source of truth, last verification, and invalidation conditions.
+7. Do not create an experience record or project-context update merely to close a task. Promote only material with real long-term value; one-off root causes, raw logs, temporary failures, and unverified guesses remain task-local.
+8. Approval blockers and risks are task-local until resolved. Move them into durable project context only when they become verified recurring constraints.
+9. Do not store secrets, private data, or unverified guesses.
+
 ## Allowed actions
 
-- Record task progress, verification evidence, and handoff notes.
+- Record task progress, observations, and handoff notes.
 - Suggest updates to stable project context when facts are verified.
 - Link related documents so future agents can find the right source quickly.
 - Mark uncertain facts as open questions instead of long-lived truth.
@@ -35,17 +34,15 @@ Use this layer after discovering verified stable facts, after finishing multi-st
 - Do not treat `status.md` as durable project memory.
 - Do not overwrite project context with guesses.
 - Do not duplicate information already maintained by source files or package metadata unless a human-readable index is needed.
-- Do not promote every task decision, one-off log, unverified guess, or sensitive detail into a decision record.
 - Do not promote raw task notes, one-off failures, temporary logs, unverified guesses, or sensitive details into experience records.
 
 ## Outputs
 
-- Task-local notes and status ledgers for temporary findings and recovery state.
+- Task-local status ledgers and notes for temporary findings and recovery state.
 - Candidate stable facts for `{{HARNESS_DIR}}/docs/project-context.md`.
-- Candidate long-lived decision records under `{{HARNESS_DIR}}/docs/decisions/` when their rationale must survive the task.
 - Candidate reusable experience records under `{{HARNESS_DIR}}/docs/experience/` when a verified lesson should survive the task.
 - Open questions needing user confirmation.
-- Links between related context, process, and verification records.
+- Links between related context, process, and observation records.
 
 ## Links to other layers
 

@@ -40,20 +40,6 @@ test('doctor ignores a legacy bootstrap file but detects drift in active managed
   assert.doesNotMatch(result.stdout, /bootstrap\.md/);
 });
 
-test('doctor detects decision-guide drift but ignores project-maintained ADRs', () => {
-  const workspace = initWorkspace();
-  const decisions = path.join(workspace, 'harness', 'docs', 'decisions');
-  const projectAdr = path.join(decisions, '0001-example.md');
-  fs.writeFileSync(projectAdr, '# Project ADR\n\nInitial project decision.\n', 'utf8');
-  fs.appendFileSync(projectAdr, 'Updated project rationale.\n', 'utf8');
-  let result = doctor(workspace);
-  assert.strictEqual(result.status, 0, result.stdout);
-
-  append(path.join(decisions, 'README.md'));
-  result = expectDoctorError(workspace, /managed content drifted docs\/decisions\/README\.md/);
-  assert.doesNotMatch(result.stdout, /0001-example\.md/);
-});
-
 test('doctor detects experience-guide drift but ignores project-maintained experience records', () => {
   const workspace = initWorkspace();
   const experience = path.join(workspace, 'harness', 'docs', 'experience');
@@ -100,7 +86,7 @@ test('doctor rejects inactive entry contracts but allows user-only inactive entr
 test('doctor rejects a drifted inactive entry contract', () => {
   const workspace = initWorkspace();
   const drifted = read(path.join(workspace, 'CLAUDE.md'))
-    .replace('Niuma Harness — Operating Loop', 'Niuma Harness — Drifted Loop');
+    .replace('Niuma Harness — Operating Contract', 'Niuma Harness — Drifted Loop');
   fs.writeFileSync(path.join(workspace, 'AGENTS.md'), drifted, 'utf8');
   expectDoctorError(workspace, /stale contract zone in AGENTS\.md/);
 });

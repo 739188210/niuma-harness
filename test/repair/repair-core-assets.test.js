@@ -37,14 +37,14 @@ test('repair restores Codex contract drift without managing independent rule ass
   assert.strictEqual(result.status, 0, result.stderr);
   const entryPath = path.join(workspace, 'AGENTS.md');
   const rulesRoot = path.join(workspace, '.agents', 'harness-rules');
-  fs.writeFileSync(entryPath, read(entryPath).replace('Operating Loop', 'Operating Loop (drifted)'), 'utf8');
+  fs.writeFileSync(entryPath, read(entryPath).replace('Operating Contract', 'Operating Contract (drifted)'), 'utf8');
   fs.writeFileSync(path.join(rulesRoot, 'common', 'testing.md'), 'local Codex rule\n', 'utf8');
   fs.writeFileSync(path.join(rulesRoot, 'local.md'), 'extra asset\n', 'utf8');
   const assetsBefore = snapshotTree(rulesRoot);
 
   result = run(['repair', workspace, '-y']);
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.doesNotMatch(read(entryPath), /Operating Loop \(drifted\)/);
+  assert.doesNotMatch(read(entryPath), /Operating Contract \(drifted\)/);
   assert.deepStrictEqual(snapshotTree(rulesRoot), assetsBefore);
   assert.strictEqual(run(['doctor', workspace]).status, 0);
 });

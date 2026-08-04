@@ -36,27 +36,6 @@ test('repair -y backs up all affected targets and finishes doctor-green', () => 
   assert.strictEqual(result.status, 0, result.stdout);
 });
 
-test('repair restores the managed decision guide without touching project ADRs', () => {
-  const workspace = initWorkspace();
-  const decisions = path.join(workspace, 'harness', 'docs', 'decisions');
-  const guide = path.join(decisions, 'README.md');
-  const projectAdr = path.join(decisions, '0001-example.md');
-  const projectAdrContent = '# Project ADR\n\nKeep this project record unchanged.\n';
-  fs.writeFileSync(projectAdr, projectAdrContent, 'utf8');
-  fs.appendFileSync(guide, 'drift\n', 'utf8');
-
-  let result = run(['repair', workspace, '--dry-run']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assert.match(result.stdout, /harness\/docs\/decisions\/README\.md/);
-  assert.doesNotMatch(result.stdout, /0001-example\.md/);
-
-  result = run(['repair', workspace, '-y']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  assert.match(result.stdout, /Repair completed\. Doctor passed/);
-  assert.strictEqual(read(projectAdr), projectAdrContent);
-  assert.strictEqual(run(['doctor', workspace]).status, 0);
-});
-
 test('repair restores the managed experience guide without touching project experience records', () => {
   const workspace = initWorkspace();
   const experience = path.join(workspace, 'harness', 'docs', 'experience');

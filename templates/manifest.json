@@ -6,8 +6,6 @@
   ],
   "directories": [
     "docs",
-    "docs/experiments",
-    "docs/decisions",
     "docs/experience",
     "docs/layers",
     "docs/policy",
@@ -26,15 +24,6 @@
       "target": "docs/module-topology.md",
       "template": "core/module-topology.md",
       "dynamic": true
-    },
-    {
-      "target": "docs/experiments/task-execution-record.md",
-      "template": "core/experiments/task-execution-record.md"
-    },
-    {
-      "target": "docs/decisions/README.md",
-      "template": "core/decisions/README.md",
-      "initialCollision": "error"
     },
     {
       "target": "docs/experience/README.md",

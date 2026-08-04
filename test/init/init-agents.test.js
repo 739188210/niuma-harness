@@ -32,10 +32,10 @@ test('entry file carries the operating contract zone', () => {
   const body = read(path.join(workspace, 'CLAUDE.md'));
   assert.match(body, /<!-- niuma-harness:contract begin/, 'entry must open the contract zone');
   assert.match(body, /<!-- niuma-harness:contract end/, 'entry must close the contract zone');
-  assert.match(body, /Operating Loop/, 'entry must contain the operating loop');
+  assert.match(body, /Operating Contract/, 'entry must contain the operating contract');
   assert.match(body, /harness\/docs\/process\/task-triage\.md/, 'entry must point needed workflow routing to triage');
-  assert.match(body, /Direct, Minimum, or Recoverable task-material decision/, 'entry must point task-material selection to DMR');
-  assert.match(body, /request-named files and the smallest relevant current source, configuration, build, test, README, or command evidence/i, 'entry must prioritize task-specific current evidence');
+  assert.match(body, /whether work stays Direct, needs status tracking, or benefits from an optional pre-work plan/, 'entry must point task-material selection to the work-area guide');
+  assert.match(body, /Inspect the smallest request-relevant current source, configuration, build, test, README, or command evidence/i, 'entry must prioritize task-specific current evidence');
   assert.match(body, /harness\/docs\/layers\/01-context\.md/, 'entry depth links must include the harness directory');
   assert.doesNotMatch(body, /\(depth: `docs\//, 'entry depth links must not use workspace-root docs paths');
 });
@@ -46,9 +46,9 @@ test('multi mode makes AGENTS.md the complete entry and CLAUDE.md its pointer', 
   const agents = read(path.join(workspace, 'AGENTS.md'));
   assert.match(claude, /Niuma Harness — Claude Pointer/);
   assert.match(claude, /read the root \[`AGENTS\.md`\]\(AGENTS\.md\)/);
-  assert.doesNotMatch(claude, /Niuma Harness — Operating Loop/);
+  assert.doesNotMatch(claude, /Niuma Harness — Operating Contract/);
   assert.doesNotMatch(claude, /Codex engineering rules/);
-  assert.match(agents, /Niuma Harness — Operating Loop/);
+  assert.match(agents, /Niuma Harness — Operating Contract/);
   assert.match(agents, /## Codex engineering rules/);
   assert.match(agents, /\.agents\/harness-rules\//);
   assert.doesNotMatch(agents, /Selected engineering rules|niuma-harness:codex-rules/);
@@ -76,10 +76,10 @@ test('all agent entries retain the shared operating contract', () => {
       if (scenario.agent === 'multi' && entryFile === 'CLAUDE.md') {
         assert.match(entry, /Niuma Harness — Claude Pointer/);
         assert.match(entry, /read the root \[`AGENTS\.md`\]\(AGENTS\.md\)/);
-        assert.doesNotMatch(entry, /Niuma Harness — Operating Loop/);
+        assert.doesNotMatch(entry, /Niuma Harness — Operating Contract/);
         continue;
       }
-      assert.match(entry, /Niuma Harness — Operating Loop/);
+      assert.match(entry, /Niuma Harness — Operating Contract/);
       if (entryFile === 'AGENTS.md' && (scenario.agent === 'codex' || scenario.agent === 'multi')) {
         assert.match(entry, /## Codex engineering rules/);
         assert.match(entry, /\.agents\/harness-rules\/common\//);

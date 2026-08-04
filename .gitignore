@@ -11,3 +11,4 @@ npm-debug.log*
 /extends/jiezhen_harness/
 /extends/CN/
 /extends/jiezhen-harness/
+/.playwright-mcp/

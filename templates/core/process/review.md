@@ -37,7 +37,7 @@ Use `{{HARNESS_DIR}}/docs/layers/05-recovery.md` when the diff does not match th
 
 ## Memory and task notes
 
-For multi-step reviews, keep status, findings, fix decisions, and verification evidence under `agent-work/tasks/<task-name>/`. Move only verified durable lessons through the Memory layer before updating `{{HARNESS_DIR}}/docs/project-context.md`.
+For status-tracked reviews, keep current status, findings, fix decisions, actual checks, and remaining unknowns in `agent-work/tasks/<task-name>/status.md`. Move only verified durable lessons through the Memory layer before updating `{{HARNESS_DIR}}/docs/project-context.md`.
 
 For two-stage review across isolated subagents on large or risky work, see `{{HARNESS_DIR}}/docs/process/subagent-development.md`.
 

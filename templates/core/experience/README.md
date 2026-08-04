@@ -2,23 +2,23 @@
 
 ## Purpose
 
-Use this library to preserve reusable project-maintained experience: verified approaches, recurring scenarios, known traps, and investigation guidance that can help future tasks. An experience record is not a current-state source of truth, project fact index, ADR, or task execution record.
+Use this library to preserve reusable project-maintained experience: verified approaches, recurring scenarios, known traps, and investigation guidance that can help future tasks. An experience record is not a current-state source of truth, project fact index, or task execution record.
 
 ## When to create or update an experience record
 
 Create or update a record only when the lesson is verified against current files, command output, tests, configuration, or user confirmation; can help work beyond the originating task; and has clear applicability and invalidation conditions.
 
-Start from task-local observations in `agent-work/`, then re-check the current source of truth and distill the reusable lesson. Link to authoritative sources instead of copying mutable details or raw task evidence.
+Start from task-local observations in `agent-work/`, then re-check the current source of truth and distill the reusable lesson. Link to authoritative sources instead of copying mutable details or raw task observations.
 
 ## When not to use one
 
-Do not create a record for every task, small implementation choice, raw task note, one-off failure, temporary log, debugging trace, unverified guess, or sensitive data. Do not promote raw task notes, one-off failures, temporary logs, unverified guesses, or sensitive data into an experience record. Keep verified stable project facts in `{{HARNESS_DIR}}/docs/project-context.md`, long-lived decision rationale in `{{HARNESS_DIR}}/docs/decisions/`, and task-local evidence in `agent-work/`.
+Do not create a record for every task, small implementation choice, raw task note, one-off failure, temporary log, debugging trace, unverified guess, or sensitive data. Keep verified stable project facts in `{{HARNESS_DIR}}/docs/project-context.md` and task-local state in `agent-work/`.
 
 ## Priority and maintenance
 
 Current user instructions and current workspace files take precedence over experience records. Experience records provide reusable guidance but never override current code, configuration, tests, or command output.
 
-When a record conflicts with higher-priority evidence, verify the current state, use the higher-priority source for the task, and then update, retire, or mark the experience stale after verification. Keep unresolved conflict evidence in task-local notes.
+When a record conflicts with higher-priority evidence, verify the current state, use the higher-priority source for the task, and then update, retire, or mark the experience stale after verification. Keep unresolved conflict evidence in task-local state.
 
 This `README.md` is tool-managed. Individual experience records are project-maintained under `{{HARNESS_DIR}}/docs/experience/`: `init`, `doctor`, and `repair` do not create, overwrite, evaluate, or delete them.
 
@@ -65,12 +65,10 @@ Copy this structure into a project-maintained Markdown file when a reusable less
 
 <Changes that require review, revision, or retirement>
 
-## Promotion notes
+## Origin (optional)
 
 - Origin task: `<agent-work/tasks/<task-name>/>`
-- Success criteria: `<criterion-id>`
-- Verification: `<agent-work/tasks/<task-name>/verification.md>` (`evidenceIds`: `<evidence-id>`)
 - Rechecked against source of truth: `<YYYY-MM-DD — current files, command, or user confirmation>`
 
-<Optional locator for the task evidence that suggested this lesson. It does not replace Source of truth or copy raw task logs; omit it when no task evidence is useful.>
+<This optional locator does not replace Source of truth or copy raw task logs. Omit it when no task path is useful.>
 ```

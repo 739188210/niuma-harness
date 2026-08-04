@@ -244,16 +244,18 @@ test('--harness-dir uses a custom directory name', () => {
   assertClaudeRulePointers(workspace, 'ai-harness', expectedDefaultRules('claude'));
   const entry = read(path.join(workspace, 'CLAUDE.md'));
   assert.match(entry, /ai-harness\/docs\/process\/task-triage\.md/);
-  assert.match(entry, /request-named files and the smallest relevant current source, configuration, build, test, README, or command evidence/i);
+  assert.match(entry, /smallest request-relevant current source, configuration, build, test, README, or command evidence/i);
   assert.match(entry, /ai-harness\/docs\/layers\/01-context\.md/);
-  assert.match(entry, /ai-harness\/docs\/experiments\/task-execution-record\.md/);
+  assert.match(entry, /ai-harness\/docs\/layers\/07-loop\.md/);
+  assert.doesNotMatch(entry, /experiments\/task-execution-record|structured execution record/);
   assert.doesNotMatch(entry, /\(depth: `docs\//);
 
   const index = read(path.join(workspace, 'ai-harness', 'docs', 'index.md'));
   assert.match(index, /\[Harness maintainer orientation\]\(\.\.\/README\.md\)/);
 
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
-  assert.match(workReadme, /required structured execution record for non-trivial tasks/);
+  assert.match(workReadme, /optional feedback about this Harness/);
+  assert.doesNotMatch(workReadme, /required structured execution record|verification\.md/);
   assert.match(workReadme, /ai-harness\/docs\/layers\/07-loop\.md/);
   assert.match(workReadme, /ai-harness\/docs\/project-context\.md/);
   assert.doesNotMatch(workReadme, /`docs\//);
@@ -300,7 +302,7 @@ test('agent switch from multi to claude replaces the pointer with a full contrac
   assert.strictEqual(result.status, 0, result.stderr);
   assertNoPath(path.join(workspace, 'AGENTS.md'));
   assertFile(claudeEntry);
-  assert.match(read(claudeEntry), /Niuma Harness — Operating Loop/);
+  assert.match(read(claudeEntry), /Niuma Harness — Operating Contract/);
   assert.doesNotMatch(read(claudeEntry), /Niuma Harness — Claude Pointer/);
 });
 

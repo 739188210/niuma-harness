@@ -1,362 +1,94 @@
 const test = require('node:test');
 const {
-  agentCases,
   assert,
-  assertAgentEntryShape,
-  assertCommonHarnessShape,
-  assertFile,
   assertNoPath,
   fs,
-  initWorkspace,
   path,
   read,
   run,
   tempDir,
 } = require('../support/init-fixtures');
 
-test('generated docs route durable decisions without taking ownership of project ADRs', () => {
+test('generated docs keep experience project-maintained and decoupled from retired protocols', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
-  const decisionReadme = path.join(h, 'docs', 'decisions', 'README.md');
-
-  const guide = read(decisionReadme);
-  assert.match(guide, /^# Decision Records$/m);
-  assert.match(guide, /long-lived decision and its rationale/);
-  assert.match(guide, /Do not create a record for every task/);
-  assert.match(guide, /Current user instructions and current workspace files take precedence/);
-  assert.match(guide, /verify the current state, use the higher-priority source for the task, and then update, supersede, or retire the record/);
-  assert.match(guide, /Individual decision records are project-maintained/);
-  for (const field of ['Status', 'Date', 'Scope', 'Source of truth', 'Context', 'Decision', 'Consequences', 'Alternatives considered', 'Verification or migration notes', 'Task evidence \\(optional\\)']) {
-    assert.match(guide, new RegExp(`## ${field}`));
-  }
-  assert.match(guide, /Current source files, configuration, tests, verified runbooks, or command\/output evidence to re-check/);
-  assert.match(guide, /This ADR records decision rationale; it is not the current-state authority/);
-  assert.match(guide, /Origin task/);
-  assert.match(guide, /Task evidence is a locator for the decision's origin/);
-  assert.match(guide, /Omit this section when no task evidence is useful/);
-
-  const index = read(path.join(h, 'docs', 'index.md'));
-  assert.match(index, /Governance and reusable knowledge: applicable Rules, accepted and unsuperseded ADRs, and active experience records/);
-  assert.match(index, /Historical and task material: historical notes, migration material, old proposals, plans, task records/);
-
-  const harnessReadme = read(path.join(h, 'README.md'));
-  assert.match(harnessReadme, /Individual decision and experience records are also project-maintained/);
-  assert.match(harnessReadme, /only their README guides are tool-managed/);
-
-  const memory = read(path.join(h, 'docs', 'layers', '06-memory.md'));
-  assert.match(memory, /Put important long-lived decision rationale in project-maintained records under `harness\/docs\/decisions\//);
-  assert.match(memory, /Do not promote every task decision, one-off log, unverified guess, or sensitive detail into a decision record/);
-  assert.match(memory, /Do not create an ADR, experience record, or project-context update merely to close a task/);
-
-  const projectAdr = path.join(h, 'docs', 'decisions', '0001-example.md');
-  const projectAdrContent = '# Project decision\n\nKeep this exact content.\n';
-  fs.writeFileSync(projectAdr, projectAdrContent, 'utf8');
-  const reinit = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(reinit.status, 0, reinit.stderr);
-  assert.strictEqual(read(projectAdr), projectAdrContent);
-
-  const customWorkspace = tempDir();
-  const customResult = run(['init', customWorkspace, '--agent', 'claude', '--harness-dir', 'ai-harness']);
-  assert.strictEqual(customResult.status, 0, customResult.stderr);
-  const customGuide = read(path.join(customWorkspace, 'ai-harness', 'docs', 'decisions', 'README.md'));
-  const customIndex = read(path.join(customWorkspace, 'ai-harness', 'docs', 'index.md'));
-  const customMemory = read(path.join(customWorkspace, 'ai-harness', 'docs', 'layers', '06-memory.md'));
-  assert.match(customGuide, /`ai-harness\/docs\/decisions\//);
-  assert.match(customIndex, /\[Decision-record guide\]\(decisions\/README\.md\)/);
-  assert.match(customMemory, /`ai-harness\/docs\/decisions\//);
-  for (const body of [customGuide, customIndex, customMemory]) {
-    assert.doesNotMatch(body, /{{HARNESS_DIR}}|`harness\/docs\//);
-  }
-});
-
-test('generated docs route reusable experience without taking ownership of project experience records', () => {
-  const workspace = tempDir();
-  const result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const h = path.join(workspace, 'harness');
-  const experienceReadme = path.join(h, 'docs', 'experience', 'README.md');
-
-  const guide = read(experienceReadme);
+  const guide = read(path.join(h, 'docs', 'experience', 'README.md'));
   assert.match(guide, /^# Experience Library$/m);
-  assert.match(guide, /reusable project-maintained experience/);
-  assert.match(guide, /not a current-state source of truth, project fact index, ADR, or task execution record/);
   assert.match(guide, /Do not create a record for every task/);
-  assert.match(guide, /Do not promote raw task notes, one-off failures, temporary logs, unverified guesses, or sensitive data/);
-  assert.match(guide, /Current user instructions and current workspace files take precedence/);
+  assert.match(guide, /raw task note, one-off failure, temporary log/);
   assert.match(guide, /Individual experience records are project-maintained/);
-  assert.match(guide, /Origin task/);
-  assert.match(guide, /Optional locator for the task evidence that suggested this lesson/);
-  assert.match(guide, /omit it when no task evidence is useful/);
-  for (const field of ['Status', 'Last verified', 'Scope', 'Source of truth', 'Applicable when', 'Scenario or symptoms', 'Verified approach', 'What not to assume', 'Invalidation conditions', 'Promotion notes']) {
-    assert.match(guide, new RegExp(`## ${field}`));
-  }
+  assert.match(guide, /## Origin \(optional\)/);
+  assert.doesNotMatch(guide, /ADR|verification\.md|evidenceIds/);
 
-  const index = read(path.join(h, 'docs', 'index.md'));
-  assert.match(index, /Governance and reusable knowledge: applicable Rules, accepted and unsuperseded ADRs, and active experience records/);
-  assert.match(index, /superseded or expired experience/);
-
-  const harnessReadme = read(path.join(h, 'README.md'));
-  assert.match(harnessReadme, /Individual decision and experience records are also project-maintained/);
-  assert.match(harnessReadme, /only their README guides are tool-managed/);
-
-  const memory = read(path.join(h, 'docs', 'layers', '06-memory.md'));
-  assert.match(memory, /Put verified reusable experience with clear applicability and invalidation conditions in project-maintained records under `harness\/docs\/experience\//);
-  assert.match(memory, /Do not promote raw task notes, one-off failures, temporary logs, unverified guesses, or sensitive details into experience records/);
-  assert.match(memory, /When an ADR or experience record is created from a task, it may link the task path/);
-
-  const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
-  assert.match(workReadme, /candidate reusable experience/);
-  assert.match(workReadme, /`harness\/docs\/experience\//);
-
-  const projectExperience = path.join(h, 'docs', 'experience', 'pagination.md');
-  const projectExperienceContent = '# Pagination lesson\n\nKeep this exact content.\n';
-  fs.writeFileSync(projectExperience, projectExperienceContent, 'utf8');
-  const reinit = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(reinit.status, 0, reinit.stderr);
-  assert.strictEqual(read(projectExperience), projectExperienceContent);
-
-  const customWorkspace = tempDir();
-  const customResult = run(['init', customWorkspace, '--agent', 'claude', '--harness-dir', 'ai-harness']);
-  assert.strictEqual(customResult.status, 0, customResult.stderr);
-  const customGuide = read(path.join(customWorkspace, 'ai-harness', 'docs', 'experience', 'README.md'));
-  const customIndex = read(path.join(customWorkspace, 'ai-harness', 'docs', 'index.md'));
-  const customMemory = read(path.join(customWorkspace, 'ai-harness', 'docs', 'layers', '06-memory.md'));
-  const customWorkReadme = read(path.join(customWorkspace, 'agent-work', 'README.md'));
-  assert.match(customIndex, /\[Experience-record guide\]\(experience\/README\.md\)/);
-  for (const body of [customGuide, customIndex, customMemory, customWorkReadme]) {
-    assert.doesNotMatch(body, /{{HARNESS_DIR}}|`harness\/docs\//);
-  }
-  for (const body of [customGuide, customMemory, customWorkReadme]) {
-    assert.match(body, /`ai-harness\/docs\/experience\//);
-  }
+  const record = path.join(h, 'docs', 'experience', 'pagination.md');
+  fs.writeFileSync(record, '# Pagination lesson\n', 'utf8');
+  assert.strictEqual(run(['init', workspace, '--agent', 'claude']).status, 0);
+  assert.strictEqual(read(record), '# Pagination lesson\n');
 });
 
-test('generated docs expose experimental task execution feedback guidance', () => {
+test('generated docs define optional Harness feedback without an execution-record schema', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
-
-  const feedbackDoc = read(path.join(h, 'docs', 'experiments', 'task-execution-record.md'));
-  assert.match(feedbackDoc, /Task Execution Feedback Record/);
-  assert.match(feedbackDoc, /enabled by the current Niuma Harness package/);
-  assert.match(feedbackDoc, /not workspace-disableable/);
-  assert.match(feedbackDoc, /deleting this document does not disable the requirement/);
-  assert.match(feedbackDoc, /"scopeChanges": \[\]/);
-  assert.match(feedbackDoc, /"deviations": \[\]/);
-  assert.match(feedbackDoc, /"authorizationReferences": \[\]/);
-  assert.match(feedbackDoc, /"declaredResult": "success"/);
-  assert.match(feedbackDoc, /"evidenceSources"/);
-  assert.match(feedbackDoc, /structured task execution record/);
-  assert.match(feedbackDoc, /Use a record for every non-trivial task/);
-  assert.match(feedbackDoc, /For a trivial task, state in the final response that no separate record was needed/);
-  assert.doesNotMatch(feedbackDoc, /For a trivial read-only task/);
-  assert.doesNotMatch(feedbackDoc, /can be removed or disabled/i);
-
+  assertNoPath(path.join(h, 'docs', 'experiments'));
+  assertNoPath(path.join(h, 'docs', 'decisions'));
   const entry = read(path.join(workspace, 'CLAUDE.md'));
-  assert.match(entry, /Non-trivial tasks must maintain the required structured execution record and evidence links/);
-  assert.match(entry, /harness\/docs\/experiments\/task-execution-record\.md/);
-
+  assert.doesNotMatch(entry, /structured execution record|task-execution-record|evidence links/);
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
-  assert.match(workReadme, /harness-feedback\.md/);
-  assert.match(workReadme, /required structured execution record for non-trivial tasks/);
-  assert.match(workReadme, /Package-enabled experimental Harness execution records/);
-  assert.doesNotMatch(workReadme, /while .*task-execution-record\.md.*exists/i);
-  assert.match(workReadme, /`verification\.md`: actual checks, expected signals, actual results, skipped checks, and remaining unknowns/i);
-
-
-  const index = read(path.join(h, 'docs', 'index.md'));
-  assert.match(index, /\[Task execution feedback\]\(experiments\/task-execution-record\.md\)/);
+  assert.match(workReadme, /optional feedback about this Harness/);
+  assert.match(workReadme, /Its absence never blocks task execution, recovery, or completion/);
+  assert.doesNotMatch(workReadme, /required structured execution record|verification\.md/);
 });
 
-
-test('generated feature docs define pre-plan confirmation gate', () => {
+test('generated feature and process docs define optional pre-work plans', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
-
-  const featurePlaybook = read(path.join(h, 'docs', 'process', 'feature-development.md'));
-  assert.match(featurePlaybook, /Confirm understanding before planning/);
-  assert.match(featurePlaybook, /Before writing a detailed plan, PRD, architecture note, task list, or implementation/);
-  assert.match(featurePlaybook, /unclear scope, missing acceptance criteria, or meaningful design choices/);
-  assert.match(featurePlaybook, /If an open question can change the implementation direction, ask the user/);
-  assert.match(featurePlaybook, /already gave complete requirements and approval/);
-
-  const processMemo = read(path.join(h, 'docs', 'layers', '03-process.md'));
-  assert.match(processMemo, /confirmation gate defined by the selected workflow/);
-  assert.match(processMemo, /use `agent-work\/README\.md` to choose Direct, Minimum, or Recoverable task material/);
-  assert.match(processMemo, /only authority for that decision and for file roles/);
-});
-
-test('generated process memo maps triggers to workflows and artifacts', () => {
-  const workspace = tempDir();
-  const result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const h = path.join(workspace, 'harness');
-
-  const processMemo = read(path.join(h, 'docs', 'layers', '03-process.md'));
-  assert.match(processMemo, /## Trigger and artifact routing/);
-  assert.match(processMemo, /harness\/docs\/process\/bugfix\.md/);
-  assert.match(processMemo, /Reproduction signal/);
-  assert.match(processMemo, /harness\/docs\/process\/feature-development\.md/);
-  assert.match(processMemo, /Acceptance criteria/);
-  assert.match(processMemo, /harness\/docs\/process\/refactor\.md/);
-  assert.match(processMemo, /Behavior baseline/);
-  assert.match(processMemo, /harness\/docs\/process\/review\.md/);
-  assert.match(processMemo, /Findings with severity/);
-  assert.match(processMemo, /harness\/docs\/process\/release\.md/);
-  assert.match(processMemo, /package or artifact scope/);
-  assert.match(processMemo, /Observation schema/);
-  assert.match(processMemo, /explicit lightweight default routes in `harness\/docs\/process\/task-triage\.md`/);
-  assert.match(processMemo, /"documentation", "docs", "investigate", "verify", "cleanup" as lightweight task intents/);
-  assert.match(processMemo, /ownership gate where applicable/);
-  assert.match(processMemo, /Trigger words are routing hints, not permission to bypass Policy/);
-  assert.match(processMemo, /If multiple rows match, start with `harness\/docs\/process\/task-triage\.md`/);
-  assert.match(processMemo, /Do not duplicate/);
-});
-
-test('generated process playbooks define required artifact contracts', () => {
-  const workspace = tempDir();
-  const result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const h = path.join(workspace, 'harness');
-
-  const triage = read(path.join(h, 'docs', 'process', 'task-triage.md'));
-  assert.match(triage, /## Base minimum reading set/);
-  assert.match(triage, /## Conditional reading/);
-  assert.doesNotMatch(triage, /`harness\/docs\/process\/bootstrap\.md`/);
-  assert.match(triage, /matching fact scope, its sources, known gaps, and freshness boundary/);
-  assert.match(triage, /Current verifiable workspace evidence remains higher priority/);
-  assert.match(triage, /`harness\/docs\/policy\/action-boundary\.md`/);
-  assert.match(triage, /`harness\/docs\/module-topology\.md`/);
-  assert.match(triage, /`harness\/docs\/decisions\//);
-  assert.match(triage, /`harness\/docs\/experience\//);
-  assert.match(triage, /## Required artifact\/checklist/);
-  assert.match(triage, /Task classification/);
-  assert.match(triage, /Task-material selection: Direct, Minimum, or Recoverable/);
-  assert.match(triage, /choose Direct, Minimum, or Recoverable using the task-material protocol in `agent-work\/README\.md`/);
-  assert.match(triage, /do not create another classification or risk tier for task files/);
-  assert.match(triage, /Documentation update[\s\S]*harness\/docs\/process\/refactor\.md/);
-  assert.match(triage, /generated output, internal links, and factual accuracy/);
-  assert.match(triage, /Investigation[\s\S]*harness\/docs\/process\/review\.md[\s\S]*Use the existing `review` classification[\s\S]*Do not modify files/);
-  assert.match(triage, /facts, inferences, and unknowns/);
-  assert.match(triage, /Verification[\s\S]*harness\/docs\/layers\/04-observation\.md[\s\S]*Use the existing `verification` classification/);
-  assert.match(triage, /unrun checks are unknown, not passing/);
-  assert.match(triage, /Cleanup[\s\S]*Use the existing `refactor` classification[\s\S]*Check ownership first/);
-  assert.match(triage, /deleting files not created by this task/);
-
   const feature = read(path.join(h, 'docs', 'process', 'feature-development.md'));
-  for (const playbook of [
-    read(path.join(h, 'docs', 'process', 'bugfix.md')),
-    feature,
-    read(path.join(h, 'docs', 'process', 'refactor.md')),
-    read(path.join(h, 'docs', 'process', 'review.md')),
-    read(path.join(h, 'docs', 'process', 'release.md')),
-  ]) {
-    assert.match(playbook, /base minimum reading set.*task-triage\.md/i);
-  }
-  assert.doesNotMatch(feature, /Load Context: read `harness\/docs\/index\.md`, `harness\/docs\/project-context\.md`/);
-  assert.match(feature, /relevant existing implementation patterns and acceptance-criterion targets/);
-  assert.match(feature, /## Required artifact\/checklist/);
-  assert.match(feature, /Acceptance criteria/);
-  assert.match(feature, /Use `agent-work\/README\.md` to select task material only when it is needed/);
-  assert.match(feature, /When it selects a minimum anchor, create `agent-work\/tasks\/<task-name>\/plan\.md` before implementation/);
-  assert.match(feature, /acceptance criteria as stable success-criterion IDs/);
-  assert.doesNotMatch(feature, /keep status, context, plan, verification, and handoff notes/);
-
-  const bugfix = read(path.join(h, 'docs', 'process', 'bugfix.md'));
-  assert.doesNotMatch(bugfix, /Load Context: read `harness\/docs\/index\.md`, `harness\/docs\/project-context\.md`/);
-  assert.match(bugfix, /symptom report, affected source or test files, and the smallest reproduction target/);
-  assert.match(bugfix, /## Required artifact\/checklist/);
-  assert.match(bugfix, /Reproduction signal/);
-
-  const refactor = read(path.join(h, 'docs', 'process', 'refactor.md'));
-  assert.match(refactor, /affected implementation and tests and identify the behavior baseline/);
-  assert.match(refactor, /## Required artifact\/checklist/);
-  assert.match(refactor, /Behavior baseline/);
-  assert.match(refactor, /Use `agent-work\/README\.md` to select task material only when it is needed/);
-  assert.doesNotMatch(refactor, /keep status, context, plan, verification, and handoff notes/);
-
-  const review = read(path.join(h, 'docs', 'process', 'review.md'));
-  assert.match(review, /changed files or diff, intended task goal, and available verification evidence/);
-  assert.match(review, /## Required artifact\/checklist/);
-  assert.match(review, /Findings grouped by severity/);
-  assert.match(review, /## Fix boundary/);
-  assert.match(review, /Fixing findings is a separate action/);
-
-  const release = read(path.join(h, 'docs', 'process', 'release.md'));
-  assert.match(release, /package metadata, release-related docs, and the target package or artifact contents/);
-  assert.match(release, /## Required artifact\/checklist/);
-  assert.match(release, /Release target/);
-  assert.match(release, /Package or artifact scope/);
-  assert.match(release, /check whether it can be released/);
-  assert.match(release, /local dry-run, build, test, lint, artifact, and metadata checks/i);
-  assert.match(release, /do not need separate approval/i);
-  assert.match(release, /touch external systems, credentials, quotas, or release infrastructure/);
-  assert.match(release, /Publishing, tagging, pushing, deploying, and version bumps are forbidden unless explicitly requested/);
-
-  const processMemo = read(path.join(h, 'docs', 'layers', '03-process.md'));
-  assert.match(processMemo, /shared tree would create avoidable risk or coordination cost/);
-  assert.match(processMemo, /Do not isolate merely because a task has more than one step/);
-  assert.doesNotMatch(processMemo, /If the work is multi-step, risky, or parallel, isolate/);
+  assert.match(feature, /Confirm understanding before planning/);
+  assert.match(feature, /Create `agent-work\/tasks\/<task-name>\/plan\.md` before implementation only when a plan has real pre-work value/);
+  const process = read(path.join(h, 'docs', 'layers', '03-process.md'));
+  assert.match(process, /whether work stays Direct or needs status tracking/);
+  const triage = read(path.join(h, 'docs', 'process', 'task-triage.md'));
+  assert.match(triage, /Direct or status-tracked material choice/);
+  assert.doesNotMatch(triage, /decisions\/|ADR|Minimum|Recoverable/);
 });
 
-test('generated subagent playbook defines parent integration gate', () => {
+test('generated subagent playbook keeps integrated observations in parent status', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
-
-  const isolation = read(path.join(h, 'docs', 'process', 'isolation.md'));
-  assert.match(isolation, /shared workspace would create avoidable risk or coordination cost/);
-  assert.match(isolation, /Do not isolate merely because a task has more than one step/);
-  assert.match(isolation, /materially reduces risk or coordination cost/);
-  assert.match(isolation, /Overlap with another active task in the shared tree/);
-  assert.match(isolation, /local worktree isolation rules/);
-  assert.match(isolation, /newly created local task branch/);
-  assert.match(isolation, /shared working tree does not need to be clean/);
-  assert.match(isolation, /must not stage, revert, overwrite, clean, or otherwise modify shared-tree files/);
-  assert.match(isolation, /Copying local-only config or using credentials is not part of worktree creation/);
-  assert.match(isolation, /invalid isolation path/);
-  assert.match(isolation, /fall back to task-scoped work in the shared tree/);
-  assert.doesNotMatch(isolation, /Use this playbook to isolate multi-step, risky, or parallel work/);
-  assert.doesNotMatch(isolation, /dirty tree/);
-  assert.doesNotMatch(isolation, /task-scoped commits in the shared tree/);
-
   const subagent = read(path.join(h, 'docs', 'process', 'subagent-development.md'));
-  assert.match(subagent, /## Default review/);
-  assert.match(subagent, /one read-only review covering specification compliance and code quality/);
-  assert.match(subagent, /large, high-risk, or cross-cutting work/);
-  assert.match(subagent, /two focused passes/);
-  assert.match(subagent, /independent reviewer is available/);
-  assert.match(subagent, /did not write the code it reviews/);
-  assert.match(subagent, /no suitable reviewer capability exists/);
-  assert.match(subagent, /clearly labeled self-review/);
-  assert.match(subagent, /Do not claim independent review occurred/);
-  assert.match(subagent, /## Parent integration gate/);
   assert.match(subagent, /parent `status\.md` updates/);
   assert.match(subagent, /active task owner owns the final integrated result/);
-  assert.match(subagent, /changed or reviewed files/);
-  assert.match(subagent, /verification evidence/);
-  assert.match(subagent, /Overlapping edits/);
-  assert.match(subagent, /conflicting verification claims/);
-  assert.match(subagent, /CRITICAL or HIGH review findings/);
-  assert.match(subagent, /enter Recovery instead of silently choosing one/);
   assert.match(subagent, /final Observation over the integrated workspace/);
-  assert.match(subagent, /supporting evidence, not a replacement/);
-
-  const processMemo = read(path.join(h, 'docs', 'layers', '03-process.md'));
-  assert.match(processMemo, /parent flow or active task owner is responsible for integrating delegated outputs/);
-
-  const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop.md'));
-  assert.match(loopMemo, /integrated delegated state, conflicts, and next action/);
-
-  const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation.md'));
-  assert.match(observationMemo, /final Observation verifies the integrated result/);
+  const loop = read(path.join(h, 'docs', 'layers', '07-loop.md'));
+  assert.match(loop, /integrated state, checks, conflicts, and next action/);
 });
+
+test('generated docs use final responses or status ledgers for actual observations', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+  const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
+  assert.match(workReadme, /\| Direct \|/);
+  assert.match(workReadme, /\| Status-tracked \|/);
+  assert.match(workReadme, /only task-local record of actual checks, results, skipped checks, and unknowns/);
+  assert.doesNotMatch(workReadme, /verification\.md|Recoverable/);
+  const observation = read(path.join(h, 'docs', 'layers', '04-observation.md'));
+  assert.match(observation, /For Direct work, put that record in the final response/);
+  assert.match(observation, /For status-tracked work, put it in .*status\.md/);
+  const loop = read(path.join(h, 'docs', 'layers', '07-loop.md'));
+  assert.match(loop, /A task must not say `complete` while material acceptance remains failed, blocked, or unknown/);
+  assert.doesNotMatch(loop, /verification\.md|Recoverable/);
+});
+
 
 test('generated docs define external side-effect network gate', () => {
   const workspace = tempDir();
@@ -502,56 +234,4 @@ test('generated docs require practical TDD for eligible behavior work', () => {
   assert.match(policy, /even in an existing test file or verification target/);
   assert.match(policy, /preserve or strengthen the prior behavior contract/);
   assert.match(policy, /Other changes to an existing verification target are ask-first/);
-});
-
-test('generated docs select task material mechanically without pre-creating a package', () => {
-  const workspace = tempDir();
-  const result = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(result.status, 0, result.stderr);
-  const h = path.join(workspace, 'harness');
-
-  const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
-  assert.match(workReadme, /## Task material selection table/);
-  assert.match(workReadme, /\| Direct \|.*\| No task file \|/);
-  assert.match(workReadme, /\| Minimum \|.*\| `plan\.md` \|/);
-  assert.match(workReadme, /\| Recoverable \|.*\| `plan\.md` and `status\.md` \|/);
-  assert.match(workReadme, /Direct, Minimum, and Recoverable are the only ordinary task-material selections/);
-  assert.match(workReadme, /Quick, normal, and careful are risk\/impact tiers, not task-material selections/);
-  assert.match(workReadme, /Non-trivial decides only whether `harness-feedback\.md` is required/);
-  assert.match(workReadme, /do not use non-trivial, quick, normal, or careful to decide whether to create `plan\.md`, `status\.md`, or a task folder/i);
-  assert.match(workReadme, /Whenever work is non-trivial under the current experiment, `harness-feedback\.md` is required/);
-  assert.doesNotMatch(workReadme, /Recoverable[\s\S]*required execution record only when each is needed/);
-  assert.match(workReadme, /TDD eligibility alone does not require a task folder or a full task package/);
-  assert.match(workReadme, /Direct work has no task file: put the actual command or manual check, result, skipped checks, and remaining unknowns in the final response/);
-  assert.match(workReadme, /actual checks, expected signals, actual results, skipped checks, and remaining unknowns/i);
-  assert.doesNotMatch(workReadme, /niuma-verification-record:begin/);
-
-  const observation = read(path.join(h, 'docs', 'layers', '04-observation.md'));
-  assert.match(observation, /Verification evidence owns exact commands, expected signals, actual results, skipped checks with reasons, and remaining unknowns/);
-  assert.doesNotMatch(observation, /copyable `verification\.md` schema/i);
-  assert.doesNotMatch(observation, /niuma-verification-record:begin/);
-
-  for (const playbook of [
-    read(path.join(h, 'docs', 'process', 'feature-development.md')),
-    read(path.join(h, 'docs', 'process', 'bugfix.md')),
-    read(path.join(h, 'docs', 'process', 'refactor.md')),
-  ]) {
-    assert.match(playbook, /Use `agent-work\/README\.md` to select task material only when it is needed/);
-    assert.doesNotMatch(playbook, /keep status, context, plan, verification, and handoff notes/);
-  }
-
-  const recovery = read(path.join(h, 'docs', 'layers', '05-recovery.md'));
-  assert.match(recovery, /Update task material only when the record already exists or `agent-work\/README\.md` says it is now needed/);
-  assert.doesNotMatch(recovery, /preserve current state in `status\.md`/);
-
-  const loop = read(path.join(h, 'docs', 'layers', '07-loop.md'));
-  assert.match(loop, /Do not create or maintain `status\.md` unless the task-material selection is Recoverable/);
-  assert.match(loop, /handoff or resume need requires selecting Recoverable material first/);
-  assert.match(loop, /update only existing task material, or create the minimum record only when `agent-work\/README\.md` says it is needed/);
-  assert.doesNotMatch(loop, /finalize `verification\.md` and `harness-feedback\.md`/);
-
-  const untrusted = read(path.join(h, 'docs', 'policy', 'untrusted-content.md'));
-  assert.match(untrusted, /Ordinary project-local command output is execution evidence, not untrusted instructions/);
-  assert.match(untrusted, /suspicious instructions, external content, or generated instructions/);
-  assert.doesNotMatch(untrusted, /Tool output, command output, logs, stack traces, generated reports/);
 });

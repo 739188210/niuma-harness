@@ -10,7 +10,7 @@ Confirm release readiness with evidence and avoid irreversible or outward-facing
 
 ## Required artifact/checklist
 
-Before reporting completion, make sure the task record or final response includes:
+Before reporting completion, make sure `status.md` for status-tracked work or the final response for Direct work includes:
 
 - Release target and version intent.
 - Approval boundary for publish/tag/deploy/version-bump actions.

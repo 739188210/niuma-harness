@@ -25,7 +25,7 @@ If an open question can change the implementation direction, ask the user before
 
 ## Required artifact/checklist
 
-Before reporting completion, make sure the task record or final response includes:
+Before reporting completion, make sure `status.md` for status-tracked work or the final response for Direct work includes:
 
 - Acceptance criteria used.
 - Non-goals and assumptions when they affect scope.
@@ -38,14 +38,14 @@ Before reporting completion, make sure the task record or final response include
 
 1. Apply the base minimum reading set and conditional reads in `{{HARNESS_DIR}}/docs/process/task-triage.md`, then inspect relevant existing implementation patterns and acceptance-criterion targets.
 2. Confirm understanding before planning when the feature has unclear scope, missing acceptance criteria, or meaningful design choices whose answer can change the implementation direction. Isolate first (`{{HARNESS_DIR}}/docs/process/isolation.md`) only when shared-tree work would create avoidable risk or coordination cost, such as intermediate broken states, parallel edits, experimental work, high-risk behavior changes, or overlap with another active task. For large features, consider staged subagent dispatch (`{{HARNESS_DIR}}/docs/process/subagent-development.md`).
-3. Use `agent-work/README.md` to select task material only when it is needed. When it selects a minimum anchor, create `agent-work/tasks/<task-name>/plan.md` before implementation and record acceptance criteria as stable success-criterion IDs, the smallest path, and planned evidence.
-4. Classify each acceptance criterion before implementation: test-first when it has a stable automated target, otherwise declare the automation-unsuitability reason and replacement evidence before implementation. TDD eligibility does not by itself require a task folder or a full task package.
+3. Use `agent-work/README.md` to decide whether work stays Direct or needs status tracking. Create `agent-work/tasks/<task-name>/plan.md` before implementation only when a plan has real pre-work value for the acceptance criteria, smallest path, or planned checks.
+4. Classify each acceptance criterion before implementation: test-first when it has a stable automated target, otherwise declare the automation-unsuitability reason and replacement evidence before implementation. TDD eligibility does not by itself require task material.
 5. For test-first criteria, follow `{{HARNESS_DIR}}/docs/process/test-driven-development.md`; do not implement before the focused RED evidence.
 6. Choose the smallest implementation path that fits the current architecture.
 7. Plan verification before implementation. Use `{{HARNESS_DIR}}/docs/layers/04-observation.md` for evidence expectations.
 8. Implement the feature with task-scoped changes.
 9. Run relevant verification commands.
-10. Record changes, verification results, skipped checks, and remaining unknowns, including any material risks.
+10. Record changes, actual checks, skipped checks, and remaining unknowns, including material risks, in the final response or `status.md` when work is status-tracked.
 
 ## When to pause
 
@@ -62,7 +62,7 @@ Use `{{HARNESS_DIR}}/docs/layers/05-recovery.md` when tests, builds, commands, c
 
 ## Memory and task notes
 
-Use `agent-work/README.md` to select task material only when it is needed; do not pre-create a full task package for a multi-step feature.
+Use `agent-work/README.md` to choose only the task material that helps execution or recovery; do not pre-create a full task package for a multi-step feature.
 
 Use `{{HARNESS_DIR}}/docs/layers/06-memory.md` before moving any task finding into `{{HARNESS_DIR}}/docs/project-context.md`.
 

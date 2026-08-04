@@ -1,42 +1,34 @@
 # Agent Work Area
 
-This workspace-level directory stores task-local agent work. It is an execution aid: create only the material that lets an agent start, continue, recover, or hand off work correctly. Do not create a task folder or a full set of files merely to satisfy a format.
+This workspace-level directory stores task-local agent work. Create only the material that helps an agent execute, resume, hand off, or improve the Harness. Do not create a task folder or a full set of files merely to satisfy a format.
 
-Create runtime task records under:
+Task-local files live under:
 
 ```text
 agent-work/tasks/<task-name>/
   status.md
-  context.md
   plan.md
-  verification.md
-  harness-feedback.md
+  context.md
   notes.md
+  harness-feedback.md
 ```
 
 `init`, `doctor`, and `repair` do not create, rewrite, or delete task folders or task-local files.
 
-## Choose the smallest useful execution material
+## Choose the smallest useful material
 
-Task classification, risk tier, Policy, and playbook selection stay defined by `{{HARNESS_DIR}}/docs/process/task-triage.md` and the selected process. This guide does not create another task type or risk tier. Direct, Minimum, and Recoverable are the only ordinary task-material selections. Quick, normal, and careful are risk/impact tiers, not task-material selections. Do not use non-trivial, quick, normal, or careful to decide whether to create `plan.md`, `status.md`, or a task folder. After those decisions, choose only the material needed to execute and recover safely.
+Task classification, risk tier, Policy, and playbook selection remain defined by `{{HARNESS_DIR}}/docs/process/task-triage.md` and the selected process. This guide only decides whether task-local material helps.
 
-## Task material selection table
+| Path | Use when | Create | Where actual observation belongs |
+| --- | --- | --- | --- |
+| Direct | The goal, affected location, expected result, and smallest check are clear; work is local and reversible; there is no meaningful implementation choice, handoff, or recovery need; and the request plus current files are enough to reconstruct the work. | No task file | Final response: checks or manual steps, actual results, skipped checks with impact, and remaining unknowns. |
+| Status-tracked | Work is complex, interruptible, delegated, parallel, blocked, under recovery, changing scope, crossing sessions, or cannot safely resume from current files alone. | `status.md` | `status.md` is the current task state and the only task-local record of actual checks, results, skipped checks, and unknowns. |
 
-| Selection | Use when | Create before work | Evidence and reporting |
-|---|---|---|---|
-| Direct | The goal, affected location, expected result, and smallest verification are clear; work is local and reversible; there is no meaningful solution choice; and the request plus current files are enough to reconstruct the work. | No task file | Direct work has no task file: put the actual command or manual check, result, skipped checks, and remaining unknowns in the final response. |
-| Minimum | A meaningful solution choice, compatibility boundary, multiple related edits, multiple success criteria, or interruption risk makes direct work unsafe to reconstruct. | `plan.md` | Record actual evidence in `verification.md` only if keeping it during execution helps recovery or handoff; otherwise report it truthfully in the final response. |
-| Recoverable | Work is multi-stage, interruptible, delegated, parallel, risky, under recovery, changing scope or direction, or cannot be safely resumed from current code alone. | `plan.md` and `status.md` | Update applicable records with observed facts; create `verification.md`, notes, or context only when needed. For non-trivial work under the current experiment, `harness-feedback.md` is required. |
+TDD eligibility alone does not require a task folder. Do not use task classification, risk tier, or the number of steps as a mechanical reason to create files. Choose the smallest material that makes the next action and a safe resume clear.
 
-TDD eligibility alone does not require a task folder or a full task package. The selected workflow decides whether work is test-first; this table decides only whether task-local material is needed. Non-trivial decides only whether `harness-feedback.md` is required under the current experiment, regardless of Direct, Minimum, or Recoverable material selection. Whenever work is non-trivial under the current experiment, `harness-feedback.md` is required.
+## Optional plan
 
-### Direct execution
-
-Choose Direct only when every Direct row condition holds. Make the change, run the smallest relevant check, and report the actual result in the final response.
-
-### Minimum execution anchor
-
-Before changing files, create `agent-work/tasks/<task-name>/plan.md` when the Minimum row applies. `plan.md` is an execution input, not a completion summary.
+Create `agent-work/tasks/<task-name>/plan.md` **before implementation** only when an explicit plan will clarify a meaningful implementation choice, implementation order, mutually constraining acceptance criteria, or verification design. A plan is an execution input, never a completion summary. Do not backfill one after work is complete.
 
 Use this compact shape:
 
@@ -48,39 +40,76 @@ Use this compact shape:
 - Non-goals and constraints:
 
 ## Success criteria
-- `criterion-id`: <observable behavior or result>
+- <observable behavior or result>
 
 ## Smallest approach
 - <why this path fits the current architecture>
 
-## Verification design
-- `criterion-id` → `<planned evidence-id or check>`
+## Planned verification
+- <check or manual observation>
 ```
 
-Use readable stable success-criterion IDs. When an existing task record or user-approved material already supplies an ID, reuse it rather than creating a second ID scheme. The plan designs verification; it does not claim that verification ran.
+A status-tracked task may use `status.md` without a plan when the current request already supplies a safe, clear path.
 
-### Recoverable execution
+## Status-tracked work
 
-When the Recoverable row applies, add and maintain `status.md`. On resume, `status.md` is the first task-local operational state to read; `plan.md` is not current truth. Follow the Recovery entry in `{{HARNESS_DIR}}/docs/layers/07-loop.md` for the only complete recovery order.
+For status-tracked work, `status.md` is the operational ledger and the only task-local source for current state and actual observations. Keep it short enough to resume from without relying on the old conversation.
 
-Create other files only when they provide information that cannot stay concise in the plan or ledger:
+Minimum fields:
 
-- `context.md`: task objective, scope, verified current facts, constraints, assumptions, and open questions. Do not use it for implementation steps or raw command output.
-- `plan.md`: goal, non-goals, stable success criteria, smallest approach, implementation order, and verification design.
-- `status.md`: current stage, completed steps, next safe action, blockers or risks, and resume instructions. It is the active operational ledger, not durable memory.
-- `verification.md`: actual checks, expected signals, actual results, skipped checks, and remaining unknowns. Start and update it when verification occurs; do not backfill it after completion.
-- `harness-feedback.md`: the required structured execution record for non-trivial tasks in this package release. Its existing schema and evidence links remain authoritative for that record.
-- `notes.md`: temporary investigation notes, failed attempts, candidate approaches, candidate reusable experience, handoff details, and optional candidates for later knowledge promotion. It is not verification evidence or a durable fact source.
+```md
+# Task status
+
+- State: active | blocked | partial | complete | stopped
+- Goal and current scope:
+- Confirmed progress:
+- Observations and checks:
+- Skipped checks and impact:
+- Remaining unknowns:
+- Blockers or risks:
+- Next safe action:
+- Resume condition:
+```
+
+Record only observations actually made during the task:
+
+- command or manual check and its expected signal when useful;
+- actual result, including relevant failure information;
+- skipped checks, their reason, and unresolved impact; and
+- remaining unknowns, or an explicit statement that none material remain.
+
+`complete` is not valid while material acceptance remains failed, blocked, or unknown. Current code, configuration, tests, and command output override an older ledger.
+
+## Optional task material
+
+Create other files only when they add information that cannot stay concise in `status.md`:
+
+- `context.md`: verified current facts, constraints, assumptions, and open questions. Do not use it for implementation steps or raw command output.
+- `notes.md`: temporary investigation notes, failed attempts, candidate approaches, candidate reusable experience, and handoff details. It is not a current-state or verification authority.
+- `harness-feedback.md`: optional feedback about this Harness. Create it only when the task exposes helpful guidance, ambiguity, conflict, friction, unnecessary cost, or a missing instruction in the Harness documents.
+
+A Harness feedback file is free Markdown. Keep it focused on:
+
+```md
+# Harness feedback
+
+- Harness document or guidance involved:
+- Task situation:
+- Observed help, ambiguity, or friction:
+- Actual impact on execution:
+- Suggested documentation improvement:
+```
+
+Do not use `harness-feedback.md` as a task plan, status ledger, evidence log, authorization ledger, scope ledger, or completion report. Its absence never blocks task execution, recovery, or completion.
 
 ## What belongs here
 
-- Task goals, acceptance criteria, plans, and execution boundaries when they are needed for safe execution or recovery.
-- Task-local status ledgers for multi-step, risky, parallel, interruptible, or recovery work.
-- Task-local context gathered during execution.
-- Verification commands, expected signals, actual results, skipped checks, and remaining unknowns, including material risks.
-- Package-enabled experimental Harness execution records for non-trivial tasks.
+- Task-local plans when they are useful before work.
+- Status ledgers for complex, blocked, multi-session, delegated, parallel, or recovery work.
+- Actual observations and verification results for status-tracked work.
+- Task-local context and temporary investigation notes.
+- Optional feedback that improves Harness documentation from real task experience.
 - Handoff state after interruption.
-- Temporary investigation notes that should not become stable project facts.
 
 ## What does not belong here
 
@@ -89,25 +118,14 @@ Create other files only when they provide information that cannot stay concise i
 - Secrets, credentials, tokens, or private data.
 - Unverified guesses presented as truth.
 - One-off logs that do not help future task work.
-- Promoted experience records; keep raw notes and evidence here, then use the Memory layer to create a condensed project-maintained record under `{{HARNESS_DIR}}/docs/experience/` when warranted.
-
-## Verification evidence
-
-When a task uses `verification.md`, record only evidence actually observed during the task:
-
-- the check or manual verification step and its expected signal;
-- the actual result, including relevant failure information;
-- every skipped check, its reason, and its unresolved impact; and
-- remaining unknowns, or an explicit statement that none material remain.
-
-Use concise Markdown that another agent or maintainer can read without a parser. Start the record when verification occurs and update it from actual results; do not backfill evidence after completion. `harness-feedback.md` may link to or summarize this evidence, but it does not replace it.
+- Promoted experience records; keep raw task observations here, then use the Memory layer to create a condensed project-maintained record under `{{HARNESS_DIR}}/docs/experience/` when warranted.
 
 ## Runtime protocol
 
-The Loop Recovery entry defines the only task-material reading order for safe resume; this guide defines only when material is needed and each file's role: `{{HARNESS_DIR}}/docs/layers/07-loop.md`.
+The Loop Recovery entry defines the only reading order for safe resume: `{{HARNESS_DIR}}/docs/layers/07-loop.md`.
 
 ## Durable facts
 
-Promote only material with real long-term value. Durable project facts should move through the Memory layer before being recorded in the active harness root's `{{HARNESS_DIR}}/docs/project-context.md`. Candidate reusable experience stays task-local until verified and condensed through the Memory layer into a project-maintained record under `{{HARNESS_DIR}}/docs/experience/`; raw task evidence remains here. Create an ADR only when a durable decision rationale must survive the task; do not create an empty ADR or experience record merely to state that none was needed.
+Promote only material with real long-term value. Durable project facts should move through the Memory layer before being recorded in the active harness root's `{{HARNESS_DIR}}/docs/project-context.md`. Candidate reusable experience stays task-local until verified and condensed through the Memory layer into a project-maintained record under `{{HARNESS_DIR}}/docs/experience/`; raw task observations remain here.
 
 Do not put task-local records under `{{HARNESS_DIR}}/docs/`.

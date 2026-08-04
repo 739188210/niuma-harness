@@ -12,7 +12,7 @@ Use this table to find the smallest fact scope that may help the task. A scope i
 | --- | --- | --- | --- | --- |
 | Build and verification commands | unverified | Current package scripts, CI configuration, and command output | Package scripts or CI configuration changes | Add only verified commands needed by a task. |
 | Workspace topology | unverified | Current README files, workspace configuration, and source layout | Workspace configuration or source layout changes | Add affected module boundaries as they are verified. |
-| Engineering conventions | unverified | Current source, tests, lint/format configuration, and accepted decisions | Accepted decision or reference pattern changes | Add durable conventions only when they affect recurring work. |
+| Engineering conventions | unverified | Current source, tests, lint/format configuration, and verified reference patterns | Reference pattern or relevant configuration changes | Add durable conventions only when they affect recurring work. |
 
 ## Task fact routing
 

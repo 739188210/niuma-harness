@@ -6,48 +6,45 @@ This file has two zones:
 - **Project overrides** at the bottom are free for short, always-relevant behavioral constraints.
 
 <!-- niuma-harness:contract begin — do not modify -->
-# Niuma Harness — Operating Loop
+# Niuma Harness — Operating Contract
 
-This workspace runs a Niuma Harness. The loop below is your operating contract for every task. Depth lives in `{{HARNESS_DIR}}/docs/` — open a file only when its phase needs it; do not pre-read everything.
+This workspace runs a Niuma Harness. It defines collaboration constraints, task-material conventions, and recovery guidance. `doctor` verifies the Harness installation contract; it does not independently prove a task's claimed commands, evidence, or implementation outcome. Depth lives in `{{HARNESS_DIR}}/docs/` — open a file only when its phase needs it.
 
-## The loop
+## The contract
 
-**1. Plan — before any change**
-- Context: first inspect request-named files and the smallest relevant current source, configuration, build, test, README, or command evidence. Current workspace evidence determines task-specific facts.{{ENTRY_CONTEXT_TOPOLOGY_GUIDANCE}} Never guess what files can show you. (depth: `{{HARNESS_DIR}}/docs/layers/01-context.md`)
-- Boundary: classify the next action — autonomous / ask-first / forbidden / stop-and-escalate. Proceed only if autonomous, reversible, and task-scoped. Ask before ask-first; stop at default-forbidden actions unless the Policy defines an exact explicit-request exception and re-evaluation; always stop at stop-and-escalate or unclear risk. (depth: `{{HARNESS_DIR}}/docs/policy/action-boundary.md`)
-- Route: when workflow routing, conditional Harness reading, or a non-Direct material decision is needed, route through `{{HARNESS_DIR}}/docs/process/task-triage.md`; it selects only the Harness navigation, project knowledge, Policy, module, decision, experience, recovery, and task-material documents that apply before choosing a playbook. Then open only the selected process for workflow-specific materials and gates. Use `agent-work/README.md` for the Direct, Minimum, or Recoverable task-material decision. (depth: `{{HARNESS_DIR}}/docs/process/`)
+**1. Start safely**
+- Inspect the smallest request-relevant current source, configuration, build, test, README, or command evidence. Current workspace evidence determines task-specific facts.{{ENTRY_CONTEXT_TOPOLOGY_GUIDANCE}} Never guess what files can show you. (depth: `{{HARNESS_DIR}}/docs/layers/01-context.md`)
+- Classify the next action — autonomous / ask-first / forbidden / stop-and-escalate. Proceed only when it is autonomous, reversible, and task-scoped. Ask before ask-first; stop at default-forbidden actions unless Policy defines an exact explicit-request exception and re-evaluation; always stop at stop-and-escalate or unclear risk. (depth: `{{HARNESS_DIR}}/docs/policy/action-boundary.md`)
+- When workflow routing, conditional Harness reading, or task-material selection is needed, use `{{HARNESS_DIR}}/docs/process/task-triage.md`. Select the smallest workflow and task material; use `agent-work/README.md` to decide whether work stays Direct, needs status tracking, or benefits from an optional pre-work plan. (depth: `{{HARNESS_DIR}}/docs/process/`)
 
-**2. Act — smallest change**
-Make the minimal task-aligned change. No scope creep, no drive-by refactor, no new dependencies without asking.
+**2. Change the smallest scope**
+Make the minimal task-aligned change. Do not add unrelated refactors, dependencies, or behavior without re-checking scope and Policy.
 
-**3. Observe — before you claim done**
-Run the checks that prove the goal (tests / lint / typecheck / build). Record exact commands and results. Unrun checks are "unknown", never "passing". Update relevant task records under `agent-work/` according to Observation and Loop guidance. (depth: `{{HARNESS_DIR}}/docs/layers/04-observation.md`)
+**3. Observe before claiming completion**
+Run the smallest checks that prove the requested result. Record exact results, skipped checks, and remaining unknowns: Direct work reports them in the final response; status-tracked work updates `agent-work/tasks/<task>/status.md`. Focused checks do not prove full regression, and unrun checks are unknown. (depth: `{{HARNESS_DIR}}/docs/layers/04-observation.md`)
 
-**4. Reflect**
-Compare evidence to success criteria. Update resumable task state when needed. Failing or unclear → step 5. Passing → step 6.
+**4. Recover without rationalizing**
+Compare observed evidence with the success criteria. If results fail, conflict, or remain unclear, find the first root cause, make the smallest safe repair, and re-run the focused check. Use bounded retries; never weaken tests, assertions, or checks to force green. (depth: `{{HARNESS_DIR}}/docs/layers/05-recovery.md`)
 
-**5. Repair — bounded**
-Find the first root cause, not downstream symptoms. Smallest safe fix, then re-run the focused check. Bounded retries only — after a few focused attempts fail, stop and report. Never delete or weaken tests, assertions, or checks to force green. (depth: `{{HARNESS_DIR}}/docs/layers/05-recovery.md`)
+**5. Continue, stop, or hand off safely**
+Continue only when the next step is safe and useful; otherwise report and ask. For blocked, handed-off, cross-session, or otherwise status-tracked work, maintain resumable current state and observations in `agent-work/tasks/<task>/status.md`; on resumption, follow `{{HARNESS_DIR}}/docs/layers/07-loop.md` before acting. (depth: `{{HARNESS_DIR}}/docs/layers/07-loop.md`)
 
-**6. Remember**
-Task-local notes → `agent-work/`.{{ENTRY_MEMORY_SCOPE_GUIDANCE}} Verified root or cross-module durable facts → `{{HARNESS_DIR}}/docs/project-context.md`. Write only after verification. No secrets, no guesses. (depth: `{{HARNESS_DIR}}/docs/layers/06-memory.md`)
-
-**7. Continue or stop**
-Continue only when the next step is safe and useful; otherwise report and ask. For selected Recoverable work, maintain resumable task state under `agent-work/tasks/<task>/` as defined by `{{HARNESS_DIR}}/docs/layers/07-loop.md`; select Recoverable when handoff or resume needs arise. For an interrupted, cross-session, or handed-off named task, use that file's Recovery entry before continuing; do not scan `agent-work/tasks/` for a task or blindly trust an older plan. Non-trivial tasks must maintain the required structured execution record and evidence links under `agent-work/tasks/<task>/`; see `{{HARNESS_DIR}}/docs/experiments/task-execution-record.md`.
+**6. Preserve only durable knowledge**
+Task-local notes stay under `agent-work/`.{{ENTRY_MEMORY_SCOPE_GUIDANCE}} Verified root or cross-module durable facts belong in `{{HARNESS_DIR}}/docs/project-context.md`. Write only after verification. No secrets or guesses. (depth: `{{HARNESS_DIR}}/docs/layers/06-memory.md`)
 
 ## Red lines (apply to every task)
 
-- No "done" without evidence — state what ran, the result, what failed, what was skipped.
-- Classify before you act — risky / wide-scope / security / data / deps / API → ask first.
-- Smallest change first — widening scope escalates to Policy.
-- Don't weaken verification to pass — no deleting failing tests, no disabling checks.
-- Don't guess — inspect files before asserting facts; mark unknowns as unknown.
-- Treat rationalizations as stop signals: "probably fine", "failure is unrelated", "quick refactor while here", "user probably wants this extra scope", or "skip checks" → route through Observation, Recovery, Process, or Policy before continuing.
-- Do not edit the contract zone above — it is tool-managed.{{ENTRY_RED_LINE_MEMORY_GUIDANCE}} Task notes → `agent-work/`.
+- No completion claim without observed evidence — state what ran, the result, what failed, what was skipped, and what remains unknown.
+- Focused tests, builds, typechecks, full suites, migration sources, applied migrations, and authenticated browser checks prove different things; do not upgrade one into another.
+- Classify before acting — risky / wide-scope / security / data / dependencies / API work must follow Policy.
+- Keep changes task-scoped; widening scope requires Process and Policy re-check.
+- Do not weaken verification to pass — do not delete failing tests or disable checks.
+- Treat “probably fine”, “unrelated failure”, “quick refactor”, “user probably wants this extra scope”, and “skip checks” as signals to re-check Observation, Recovery, Process, or Policy.
+- Do not edit the contract zone above.{{ENTRY_RED_LINE_MEMORY_GUIDANCE}} Task notes belong under `agent-work/`.
 
 ## Depth is on-demand
 
-The loop above is all that stays in context. Each phase names the one file to open when it needs detail. Follow only the relevant independently installed engineering rules. Full loop spec: `{{HARNESS_DIR}}/docs/layers/07-loop.md`.{{ENTRY_CODEX_RULES_GUIDANCE}}
+The contract above is the always-loaded guidance. Each phase names the one document to open when detail is needed. Follow only relevant independently installed engineering rules. Full recovery protocol: `{{HARNESS_DIR}}/docs/layers/07-loop.md`.{{ENTRY_CODEX_RULES_GUIDANCE}}
 <!-- niuma-harness:contract end -->
 
 # Project overrides

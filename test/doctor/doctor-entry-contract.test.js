@@ -45,7 +45,7 @@ test('doctor fails when the entry contract zone is tampered', () => {
   const init = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(init.status, 0, init.stderr);
   const entry = path.join(workspace, 'CLAUDE.md');
-  const body = read(entry).replace('Operating Loop', 'Operating Loop (hacked)');
+  const body = read(entry).replace('Operating Contract', 'Operating Contract (hacked)');
   fs.writeFileSync(entry, body, 'utf8');
   const result = run(['doctor', workspace]);
   assert.notStrictEqual(result.status, 0, 'doctor should fail when the contract zone is tampered');
