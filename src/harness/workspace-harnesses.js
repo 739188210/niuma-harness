@@ -12,12 +12,19 @@ const DAMAGED_HARNESS_MARKERS = [
     relativePath: 'docs/index.md',
   },
   {
-    fragments: ['# Loop Runtime Layer Memo', 'agent-work/tasks/<task-name>/status.md'],
-    relativePath: 'docs/layers/07-loop.md',
-  },
-  {
     fragments: ['# Action Boundary Policy', '## Autonomous actions'],
     relativePath: 'docs/policy/action-boundary.md',
+  },
+];
+
+const RESUMPTION_MARKERS = [
+  {
+    fragments: ['# Resumption Runtime Layer Memo', 'agent-work/tasks/<task-name>/status.md'],
+    relativePath: 'docs/layers/07-resumption.md',
+  },
+  {
+    fragments: ['# Loop Runtime Layer Memo', 'agent-work/tasks/<task-name>/status.md'],
+    relativePath: 'docs/layers/07-loop.md',
   },
 ];
 
@@ -67,11 +74,14 @@ function inspectHarnessCandidate(workspaceDir, directoryName, options = {}) {
 }
 
 function hasDamagedHarnessStructure(directoryPath) {
-  return DAMAGED_HARNESS_MARKERS.every(({ fragments, relativePath }) => {
-    if (!isRegularFileInsideWithoutSymlink(directoryPath, relativePath)) return false;
-    const content = fs.readFileSync(path.join(directoryPath, ...relativePath.split('/')), 'utf8');
-    return fragments.every((fragment) => content.includes(fragment));
-  });
+  return DAMAGED_HARNESS_MARKERS.every((marker) => hasMarker(directoryPath, marker))
+    && RESUMPTION_MARKERS.some((marker) => hasMarker(directoryPath, marker));
+}
+
+function hasMarker(directoryPath, { fragments, relativePath }) {
+  if (!isRegularFileInsideWithoutSymlink(directoryPath, relativePath)) return false;
+  const content = fs.readFileSync(path.join(directoryPath, ...relativePath.split('/')), 'utf8');
+  return fragments.every((fragment) => content.includes(fragment));
 }
 
 function isRegularFileInsideWithoutSymlink(baseDir, relativePath) {

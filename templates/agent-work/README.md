@@ -1,6 +1,6 @@
 # Agent Work Area
 
-This workspace-level directory holds task-local material. Use the smallest material that makes the next action, evidence, and safe resumption clear. Do not create a task folder merely to satisfy a format.
+This workspace-level directory holds task-local material. Use the smallest material that makes the next action, planned evidence, current truth, and safe resumption clear. Do not create a task folder merely to satisfy a format.
 
 Task-local files live under:
 
@@ -13,9 +13,17 @@ agent-work/tasks/<task-name>/
   harness-feedback.md
 ```
 
-## Task-material decision card
+## Progressive task-material profile card
 
-`{{HARNESS_DIR}}/docs/layers/03-process.md` selects the execution form from current complexity, Policy boundaries, and recoverability. This guide is the only authority for choosing task-local material. The forms are not task labels or a risk matrix.
+`{{HARNESS_DIR}}/docs/layers/03-process.md` selects the smallest progressive task-material profile that fits current evidence. This guide is the only authority for choosing task-local material. Direct, Planned, and Tracked are not independent labels, combinable modes, or a risk matrix: `Direct < Planned < Tracked`.
+
+| Profile | Use when current evidence requires | Required material | Where actual evidence lives |
+| --- | --- | --- | --- |
+| Direct | Every Direct condition below holds | None | Final response |
+| Planned | Direct no longer fits because any planning trigger below holds, but safe resumption does not require a ledger | `plan.md` | Final response |
+| Tracked | Planned work also needs a resumable current-state and evidence ledger because any tracking trigger below holds | `plan.md` + `status.md` | `status.md` only |
+
+Planning material does not grant action permission. Classify each boundary action under Policy.
 
 ### Direct
 
@@ -34,16 +42,17 @@ If any condition stops being true, stop treating work as Direct. Re-check Proces
 
 ### Planned
 
-Create `agent-work/tasks/<task-name>/plan.md` **before implementation** when any condition holds:
+Create `agent-work/tasks/<task-name>/plan.md` **before implementation**, or before the next implementation step when current work is reclassified, when any condition holds:
 
+- two or more implementation steps, related edits, changed areas, components, or file families;
 - two or more acceptance criteria;
-- a meaningful implementation choice or trade-off;
-- implementation order affects correctness or safety;
-- an API, data, migration, compatibility, or cross-module decision;
-- planned verification has non-obvious evidence requirements; or
-- the user asks for a plan.
+- a meaningful implementation choice, trade-off, ordering dependency, rollback concern, or compatibility concern;
+- an API, data, migration, compatibility, authentication, dependency, security, cross-module, or external-operation boundary;
+- planned verification has non-obvious, manual, multi-stage, or integration evidence requirements;
+- the user asks for a plan; or
+- the work is Tracked.
 
-A plan is an execution input, never a completion summary. Do not backfill one after work is complete.
+A plan is an execution input, never a completion summary or evidence ledger. It records the approved goal, boundaries, smallest approach, and planned verification. Do not backfill one merely to narrate completed work; when reclassification makes planning necessary, document the remaining approved work before continuing.
 
 ```md
 # Task plan
@@ -64,7 +73,14 @@ A plan is an execution input, never a completion summary. Do not backfill one af
 
 ### Tracked
 
-Create `agent-work/tasks/<task-name>/status.md` when any condition holds:
+Tracked work is always Planned. Create and maintain both:
+
+```text
+agent-work/tasks/<task-name>/plan.md
+agent-work/tasks/<task-name>/status.md
+```
+
+Use Tracked when any condition holds:
 
 - work is blocked, under Recovery, delegated, parallel, or likely to cross sessions;
 - it cannot safely resume from the request and current files alone;
@@ -72,7 +88,7 @@ Create `agent-work/tasks/<task-name>/status.md` when any condition holds:
 - it has material failures, unknowns, external prerequisites, or approval dependencies; or
 - multiple stages must be integrated before a truthful outcome can be stated.
 
-A Tracked task may also be Planned. `status.md` is the sole task-local operational ledger: it records current state and actual observations; do not create `verification.md` or another competing task evidence ledger.
+`plan.md` is the execution input. `status.md` is the sole task-local operational and evidence ledger: it records current state, actual observations, scope changes, deferred work, applicable authorization boundary or user approval reference, and the next safe action; do not create `verification.md` or another competing task evidence ledger.
 
 Use these distinct terms:
 
@@ -119,7 +135,15 @@ Add this section only for a material scope change:
 
 A narrowed scope can pass only as the revised task. It does not silently make the original scope complete.
 
-Record only observations actually made: the command or manual check, expected signal when useful, actual result including relevant failure information, skipped checks with reason and impact, and remaining unknowns. Current source, configuration, tests, and command output override an older ledger.
+## Evidence and outcome quick rules
+
+- Evidence is scoped: focused tests do not prove full regression; builds do not prove typechecks; typechecks do not prove runtime workflows; a migration source does not prove it was applied; and unauthenticated browser access does not prove authenticated acceptance.
+- Record only actual observations: command or manual check, actual result, skipped checks with reason and impact, and remaining unknowns. Unrun checks are unknown, not passed.
+- A broad failure is only suspected pre-existing until the same failure was observed before the task, its location and type are demonstrably outside changed scope, or trusted CI, a baseline, or verified historical evidence establishes it. Even then, record the broad check as not passing.
+- `passed` means every material criterion has sufficient passing evidence. Material failures, blockers, skipped checks with unresolved impact, or unknowns require `partial`, `blocked`, `failed`, or `unknown`, not complete.
+- Policy decides whether an action is allowed. For material authorization, scope, or deferment changes, record the actual user approval or Policy boundary reference in `status.md`; do not infer approval from a plan.
+
+Use `{{HARNESS_DIR}}/docs/layers/04-observation.md` for detailed evidence and outcome semantics, `{{HARNESS_DIR}}/docs/layers/05-recovery.md` for failure handling, `{{HARNESS_DIR}}/docs/policy/action-boundary.md` for authorization, and `{{HARNESS_DIR}}/docs/layers/07-resumption.md` for resume order.
 
 ## Optional task material
 
@@ -150,4 +174,4 @@ Use `{{HARNESS_DIR}}/docs/layers/06-memory.md` to route verified durable facts a
 
 ## Resume
 
-For Tracked work, the Loop Recovery entry defines the only resume reading order: `{{HARNESS_DIR}}/docs/layers/07-loop.md`.
+For Tracked work, the Resumption entry defines the only resume reading order: `{{HARNESS_DIR}}/docs/layers/07-resumption.md`.

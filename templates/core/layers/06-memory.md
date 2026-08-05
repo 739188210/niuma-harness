@@ -65,6 +65,6 @@ If none applies, do not preserve it beyond the final response. Do not create rec
 - Context: `{{HARNESS_DIR}}/docs/layers/01-context.md`
 - Observation: `{{HARNESS_DIR}}/docs/layers/04-observation.md`
 - Recovery: `{{HARNESS_DIR}}/docs/layers/05-recovery.md`
-- Loop: `{{HARNESS_DIR}}/docs/layers/07-loop.md`
+- Resumption: `{{HARNESS_DIR}}/docs/layers/07-resumption.md`
 - Stable facts: `{{HARNESS_DIR}}/docs/project-context.md`
 - Task work area: `agent-work/`

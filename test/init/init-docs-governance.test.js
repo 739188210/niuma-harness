@@ -71,17 +71,19 @@ test('generated docs make task-material selection decisive and singular', () => 
   const h = path.join(workspace, 'harness');
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
   assert.match(workReadme, /Use Direct only when \*\*all\*\* conditions hold/);
+  assert.match(workReadme, /two or more implementation steps, related edits, changed areas, components, or file families/);
   assert.match(workReadme, /two or more acceptance criteria/);
-  assert.match(workReadme, /Create .*status\.md.*when any condition holds/s);
+  assert.match(workReadme, /### Tracked[\s\S]*?plan\.md[\s\S]*?status\.md/);
   assert.match(workReadme, /## Scope change/);
   assert.match(workReadme, /Task outcome/);
   assert.match(workReadme, /do not create `verification\.md` or another competing task evidence ledger/);
   assert.doesNotMatch(workReadme, /Minimum|Recoverable/);
   const process = read(path.join(h, 'docs', 'layers', '03-process.md'));
-  assert.match(process, /`agent-work\/README\.md` as the only decision card for Direct, Planned, or Tracked work/);
-  assert.match(process, /Complexity determines whether work is Planned/);
-  assert.match(process, /recoverability determines whether work is Tracked/);
-  assert.match(process, /A Tracked task may also be Planned/);
+  assert.match(process, /`agent-work\/README\.md` as the only progressive task-material profile card for Direct, Planned, or Tracked work/);
+  assert.match(process, /Direct, Planned, and Tracked are progressive task-material profiles/);
+  assert.match(process, /`Direct < Planned < Tracked`/);
+  assert.match(process, /`Tracked` includes `Planned`/);
+  assert.match(process, /Policy still decides whether each action may proceed/);
   assertNoPath(path.join(h, 'docs', 'process'));
 });
 
@@ -106,14 +108,14 @@ test('generated docs use final responses or status ledgers for actual observatio
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
   assert.match(workReadme, /### Direct/);
   assert.match(workReadme, /### Tracked/);
-  assert.match(workReadme, /sole task-local operational ledger/);
+  assert.match(workReadme, /sole task-local operational and evidence ledger/);
   assert.doesNotMatch(workReadme, /Recoverable/);
   const observation = read(path.join(h, 'docs', 'layers', '04-observation.md'));
   assert.match(observation, /For Direct work, record evidence in the final response/);
-  assert.match(observation, /For Tracked work, record it in .*status\.md/);
-  const loop = read(path.join(h, 'docs', 'layers', '07-loop.md'));
-  assert.match(loop, /A task outcome must not be `passed` while a material acceptance criterion is failed, blocked, skipped with unresolved impact, or unknown/);
-  assert.doesNotMatch(loop, /Recoverable/);
+  assert.match(observation, /For Tracked work, record it only in .*status\.md/);
+  const resumption = read(path.join(h, 'docs', 'layers', '07-resumption.md'));
+  assert.match(resumption, /A task outcome must not be `passed` while a material acceptance criterion is failed, blocked, skipped with unresolved impact, or unknown/);
+  assert.doesNotMatch(resumption, /Recoverable/);
 });
 
 

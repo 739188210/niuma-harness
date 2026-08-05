@@ -167,7 +167,7 @@ function printInitSummary(context) {
 }
 
 function printDone() {
-  console.log('Done. Agents follow the operating loop in the generated entry file (CLAUDE.md / AGENTS.md). Run `niuma-harness doctor .` to verify; read the generated harness README for structure and maintenance.');
+  console.log('Done. Agents follow the generated collaboration contract in CLAUDE.md / AGENTS.md. Run `niuma-harness doctor .` to verify installed Harness integrity; read the generated Harness README for ownership and maintenance.');
 }
 
 function sameStringArray(left, right) {

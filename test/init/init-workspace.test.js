@@ -223,6 +223,28 @@ test('custom ai-harness multi OpenCode adapter uses the actual harness root', ()
   assert.strictEqual(doctor.status, 0, doctor.stdout || doctor.stderr);
 });
 
+test('re-init migrates the resumption layer without changing a retained legacy loop file', () => {
+  const workspace = tempDir();
+  let result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+
+  const layers = path.join(workspace, 'harness', 'docs', 'layers');
+  const legacyPath = path.join(layers, '07-loop.md');
+  const legacyContent = '# Loop Runtime Layer Memo\n\nagent-work/tasks/<task-name>/status.md\n\nuser-kept legacy note\n';
+  fs.renameSync(path.join(layers, '07-resumption.md'), legacyPath);
+  fs.writeFileSync(legacyPath, legacyContent, 'utf8');
+
+  result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.strictEqual(read(legacyPath), legacyContent);
+  assertFile(path.join(layers, '07-resumption.md'));
+  assert.match(read(path.join(workspace, 'CLAUDE.md')), /docs\/layers\/07-resumption\.md/);
+  assert.match(read(path.join(workspace, 'agent-work', 'README.md')), /docs\/layers\/07-resumption\.md/);
+
+  const doctor = run(['doctor', workspace]);
+  assert.strictEqual(doctor.status, 0, doctor.stdout || doctor.stderr);
+});
+
 test('--harness-dir uses a custom directory name', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude', '--harness-dir', 'ai-harness']);
@@ -246,7 +268,7 @@ test('--harness-dir uses a custom directory name', () => {
   assert.match(entry, /ai-harness\/docs\/layers\/03-process\.md/);
   assert.match(entry, /smallest request-relevant current source, configuration, build, test, README, or command evidence/i);
   assert.match(entry, /ai-harness\/docs\/layers\/01-context\.md/);
-  assert.match(entry, /ai-harness\/docs\/layers\/07-loop\.md/);
+  assert.match(entry, /ai-harness\/docs\/layers\/07-resumption\.md/);
   assert.doesNotMatch(entry, /experiments\/task-execution-record|structured execution record/);
   assert.doesNotMatch(entry, /\(depth: `docs\//);
 
@@ -257,7 +279,7 @@ test('--harness-dir uses a custom directory name', () => {
   assert.match(workReadme, /optional feedback about Harness protocol or documentation friction/);
   assert.doesNotMatch(workReadme, /required structured execution record/);
   assert.match(workReadme, /do not create `verification\.md` or another competing task evidence ledger/);
-  assert.match(workReadme, /ai-harness\/docs\/layers\/07-loop\.md/);
+  assert.match(workReadme, /ai-harness\/docs\/layers\/07-resumption\.md/);
   assert.match(workReadme, /ai-harness\/docs\/project-context\.md/);
   assert.doesNotMatch(workReadme, /`docs\//);
   assert.doesNotMatch(workReadme, /`harness\/docs\//);

@@ -136,6 +136,23 @@ test('repair discovers a strongly damaged harness with a missing manifest from d
   assert.strictEqual(run(['doctor', harness]).status, 0);
 });
 
+test('repair migrates a legacy loop marker without modifying its retained file', () => {
+  const workspace = initWorkspace('claude');
+  const harness = path.join(workspace, 'harness');
+  const layers = path.join(harness, 'docs', 'layers');
+  const legacyPath = path.join(layers, '07-loop.md');
+  const legacyContent = '# Loop Runtime Layer Memo\n\nagent-work/tasks/<task-name>/status.md\n\nuser-kept legacy note\n';
+  fs.renameSync(path.join(layers, '07-resumption.md'), legacyPath);
+  fs.writeFileSync(legacyPath, legacyContent, 'utf8');
+  fs.rmSync(path.join(harness, 'manifest.json'));
+
+  const result = run(['repair', workspace, '-y', '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.strictEqual(read(legacyPath), legacyContent);
+  assert.ok(fs.existsSync(path.join(layers, '07-resumption.md')));
+  assert.strictEqual(run(['doctor', workspace]).status, 0);
+});
+
 test('repair rejects an explicitly named unrelated manifest directory without mutation', () => {
   const workspace = tempDir();
   const target = path.join(workspace, 'custom-harness');
@@ -171,7 +188,7 @@ test('repair rejects arbitrary content in damaged-harness marker files', () => {
   const target = tempDir();
   fs.mkdirSync(path.join(target, 'docs', 'layers'), { recursive: true });
   fs.writeFileSync(path.join(target, 'README.md'), 'unrelated readme\n');
-  fs.writeFileSync(path.join(target, 'docs', 'layers', '07-loop.md'), 'unrelated loop\n');
+  fs.writeFileSync(path.join(target, 'docs', 'layers', '07-resumption.md'), 'unrelated resumption\n');
   const result = run(['repair', target, '--dry-run', '--agent', 'claude']);
   assert.notStrictEqual(result.status, 0);
   assert.match(result.stderr, /No Niuma harness found/);
@@ -192,7 +209,7 @@ test('repair reports ambiguity for multiple strongly damaged harness roots', () 
 test('repair does not treat an ordinary docs directory as a damaged harness', () => {
   const workspace = tempDir();
   fs.mkdirSync(path.join(workspace, 'docs', 'layers'), { recursive: true });
-  fs.writeFileSync(path.join(workspace, 'docs', 'layers', '07-loop.md'), 'ordinary notes\n');
+  fs.writeFileSync(path.join(workspace, 'docs', 'layers', '07-resumption.md'), 'ordinary notes\n');
   const result = run(['repair', workspace, '--dry-run', '--agent', 'claude']);
   assert.notStrictEqual(result.status, 0);
   assert.match(result.stderr, /No Niuma harness found/);

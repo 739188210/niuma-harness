@@ -57,7 +57,7 @@ Continue only when the next step is safe and useful; otherwise report and ask. F
 
 ## Depth is on-demand
 
-The loop above is all that stays in context. Each phase names the one file to open when it needs detail. Full loop spec: `harness/docs/layers/07-loop.md`.
+The contract above is all that stays in context. Each phase names the one file to open when it needs detail. Full resumption protocol: `harness/docs/layers/07-resumption.md`.
 <!-- niuma-harness:contract end -->
 
 # Development

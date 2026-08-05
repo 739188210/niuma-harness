@@ -8,9 +8,9 @@ Define safe behavior when execution fails, evidence is unclear, or the agent dis
 
 Use this layer when tests fail, builds fail, commands fail, context is missing, edits are wrong, requirements are unclear, acceptance criteria are unmet, scope drifts, process flow stalls, checks conflict, or the same fix attempt fails repeatedly.
 
-If the Loop layer flags a rationalization about missing evidence or dismissing failures as unrelated, use this layer to classify the failure or uncertainty before continuing. Scope-expansion rationalizations route through Process and Policy.
+When current evidence is failing, conflicting, unclear, or unsafe during resumption, use this layer to classify the failure or uncertainty before continuing. Scope-expansion concerns route through Process and Policy.
 
-The Loop Recovery entry owns task-material reading order and current-workspace recheck. Use this layer only after that entry finds a failure, conflict, uncertainty, or unsafe state. Failure types are recovery-handling labels, not execution forms or permission categories.
+The Resumption entry owns task-material reading order and current-workspace recheck. Use this layer only after that entry finds a failure, conflict, uncertainty, or unsafe state. Failure types are recovery-handling labels, not task-material profiles or permission categories.
 
 ## Agent protocol
 
@@ -21,7 +21,7 @@ The Loop Recovery entry owns task-material reading order and current-workspace r
 4. Make the smallest safe repair attempt.
 5. Re-run the smallest relevant check.
 6. Stop and report if the same failure persists after focused retries or if repair requires user approval.
-7. Update task material only when the record already exists or `agent-work/README.md` says status tracking is now needed. Record the observed failure, root cause, repair attempt, focused recheck, criterion result, task outcome, stop condition, and remaining unknowns in `status.md`; add its `## Scope change` section when recovery materially changes scope. For Direct work, report them in the final response. Do not create a full task package merely because Recovery ran.
+7. Do not create task material merely because a transient Direct-work failure entered Recovery. When `agent-work/README.md` promotes the work to the Tracked profile, maintain its required `plan.md` plus `status.md`: update the plan for remaining approved work before the next implementation step, and record the observed failure, root cause, repair attempt, focused recheck, criterion result, task outcome, stop condition, and remaining unknowns only in `status.md`. Add its `## Scope change` section when recovery materially changes scope. For Direct work, report them in the final response.
 
 ## Failure response map
 
@@ -83,4 +83,4 @@ Rollback boundaries (what may be reverted) are owned by Policy: `{{HARNESS_DIR}}
 - Process: `{{HARNESS_DIR}}/docs/layers/03-process.md`
 - Observation: `{{HARNESS_DIR}}/docs/layers/04-observation.md`
 - Memory: `{{HARNESS_DIR}}/docs/layers/06-memory.md`
-- Loop: `{{HARNESS_DIR}}/docs/layers/07-loop.md`
+- Resumption: `{{HARNESS_DIR}}/docs/layers/07-resumption.md`

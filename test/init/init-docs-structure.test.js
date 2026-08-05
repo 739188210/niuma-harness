@@ -69,19 +69,26 @@ test('generated memos and policy contain required structure anchors', () => {
     'docs/layers/04-observation.md',
     'docs/layers/05-recovery.md',
     'docs/layers/06-memory.md',
-    'docs/layers/07-loop.md',
   ]) {
     const body = read(path.join(h, ...memo.split('/')));
     assert.match(body, /## Agent protocol/, `${memo} must contain Agent protocol`);
     assert.match(body, /## Forbidden actions/, `${memo} must contain Forbidden actions`);
   }
 
+  const resumptionMemo = read(path.join(h, 'docs', 'layers', '07-resumption.md'));
+  assert.match(resumptionMemo, /# Resumption Runtime Layer Memo/);
+  assert.match(resumptionMemo, /## Recovery entry/);
+  assert.match(resumptionMemo, /## Resume constraints/);
+  assert.doesNotMatch(resumptionMemo, /## Agent protocol|## Rationalization red flags/);
+
   assertNoPath(path.join(h, 'docs', 'process'));
 
   assertFile(path.join(h, 'README.md'));
   const readme = read(path.join(h, 'README.md'));
   assert.match(readme, /^# Niuma Harness$/m);
-  assert.match(readme, /task-execution framework/);
+  assert.match(readme, /project-level collaboration protocol/);
+  assert.match(readme, /## Installation integrity boundary/);
+  assert.match(readme, /Doctor does not independently prove a task implementation, claimed command, test result, evidence record, runtime behavior, or final outcome/);
   assert.match(readme, /CLAUDE\.md/);
   assert.match(readme, /AGENTS\.md/);
   assert.match(readme, /docs\/index\.md/);
@@ -140,51 +147,49 @@ test('generated docs define Tracked task protocol', () => {
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
 
-  const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop.md'));
-  assert.match(loopMemo, /agent-work\/tasks\/<task-name>\/status\.md/);
-  assert.match(loopMemo, /Tracked work/);
-  assert.match(loopMemo, /It owns current task state and actual observations needed to continue safely/);
-  assert.match(loopMemo, /## Recovery entry/);
-  const recoveryEntry = loopMemo.match(/## Recovery entry[\s\S]*?\n## Ownership boundaries/)[0];
+  const resumptionMemo = read(path.join(h, 'docs', 'layers', '07-resumption.md'));
+  assert.match(resumptionMemo, /agent-work\/tasks\/<task-name>\/status\.md/);
+  assert.match(resumptionMemo, /Tracked work/);
+  assert.match(resumptionMemo, /Tracked extends Planned/);
+  assert.match(resumptionMemo, /owns current task state and actual observations/);
+  assert.match(resumptionMemo, /## Recovery entry/);
+  const recoveryEntry = resumptionMemo.match(/## Recovery entry[\s\S]*?\n## Authority boundaries/)[0];
   assert.ok(recoveryEntry.indexOf('`status.md`') < recoveryEntry.indexOf('`plan.md`'));
   assert.match(recoveryEntry, /relevant source, configuration, tests, README\/runbook, and command results/);
   assert.doesNotMatch(recoveryEntry, /verification\.md|harness-feedback\.md/);
 
   const entry = read(path.join(workspace, 'CLAUDE.md'));
   assert.match(entry, /Direct work reports them in the final response; Tracked work updates/);
-  assert.match(entry, /otherwise Tracked work, maintain resumable current state and observations/);
+  assert.match(entry, /otherwise Tracked work, maintain its `plan\.md` and resumable current state and observations/);
   assert.doesNotMatch(entry, /structured execution record|harness-feedback\.md|verification\.md/);
 
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
-  assert.match(workReadme, /## Task-material decision card/);
-  assert.match(workReadme, /### Tracked/);
+  assert.match(workReadme, /## Progressive task-material profile card/);
+  assert.match(workReadme, /### Tracked[\s\S]*?plan\.md[\s\S]*?status\.md/);
   assert.match(workReadme, /### Planned/);
   assert.match(workReadme, /A plan is an execution input, never a completion summary/);
-  assert.match(workReadme, /`status.md` is the sole task-local operational ledger/);
+  assert.match(workReadme, /`status\.md` is the sole task-local operational and evidence ledger/);
   assert.match(workReadme, /Task outcome/);
   assert.doesNotMatch(workReadme, /Recoverable/);
 });
 
-test('generated loop memo defines rationalization red flags', () => {
+test('generated resumption memo stays scoped to recovery and continuation', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
 
-  const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop.md'));
-  assert.match(loopMemo, /## Rationalization red flags/);
-  const redFlagsSection = loopMemo.match(/## Rationalization red flags[\s\S]*?\n## Allowed actions/)[0];
-  assert.match(redFlagsSection, /skip tests\/checks/);
-  assert.match(redFlagsSection, /probably fine/);
-  assert.match(redFlagsSection, /unrelated/);
-  assert.match(redFlagsSection, /quick refactor/);
-  assert.match(redFlagsSection, /extra scope/);
-  assert.match(redFlagsSection, /stop-and-classify signals/);
-  assert.match(redFlagsSection, /route through Observation, Recovery, Process, or Policy/);
+  const resumptionMemo = read(path.join(h, 'docs', 'layers', '07-resumption.md'));
+  assert.match(resumptionMemo, /`status\.md` first/);
+  assert.match(resumptionMemo, /Read `plan\.md` next/);
+  assert.match(resumptionMemo, /Current facts override older task material/);
+  assert.match(resumptionMemo, /legacy interrupted task lacks it/);
+  assert.match(resumptionMemo, /Do not execute an older next action until this entry is complete/);
+  assert.doesNotMatch(resumptionMemo, /Plan: load Context|Act: make|Observe: run|Reflect: compare|Repair: enter|Remember: capture|## Rationalization red flags/);
 
   const recoveryMemo = read(path.join(h, 'docs', 'layers', '05-recovery.md'));
-  assert.match(recoveryMemo, /rationalization about missing evidence or dismissing failures as unrelated/);
-  assert.match(recoveryMemo, /Scope-expansion rationalizations route through Process and Policy/);
+  assert.match(recoveryMemo, /current evidence is failing, conflicting, unclear, or unsafe during resumption/);
+  assert.match(recoveryMemo, /Scope-expansion concerns route through Process and Policy/);
 });
 
 test('generated observation memo defines status and final-response evidence locations', () => {
@@ -196,7 +201,7 @@ test('generated observation memo defines status and final-response evidence loca
   assert.match(observationMemo, /## Evidence boundaries/);
   assert.match(observationMemo, /A focused test passing does not prove full regression passed/);
   assert.match(observationMemo, /For Direct work, record evidence in the final response/);
-  assert.match(observationMemo, /For Tracked work, record it in .*status\.md/);
+  assert.match(observationMemo, /For Tracked work, record it only in .*status\.md/);
   assert.match(observationMemo, /## Evidence and outcome vocabulary/);
   assert.doesNotMatch(observationMemo, /verification\.md|niuma-verification-record/);
 });
@@ -208,8 +213,8 @@ test('generated recovery memo maps failure types to required responses', () => {
   const h = path.join(workspace, 'harness');
 
   const recoveryMemo = read(path.join(h, 'docs', 'layers', '05-recovery.md'));
-  assert.match(recoveryMemo, /The Loop Recovery entry owns task-material reading order and current-workspace recheck/);
-  assert.match(recoveryMemo, /Failure types are recovery-handling labels, not execution forms or permission categories/);
+  assert.match(recoveryMemo, /The Resumption entry owns task-material reading order and current-workspace recheck/);
+  assert.match(recoveryMemo, /Failure types are recovery-handling labels, not task-material profiles or permission categories/);
   assert.match(recoveryMemo, /## Failure response map/);
   assert.match(recoveryMemo, /`test`/);
   assert.match(recoveryMemo, /`build`/);
@@ -236,10 +241,10 @@ test('generated docs define task state ownership boundaries', () => {
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
 
-  const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop.md'));
-  assert.match(loopMemo, /The ledger is the resume point/);
-  assert.match(loopMemo, /task-local observations/);
-  assert.match(loopMemo, /active task owner/);
+  const resumptionMemo = read(path.join(h, 'docs', 'layers', '07-resumption.md'));
+  assert.match(resumptionMemo, /`status\.md` is the resume point/);
+  assert.match(resumptionMemo, /task-local observations/);
+  assert.match(resumptionMemo, /active task owner/);
 
   const memoryMemo = read(path.join(h, 'docs', 'layers', '06-memory.md'));
   assert.match(memoryMemo, /For Tracked work, task-local state stays in `agent-work\/tasks\/<task-name>\/status\.md`/);
@@ -249,11 +254,12 @@ test('generated docs define task state ownership boundaries', () => {
 
   const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation.md'));
   assert.match(observationMemo, /Record concise, human-readable facts where the task path requires them/);
-  assert.match(observationMemo, /status\.md`; it is the only task-local evidence ledger/);
+  assert.match(observationMemo, /status\.md`; it is the only task-local evidence ledger even when the required `plan\.md` exists/);
 
   const processMemo = read(path.join(h, 'docs', 'layers', '03-process.md'));
-  assert.match(processMemo, /Complexity determines whether work is Planned/);
-  assert.match(processMemo, /A Tracked task may also be Planned/);
+  assert.match(processMemo, /Direct, Planned, and Tracked are progressive task-material profiles/);
+  assert.match(processMemo, /`Direct < Planned < Tracked`/);
+  assert.match(processMemo, /`Tracked` includes `Planned`/);
   assert.match(processMemo, /`agent-work\/README\.md` owns task-file selection and roles/);
   assert.match(processMemo, /Observation owns evidence and outcome semantics/);
 

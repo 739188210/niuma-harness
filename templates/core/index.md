@@ -19,7 +19,7 @@ This is the complete runtime navigation map for the Harness. The entry file (`CL
 - [Observation](layers/04-observation.md)
 - [Recovery](layers/05-recovery.md)
 - [Memory](layers/06-memory.md)
-- [Loop](layers/07-loop.md)
+- [Resumption](layers/07-resumption.md)
 
 ### Concrete policy
 
@@ -56,7 +56,7 @@ For a declared multi-module workspace, read `{{HARNESS_DIR}}/docs/module-topolog
 
 ## Runtime reading order
 
-1. The entry contract first directs task-specific current evidence; when execution-form selection, conditional Harness reading, or task-material selection is needed, follow `{{HARNESS_DIR}}/docs/layers/03-process.md`.
+1. The entry contract first directs task-specific current evidence; when task-material profile selection, conditional Harness reading, or planning/resumption material is needed, follow `{{HARNESS_DIR}}/docs/layers/03-process.md`.
 2. Use this navigation map only when Process selects Harness navigation, fact priority, the Policy exception, or a linked protocol. Do not follow every link.
 3. When Process selects stable project facts, in `{{HARNESS_DIR}}/docs/project-context.md` read Context coverage and, when it exists and matches the task, the `Task fact routing` table to select only task-relevant stable-fact headings.
 4. Before relying on a project-context fact, inspect task-relevant current README, build files, configuration, source, tests, or command output.

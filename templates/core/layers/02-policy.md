@@ -28,7 +28,7 @@ Approval blockers and policy risks are task-local state until resolved. Do not a
 
 ## Forbidden actions
 
-- Do not duplicate the full action boundary list in this memo, execution-form guidance, or rules.
+- Do not duplicate the full action boundary list in this memo, task-material profile guidance, or rules.
 - Do not choose the more permissive interpretation when policy sources conflict.
 - Do not treat an explicit request as blanket approval beyond the named action and scope.
 

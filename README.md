@@ -137,7 +137,7 @@ workspace/
         04-observation.md
         05-recovery.md
         06-memory.md
-        07-loop.md
+        07-resumption.md
       policy/
         action-boundary.md
         secret-leak.md
@@ -169,7 +169,7 @@ The generated `docs/layers/` directory is the AI agent operating model:
 | Observation | `docs/layers/04-observation.md` | How the agent verifies whether the current state is good |
 | Recovery | `docs/layers/05-recovery.md` | How the agent responds when work fails or becomes unclear |
 | Memory | `docs/layers/06-memory.md` | What should be preserved and what should stay task-local |
-| Loop | `docs/layers/07-loop.md` | How the agent continues, pauses, recovers, or stops |
+| Resumption | `docs/layers/07-resumption.md` | How the agent resumes, pauses, hands off, or stops Tracked work safely |
 
 The layer files describe what each layer must do. Engineering standards are installed in each selected agent's native rule surface. Runtime task records live in the workspace-level `agent-work/` directory.
 

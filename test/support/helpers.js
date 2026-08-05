@@ -33,7 +33,7 @@ const layerMemos = [
   'docs/layers/04-observation.md',
   'docs/layers/05-recovery.md',
   'docs/layers/06-memory.md',
-  'docs/layers/07-loop.md',
+  'docs/layers/07-resumption.md',
 ];
 
 function run(args, options = {}) {

@@ -14,7 +14,7 @@ Use this layer before declaring an outcome, after any code or documentation chan
 2. Prefer project-local commands documented in `{{HARNESS_DIR}}/docs/project-context.md`; use `{{HARNESS_DIR}}/docs/index.md` only as navigation.
 3. Run focused checks first, then broader checks when justified by changed risk.
 4. Record only checks actually run, actual results, skipped checks with reason and impact, and remaining unknowns.
-5. For Direct work, record evidence in the final response. For Tracked work, record it in `agent-work/tasks/<task-name>/status.md`.
+5. For Direct work, record evidence in the final response. For Tracked work, record it only in `agent-work/tasks/<task-name>/status.md`; its required `plan.md` is planned direction, not an evidence ledger.
 6. Treat unrun checks as unknown, not passing. If verification fails, treat the failing check as evidence; do not move the verification target unless the Policy test-change gate permits it and the reason is recorded.
 
 ## Evidence boundaries
@@ -54,7 +54,7 @@ State one task outcome across material criteria:
 - `failed`: the task goal or a material criterion is shown to fail.
 - `unknown`: evidence is insufficient to judge the task outcome.
 
-For Tracked work, keep a compact acceptance/evidence matrix in `status.md`; it is the only task-local evidence ledger. A task may be closed or handed off with a non-passing outcome, but it must not be called complete unless its outcome is `passed`.
+For Tracked work, keep a compact acceptance/evidence matrix in `status.md`; it is the only task-local evidence ledger even when the required `plan.md` exists. A task may be closed or handed off with a non-passing outcome, but it must not be called complete unless its outcome is `passed`.
 
 ## Evidence record
 

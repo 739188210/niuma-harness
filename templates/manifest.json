@@ -59,8 +59,8 @@
       "template": "core/layers/06-memory.md"
     },
     {
-      "target": "docs/layers/07-loop.md",
-      "template": "core/layers/07-loop.md"
+      "target": "docs/layers/07-resumption.md",
+      "template": "core/layers/07-resumption.md"
     },
     {
       "target": "docs/policy/action-boundary.md",

@@ -57,14 +57,14 @@ test('generated docs route only needed Process context and task material', () =>
   const process = read(path.join(h, 'docs', 'layers', '03-process.md'));
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
 
-  assert.match(entry, /execution-form selection, conditional Harness reading, or task-material selection is needed, use `harness\/docs\/layers\/03-process\.md`/);
-  assert.match(entry, /only decision card for Direct, Planned, or Tracked work/);
-  assert.match(context, /execution-form selection, conditional Harness reading, or task-material selection is needed/);
-  assert.match(process, /## Execution-form decision/);
+  assert.match(entry, /task-material profile selection, conditional Harness reading, or planning\/resumption material is needed, use `harness\/docs\/layers\/03-process\.md`/);
+  assert.match(entry, /only progressive task-material profile card for Direct, Planned, or Tracked work/);
+  assert.match(context, /task-material profile selection, conditional Harness reading, or task-material selection is needed/);
+  assert.match(process, /## Task-material profile decision/);
   assert.match(process, /`Direct`/);
   assert.match(process, /`Planned`/);
   assert.match(process, /`Tracked`/);
-  assert.match(process, /not labels to combine or a risk matrix/);
+  assert.match(process, /progressive task-material profiles/);
   assert.match(workReadme, /This guide is the only authority for choosing task-local material/);
   assertNoPath(path.join(h, 'docs', 'process'));
 });
@@ -85,7 +85,7 @@ test('custom harness paths replace template variables in retained knowledge and 
     assert.doesNotMatch(body, /{{HARNESS_DIR}}|`harness\/docs\//);
   }
 
-  assert.match(read(path.join(workspace, 'agent-work', 'README.md')), /`ai-harness\/docs\/layers\/07-loop\.md`/);
+  assert.match(read(path.join(workspace, 'agent-work', 'README.md')), /`ai-harness\/docs\/layers\/07-resumption\.md`/);
   assert.match(read(path.join(workspace, 'ai-harness', 'docs', 'layers', '06-memory.md')), /`ai-harness\/docs\/experience\//);
 });
 
