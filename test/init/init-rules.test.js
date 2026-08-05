@@ -62,7 +62,7 @@ test('default rules include common engineering rules', () => {
   }
 });
 
-test('generated common testing rules require practical TDD across agent surfaces', () => {
+test('generated common testing rules require test-first behavior evidence across agent surfaces', () => {
   for (const scenario of [
     { agent: 'claude', rulePath: ['.claude', 'rules', 'common', 'testing.md'] },
     { agent: 'codex', rulePath: ['.agents', 'harness-rules', 'common', 'testing.md'] },
@@ -73,7 +73,7 @@ test('generated common testing rules require practical TDD across agent surfaces
     assert.strictEqual(result.status, 0, result.stderr);
     const rule = read(path.join(workspace, ...scenario.rulePath));
 
-    assert.match(rule, /must follow generated `ai-harness\/docs\/process\/test-driven-development\.md`/);
+    assert.match(rule, /must follow the test-first behavior evidence protocol in `ai-harness\/docs\/layers\/04-observation\.md`/);
     assert.match(rule, /RED → same-target GREEN → optional REFACTOR/);
     assert.match(rule, /does not replace test-first work when that protocol applies/);
     assert.match(rule, /Valid alternatives must be declared before implementation/);

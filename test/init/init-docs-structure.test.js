@@ -37,10 +37,7 @@ test('template sources use the flattened package layout while preserving runtime
   assertFile(path.join(workspace, 'harness', 'docs', 'index.md'));
   assertFile(path.join(workspace, 'harness', 'docs', 'layers', '01-context.md'));
   assertFile(path.join(workspace, 'harness', 'docs', 'policy', 'action-boundary.md'));
-  assertFile(path.join(workspace, 'harness', 'docs', 'process', 'review.md'));
-  for (const page of ['release.md', 'isolation.md', 'subagent-development.md']) {
-    assertNoPath(path.join(workspace, 'harness', 'docs', 'process', page));
-  }
+  assertNoPath(path.join(workspace, 'harness', 'docs', 'process'));
   assertFile(path.join(workspace, 'agent-work', 'README.md'));
 
   const doctor = run(['doctor', workspace]);
@@ -59,7 +56,7 @@ test('re-init preserves a legacy automation document as user content', () => {
   assert.strictEqual(read(legacyPath), legacyContent);
 });
 
-test('generated memos/playbooks/policy contain required structure anchors', () => {
+test('generated memos and policy contain required structure anchors', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
@@ -79,17 +76,7 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
     assert.match(body, /## Forbidden actions/, `${memo} must contain Forbidden actions`);
   }
 
-  for (const pb of [
-    'docs/process/task-triage.md',
-    'docs/process/bugfix.md',
-    'docs/process/feature-development.md',
-    'docs/process/refactor.md',
-    'docs/process/review.md',
-  ]) {
-    const body = read(path.join(h, ...pb.split('/')));
-    assert.match(body, /## Goal/, `${pb} must contain Goal`);
-    assert.match(body, /## Recovery/, `${pb} must contain Recovery`);
-  }
+  assertNoPath(path.join(h, 'docs', 'process'));
 
   assertFile(path.join(h, 'README.md'));
   const readme = read(path.join(h, 'README.md'));
@@ -117,10 +104,15 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
   assert.match(actionBoundary, /project-local verification commands that do not create external side effects/);
   assert.match(actionBoundary, /harness\/docs\/policy\/untrusted-content\.md/);
   const secretLeak = read(path.join(h, 'docs', 'policy', 'secret-leak.md'));
-  assert.match(secretLeak, /secret or sensitive data/);
+  assert.match(secretLeak, /secret or sensitive value/);
   assert.match(secretLeak, /private key, or private data/);
-  assert.match(secretLeak, /Remove the secret from the working tree when safe/);
-  assert.match(secretLeak, /version-control-aware cleanup for committed or pushed exposure/);
+  assert.match(secretLeak, /redact, contain, continue safely/);
+  assert.match(secretLeak, /Continue task-scoped local work when it does not depend on the value/);
+  assert.match(secretLeak, /Do not stop unrelated safe work merely because the value was observed/);
+  assert.match(secretLeak, /generated files created by the agent/);
+  assert.match(secretLeak, /For an existing workspace file, classify any redaction or other remediation/);
+  assert.match(secretLeak, /never persist a leaked value/);
+  assert.doesNotMatch(secretLeak, /priority is containment and escalation, not smallest-fix-and-retry/);
   assert.match(secretLeak, /## Trigger/, 'secret-leak.md must contain Trigger');
   assert.match(secretLeak, /## Forbidden/, 'secret-leak.md must contain Forbidden');
   const untrustedContent = read(path.join(h, 'docs', 'policy', 'untrusted-content.md'));
@@ -142,7 +134,7 @@ test('generated memos/playbooks/policy contain required structure anchors', () =
 });
 
 
-test('generated docs define status-tracked task protocol', () => {
+test('generated docs define Tracked task protocol', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
@@ -150,7 +142,7 @@ test('generated docs define status-tracked task protocol', () => {
 
   const loopMemo = read(path.join(h, 'docs', 'layers', '07-loop.md'));
   assert.match(loopMemo, /agent-work\/tasks\/<task-name>\/status\.md/);
-  assert.match(loopMemo, /status-tracked work/);
+  assert.match(loopMemo, /Tracked work/);
   assert.match(loopMemo, /It owns current task state and actual observations needed to continue safely/);
   assert.match(loopMemo, /## Recovery entry/);
   const recoveryEntry = loopMemo.match(/## Recovery entry[\s\S]*?\n## Ownership boundaries/)[0];
@@ -159,14 +151,14 @@ test('generated docs define status-tracked task protocol', () => {
   assert.doesNotMatch(recoveryEntry, /verification\.md|harness-feedback\.md/);
 
   const entry = read(path.join(workspace, 'CLAUDE.md'));
-  assert.match(entry, /Direct work reports them in the final response; status-tracked work updates/);
-  assert.match(entry, /status-tracked work, maintain resumable current state and observations/);
+  assert.match(entry, /Direct work reports them in the final response; Tracked work updates/);
+  assert.match(entry, /otherwise Tracked work, maintain resumable current state and observations/);
   assert.doesNotMatch(entry, /structured execution record|harness-feedback\.md|verification\.md/);
 
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
   assert.match(workReadme, /## Task-material decision card/);
-  assert.match(workReadme, /### Status-tracked work/);
-  assert.match(workReadme, /### Plan/);
+  assert.match(workReadme, /### Tracked/);
+  assert.match(workReadme, /### Planned/);
   assert.match(workReadme, /A plan is an execution input, never a completion summary/);
   assert.match(workReadme, /`status.md` is the sole task-local operational ledger/);
   assert.match(workReadme, /Task outcome/);
@@ -204,7 +196,7 @@ test('generated observation memo defines status and final-response evidence loca
   assert.match(observationMemo, /## Evidence boundaries/);
   assert.match(observationMemo, /A focused test passing does not prove full regression passed/);
   assert.match(observationMemo, /For Direct work, record evidence in the final response/);
-  assert.match(observationMemo, /For status-tracked work, record it in .*status\.md/);
+  assert.match(observationMemo, /For Tracked work, record it in .*status\.md/);
   assert.match(observationMemo, /## Evidence and outcome vocabulary/);
   assert.doesNotMatch(observationMemo, /verification\.md|niuma-verification-record/);
 });
@@ -217,7 +209,7 @@ test('generated recovery memo maps failure types to required responses', () => {
 
   const recoveryMemo = read(path.join(h, 'docs', 'layers', '05-recovery.md'));
   assert.match(recoveryMemo, /The Loop Recovery entry owns task-material reading order and current-workspace recheck/);
-  assert.match(recoveryMemo, /Failure types are recovery-handling labels, not task classifications, risk tiers, or playbooks/);
+  assert.match(recoveryMemo, /Failure types are recovery-handling labels, not execution forms or permission categories/);
   assert.match(recoveryMemo, /## Failure response map/);
   assert.match(recoveryMemo, /`test`/);
   assert.match(recoveryMemo, /`build`/);
@@ -250,7 +242,7 @@ test('generated docs define task state ownership boundaries', () => {
   assert.match(loopMemo, /active task owner/);
 
   const memoryMemo = read(path.join(h, 'docs', 'layers', '06-memory.md'));
-  assert.match(memoryMemo, /For status-tracked work, task-local state stays in `agent-work\/tasks\/<task-name>\/status\.md`/);
+  assert.match(memoryMemo, /For Tracked work, task-local state stays in `agent-work\/tasks\/<task-name>\/status\.md`/);
   assert.match(memoryMemo, /Module-local durable facts belong in the affected module entry's marker-external knowledge area/);
   assert.match(memoryMemo, /Root or cross-module durable facts belong in `harness\/docs\/project-context\.md`/);
   assert.match(memoryMemo, /Approval blockers and risks are task-local until resolved/);
@@ -260,9 +252,10 @@ test('generated docs define task state ownership boundaries', () => {
   assert.match(observationMemo, /status\.md`; it is the only task-local evidence ledger/);
 
   const processMemo = read(path.join(h, 'docs', 'layers', '03-process.md'));
-  assert.match(processMemo, /The selected workflow owns its task-type success criteria and gates/);
-  assert.match(processMemo, /agent-work\/README\.md.*Direct eligibility and plan or status-ledger triggers/);
-  assert.match(processMemo, /Observation owns generic evidence and outcome semantics/);
+  assert.match(processMemo, /Complexity determines whether work is Planned/);
+  assert.match(processMemo, /A Tracked task may also be Planned/);
+  assert.match(processMemo, /`agent-work\/README\.md` owns task-file selection and roles/);
+  assert.match(processMemo, /Observation owns evidence and outcome semantics/);
 
   const policyMemo = read(path.join(h, 'docs', 'layers', '02-policy.md'));
   assert.match(policyMemo, /Approval blockers and policy risks are task-local state/);

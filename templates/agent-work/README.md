@@ -13,11 +13,9 @@ agent-work/tasks/<task-name>/
   harness-feedback.md
 ```
 
-`init`, `doctor`, and `repair` do not create, rewrite, or delete task folders or task-local files.
-
 ## Task-material decision card
 
-Task classification, risk tier, Policy, and workflow selection belong to `{{HARNESS_DIR}}/docs/process/task-triage.md`. This guide is the only authority for choosing task-local material.
+`{{HARNESS_DIR}}/docs/layers/03-process.md` selects the execution form from current complexity, Policy boundaries, and recoverability. This guide is the only authority for choosing task-local material. The forms are not task labels or a risk matrix.
 
 ### Direct
 
@@ -32,9 +30,9 @@ Use Direct only when **all** conditions hold:
 
 Create no task file. In the final response, record actual checks or manual steps, results, skipped checks with their impact, and remaining unknowns.
 
-If any condition stops being true, stop treating work as Direct. Re-check Policy and select the required material before continuing.
+If any condition stops being true, stop treating work as Direct. Re-check Process and Policy and select the required material before continuing.
 
-### Plan
+### Planned
 
 Create `agent-work/tasks/<task-name>/plan.md` **before implementation** when any condition holds:
 
@@ -64,7 +62,7 @@ A plan is an execution input, never a completion summary. Do not backfill one af
 - <check or manual observation>
 ```
 
-### Status-tracked work
+### Tracked
 
 Create `agent-work/tasks/<task-name>/status.md` when any condition holds:
 
@@ -74,7 +72,7 @@ Create `agent-work/tasks/<task-name>/status.md` when any condition holds:
 - it has material failures, unknowns, external prerequisites, or approval dependencies; or
 - multiple stages must be integrated before a truthful outcome can be stated.
 
-`status.md` is the sole task-local operational ledger. It records current state and actual observations; do not create `verification.md` or another competing task evidence ledger.
+A Tracked task may also be Planned. `status.md` is the sole task-local operational ledger: it records current state and actual observations; do not create `verification.md` or another competing task evidence ledger.
 
 Use these distinct terms:
 
@@ -152,4 +150,4 @@ Use `{{HARNESS_DIR}}/docs/layers/06-memory.md` to route verified durable facts a
 
 ## Resume
 
-For status-tracked work, the Loop Recovery entry defines the only resume reading order: `{{HARNESS_DIR}}/docs/layers/07-loop.md`.
+For Tracked work, the Loop Recovery entry defines the only resume reading order: `{{HARNESS_DIR}}/docs/layers/07-loop.md`.

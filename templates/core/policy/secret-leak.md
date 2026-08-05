@@ -1,39 +1,36 @@
-# Secret Leak Response
+# Secret Exposure Response
 
 ## Purpose
 
-Define what an agent must do when it detects that a secret or sensitive data (credential, token, key, password, private key, or private data) has entered code, a commit, history, logs, or output. This is a high-severity failure with a different shape from normal Recovery: the priority is containment and escalation, not smallest-fix-and-retry.
+Define how an agent contains a discovered secret or sensitive value (credential, token, key, password, private key, or private data) without repeating it or expanding its exposure. Detection requires redaction and careful handling; it does not by itself stop unrelated safe task work.
 
 ## Trigger
 
-Use this document when the agent observes any of:
+Use this document when the agent observes a secret or sensitive value in source, configuration, env files, docs, git commits or history, logs, tool output, screenshots, task material, or user-provided content.
 
-- A secret present in a source file, config, env file, or doc.
-- A secret in a git commit, the index, or history.
-- A secret echoed in command output, logs, or process notes.
-- A secret the user pasted into the conversation.
+## Response: redact, contain, continue safely
 
-## Response: contain, do not self-repair
-
-1. Stop. Do not commit, push, copy, or echo the secret further.
-2. Do not attempt silent repair. Rotating, deleting, or rewriting history is high-risk and ask-first (see `action-boundary.md`).
-3. Preserve evidence without copying the secret value. Record only the secret type, where it was found, and exposure scope (local-only / committed / pushed / public).
-4. Escalate to the user. State the exposure scope and the recommended actions (rotate the secret, rewrite history if pushed, notify affected downstream systems).
-5. Clean only after approval. Remove the secret from the working tree when safe, and use version-control-aware cleanup for committed or pushed exposure. Never delete files merely to hide evidence.
+1. Do not repeat, print, copy, persist, commit, upload, or use the sensitive value.
+2. Redact the value from command-output excerpts, task material, final responses, logs, screenshots, fixtures, examples, and generated files created by the agent. For an existing workspace file, classify any redaction or other remediation under `{{HARNESS_DIR}}/docs/policy/action-boundary.md` before modifying it. When a record is necessary, state only its type, location, and exposure scope (local-only / committed / pushed / public).
+3. Continue task-scoped local work when it does not depend on the value and cannot expand its exposure.
+4. Classify every action concerning the value separately under `{{HARNESS_DIR}}/docs/policy/action-boundary.md`. Rotation, revocation, deletion, history rewrite, remote cleanup, external notification, credential use, and changes to user-owned content are not authorized by this response.
+5. If the requested work requires the value or a sensitive external action, record that exact blocker and ask for a safe substitute or scoped approval. Do not stop unrelated safe work merely because the value was observed.
+6. Do not treat local redaction as proof that an exposure is resolved; a value may remain in history, logs, artifacts, or remote systems.
 
 ## Forbidden
 
-- Running `git push --force` or rewriting shared history without explicit approval.
-- Rotating or revoking secrets via API on the agent's own initiative.
-- Copying the secret into `agent-work/` task notes, logs, or any output.
-- Treating a leak as fixed because the secret was removed from the working tree (it may still be in history or on remotes).
+- Copying the value into `agent-work/`, logs, memory, output, screenshots, fixtures, examples, commits, or external services.
+- Using the value as a credential or transmitting it to diagnose the task without separate approval and applicable Policy classification.
+- Rotating, revoking, deleting, rewriting history, or changing remote resources on the agent's own initiative.
+- Treating a leak as resolved solely because the working-tree copy was redacted or removed.
 
 ## Difference from normal Recovery
 
-Normal Recovery (`{{HARNESS_DIR}}/docs/layers/05-recovery.md`) targets the smallest safe fix and focused retry. A secret leak inverts that: the safe action is to stop and escalate, not to patch. Never apply "smallest fix" reasoning to a leak.
+Apply this response first to prevent further exposure. Then, if the remaining task failure or work stream can proceed without the value, use normal Recovery (`{{HARNESS_DIR}}/docs/layers/05-recovery.md`) for that non-secret work. A secret-dependent action remains blocked until it has a safe substitute or the required approval.
 
 ## Links
 
-- Policy: `{{HARNESS_DIR}}/docs/policy/action-boundary.md` (rotation and history rewrite are ask-first)
+- Action boundaries: `{{HARNESS_DIR}}/docs/policy/action-boundary.md`
+- Untrusted content: `{{HARNESS_DIR}}/docs/policy/untrusted-content.md`
 - Recovery: `{{HARNESS_DIR}}/docs/layers/05-recovery.md`
-- Memory: `{{HARNESS_DIR}}/docs/layers/06-memory.md` (never persist a leaked secret; record only its type and location)
+- Memory: `{{HARNESS_DIR}}/docs/layers/06-memory.md` (never persist a leaked value; record only its type and location)

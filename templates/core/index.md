@@ -1,6 +1,6 @@
 # Harness Runtime Index
 
-This is the complete runtime navigation map for the Harness. The entry file (`CLAUDE.md` / `AGENTS.md`) holds the always-loaded operating contract; use this map only when triage selects detailed protocols, policy, project facts, reusable experience, or task-local materials.
+This is the complete runtime navigation map for the Harness. The entry file (`CLAUDE.md` / `AGENTS.md`) holds the always-loaded operating contract; use this map only when Process selects detailed protocols, policy, project facts, reusable experience, or task-local materials.
 
 ## Runtime navigation
 
@@ -26,15 +26,6 @@ This is the complete runtime navigation map for the Harness. The entry file (`CL
 - [Action boundary](policy/action-boundary.md)
 - [Secret-leak response](policy/secret-leak.md)
 - [Untrusted content](policy/untrusted-content.md)
-
-### Task workflows
-
-- [Task triage and lightweight default routing](process/task-triage.md)
-- [Bug fixes](process/bugfix.md)
-- [Feature development](process/feature-development.md)
-- [Refactoring](process/refactor.md)
-- [Test-driven development](process/test-driven-development.md)
-- [Reviews](process/review.md)
 
 ### Runtime materials
 
@@ -65,14 +56,14 @@ For a declared multi-module workspace, read `{{HARNESS_DIR}}/docs/module-topolog
 
 ## Runtime reading order
 
-1. The entry contract first directs task-specific current evidence; when workflow routing, conditional Harness reading, or task-material selection is needed, follow `{{HARNESS_DIR}}/docs/process/task-triage.md`.
-2. Use this navigation map only when triage selects Harness navigation, fact priority, the Policy exception, or a linked protocol. Do not follow every link.
-3. When triage selects stable project facts, in `{{HARNESS_DIR}}/docs/project-context.md` read Context coverage and, when it exists and matches the task, the `Task fact routing` table to select only task-relevant stable-fact headings.
+1. The entry contract first directs task-specific current evidence; when execution-form selection, conditional Harness reading, or task-material selection is needed, follow `{{HARNESS_DIR}}/docs/layers/03-process.md`.
+2. Use this navigation map only when Process selects Harness navigation, fact priority, the Policy exception, or a linked protocol. Do not follow every link.
+3. When Process selects stable project facts, in `{{HARNESS_DIR}}/docs/project-context.md` read Context coverage and, when it exists and matches the task, the `Task fact routing` table to select only task-relevant stable-fact headings.
 4. Before relying on a project-context fact, inspect task-relevant current README, build files, configuration, source, tests, or command output.
 5. Refresh a fact scope only when its `Refresh when` condition applies, its known gap matters to the task, or current evidence conflicts; recheck only that scope from its listed current sources. Missing coverage means inspect the relevant workspace evidence, not the whole project. Current workspace evidence takes precedence over retained context.
 6. Read task-relevant experience records when a comparable scenario, known trap, or explicit Experience reference may apply; verify current facts and apply Policy before relying on them.
-7. Read the selected layer protocol and playbook when the task needs detail.
-8. Use `agent-work/` only when task state must survive outside the current conversation.
+7. Read the selected layer protocol when the task needs detail.
+8. Use `agent-work/` only when Planned or Tracked work needs task-local material.
 
 If project-specific facts are missing, inspect the current workspace before acting. Do not guess missing paths, commands, stack details, or ownership.
 

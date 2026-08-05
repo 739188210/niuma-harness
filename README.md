@@ -2,7 +2,7 @@
 
 Initialize and check a 7-layer AI engineering harness for a project workspace.
 
-Niuma Harness generates a documentation scaffold plus an entry file (`CLAUDE.md` / `AGENTS.md`) that carries a distilled operating loop — agents follow it automatically every session. The scaffold helps AI coding tools understand project context, policies, workflows, observation checks, recovery paths, memory rules, loop behavior, and task notes, and writes a `manifest.json` for later health checks.
+Niuma Harness generates a documentation scaffold plus an entry file (`CLAUDE.md` / `AGENTS.md`) that carries a distilled operating loop — agents follow it automatically every session. The scaffold helps AI coding tools understand project context, Policy, Direct / Planned / Tracked execution forms, observation checks, recovery paths, memory rules, loop behavior, and task notes, and writes a `manifest.json` for later health checks.
 
 Re-running `init` is safe and idempotent: it refreshes the generated Harness core, preserves your own content, preserves independently installed assets, and merges the operating loop into an existing entry file.
 
@@ -142,13 +142,6 @@ workspace/
         action-boundary.md
         secret-leak.md
         untrusted-content.md
-      process/
-        task-triage.md
-        bugfix.md
-        feature-development.md
-        refactor.md
-        review.md
-        test-driven-development.md
   agent-work/
     README.md
     tasks/
@@ -172,7 +165,7 @@ The generated `docs/layers/` directory is the AI agent operating model:
 |---|---|---|
 | Context | `docs/layers/01-context.md` | What the agent should understand before acting |
 | Policy | `docs/layers/02-policy.md` | What the agent may do, must not do, or must ask about |
-| Process | `docs/layers/03-process.md` | How different task types move from request to delivery |
+| Process | `docs/layers/03-process.md` | How complexity, boundaries, and recoverability select Direct, Planned, or Tracked work |
 | Observation | `docs/layers/04-observation.md` | How the agent verifies whether the current state is good |
 | Recovery | `docs/layers/05-recovery.md` | How the agent responds when work fails or becomes unclear |
 | Memory | `docs/layers/06-memory.md` | What should be preserved and what should stay task-local |
@@ -211,7 +204,7 @@ Schema version 1 is intentionally unsupported. `init` will not adopt existing fi
 | File | On re-init |
 |---|---|
 | **Entry** (`CLAUDE.md` / `AGENTS.md`) | Merged: if the contract block is present it is refreshed; otherwise the block is inserted at the top. In multi mode, `AGENTS.md` is the full contract and `CLAUDE.md` is its pointer. Your existing content is always preserved. |
-| **Tool-managed** (layers, process playbooks, policy, index, README.md, `agent-work/README.md`) | Refreshed from the template. |
+| **Tool-managed** (layers, policy, index, README.md, `agent-work/README.md`) | Refreshed from the template. |
 | **User-maintained** (`project-context.md`) | Preserved if it exists; created from the template only when absent. |
 | Native Markdown rules | Installed on first init or through `install-rule`, then left unchanged by re-init, Doctor, and Repair. Claude uses `.claude/rules/`; Codex uses `.agents/harness-rules/`; OpenCode uses `.opencode/rules/`. Codex/multi `AGENTS.md` provides fixed guidance to read applicable installed Codex rule files. |
 | Native command artifacts (`.claude/commands/`, `.agents/skills/<command-id>/`, `.opencode/commands/`) | Installed on first init or through `install-command`, then left unchanged by re-init, Doctor, and Repair. Unknown user-created files are also left untouched. |

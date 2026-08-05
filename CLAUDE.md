@@ -26,7 +26,7 @@ This workspace runs a Niuma Harness. The loop below is your operating contract f
 **1. Plan — before any change**
 - Context: read `harness/docs/project-context.md` for stable facts; inspect current files for anything task-relevant. Never guess what files can show you. (depth: `docs/layers/01-context.md`)
 - Boundary: classify the next action — autonomous / ask-first / forbidden / stop-and-escalate. Proceed only if autonomous, reversible, and task-scoped. Ask before ask-first; stop at forbidden or unclear risk. (depth: `docs/policy/action-boundary.md`)
-- Route: pick a process — bugfix / feature / refactor / review / release. Skip only for trivial single-step tasks. (depth: `docs/process/`)
+- Execution form: use complexity, Policy boundaries, and recoverability to select Direct, Planned, or Tracked work. Use `agent-work/README.md` only when task material is needed. (depth: `docs/layers/03-process.md`)
 
 **2. Act — smallest change**
 Make the minimal task-aligned change. No scope creep, no drive-by refactor, no new dependencies without asking.
@@ -106,7 +106,7 @@ Dependency-free CommonJS Node CLI. `bin/niuma-harness.js` invokes `main()` from 
 - **Skills** are copied from `templates/skills/*` into selected agent-native skill roots. They are installed only on first init or through `install-skill`; re-init preserves them, including local runtime configuration such as `zentao.config.json`.
 - **Generated status** is `harness/manifest.json`, distinct from package-internal `templates/manifest.json`. Schema 5 records only the generated Harness core: its directory, agent, entry files, and topology. Rules, commands, skills, adapters, and their local configuration are independent assets outside manifest ownership. Init refreshes core files; Doctor validates core state; Repair backs up and restores core state without managing assets.
 
-Generated harness docs follow the seven-layer model under `docs/layers/`, with policy/process docs, `docs/experiments/task-execution-record.md`, optional rules, and workspace-level runtime notes under `agent-work/`.
+Generated harness docs follow the seven-layer model under `docs/layers/`, with policy documents, optional rules, and workspace-level runtime notes under `agent-work/`.
 
 ## Tests
 

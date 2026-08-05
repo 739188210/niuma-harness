@@ -6,7 +6,7 @@ Use this library to preserve verified, reusable action knowledge: approaches, tr
 
 An experience record is not a current-task status ledger, a current project fact index, or Harness documentation feedback:
 
-- Current task progress, checks, blockers, and next actions belong in `agent-work/tasks/<task-name>/status.md` for status-tracked work, or the final response for Direct work.
+- Current task progress, checks, blockers, and next actions belong in `agent-work/tasks/<task-name>/status.md` for Tracked work, or the final response for Direct work.
 - Current project structure, constraints, and verification boundaries belong in `{{HARNESS_DIR}}/docs/project-context.md` or applicable module knowledge.
 - Harness protocol or documentation friction belongs in optional `agent-work/tasks/<task-name>/harness-feedback.md`.
 

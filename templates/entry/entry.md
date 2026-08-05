@@ -15,19 +15,19 @@ This workspace runs a Niuma Harness. It defines collaboration constraints, task-
 **1. Start safely**
 - Inspect the smallest request-relevant current source, configuration, build, test, README, or command evidence. Current workspace evidence determines task-specific facts.{{ENTRY_CONTEXT_TOPOLOGY_GUIDANCE}} Never guess what files can show you. (depth: `{{HARNESS_DIR}}/docs/layers/01-context.md`)
 - Classify the next action — autonomous / ask-first / forbidden / stop-and-escalate. Proceed only when it is autonomous, reversible, and task-scoped. Ask before ask-first; stop at default-forbidden actions unless Policy defines an exact explicit-request exception and re-evaluation; always stop at stop-and-escalate or unclear risk. (depth: `{{HARNESS_DIR}}/docs/policy/action-boundary.md`)
-- When workflow routing, conditional Harness reading, or task-material selection is needed, use `{{HARNESS_DIR}}/docs/process/task-triage.md`. Select the smallest workflow, then use `agent-work/README.md` as the only decision card for Direct eligibility and plan or status-ledger triggers. (depth: `{{HARNESS_DIR}}/docs/process/`)
+- When execution-form selection, conditional Harness reading, or task-material selection is needed, use `{{HARNESS_DIR}}/docs/layers/03-process.md`, then use `agent-work/README.md` as the only decision card for Direct, Planned, or Tracked work. (depth: `{{HARNESS_DIR}}/docs/layers/03-process.md`)
 
 **2. Change the smallest scope**
 Make the minimal task-aligned change. Do not add unrelated refactors, dependencies, or behavior without re-checking scope and Policy.
 
 **3. Observe before claiming completion**
-Run the smallest checks that prove the requested result. Record exact results, skipped checks, and remaining unknowns: Direct work reports them in the final response; status-tracked work updates `agent-work/tasks/<task>/status.md`. Focused checks do not prove full regression, and unrun checks are unknown. (depth: `{{HARNESS_DIR}}/docs/layers/04-observation.md`)
+Run the smallest checks that prove the requested result. Record exact results, skipped checks, and remaining unknowns: Direct work reports them in the final response; Tracked work updates `agent-work/tasks/<task>/status.md`. Focused checks do not prove full regression, and unrun checks are unknown. (depth: `{{HARNESS_DIR}}/docs/layers/04-observation.md`)
 
 **4. Recover without rationalizing**
 Compare observed evidence with the success criteria. If results fail, conflict, or remain unclear, find the first root cause, make the smallest safe repair, and re-run the focused check. Use bounded retries; never weaken tests, assertions, or checks to force green. (depth: `{{HARNESS_DIR}}/docs/layers/05-recovery.md`)
 
 **5. Continue, stop, or hand off safely**
-Continue only when the next step is safe and useful; otherwise report and ask. For blocked, handed-off, cross-session, or otherwise status-tracked work, maintain resumable current state and observations in `agent-work/tasks/<task>/status.md`; on resumption, follow `{{HARNESS_DIR}}/docs/layers/07-loop.md` before acting. (depth: `{{HARNESS_DIR}}/docs/layers/07-loop.md`)
+Continue only when the next step is safe and useful; otherwise report and ask. For blocked, handed-off, cross-session, or otherwise Tracked work, maintain resumable current state and observations in `agent-work/tasks/<task>/status.md`; on resumption, follow `{{HARNESS_DIR}}/docs/layers/07-loop.md` before acting. (depth: `{{HARNESS_DIR}}/docs/layers/07-loop.md`)
 
 **6. Preserve only durable knowledge**
 Task-local notes stay under `agent-work/`.{{ENTRY_MEMORY_SCOPE_GUIDANCE}} Verified root or cross-module durable facts belong in `{{HARNESS_DIR}}/docs/project-context.md`. Write only after verification. No secrets or guesses. (depth: `{{HARNESS_DIR}}/docs/layers/06-memory.md`)

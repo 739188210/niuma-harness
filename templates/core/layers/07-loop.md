@@ -2,15 +2,15 @@
 
 ## Purpose
 
-Define how an AI agent resumes, hands off, pauses, or stops status-tracked work safely. This layer connects the current task ledger with current workspace evidence; it does not repeat workflow or evidence-selection rules.
+Define how an AI agent resumes, hands off, pauses, or stops Tracked work safely. This layer connects the current task ledger with current workspace evidence; it does not repeat execution-form or evidence-selection rules.
 
 ## When to use
 
-Use this layer for status-tracked work after interruption, context reset, cross-session continuation, handoff, named task resume, or a failure that makes Direct work unsafe to continue.
+Use this layer for Tracked work after interruption, context reset, cross-session continuation, handoff, named task resume, or a failure that makes Direct work unsafe to continue.
 
 ## Status ledger
 
-When `agent-work/README.md` selects status tracking, maintain:
+When `agent-work/README.md` selects Tracked work, maintain:
 
 ```text
 agent-work/tasks/<task-name>/status.md
@@ -29,7 +29,7 @@ Use the task-material decision card’s minimum shape, including:
 - Next safe action and resume condition
 - `## Scope change` when the scope changes materially
 
-`closed` means the active work stopped or handed off. It does not make the outcome `passed`. Do not create or maintain `status.md` merely for format; the decision card selects it. A status-tracked task may exist without `plan.md`.
+`closed` means the active work stopped or handed off. It does not make the outcome `passed`. Do not create or maintain `status.md` merely for format; the decision card selects it. A Tracked task may exist without `plan.md`.
 
 ## Recovery entry
 
@@ -39,12 +39,12 @@ Use this as the only task-material reading order after interruption, context res
 2. Read that task’s `status.md` first. Extract its work state, outcome, current scope, confirmed progress, last verified evidence, criterion results, unknowns, blockers or risks, candidate next action, and resume condition. Its next action is not authorization to act.
 3. Read `plan.md` only when it exists. It is earlier direction: goal, boundaries, success criteria, smallest approach, and planned checks; it is not current truth.
 4. Re-check the smallest current workspace evidence needed for the candidate next action: relevant source, configuration, tests, README/runbook, and command results. Current facts override older task material.
-5. Route from that evidence: continue the selected playbook’s next smallest safe action when its goal, boundary, and preconditions still hold; enter `{{HARNESS_DIR}}/docs/layers/05-recovery.md` when evidence is failing, conflicting, unclear, or unsafe; return to `{{HARNESS_DIR}}/docs/process/task-triage.md` only when current evidence invalidates the original classification, risk tier, success criteria, or selected playbook; follow Policy before an action crosses its boundary.
+5. Route from that evidence: continue the next smallest safe action when its goal, boundary, and preconditions still hold; enter `{{HARNESS_DIR}}/docs/layers/05-recovery.md` when evidence is failing, conflicting, unclear, or unsafe; re-check `{{HARNESS_DIR}}/docs/layers/03-process.md` when current evidence invalidates the execution form, acceptance criteria, Policy boundary, or resumption assumptions; follow Policy before an action crosses its boundary.
 6. Before continuing, pausing, or handing off, update `status.md` with current facts, actual observations, outcome, and next safe action.
 
 ## Ownership boundaries
 
-`status.md` owns one status-tracked task’s operational resume state and task-local observations. It does not own durable project facts or raw long logs.
+`status.md` owns one Tracked task’s operational resume state and task-local observations. It does not own durable project facts or raw long logs.
 
 The active task owner keeps it current before pausing, handing off, or resuming. Parallel or delegated work may keep temporary notes, but the active task owner summarizes integrated state, checks, conflicts, and next action in the parent ledger.
 
@@ -54,13 +54,13 @@ A task outcome must not be `passed` while a material acceptance criterion is fai
 
 ## Agent protocol
 
-1. Plan: load Context, check Policy, select a Process, and use `agent-work/README.md` to select Direct, a plan, or a status ledger.
+1. Plan: load Context, check Policy, select Direct, Planned, or Tracked through Process and `agent-work/README.md`.
 2. Act: make the smallest task-aligned change or investigation step.
-3. Observe: run or record relevant checks; for status-tracked work, update the ledger with actual observations and criterion results.
+3. Observe: run or record relevant checks; for Tracked work, update the ledger with actual observations and criterion results.
 4. Reflect: compare evidence with success criteria and update work state, outcome, unknowns, and next safe action.
 5. Repair: enter Recovery if the result is failing, unclear, or unsafe. Retries for the same failure are bounded; once the limit is reached, stop, preserve the failure signal, and report instead of continuing.
 6. Remember: capture verified durable facts through the Memory layer.
-7. Continue or stop: proceed only when the next step is safe and useful; otherwise report and ask. Before pausing or stopping status-tracked work, make sure the ledger is enough to resume from.
+7. Continue or stop: proceed only when the next step is safe and useful; otherwise report and ask. Before pausing or stopping Tracked work, make sure the ledger is enough to resume from.
 
 ## Rationalization red flags
 
@@ -77,7 +77,7 @@ During Reflect or Continue, treat these thoughts as stop-and-classify signals. A
 ## Allowed actions
 
 - Maintain a visible task checklist for multi-step work.
-- Maintain `agent-work/tasks/<task-name>/status.md` for status-tracked work.
+- Maintain `agent-work/tasks/<task-name>/status.md` for Tracked work.
 - Continue autonomously through low-risk, task-scoped steps.
 - Pause when policy, uncertainty, repeated failure, or user decision points appear.
 - Resume from `status.md`, an optional plan, and current project files after interruption.
@@ -87,7 +87,7 @@ During Reflect or Continue, treat these thoughts as stop-and-classify signals. A
 - Do not continue looping when the next action is not tied to the task goal.
 - Do not ignore failed observation and proceed as if the task passed.
 - Do not enter open-ended retries without a stop condition.
-- Do not rely only on conversation state for status-tracked work.
+- Do not rely only on conversation state for Tracked work.
 - Do not treat `status.md` as durable project memory; route durable facts through the Memory layer.
 - Do not treat memory updates as complete until facts are verified.
 

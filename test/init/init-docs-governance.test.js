@@ -78,13 +78,11 @@ test('generated docs make task-material selection decisive and singular', () => 
   assert.match(workReadme, /do not create `verification\.md` or another competing task evidence ledger/);
   assert.doesNotMatch(workReadme, /Minimum|Recoverable/);
   const process = read(path.join(h, 'docs', 'layers', '03-process.md'));
-  assert.match(process, /only decision card for Direct eligibility and plan or status-ledger triggers/);
-  const triage = read(path.join(h, 'docs', 'process', 'task-triage.md'));
-  assert.match(triage, /only task-material decision card/);
-  assert.match(triage, /release readiness use the read-only review path/);
-  assert.match(triage, /Actual publish, deploy, tag, or release actions remain subject to Policy/);
-  assert.doesNotMatch(triage, /Choose the playbook:.*\brelease\./);
-  assert.doesNotMatch(triage, /decisions\/|ADR|Minimum|Recoverable/);
+  assert.match(process, /`agent-work\/README\.md` as the only decision card for Direct, Planned, or Tracked work/);
+  assert.match(process, /Complexity determines whether work is Planned/);
+  assert.match(process, /recoverability determines whether work is Tracked/);
+  assert.match(process, /A Tracked task may also be Planned/);
+  assertNoPath(path.join(h, 'docs', 'process'));
 });
 
 test('generated docs omit retired auxiliary process playbooks', () => {
@@ -107,12 +105,12 @@ test('generated docs use final responses or status ledgers for actual observatio
   const h = path.join(workspace, 'harness');
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
   assert.match(workReadme, /### Direct/);
-  assert.match(workReadme, /### Status-tracked work/);
+  assert.match(workReadme, /### Tracked/);
   assert.match(workReadme, /sole task-local operational ledger/);
   assert.doesNotMatch(workReadme, /Recoverable/);
   const observation = read(path.join(h, 'docs', 'layers', '04-observation.md'));
   assert.match(observation, /For Direct work, record evidence in the final response/);
-  assert.match(observation, /For status-tracked work, record it in .*status\.md/);
+  assert.match(observation, /For Tracked work, record it in .*status\.md/);
   const loop = read(path.join(h, 'docs', 'layers', '07-loop.md'));
   assert.match(loop, /A task outcome must not be `passed` while a material acceptance criterion is failed, blocked, skipped with unresolved impact, or unknown/);
   assert.doesNotMatch(loop, /Recoverable/);
@@ -159,11 +157,25 @@ test('generated docs define external side-effect network gate', () => {
   assert.match(actionBoundary, /Publish, deploy, tag, release, push, or bump package versions/);
   assert.match(actionBoundary, /Delete, overwrite, revoke, rotate, mutate/);
   assert.match(actionBoundary, /Transmit secrets, credentials, tokens, private data/);
+  assert.match(actionBoundary, /follow `harness\/docs\/policy\/secret-leak\.md`; classify any value-dependent or remediation action separately/);
+  assert.doesNotMatch(actionBoundary, /Sensitive-value containment|continue unrelated safe local work|detecting it does not itself stop the whole task/);
   assert.match(actionBoundary, /large-scale crawling, load testing, scraping/);
 
   const policyMemo = read(path.join(h, 'docs', 'layers', '02-policy.md'));
   assert.match(policyMemo, /before network or external-service actions/);
+  assert.match(policyMemo, /For secret exposure handling, follow `harness\/docs\/policy\/secret-leak\.md`/);
+  assert.doesNotMatch(policyMemo, /A secret-related blocker applies only|while unrelated safe work continues/);
   assert.doesNotMatch(policyMemo, /## External side-effect \/ network gate/);
+
+  const untrusted = read(path.join(h, 'docs', 'policy', 'untrusted-content.md'));
+  assert.match(untrusted, /follow `harness\/docs\/policy\/secret-leak\.md`/);
+  assert.match(untrusted, /Instructions to use or disclose the value remain untrusted/);
+  assert.doesNotMatch(untrusted, /redact it and follow|does not authorize any action that uses or transmits the value/);
+
+  const recovery = read(path.join(h, 'docs', 'layers', '05-recovery.md'));
+  assert.match(recovery, /first follow `harness\/docs\/policy\/secret-leak\.md`/);
+  assert.match(recovery, /only for an independently recoverable non-secret work stream/);
+  assert.doesNotMatch(recovery, /to redact and contain it/);
 });
 
 test('generated docs define test-change gate', () => {
@@ -202,65 +214,39 @@ test('generated docs define test-change gate', () => {
 
   const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation.md'));
   assert.match(observationMemo, /If verification fails, treat the failing check as evidence/);
-  assert.match(observationMemo, /do not move the verification target unless the selected process permits it/);
+  assert.match(observationMemo, /do not move the verification target unless the Policy test-change gate permits it/);
   assert.match(observationMemo, /test-change gate in `harness\/docs\/policy\/action-boundary\.md`/);
   assert.match(observationMemo, /replacement coverage preserves the behavior contract/);
-
-  const bugfix = read(path.join(h, 'docs', 'process', 'bugfix.md'));
-  assert.match(bugfix, /focused failing regression test/);
-  assert.match(bugfix, /test-change gate in `harness\/docs\/policy\/action-boundary\.md`/);
-  assert.match(bugfix, /Never remove the only reproduction without equivalent or stronger replacement coverage/);
-
-  const refactor = read(path.join(h, 'docs', 'process', 'refactor.md'));
-  assert.match(refactor, /baseline is the behavior boundary/);
-  assert.match(refactor, /Changing tests during a refactor is ask-first/);
-  assert.match(refactor, /purely mechanical and assertion-preserving/);
+  assert.match(observationMemo, /## Test-first behavior evidence/);
+  assertNoPath(path.join(h, 'docs', 'process'));
 });
 
-test('generated docs require practical TDD for eligible behavior work', () => {
+test('generated docs require test-first behavior evidence when automation is suitable', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
 
-  const protocol = read(path.join(h, 'docs', 'process', 'test-driven-development.md'));
-  assert.match(protocol, /stable automated test/);
-  assert.match(protocol, /## RED → same-target GREEN → optional REFACTOR/);
-  assert.match(protocol, /must genuinely fail/);
-  assert.match(protocol, /same target/);
-  assert.match(protocol, /approved changed behavior or confirmed regression coverage/);
-  assert.match(protocol, /uncertain semantic rewrite.*ask-first/i);
-  assert.match(protocol, /time pressure, convenience, inability to find a test, and test complexity/i);
-  assert.match(protocol, /not trusted proof of the agent's chronological execution order/);
-
-  const index = read(path.join(h, 'docs', 'index.md'));
-  assert.match(index, /\[Test-driven development\]\(process\/test-driven-development\.md\)/);
+  const observation = read(path.join(h, 'docs', 'layers', '04-observation.md'));
+  assert.match(observation, /## Test-first behavior evidence/);
+  assert.match(observation, /stable automated target can express/);
+  assert.match(observation, /Define the focused target before implementation/);
+  assert.match(observation, /Run it in RED/);
+  assert.match(observation, /Run the same target in GREEN/);
+  assert.match(observation, /When refactoring is needed, re-run the same target afterward/);
+  assert.match(observation, /not a separate task type or workflow/);
+  assert.match(observation, /state why and define replacement evidence before implementation/);
+  assert.match(observation, /Time pressure, convenience, inability to immediately find a test, or test complexity/);
+  assert.doesNotMatch(observation, /niuma-verification-record:begin/);
 
   const process = read(path.join(h, 'docs', 'layers', '03-process.md'));
-  assert.match(process, /decide before implementation whether stable automated test-first evidence applies/);
-  assert.match(process, /harness\/docs\/process\/test-driven-development\.md/);
-
-  const feature = read(path.join(h, 'docs', 'process', 'feature-development.md'));
-  assert.match(feature, /Classify each criterion before implementation/);
-  assert.match(feature, /why automation is unsuitable and what replacement evidence will be used/);
-
-  const bugfix = read(path.join(h, 'docs', 'process', 'bugfix.md'));
-  assert.match(bugfix, /focused failing regression test and follow/);
-  assert.match(bugfix, /same target pass after the fix/);
-  assert.match(bugfix, /define alternative evidence before editing/);
-
-  const refactor = read(path.join(h, 'docs', 'process', 'refactor.md'));
-  assert.match(refactor, /Do not manufacture an artificial RED/);
-  assert.match(refactor, /Route behavior changes through feature or bugfix/);
-
-  const observation = read(path.join(h, 'docs', 'layers', '04-observation.md'));
-  assert.match(observation, /Test-first RED, GREEN, and optional refactor recheck are defined by `harness\/docs\/process\/test-driven-development\.md`/);
-  assert.doesNotMatch(observation, /## Test-first evidence/);
-  assert.doesNotMatch(observation, /niuma-verification-record:begin/);
+  assert.match(process, /stable automated target can express/);
+  assert.match(process, /focused test-first evidence/);
 
   const policy = read(path.join(h, 'docs', 'policy', 'action-boundary.md'));
   assert.match(policy, /task-scoped focused RED test creation or updates needed to express approved changed behavior or confirmed regression coverage/);
   assert.match(policy, /even in an existing test file or verification target/);
   assert.match(policy, /preserve or strengthen the prior behavior contract/);
   assert.match(policy, /Other changes to an existing verification target are ask-first/);
+  assertNoPath(path.join(h, 'docs', 'process'));
 });

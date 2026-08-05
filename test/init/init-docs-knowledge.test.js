@@ -1,6 +1,7 @@
 const test = require('node:test');
 const {
   assert,
+  assertNoPath,
   read,
   run,
   path,
@@ -45,25 +46,27 @@ test('generated docs prioritize current facts and reusable experience', () => {
   assert.doesNotMatch(experience, /## Applicable when|## Verified approach|## What not to assume|## Invalidation conditions/);
 });
 
-test('generated docs route only needed triage context and status material', () => {
+test('generated docs route only needed Process context and task material', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
 
   const entry = read(path.join(workspace, 'CLAUDE.md'));
-  const triage = read(path.join(h, 'docs', 'process', 'task-triage.md'));
+  const context = read(path.join(h, 'docs', 'layers', '01-context.md'));
   const process = read(path.join(h, 'docs', 'layers', '03-process.md'));
+  const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
 
-  assert.match(entry, /task-material selection is needed, use `harness\/docs\/process\/task-triage\.md`/);
-  assert.match(entry, /only decision card for Direct eligibility and plan or status-ledger triggers/);
-  assert.match(triage, /## Conditional reading/);
-  assert.match(triage, /A comparable scenario, known trap, or explicit Experience reference may apply/);
-  assert.match(triage, /Experience is guidance, never current fact or action authorization/);
-  assert.match(triage, /Work is blocked, cross-session, delegated, parallel, changing scope/);
-  assert.match(triage, /only task-material decision card/);
-  assert.doesNotMatch(triage, /decisions\/|ADR|Minimum|Recoverable/);
-  assert.match(process, /only decision card for Direct eligibility and plan or status-ledger triggers/);
+  assert.match(entry, /execution-form selection, conditional Harness reading, or task-material selection is needed, use `harness\/docs\/layers\/03-process\.md`/);
+  assert.match(entry, /only decision card for Direct, Planned, or Tracked work/);
+  assert.match(context, /execution-form selection, conditional Harness reading, or task-material selection is needed/);
+  assert.match(process, /## Execution-form decision/);
+  assert.match(process, /`Direct`/);
+  assert.match(process, /`Planned`/);
+  assert.match(process, /`Tracked`/);
+  assert.match(process, /not labels to combine or a risk matrix/);
+  assert.match(workReadme, /This guide is the only authority for choosing task-local material/);
+  assertNoPath(path.join(h, 'docs', 'process'));
 });
 
 test('custom harness paths replace template variables in retained knowledge and task protocols', () => {

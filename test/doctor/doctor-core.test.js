@@ -30,10 +30,8 @@ test('doctor passes on a valid harness', () => {
   assert.match(result.stdout, /OK docs\/layers\/01-context\.md/);
   assert.match(result.stdout, /OK docs\/policy\/action-boundary\.md/);
   assert.match(result.stdout, /OK docs\/policy\/untrusted-content\.md/);
-  assert.match(result.stdout, /OK docs\/process\/refactor\.md/);
-  assert.match(result.stdout, /OK docs\/process\/review\.md/);
-  assert.match(result.stdout, /OK docs\/process\/test-driven-development\.md/);
-  assert.doesNotMatch(result.stdout, /docs\/process\/release\.md/);
+  assert.match(result.stdout, /OK docs\/layers\/03-process\.md/);
+  assert.doesNotMatch(result.stdout, /docs\/process\//);
   assert.match(result.stdout, /OK agent-work\//);
   assert.match(result.stdout, /OK agent-work\/README\.md/);
   assert.match(result.stdout, /OK agent-work\/tasks\//);
@@ -177,14 +175,14 @@ test('doctor fails when untrusted-content is missing', () => {
   assert.match(result.stdout, /missing docs\/policy\/untrusted-content\.md/);
 });
 
-test('doctor fails when a process playbook is missing', () => {
+test('doctor fails when the Process layer is missing', () => {
   const workspace = tempDir();
   const init = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(init.status, 0, init.stderr);
-  fs.unlinkSync(path.join(workspace, 'harness', 'docs', 'process', 'review.md'));
+  fs.unlinkSync(path.join(workspace, 'harness', 'docs', 'layers', '03-process.md'));
   const result = run(['doctor', workspace]);
-  assert.notStrictEqual(result.status, 0, 'doctor should fail when a process playbook is missing');
-  assert.match(result.stdout, /missing docs\/process\/review\.md/);
+  assert.notStrictEqual(result.status, 0, 'doctor should fail when the Process layer is missing');
+  assert.match(result.stdout, /missing docs\/layers\/03-process\.md/);
 });
 
 test('doctor checks templateFiles declared in package manifest', () => {

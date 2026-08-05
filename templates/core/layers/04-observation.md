@@ -14,8 +14,8 @@ Use this layer before declaring an outcome, after any code or documentation chan
 2. Prefer project-local commands documented in `{{HARNESS_DIR}}/docs/project-context.md`; use `{{HARNESS_DIR}}/docs/index.md` only as navigation.
 3. Run focused checks first, then broader checks when justified by changed risk.
 4. Record only checks actually run, actual results, skipped checks with reason and impact, and remaining unknowns.
-5. For Direct work, record evidence in the final response. For status-tracked work, record it in `agent-work/tasks/<task-name>/status.md`.
-6. Treat unrun checks as unknown, not passing. If verification fails, treat the failing check as evidence; do not move the verification target unless the selected process permits it and the reason is recorded.
+5. For Direct work, record evidence in the final response. For Tracked work, record it in `agent-work/tasks/<task-name>/status.md`.
+6. Treat unrun checks as unknown, not passing. If verification fails, treat the failing check as evidence; do not move the verification target unless the Policy test-change gate permits it and the reason is recorded.
 
 ## Evidence boundaries
 
@@ -54,7 +54,7 @@ State one task outcome across material criteria:
 - `failed`: the task goal or a material criterion is shown to fail.
 - `unknown`: evidence is insufficient to judge the task outcome.
 
-For status-tracked work, keep a compact acceptance/evidence matrix in `status.md`; it is the only task-local evidence ledger. A task may be closed or handed off with a non-passing outcome, but it must not be called complete unless its outcome is `passed`.
+For Tracked work, keep a compact acceptance/evidence matrix in `status.md`; it is the only task-local evidence ledger. A task may be closed or handed off with a non-passing outcome, but it must not be called complete unless its outcome is `passed`.
 
 ## Evidence record
 
@@ -65,7 +65,17 @@ Record concise, human-readable facts where the task path requires them:
 - every skipped check, its reason, and unresolved impact; and
 - remaining unknowns, or an explicit statement that none material remain.
 
-Test-first RED, GREEN, and optional refactor recheck are defined by `{{HARNESS_DIR}}/docs/process/test-driven-development.md`; record their actual results as ordinary observations without restating that protocol here.
+## Test-first behavior evidence
+
+For a behavior change or automatable defect regression that a stable automated target can express:
+
+1. Define the focused target before implementation.
+2. Run it in RED and record the actual failure signal.
+3. Make the smallest implementation change that should satisfy the target.
+4. Run the same target in GREEN and record the actual result.
+5. When refactoring is needed, re-run the same target afterward.
+
+RED, GREEN, and any refactor recheck are ordinary Observation evidence, not a separate task type or workflow. If a stable automated target is not suitable, state why and define replacement evidence before implementation. Time pressure, convenience, inability to immediately find a test, or test complexity do not by themselves justify skipping this protocol.
 
 For parallel or delegated work, final Observation verifies the integrated result. Per-part checks are supporting evidence unless they directly prove the final state.
 

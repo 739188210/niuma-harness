@@ -1,6 +1,7 @@
 require('./init/init-docs-structure.test');
 require('./init/init-docs-governance.test');
 require('./init/init-docs-knowledge.test');
+require('./init/core-zh-cn-parity.test');
 require('./init/documentation-navigation.test');
 require('./init/init-agents.test');
 require('./init/init-rules.test');

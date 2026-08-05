@@ -243,7 +243,7 @@ test('--harness-dir uses a custom directory name', () => {
   });
   assertClaudeRulePointers(workspace, 'ai-harness', expectedDefaultRules('claude'));
   const entry = read(path.join(workspace, 'CLAUDE.md'));
-  assert.match(entry, /ai-harness\/docs\/process\/task-triage\.md/);
+  assert.match(entry, /ai-harness\/docs\/layers\/03-process\.md/);
   assert.match(entry, /smallest request-relevant current source, configuration, build, test, README, or command evidence/i);
   assert.match(entry, /ai-harness\/docs\/layers\/01-context\.md/);
   assert.match(entry, /ai-harness\/docs\/layers\/07-loop\.md/);
@@ -541,6 +541,7 @@ test('re-init preserves legacy bootstrap protocol files without recreating or in
   const legacyBootstrap = path.join(workspace, 'harness', 'docs', 'process', 'bootstrap.md');
   const legacyContent = '# Legacy bootstrap protocol\n\nKeep this unchanged.\n';
   fs.writeFileSync(facts, 'my project facts\n', 'utf8');
+  fs.mkdirSync(path.dirname(legacyBootstrap), { recursive: true });
   fs.writeFileSync(legacyBootstrap, legacyContent, 'utf8');
 
   result = run(['init', workspace, '--agent', 'claude']);

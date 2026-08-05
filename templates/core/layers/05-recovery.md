@@ -10,12 +10,12 @@ Use this layer when tests fail, builds fail, commands fail, context is missing, 
 
 If the Loop layer flags a rationalization about missing evidence or dismissing failures as unrelated, use this layer to classify the failure or uncertainty before continuing. Scope-expansion rationalizations route through Process and Policy.
 
-The Loop Recovery entry owns task-material reading order and current-workspace recheck. Use this layer only after that entry finds a failure, conflict, uncertainty, or unsafe state. Failure types are recovery-handling labels, not task classifications, risk tiers, or playbooks.
+The Loop Recovery entry owns task-material reading order and current-workspace recheck. Use this layer only after that entry finds a failure, conflict, uncertainty, or unsafe state. Failure types are recovery-handling labels, not execution forms or permission categories.
 
 ## Agent protocol
 
 1. Classify the failure type: test, build, command, context, bad edit, unclear requirement, acceptance mismatch, scope drift, process stall, policy block, or unknown.
-   - Exception: a leaked secret is not a normal failure. Route to `{{HARNESS_DIR}}/docs/policy/secret-leak.md` instead of the steps below.
+   - When a secret is observed, first follow `{{HARNESS_DIR}}/docs/policy/secret-leak.md`. Continue this Recovery protocol only for an independently recoverable non-secret work stream.
 2. Preserve the exact failure signal needed to debug.
 3. Identify the first root cause, not every downstream symptom.
 4. Make the smallest safe repair attempt.

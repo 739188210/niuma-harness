@@ -8,8 +8,7 @@
     "docs",
     "docs/experience",
     "docs/layers",
-    "docs/policy",
-    "docs/process"
+    "docs/policy"
   ],
   "templateFiles": [
     {
@@ -74,30 +73,6 @@
     {
       "target": "docs/policy/untrusted-content.md",
       "template": "core/policy/untrusted-content.md"
-    },
-    {
-      "target": "docs/process/task-triage.md",
-      "template": "core/process/task-triage.md"
-    },
-    {
-      "target": "docs/process/bugfix.md",
-      "template": "core/process/bugfix.md"
-    },
-    {
-      "target": "docs/process/feature-development.md",
-      "template": "core/process/feature-development.md"
-    },
-    {
-      "target": "docs/process/refactor.md",
-      "template": "core/process/refactor.md"
-    },
-    {
-      "target": "docs/process/test-driven-development.md",
-      "template": "core/process/test-driven-development.md"
-    },
-    {
-      "target": "docs/process/review.md",
-      "template": "core/process/review.md"
     }
   ],
   "workTemplateFiles": [

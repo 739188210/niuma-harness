@@ -48,7 +48,7 @@ test('generated runtime index is the complete static documentation navigation ma
   const { index, links } = assertNavigationTargets(workspace, 'harness');
   const manifest = JSON.parse(read(path.join(__dirname, '..', '..', 'templates', 'manifest.json')));
   const requiredTargets = manifest.templateFiles
-    .filter((file) => !file.dynamic && /^(docs\/layers|docs\/policy|docs\/process)\//.test(file.target))
+    .filter((file) => !file.dynamic && /^(docs\/layers|docs\/policy)\//.test(file.target))
     .map((file) => file.target.slice('docs/'.length));
 
   for (const target of requiredTargets) {
@@ -58,7 +58,7 @@ test('generated runtime index is the complete static documentation navigation ma
   const entry = read(path.join(workspace, 'CLAUDE.md'));
   assert.doesNotMatch(entry, /niuma-navigation:/);
   assert.match(entry, /harness\/docs\/layers\/01-context\.md/);
-  assert.match(entry, /harness\/docs\/process\/task-triage\.md/);
+  assert.match(entry, /harness\/docs\/layers\/03-process\.md/);
 
   const readme = read(path.join(workspace, 'harness', 'README.md'));
   assert.match(readme, /\[the runtime index\]\(docs\/index\.md\)/);

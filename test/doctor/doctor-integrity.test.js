@@ -27,15 +27,16 @@ function append(filePath, content = '\nDRIFT\n') {
   fs.appendFileSync(filePath, content, 'utf8');
 }
 
-test('doctor ignores a legacy bootstrap file but detects drift in active managed core and work templates', () => {
+test('doctor ignores legacy process files but detects drift in active managed core and work templates', () => {
   const workspace = initWorkspace();
   const legacyBootstrap = path.join(workspace, 'harness', 'docs', 'process', 'bootstrap.md');
+  fs.mkdirSync(path.dirname(legacyBootstrap), { recursive: true });
   fs.writeFileSync(legacyBootstrap, '# Legacy bootstrap notes\n\nKeep this project-owned file.\n', 'utf8');
   append(path.join(workspace, 'harness', 'docs', 'layers', '01-context.md'));
-  append(path.join(workspace, 'harness', 'docs', 'process', 'task-triage.md'));
+  append(path.join(workspace, 'harness', 'docs', 'layers', '03-process.md'));
   append(path.join(workspace, 'agent-work', 'README.md'));
   const result = expectDoctorError(workspace, /managed content drifted docs\/layers\/01-context\.md/);
-  assert.match(result.stdout, /managed content drifted docs\/process\/task-triage\.md/);
+  assert.match(result.stdout, /managed content drifted docs\/layers\/03-process\.md/);
   assert.match(result.stdout, /managed content drifted agent-work\/README\.md/);
   assert.doesNotMatch(result.stdout, /bootstrap\.md/);
 });

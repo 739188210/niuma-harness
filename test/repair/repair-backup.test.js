@@ -115,19 +115,20 @@ test('repair backs up and replaces a file-directory type conflict', () => {
   assert.strictEqual(read(path.join(backup, 'files', 'harness', 'docs', 'project-context.md', 'user.txt')), 'user data\n');
 });
 
-test('repair leaves a legacy bootstrap file and project context unchanged without planning or backing either up', () => {
+test('repair leaves a legacy process file and project context unchanged without planning or backing either up', () => {
   const workspace = initWorkspace();
   const facts = path.join(workspace, 'harness', 'docs', 'project-context.md');
   const legacyBootstrap = path.join(workspace, 'harness', 'docs', 'process', 'bootstrap.md');
   const factsContent = '# Project facts\n\nKeep this user content.\n';
   const legacyContent = '# Legacy bootstrap notes\n\nKeep this unchanged.\n';
   fs.writeFileSync(facts, factsContent, 'utf8');
+  fs.mkdirSync(path.dirname(legacyBootstrap), { recursive: true });
   fs.writeFileSync(legacyBootstrap, legacyContent, 'utf8');
-  fs.appendFileSync(path.join(workspace, 'harness', 'docs', 'process', 'task-triage.md'), 'drift\n', 'utf8');
+  fs.appendFileSync(path.join(workspace, 'harness', 'docs', 'layers', '03-process.md'), 'drift\n', 'utf8');
 
   let result = run(['repair', workspace, '--dry-run']);
   assert.strictEqual(result.status, 0, result.stderr);
-  assert.match(result.stdout, /harness\/docs\/process\/task-triage\.md/);
+  assert.match(result.stdout, /harness\/docs\/layers\/03-process\.md/);
   assert.doesNotMatch(result.stdout, /bootstrap\.md/);
   assert.doesNotMatch(result.stdout, /project-context\.md/);
 
@@ -160,7 +161,7 @@ test('repair preserves a legacy four-column context coverage table and custom fa
 `;
   assert.doesNotMatch(factsContent, /Refresh when/);
   fs.writeFileSync(facts, factsContent, 'utf8');
-  fs.appendFileSync(path.join(workspace, 'harness', 'docs', 'process', 'task-triage.md'), 'drift\n', 'utf8');
+  fs.appendFileSync(path.join(workspace, 'harness', 'docs', 'layers', '03-process.md'), 'drift\n', 'utf8');
 
   const result = run(['repair', workspace, '-y']);
   assert.strictEqual(result.status, 0, result.stderr);

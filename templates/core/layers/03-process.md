@@ -2,55 +2,53 @@
 
 ## Purpose
 
-Route work through the smallest applicable workflow. This layer chooses a path; it does not repeat Policy, evidence, recovery, or task-material rules.
+Choose the smallest execution form that makes the goal, evidence, and safe resumption clear. This layer does not classify work as a task type, assign risk tiers, or repeat Policy, Observation, Recovery, or task-material rules.
 
 ## When to use
 
-Use this layer after triage selects it, before implementation, and whenever task type or scope changes.
+Use this layer before implementation or other multi-step work, when Direct eligibility is unclear, and whenever complexity, boundaries, or resumption needs change.
 
 ## Agent protocol
 
-1. When routing is needed, start with `{{HARNESS_DIR}}/docs/process/task-triage.md`; triage classifies the task, applies conditional reading, and selects a workflow.
-2. Select one primary workflow: bugfix, feature, refactor, review, or none for a lightweight read-only answer.
-3. For changed behavior or bug regressions, decide before implementation whether stable automated test-first evidence applies. Use `{{HARNESS_DIR}}/docs/process/test-driven-development.md` when eligible; otherwise declare suitable replacement evidence before implementation.
-4. Define the smallest useful goal, success criteria, and observable steps.
-5. Use `agent-work/README.md` as the only decision card for Direct eligibility and plan or status-ledger triggers.
-6. Re-check Process and Policy before expanding scope, changing task type, or crossing a new boundary.
+1. Inspect the smallest request-relevant current source, configuration, build, test, README, or command evidence.
+2. Apply `{{HARNESS_DIR}}/docs/layers/02-policy.md` and `{{HARNESS_DIR}}/docs/policy/action-boundary.md` before a non-read-only action. Policy decides permission; it is not an execution form.
+3. Define the smallest useful goal, observable acceptance criteria, and evidence that can prove them.
+4. Use `agent-work/README.md` as the only decision card for Direct, Planned, or Tracked work and its task material.
+5. For behavior that a stable automated target can express, plan focused test-first evidence under `{{HARNESS_DIR}}/docs/layers/04-observation.md`. Otherwise state suitable replacement evidence before implementation.
+6. Re-check Process and Policy before material scope expansion or when current evidence invalidates the execution form, acceptance criteria, boundary, or resumption assumptions.
 
-## Workflow routing
+## Execution-form decision
 
-| Task intent | Workflow | Workflow-specific focus |
-| --- | --- | --- |
-| Bug, regression, broken behavior | `process/bugfix.md` | Reproduce the symptom, repair the first cause, verify the same behavior. |
-| New or changed behavior | `process/feature-development.md` | Confirm acceptance criteria and implement the smallest feature slice. |
-| Behavior-preserving restructure | `process/refactor.md` | Preserve a verified behavior baseline. |
-| Review or audit | `process/review.md` | Report evidence-backed findings; fixing needs explicit approval. |
-| Read-only question or lightweight investigation | No primary workflow | Use Context, Policy when relevant, and Observation. |
+Choose the smallest form from `agent-work/README.md`:
 
-Trigger words are routing hints, not permission to bypass Policy. If multiple rows fit or scope is unclear, return to triage.
+- `Direct`: a clear, local, reversible task with one observable criterion and no meaningful design, boundary, or recovery need.
+- `Planned`: work needing a pre-implementation `plan.md` because acceptance, choices, ordering, structural decisions, or verification are non-obvious.
+- `Tracked`: work needing a current `status.md` because it is blocked, interrupted, delegated, parallel, externally dependent, materially uncertain, changing scope, or otherwise unsafe to resume from current files alone.
+
+These are not labels to combine or a risk matrix. Complexity determines whether work is Planned, Policy boundaries determine whether an action may proceed, and recoverability determines whether work is Tracked. A Tracked task may also be Planned; `status.md` remains the sole current-state and evidence ledger.
 
 ## Ownership boundaries
 
-The selected workflow owns its task-type success criteria and gates. Observation owns generic evidence and outcome semantics. Recovery owns generic failure handling. `agent-work/README.md` owns task-file selection and roles.
+Process owns execution-form selection, the smallest goal, acceptance criteria, and verification planning. Observation owns evidence and outcome semantics. Recovery owns failure handling. `agent-work/README.md` owns task-file selection and roles.
 
 ## Allowed actions
 
-- Use triage when the task type or scope is unclear.
-- Use the selected primary workflow for task-specific steps.
-- Adjust the workflow when current evidence shows the original classification was wrong.
+- Select or revise the execution form from current evidence.
+- Define the smallest useful acceptance criteria and verification before changing behavior.
+- Reduce a task back to a safe scope when its assumptions no longer hold.
 
 ## Forbidden actions
 
-- Do not start editing before selecting a process when routing is needed.
-- Do not silently expand a small task into a broad refactor or unrelated feature.
-- Do not skip verification planning for code or behavior changes.
-- Do not keep following a workflow after its assumptions are proven wrong.
+- Do not start editing when the needed execution form or Policy boundary is unresolved.
+- Do not silently expand a local task into broad or unrelated work.
+- Do not skip verification planning for a changed result.
+- Do not treat a task name as a substitute for current evidence, acceptance criteria, or permission.
 
 ## Outputs
 
-- Task classification and selected workflow.
+- Chosen execution form and any task material created.
 - Success criteria and expected verification.
-- Any scope escalation or user decision needed.
+- Any Policy boundary, scope change, or user decision needed.
 
 ## Links to other layers
 
@@ -58,4 +56,4 @@ The selected workflow owns its task-type success criteria and gates. Observation
 - Policy: `{{HARNESS_DIR}}/docs/layers/02-policy.md`
 - Observation: `{{HARNESS_DIR}}/docs/layers/04-observation.md`
 - Recovery: `{{HARNESS_DIR}}/docs/layers/05-recovery.md`
-- Workflows: `{{HARNESS_DIR}}/docs/process/`
+- Task-material decision card: `agent-work/README.md`

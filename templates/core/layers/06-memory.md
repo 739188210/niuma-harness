@@ -6,7 +6,7 @@ Define what an AI agent should preserve for future work and what should remain t
 
 ## When to use
 
-Use this layer after discovering verified stable facts, after finishing status-tracked tasks, when project notes are outdated, or when a discovery could change a future comparable task's safe next step.
+Use this layer after discovering verified stable facts, after finishing Tracked tasks, when project notes are outdated, or when a discovery could change a future comparable task's safe next step.
 
 ## Finding routing
 
@@ -14,7 +14,7 @@ Classify a verified discovery by what future work needs from it. Use one primary
 
 | Discovery | Primary destination | Boundary |
 | --- | --- | --- |
-| Current task progress, actual checks, unknowns, blockers, risks, or next action | `agent-work/tasks/<task-name>/status.md` for status-tracked work; final response for Direct work | Serves the current task only; it is not durable project memory. |
+| Current task progress, actual checks, unknowns, blockers, risks, or next action | `agent-work/tasks/<task-name>/status.md` for Tracked work; final response for Direct work | Serves the current task only; it is not durable project memory. |
 | Current project structure, current verification boundary, current environment constraint, module ownership, command, or other durable fact | `{{HARNESS_DIR}}/docs/project-context.md` or applicable module knowledge | Describes what the project is currently like; re-check its current source before relying on it. |
 | Reusable action knowledge: a safe approach, trap, diagnostic path, or decision pattern for a comparable future task | Project-maintained `{{HARNESS_DIR}}/docs/experience/<topic>.md` | Describes when and how to act safely, not what the project is currently like. A first verified discovery may qualify; repetition is not required. |
 | Help, ambiguity, conflict, friction, unnecessary cost, or missing guidance in the Harness protocol or documentation itself | Optional `agent-work/tasks/<task-name>/harness-feedback.md` | Feedback about the Harness only; it does not replace task status, observations, authorization, scope, or completion conclusions. |
@@ -24,7 +24,7 @@ If none applies, do not preserve it beyond the final response. Do not create rec
 ## Agent protocol
 
 1. Separate current task observations from durable project facts and reusable action knowledge. Verify facts against current files, command output, tests, configuration, or user confirmation before preserving them.
-2. For status-tracked work, task-local state stays in `agent-work/tasks/<task-name>/status.md`. It includes progress, temporary investigation details needed to continue, unresolved approval blockers, risks, actual observations, and handoff state. Direct work reports equivalent observations in the final response.
+2. For Tracked work, task-local state stays in `agent-work/tasks/<task-name>/status.md`. It includes progress, temporary investigation details needed to continue, unresolved approval blockers, risks, actual observations, and handoff state. Direct work reports equivalent observations in the final response.
 3. When updating user-managed `{{HARNESS_DIR}}/docs/project-context.md`, record only verified durable facts with durable value. Give each fact scope a source, scope, and freshness boundary, including a `Refresh when` condition when useful. Current workspace evidence always overrides the index.
 4. Route durable facts by scope. Module-local durable facts belong in the affected module entry's marker-external knowledge area only after verification. Root or cross-module durable facts belong in `{{HARNESS_DIR}}/docs/project-context.md` under the most suitable existing heading.
 5. When a project uses `Task fact routing`, update it only when the task-to-heading mapping changes. Keep it a compact locator; do not put source trees, test inventories, raw command output, temporary investigation, task state, or module-local details there.

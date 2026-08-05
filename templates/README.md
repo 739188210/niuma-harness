@@ -1,6 +1,6 @@
 # Niuma Harness
 
-This directory contains the generated Niuma Harness: a task-execution framework for the workspace. It gives agents an operating loop, policy, playbooks, verification guidance, and task-local working areas.
+This directory contains the generated Niuma Harness: a task-execution framework for the workspace. It gives agents an operating loop, Policy, Direct / Planned / Tracked execution forms, verification guidance, and task-local working areas.
 
 ## Start here
 
@@ -10,7 +10,7 @@ This directory contains the generated Niuma Harness: a task-execution framework 
 
 ## Ownership and maintenance
 
-`README.md`, `docs/index.md`, layer, policy, process documents, `docs/experience/README.md`, and `manifest.json` are tool-managed scaffold artifacts. Re-run `niuma-harness init` to refresh them; update the package templates when changing their generated behavior.
+`README.md`, `docs/index.md`, layer and policy documents, `docs/experience/README.md`, and `manifest.json` are tool-managed scaffold artifacts. Re-run `niuma-harness init` to refresh them; update the package templates when changing their generated behavior.
 
 `docs/project-context.md` is project-maintained and is created only when missing. Individual experience records are also project-maintained; only their README guide is tool-managed. `agent-work/` is workspace-level task state, outside this harness directory, and is not rewritten as generated harness content.
 

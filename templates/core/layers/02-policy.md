@@ -18,17 +18,17 @@ Use this layer before making changes, before running commands with side effects,
 4. Ask the user before ask-first actions.
 5. Stop instead of acting when the next step is forbidden, unsafe, or unclear in a way that affects behavior, data, security, or user-owned work.
 6. Record unresolved approval blockers and policy risks in `agent-work/` for multi-step tasks.
-7. For status-tracked work, record planned or performed actions, exact scoped authorization, unresolved approval blockers, and material scope changes in `status.md`. For Direct work, report these facts in the final response.
+7. For Tracked work, record planned or performed actions, exact scoped authorization, unresolved approval blockers, and material scope changes in `status.md`. For Direct work, report these facts in the final response.
 
 When host tools or higher-priority instructions are stricter than this policy, follow the stricter requirement.
 
 ## Blocker ownership
 
-Approval blockers and policy risks are task-local state until resolved. Do not act through unresolved ask-first or stop-and-escalate blockers.
+Approval blockers and policy risks are task-local state until resolved. Do not act through unresolved ask-first or stop-and-escalate blockers. For secret exposure handling, follow `{{HARNESS_DIR}}/docs/policy/secret-leak.md`.
 
 ## Forbidden actions
 
-- Do not duplicate the full action boundary list in this memo, process playbooks, or rules.
+- Do not duplicate the full action boundary list in this memo, execution-form guidance, or rules.
 - Do not choose the more permissive interpretation when policy sources conflict.
 - Do not treat an explicit request as blanket approval beyond the named action and scope.
 
