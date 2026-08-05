@@ -148,9 +148,7 @@ workspace/
         feature-development.md
         refactor.md
         review.md
-        release.md
-        isolation.md
-        subagent-development.md
+        test-driven-development.md
   agent-work/
     README.md
     tasks/

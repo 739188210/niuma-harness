@@ -43,7 +43,8 @@ test('generated docs define optional Harness feedback without an execution-recor
   assert.match(workReadme, /project technical discoveries belong in task state, project context, or Experience instead/);
   assert.match(workReadme, /Why this belongs to Harness feedback rather than project context or Experience/);
   assert.match(workReadme, /Its absence never blocks task execution, recovery, or completion/);
-  assert.doesNotMatch(workReadme, /required structured execution record|verification\.md/);
+  assert.doesNotMatch(workReadme, /required structured execution record/);
+  assert.match(workReadme, /do not create `verification\.md` or another competing task evidence ledger/);
 });
 
 test('generated Memory layer routes discoveries to one primary destination', () => {
@@ -63,32 +64,40 @@ test('generated Memory layer routes discoveries to one primary destination', () 
   assert.match(memory, /re-check its Source of truth and classify the current action under Policy/);
 });
 
-test('generated feature and process docs define optional pre-work plans', () => {
+test('generated docs make task-material selection decisive and singular', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
-  const feature = read(path.join(h, 'docs', 'process', 'feature-development.md'));
-  assert.match(feature, /Confirm understanding before planning/);
-  assert.match(feature, /Create `agent-work\/tasks\/<task-name>\/plan\.md` before implementation only when a plan has real pre-work value/);
+  const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
+  assert.match(workReadme, /Use Direct only when \*\*all\*\* conditions hold/);
+  assert.match(workReadme, /two or more acceptance criteria/);
+  assert.match(workReadme, /Create .*status\.md.*when any condition holds/s);
+  assert.match(workReadme, /## Scope change/);
+  assert.match(workReadme, /Task outcome/);
+  assert.match(workReadme, /do not create `verification\.md` or another competing task evidence ledger/);
+  assert.doesNotMatch(workReadme, /Minimum|Recoverable/);
   const process = read(path.join(h, 'docs', 'layers', '03-process.md'));
-  assert.match(process, /whether work stays Direct or needs status tracking/);
+  assert.match(process, /only decision card for Direct eligibility and plan or status-ledger triggers/);
   const triage = read(path.join(h, 'docs', 'process', 'task-triage.md'));
-  assert.match(triage, /Direct or status-tracked material choice/);
+  assert.match(triage, /only task-material decision card/);
+  assert.match(triage, /release readiness use the read-only review path/);
+  assert.match(triage, /Actual publish, deploy, tag, or release actions remain subject to Policy/);
+  assert.doesNotMatch(triage, /Choose the playbook:.*\brelease\./);
   assert.doesNotMatch(triage, /decisions\/|ADR|Minimum|Recoverable/);
 });
 
-test('generated subagent playbook keeps integrated observations in parent status', () => {
+test('generated docs omit retired auxiliary process playbooks', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
-  const subagent = read(path.join(h, 'docs', 'process', 'subagent-development.md'));
-  assert.match(subagent, /parent `status\.md` updates/);
-  assert.match(subagent, /active task owner owns the final integrated result/);
-  assert.match(subagent, /final Observation over the integrated workspace/);
-  const loop = read(path.join(h, 'docs', 'layers', '07-loop.md'));
-  assert.match(loop, /integrated state, checks, conflicts, and next action/);
+
+  for (const page of ['isolation.md', 'subagent-development.md', 'release.md']) {
+    assertNoPath(path.join(h, 'docs', 'process', page));
+  }
+  const index = read(path.join(h, 'docs', 'index.md'));
+  assert.doesNotMatch(index, /Workspace isolation|Subagent development|Release readiness/);
 });
 
 test('generated docs use final responses or status ledgers for actual observations', () => {
@@ -97,16 +106,16 @@ test('generated docs use final responses or status ledgers for actual observatio
   assert.strictEqual(result.status, 0, result.stderr);
   const h = path.join(workspace, 'harness');
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
-  assert.match(workReadme, /\| Direct \|/);
-  assert.match(workReadme, /\| Status-tracked \|/);
-  assert.match(workReadme, /only task-local record of actual checks, results, skipped checks, and unknowns/);
-  assert.doesNotMatch(workReadme, /verification\.md|Recoverable/);
+  assert.match(workReadme, /### Direct/);
+  assert.match(workReadme, /### Status-tracked work/);
+  assert.match(workReadme, /sole task-local operational ledger/);
+  assert.doesNotMatch(workReadme, /Recoverable/);
   const observation = read(path.join(h, 'docs', 'layers', '04-observation.md'));
-  assert.match(observation, /For Direct work, put that record in the final response/);
-  assert.match(observation, /For status-tracked work, put it in .*status\.md/);
+  assert.match(observation, /For Direct work, record evidence in the final response/);
+  assert.match(observation, /For status-tracked work, record it in .*status\.md/);
   const loop = read(path.join(h, 'docs', 'layers', '07-loop.md'));
-  assert.match(loop, /A task must not say `complete` while material acceptance remains failed, blocked, or unknown/);
-  assert.doesNotMatch(loop, /verification\.md|Recoverable/);
+  assert.match(loop, /A task outcome must not be `passed` while a material acceptance criterion is failed, blocked, skipped with unresolved impact, or unknown/);
+  assert.doesNotMatch(loop, /Recoverable/);
 });
 
 
@@ -193,19 +202,19 @@ test('generated docs define test-change gate', () => {
 
   const observationMemo = read(path.join(h, 'docs', 'layers', '04-observation.md'));
   assert.match(observationMemo, /If verification fails, treat the failing check as evidence/);
-  assert.match(observationMemo, /Do not move verification targets after a failure/);
+  assert.match(observationMemo, /do not move the verification target unless the selected process permits it/);
   assert.match(observationMemo, /test-change gate in `harness\/docs\/policy\/action-boundary\.md`/);
   assert.match(observationMemo, /replacement coverage preserves the behavior contract/);
 
   const bugfix = read(path.join(h, 'docs', 'process', 'bugfix.md'));
-  assert.match(bugfix, /The reproduction check is a verification target/);
+  assert.match(bugfix, /focused failing regression test/);
   assert.match(bugfix, /test-change gate in `harness\/docs\/policy\/action-boundary\.md`/);
-  assert.match(bugfix, /never remove the only reproduction without a replacement/);
+  assert.match(bugfix, /Never remove the only reproduction without equivalent or stronger replacement coverage/);
 
   const refactor = read(path.join(h, 'docs', 'process', 'refactor.md'));
-  assert.match(refactor, /baseline verification as the behavior boundary/);
+  assert.match(refactor, /baseline is the behavior boundary/);
   assert.match(refactor, /Changing tests during a refactor is ask-first/);
-  assert.match(refactor, /purely mechanical and preserves the same assertions/);
+  assert.match(refactor, /purely mechanical and assertion-preserving/);
 });
 
 test('generated docs require practical TDD for eligible behavior work', () => {
@@ -228,21 +237,21 @@ test('generated docs require practical TDD for eligible behavior work', () => {
   assert.match(index, /\[Test-driven development\]\(process\/test-driven-development\.md\)/);
 
   const process = read(path.join(h, 'docs', 'layers', '03-process.md'));
-  assert.match(process, /test-first versus alternative verification decision before implementation/);
+  assert.match(process, /decide before implementation whether stable automated test-first evidence applies/);
   assert.match(process, /harness\/docs\/process\/test-driven-development\.md/);
 
   const feature = read(path.join(h, 'docs', 'process', 'feature-development.md'));
-  assert.match(feature, /Classify each acceptance criterion before implementation/);
-  assert.match(feature, /automation-unsuitability reason and replacement evidence before implementation/);
+  assert.match(feature, /Classify each criterion before implementation/);
+  assert.match(feature, /why automation is unsuitable and what replacement evidence will be used/);
 
   const bugfix = read(path.join(h, 'docs', 'process', 'bugfix.md'));
-  assert.match(bugfix, /focused failing regression test before the fix/);
-  assert.match(bugfix, /same target pass afterward/);
-  assert.match(bugfix, /valid alternative-verification plan/);
+  assert.match(bugfix, /focused failing regression test and follow/);
+  assert.match(bugfix, /same target pass after the fix/);
+  assert.match(bugfix, /define alternative evidence before editing/);
 
   const refactor = read(path.join(h, 'docs', 'process', 'refactor.md'));
-  assert.match(refactor, /Do not manufacture an artificial RED for a pure refactor/);
-  assert.match(refactor, /Route behavior changes or behavior-changing tests through feature\/bugfix plus `harness\/docs\/process\/test-driven-development\.md`/);
+  assert.match(refactor, /Do not manufacture an artificial RED/);
+  assert.match(refactor, /Route behavior changes through feature or bugfix/);
 
   const observation = read(path.join(h, 'docs', 'layers', '04-observation.md'));
   assert.match(observation, /Test-first RED, GREEN, and optional refactor recheck are defined by `harness\/docs\/process\/test-driven-development\.md`/);

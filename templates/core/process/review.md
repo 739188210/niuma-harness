@@ -2,52 +2,33 @@
 
 Use this playbook when reviewing changed work.
 
-This is a concrete playbook selected by the Process layer. Use `{{HARNESS_DIR}}/docs/layers/03-process.md` for routing rules and this file for review execution.
-
 ## Goal
 
-Identify blocking issues before work is considered ready, without turning review into unrelated redesign.
+Identify evidence-backed blocking issues without turning review into unrelated redesign.
 
 ## Steps
 
-1. Apply the base minimum reading set and conditional reads in `{{HARNESS_DIR}}/docs/process/task-triage.md`, then inspect the changed files or diff, intended task goal, and available verification evidence.
-2. Classify the review as read-only reporting before acting. Recommendations may be reported as review findings; re-classify before performing risky, destructive, external, security-sensitive, scope-expanding, or test-changing follow-up actions.
-3. Confirm the intended task goal and compare it with the actual changes.
-4. Review correctness, security, maintainability, test coverage, and verification evidence.
-5. Apply relevant installed engineering standards.
-6. Classify findings by severity.
-7. Mark work as not ready while blocking findings remain unresolved.
-8. Only implement fixes when the user explicitly approved implementation changes; otherwise route fixes through the relevant bugfix, refactor, or feature playbook.
-9. Re-run or request focused verification after material fixes.
+1. Apply the base reading and conditional routing in `{{HARNESS_DIR}}/docs/process/task-triage.md`, then inspect the change, intended goal, and available verification evidence.
+2. Treat review as read-only reporting. Re-classify before any implementation, destructive, external, security-sensitive, scope-expanding, or test-changing follow-up.
+3. Compare the intended goal with actual changes; review correctness, security, maintainability, coverage, and evidence.
+4. Group findings by severity and mark work not ready while blocking findings remain unresolved.
+5. Record review scope, findings, evidence reviewed or requested, and remaining unknowns through `{{HARNESS_DIR}}/docs/layers/04-observation.md` in the final response or selected status ledger.
 
 ## Fix boundary
 
-A review reports findings. Fixing findings is a separate action unless the user explicitly asked for review-and-fix.
+A review reports findings. Implementing a fix is a separate action unless the user explicitly asks for review-and-fix; then route it through bugfix, refactor, or feature.
 
-## Severity levels
+## Severity
 
-- CRITICAL: security vulnerability, data loss risk, destructive behavior, or clearly broken user-facing behavior.
+- CRITICAL: security vulnerability, data-loss risk, destructive behavior, or clearly broken user-facing behavior.
 - HIGH: likely bug, missing required validation, unsafe edge case, or important verification gap.
 - MEDIUM: maintainability, clarity, or coverage concern that should be considered.
 - LOW: minor style, naming, or documentation note.
 
 ## Recovery
 
-Use `{{HARNESS_DIR}}/docs/layers/05-recovery.md` when the diff does not match the stated goal, review evidence is missing, or a fix creates new failures.
+Use `{{HARNESS_DIR}}/docs/layers/05-recovery.md` when the change conflicts with its goal or review evidence is missing.
 
-## Memory and task notes
+## Memory
 
-For status-tracked reviews, keep current status, findings, fix decisions, actual checks, and remaining unknowns in `agent-work/tasks/<task-name>/status.md`. Move only verified durable lessons through the Memory layer before updating `{{HARNESS_DIR}}/docs/project-context.md`.
-
-For two-stage review across isolated subagents on large or risky work, see `{{HARNESS_DIR}}/docs/process/subagent-development.md`.
-
-## Required artifact/checklist
-
-Before reporting completion, include:
-
-- Review scope.
-- Intended task goal compared with actual changes.
-- Findings grouped by severity.
-- Blocking vs non-blocking status.
-- Verification evidence reviewed or requested.
-- Follow-up items, remaining unknowns, and material risks.
+Route verified durable findings through `{{HARNESS_DIR}}/docs/layers/06-memory.md`.

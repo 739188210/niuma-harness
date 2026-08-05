@@ -2,78 +2,54 @@
 
 ## Purpose
 
-Route work through the right task workflow. This layer defines how to choose, switch, or escalate workflows.
-
-This memo is a process-routing protocol. It does not replace concrete task playbooks. `{{HARNESS_DIR}}/docs/process/task-triage.md` owns the base minimum reading set and common conditional reads; selected playbooks list only workflow-specific additional materials, gates, checklist, and evidence. Specific task steps belong in `{{HARNESS_DIR}}/docs/process/`.
+Route work through the smallest applicable workflow. This layer chooses a path; it does not repeat Policy, evidence, recovery, or task-material rules.
 
 ## When to use
 
-Use this layer after triage selects it, before implementation, and whenever the task type changes during execution.
+Use this layer after triage selects it, before implementation, and whenever task type or scope changes.
 
 ## Agent protocol
 
-1. When triage is needed, `{{HARNESS_DIR}}/docs/process/task-triage.md` first classifies the task, applies conditional reading, and selects this layer or a concrete playbook. Triage is a routing step, not the final execution playbook.
-2. Select the final execution playbook from bugfix, feature, refactor, review, or release. Documentation, cleanup, investigation, and verification use the explicit lightweight default routes in `{{HARNESS_DIR}}/docs/process/task-triage.md`; use `none` only when no execution playbook applies.
-3. For feature or bugfix behavior work, make a test-first versus alternative verification decision before implementation. Follow `{{HARNESS_DIR}}/docs/process/test-driven-development.md` for eligible stable automatable behavior and declare valid alternative evidence before implementation when automation is unsuitable.
-4. Follow any confirmation gate defined by the selected workflow before writing detailed plans or implementation docs.
-5. If working in the shared tree would create avoidable risk or coordination cost, isolate the workspace first (`{{HARNESS_DIR}}/docs/process/isolation.md`) before acting. Do not isolate merely because a task has more than one step. For large or risky work, consider staged subagent dispatch (`{{HARNESS_DIR}}/docs/process/subagent-development.md`).
-6. Define the smallest useful goal and success criteria.
-7. After classification and risk routing, use `agent-work/README.md` to decide whether work stays Direct or needs status tracking, and whether an optional pre-work plan adds value; it is the only authority for task-file roles.
-8. Break work into observable steps.
-9. Escalate to the user if the task scope expands beyond the selected workflow.
+1. When routing is needed, start with `{{HARNESS_DIR}}/docs/process/task-triage.md`; triage classifies the task, applies conditional reading, and selects a workflow.
+2. Select one primary workflow: bugfix, feature, refactor, review, or none for a lightweight read-only answer.
+3. For changed behavior or bug regressions, decide before implementation whether stable automated test-first evidence applies. Use `{{HARNESS_DIR}}/docs/process/test-driven-development.md` when eligible; otherwise declare suitable replacement evidence before implementation.
+4. Define the smallest useful goal, success criteria, and observable steps.
+5. Use `agent-work/README.md` as the only decision card for Direct eligibility and plan or status-ledger triggers.
+6. Re-check Process and Policy before expanding scope, changing task type, or crossing a new boundary.
 
-## Task state ownership
+## Workflow routing
 
-The selected workflow owns the success criteria and workflow-specific gates for the task type. `agent-work/README.md` decides whether work stays Direct, needs status tracking, or benefits from an optional pre-work plan.
+| Task intent | Workflow | Workflow-specific focus |
+| --- | --- | --- |
+| Bug, regression, broken behavior | `process/bugfix.md` | Reproduce the symptom, repair the first cause, verify the same behavior. |
+| New or changed behavior | `process/feature-development.md` | Confirm acceptance criteria and implement the smallest feature slice. |
+| Behavior-preserving restructure | `process/refactor.md` | Preserve a verified behavior baseline. |
+| Review or audit | `process/review.md` | Report evidence-backed findings; fixing needs explicit approval. |
+| Read-only question or lightweight investigation | No primary workflow | Use Context, Policy when relevant, and Observation. |
 
-For status-tracked work, decide who updates `status.md`, who records temporary task notes, and who summarizes integrated observations before work begins. Parallel or delegated work must keep ownership explicit so task ledgers are not mixed or overwritten.
+Trigger words are routing hints, not permission to bypass Policy. If multiple rows fit or scope is unclear, return to triage.
 
-For delegated work, the parent flow or active task owner is responsible for integrating delegated outputs before completion; use `{{HARNESS_DIR}}/docs/process/subagent-development.md` for the integration gate.
+## Ownership boundaries
 
-## Trigger and artifact routing
-
-Use this as a routing aid only. The selected workflow owns the full checklist, success criteria, and evidence details.
-
-| Trigger/category | Route to | Required artifact/checklist |
-|---|---|---|
-| "bug", "broken", "regression", "failing test", "does not work" | `{{HARNESS_DIR}}/docs/process/bugfix.md` | Reproduction signal and fix verification. |
-| "add", "implement", "change behavior", "support", "user can" | `{{HARNESS_DIR}}/docs/process/feature-development.md` | Acceptance criteria and verification evidence. |
-| "refactor", "cleanup", "simplify", "rename", "restructure" without behavior change | `{{HARNESS_DIR}}/docs/process/refactor.md` | Behavior baseline and preservation evidence. |
-| "review", "audit", "check this PR/diff" | `{{HARNESS_DIR}}/docs/process/review.md` | Findings with severity and reviewed evidence. |
-| "release", "publish", "ship", "tag", "package" | `{{HARNESS_DIR}}/docs/process/release.md` | Release target, approval boundary, and package or artifact scope. |
-| "security", "data", "API", "dependency", or other risky/wide-scope work | `{{HARNESS_DIR}}/docs/process/task-triage.md` plus Policy | Classification, policy boundary, selected workflow, and evidence plan. |
-| "done", "verify", "prove", "is this complete?" | Current selected workflow plus Observation | Completion evidence using the Observation schema. |
-| "documentation", "docs", "investigate", "verify", "cleanup" as lightweight task intents | `{{HARNESS_DIR}}/docs/process/task-triage.md` | Explicit lightweight default route, ownership gate where applicable, and Observation expectations. |
-
-Trigger words are routing hints, not permission to bypass Policy. If multiple rows match, start with `{{HARNESS_DIR}}/docs/process/task-triage.md`. Do not duplicate the selected workflow's steps in this memo.
+The selected workflow owns its task-type success criteria and gates. Observation owns generic evidence and outcome semantics. Recovery owns generic failure handling. `agent-work/README.md` owns task-file selection and roles.
 
 ## Allowed actions
 
-- Use `{{HARNESS_DIR}}/docs/process/task-triage.md` when the task type or scope is unclear.
-- Use `{{HARNESS_DIR}}/docs/process/bugfix.md` for defect reproduction and repair.
-- Use `{{HARNESS_DIR}}/docs/process/feature-development.md` for new or changed behavior.
-- Use `{{HARNESS_DIR}}/docs/process/refactor.md` for behavior-preserving structural changes.
-- Use `{{HARNESS_DIR}}/docs/process/test-driven-development.md` for eligible behavior changes and automatable bug regressions.
-- Use `{{HARNESS_DIR}}/docs/process/review.md` for reviewing changed work.
-- Use `{{HARNESS_DIR}}/docs/process/release.md` for release readiness or approved release work.
-- Use `{{HARNESS_DIR}}/docs/process/isolation.md` when shared-tree work would create avoidable risk or coordination cost.
-- Use `{{HARNESS_DIR}}/docs/process/subagent-development.md` to coordinate large or risky work across isolated subagents with staged review.
-- Create task-local notes for multi-step work.
-- Adjust the workflow when new evidence shows the original classification was wrong.
+- Use triage when the task type or scope is unclear.
+- Use the selected primary workflow for task-specific steps.
+- Adjust the workflow when current evidence shows the original classification was wrong.
 
 ## Forbidden actions
 
-- Do not start editing before selecting a process when workflow routing is needed.
-- Do not silently expand a small task into a large refactor.
+- Do not start editing before selecting a process when routing is needed.
+- Do not silently expand a small task into a broad refactor or unrelated feature.
 - Do not skip verification planning for code or behavior changes.
 - Do not keep following a workflow after its assumptions are proven wrong.
-- Do not duplicate full playbook steps in this memo; put concrete procedures in `{{HARNESS_DIR}}/docs/process/` instead.
 
 ## Outputs
 
 - Task classification and selected workflow.
-- A concise execution plan or task checklist.
-- Success criteria and expected verification checks.
+- Success criteria and expected verification.
 - Any scope escalation or user decision needed.
 
 ## Links to other layers

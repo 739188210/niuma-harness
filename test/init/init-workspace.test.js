@@ -255,7 +255,8 @@ test('--harness-dir uses a custom directory name', () => {
 
   const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
   assert.match(workReadme, /optional feedback about Harness protocol or documentation friction/);
-  assert.doesNotMatch(workReadme, /required structured execution record|verification\.md/);
+  assert.doesNotMatch(workReadme, /required structured execution record/);
+  assert.match(workReadme, /do not create `verification\.md` or another competing task evidence ledger/);
   assert.match(workReadme, /ai-harness\/docs\/layers\/07-loop\.md/);
   assert.match(workReadme, /ai-harness\/docs\/project-context\.md/);
   assert.doesNotMatch(workReadme, /`docs\//);

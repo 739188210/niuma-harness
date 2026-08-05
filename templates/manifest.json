@@ -98,18 +98,6 @@
     {
       "target": "docs/process/review.md",
       "template": "core/process/review.md"
-    },
-    {
-      "target": "docs/process/release.md",
-      "template": "core/process/release.md"
-    },
-    {
-      "target": "docs/process/isolation.md",
-      "template": "core/process/isolation.md"
-    },
-    {
-      "target": "docs/process/subagent-development.md",
-      "template": "core/process/subagent-development.md"
     }
   ],
   "workTemplateFiles": [

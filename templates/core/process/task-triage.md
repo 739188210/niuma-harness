@@ -29,7 +29,7 @@ Before reporting completion, make sure the final response or status ledger inclu
 - Selected playbook or reason no playbook is needed.
 - Policy boundary or blocker.
 - Success criteria or smallest useful next step.
-- Direct or status-tracked material choice and any task-local files created.
+- Task-material choice under `agent-work/README.md` and any task-local files created.
 - Actual checks, skipped checks, and remaining unknowns.
 
 ## Steps
@@ -40,9 +40,9 @@ Before reporting completion, make sure the final response or status ledger inclu
    - `quick`: clear, low-risk, localized work with a minimal check.
    - `normal`: ordinary work needing explicit success criteria and evidence.
    - `careful`: security, user data, permissions, public APIs, database shape, dependencies, releases, destructive operations, broad shared code, or high cost of failure.
-4. Choose the playbook: bugfix, feature development, refactor, review, or release. Documentation and cleanup use refactor; investigation and verification use the read-only review path.
+4. Choose the playbook: bugfix, feature development, refactor, or review. Documentation and cleanup use refactor; investigation, verification, and release readiness use the read-only review path. Actual publish, deploy, tag, or release actions remain subject to Policy and applicable project runbooks.
 5. Apply only the conditional reading that now applies.
-6. Define success criteria, the smallest useful next step, and planned checks. Use `agent-work/README.md` to decide whether work stays Direct or needs status tracking; create a plan only when it has real pre-work value.
+6. Define success criteria, the smallest useful next step, and planned checks. Use `agent-work/README.md` as the only task-material decision card: it determines Direct eligibility and plan or status-ledger triggers.
 7. Stop and ask when the request lacks enough information, expands scope, or crosses a Policy boundary.
 
 ## Observation

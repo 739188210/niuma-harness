@@ -32,7 +32,8 @@ test('doctor passes on a valid harness', () => {
   assert.match(result.stdout, /OK docs\/policy\/untrusted-content\.md/);
   assert.match(result.stdout, /OK docs\/process\/refactor\.md/);
   assert.match(result.stdout, /OK docs\/process\/review\.md/);
-  assert.match(result.stdout, /OK docs\/process\/release\.md/);
+  assert.match(result.stdout, /OK docs\/process\/test-driven-development\.md/);
+  assert.doesNotMatch(result.stdout, /docs\/process\/release\.md/);
   assert.match(result.stdout, /OK agent-work\//);
   assert.match(result.stdout, /OK agent-work\/README\.md/);
   assert.match(result.stdout, /OK agent-work\/tasks\//);

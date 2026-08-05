@@ -35,9 +35,6 @@ This is the complete runtime navigation map for the Harness. The entry file (`CL
 - [Refactoring](process/refactor.md)
 - [Test-driven development](process/test-driven-development.md)
 - [Reviews](process/review.md)
-- [Release readiness](process/release.md)
-- [Workspace isolation](process/isolation.md)
-- [Subagent development](process/subagent-development.md)
 
 ### Runtime materials
 

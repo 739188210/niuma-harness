@@ -21,7 +21,7 @@ The Loop Recovery entry owns task-material reading order and current-workspace r
 4. Make the smallest safe repair attempt.
 5. Re-run the smallest relevant check.
 6. Stop and report if the same failure persists after focused retries or if repair requires user approval.
-7. Update task material only when the record already exists or `agent-work/README.md` says status tracking is now needed. Record the observed failure, root cause, repair attempt, focused recheck, stop condition, and remaining unknowns in `status.md`; for Direct work, report them in the final response. Do not create a full task package merely because Recovery ran.
+7. Update task material only when the record already exists or `agent-work/README.md` says status tracking is now needed. Record the observed failure, root cause, repair attempt, focused recheck, criterion result, task outcome, stop condition, and remaining unknowns in `status.md`; add its `## Scope change` section when recovery materially changes scope. For Direct work, report them in the final response. Do not create a full task package merely because Recovery ran.
 
 ## Failure response map
 

@@ -61,7 +61,10 @@ function assertCommonHarnessShape(workspace, options = {}) {
   assertFile(path.join(harnessRoot, 'docs', 'process', 'refactor.md'));
   assertFile(path.join(harnessRoot, 'docs', 'process', 'test-driven-development.md'));
   assertFile(path.join(harnessRoot, 'docs', 'process', 'review.md'));
-  assertFile(path.join(harnessRoot, 'docs', 'process', 'release.md'));
+  assertFile(path.join(harnessRoot, 'docs', 'process', 'review.md'));
+  assertNoPath(path.join(harnessRoot, 'docs', 'process', 'release.md'));
+  assertNoPath(path.join(harnessRoot, 'docs', 'process', 'isolation.md'));
+  assertNoPath(path.join(harnessRoot, 'docs', 'process', 'subagent-development.md'));
   assertLayerMemos(harnessRoot);
   assertNoPath(path.join(harnessRoot, 'docs', 'layers', '01-context'));
   assertDir(path.join(workspace, 'agent-work'));

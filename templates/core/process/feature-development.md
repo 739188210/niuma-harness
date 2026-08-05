@@ -1,68 +1,35 @@
 # Feature Development Process
 
-Use this playbook when adding new behavior or changing existing user-facing behavior.
-
-This is a concrete playbook selected by the Process layer. Use `{{HARNESS_DIR}}/docs/layers/03-process.md` for routing rules and this file for feature execution.
+Use this playbook when adding behavior or changing existing user-facing behavior.
 
 ## Goal
 
 Implement the smallest safe feature slice that satisfies verified acceptance criteria.
 
-## Confirm understanding before planning
+## Before implementation
 
-Before writing a detailed plan, PRD, architecture note, task list, or implementation, restate the requested feature and confirm the work when scope or acceptance is not already clear.
-
-Keep the confirmation short:
-
-- Goal
-- Non-goals
-- Key assumptions
-- Acceptance criteria
-- Proposed smallest path
-- Open questions
-
-If an open question can change the implementation direction, ask the user before planning or coding. Do not pause for confirmation when the user request, acceptance criteria, and smallest path are already clear and the next action is autonomous under Policy. If the user already gave complete requirements and approval to proceed, record that and continue.
-
-## Required artifact/checklist
-
-Before reporting completion, make sure `status.md` for status-tracked work or the final response for Direct work includes:
-
-- Acceptance criteria used.
-- Non-goals and assumptions when they affect scope.
-- Smallest feature slice chosen.
-- Implementation summary and files changed.
-- Verification evidence using the Observation schema.
-- Skipped checks and remaining unknowns, including any material risks.
+1. Apply the base reading and conditional routing in `{{HARNESS_DIR}}/docs/process/task-triage.md`.
+2. Inspect the relevant implementation patterns and acceptance-criterion targets.
+3. When scope, acceptance criteria, or a design choice is unclear, state the goal, non-goals, assumptions, smallest path, and open question; ask before coding when the answer changes direction.
+4. Use `agent-work/README.md` to select Direct, a pre-work plan, or a status ledger.
+5. Classify each criterion before implementation: use test-first for a stable automated target; otherwise state why automation is unsuitable and what replacement evidence will be used.
 
 ## Steps
 
-1. Apply the base minimum reading set and conditional reads in `{{HARNESS_DIR}}/docs/process/task-triage.md`, then inspect relevant existing implementation patterns and acceptance-criterion targets.
-2. Confirm understanding before planning when the feature has unclear scope, missing acceptance criteria, or meaningful design choices whose answer can change the implementation direction. Isolate first (`{{HARNESS_DIR}}/docs/process/isolation.md`) only when shared-tree work would create avoidable risk or coordination cost, such as intermediate broken states, parallel edits, experimental work, high-risk behavior changes, or overlap with another active task. For large features, consider staged subagent dispatch (`{{HARNESS_DIR}}/docs/process/subagent-development.md`).
-3. Use `agent-work/README.md` to decide whether work stays Direct or needs status tracking. Create `agent-work/tasks/<task-name>/plan.md` before implementation only when a plan has real pre-work value for the acceptance criteria, smallest path, or planned checks.
-4. Classify each acceptance criterion before implementation: test-first when it has a stable automated target, otherwise declare the automation-unsuitability reason and replacement evidence before implementation. TDD eligibility does not by itself require task material.
-5. For test-first criteria, follow `{{HARNESS_DIR}}/docs/process/test-driven-development.md`; do not implement before the focused RED evidence.
-6. Choose the smallest implementation path that fits the current architecture.
-7. Plan verification before implementation. Use `{{HARNESS_DIR}}/docs/layers/04-observation.md` for evidence expectations.
-8. Implement the feature with task-scoped changes.
-9. Run relevant verification commands.
-10. Record changes, actual checks, skipped checks, and remaining unknowns, including material risks, in the final response or `status.md` when work is status-tracked.
+1. Choose the smallest implementation path that fits the current architecture.
+2. For test-first criteria, follow `{{HARNESS_DIR}}/docs/process/test-driven-development.md` before implementation.
+3. Implement only the approved feature slice.
+4. Run the planned focused checks and broader checks justified by changed risk.
+5. Record actual evidence and outcome through `{{HARNESS_DIR}}/docs/layers/04-observation.md` in the final response or `status.md`.
 
-## When to pause
+## Pause
 
-Pause and ask when `{{HARNESS_DIR}}/docs/policy/action-boundary.md` classifies the next action as ask-first, forbidden, or stop-and-escalate.
-
-Feature-specific pause points:
-
-- acceptance criteria are unclear
-- implementation would expand beyond the requested feature slice
+Ask before an action crosses Policy, acceptance criteria remain unclear, or implementation expands beyond the requested slice.
 
 ## Recovery
 
-Use `{{HARNESS_DIR}}/docs/layers/05-recovery.md` when tests, builds, commands, context, or acceptance criteria fail. Do not weaken verification to make the feature appear complete.
+Use `{{HARNESS_DIR}}/docs/layers/05-recovery.md` when evidence, commands, context, or acceptance criteria fail; do not weaken verification to make the feature appear complete.
 
-## Memory and task notes
+## Memory
 
-Use `agent-work/README.md` to choose only the task material that helps execution or recovery; do not pre-create a full task package for a multi-step feature.
-
-Use `{{HARNESS_DIR}}/docs/layers/06-memory.md` before moving any task finding into `{{HARNESS_DIR}}/docs/project-context.md`.
-
+Route verified durable findings through `{{HARNESS_DIR}}/docs/layers/06-memory.md`.

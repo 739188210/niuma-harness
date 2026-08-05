@@ -2,21 +2,20 @@
 
 ## Purpose
 
-Define how an AI agent knows whether the requested result is verified, failed, blocked, or still unknown. This layer turns completion claims into observed evidence.
+Define what task evidence proves and how to state a truthful outcome. This layer turns completion claims into observed evidence; it does not choose task files.
 
 ## When to use
 
-Use this layer before declaring work complete, after any code or documentation change, after recovery attempts, and when deciding whether to continue or stop.
+Use this layer before declaring an outcome, after any code or documentation change, after Recovery attempts, and when deciding whether to continue or stop.
 
 ## Agent protocol
 
-1. Identify the smallest checks that prove the task goal.
+1. Identify the smallest checks that prove each task acceptance criterion.
 2. Prefer project-local commands documented in `{{HARNESS_DIR}}/docs/project-context.md`; use `{{HARNESS_DIR}}/docs/index.md` only as navigation.
-3. Run focused checks first, then broader checks when justified by the changed risk.
-4. Record only checks actually run, their actual results, skipped checks with reasons and impact, and remaining unknowns.
-5. For Direct work, put that record in the final response. For status-tracked work, put it in `agent-work/tasks/<task-name>/status.md`.
-6. Treat unrun checks as unknown, not as passing.
-7. If verification fails, treat the failing check as evidence. Do not change the verification target unless the selected process permits it and the reason is recorded.
+3. Run focused checks first, then broader checks when justified by changed risk.
+4. Record only checks actually run, actual results, skipped checks with reason and impact, and remaining unknowns.
+5. For Direct work, record evidence in the final response. For status-tracked work, record it in `agent-work/tasks/<task-name>/status.md`.
+6. Treat unrun checks as unknown, not passing. If verification fails, treat the failing check as evidence; do not move the verification target unless the selected process permits it and the reason is recorded.
 
 ## Evidence boundaries
 
@@ -29,7 +28,33 @@ Evidence is scoped. Do not upgrade one evidence type into another:
 - An unauthenticated browser visit does not prove authenticated user acceptance.
 - A suspected pre-existing failure does not prove a verified baseline.
 
-When a broader check fails and the agent believes it is outside the task scope, retain that failed or unknown result. Treat the overall conclusion as partial or unknown unless current evidence establishes a baseline, proves the failure is outside the changed scope, or another trusted source establishes it.
+A broader failure may be called pre-existing only when at least one current, reviewable basis exists:
+
+1. the same check failed the same way before this task’s changes;
+2. the failure location and type are demonstrably outside the changed scope; or
+3. trusted CI, a project baseline, or verified historical evidence establishes the failure.
+
+Even then, record that broad check as not passing. Do not describe it as full regression passing.
+
+## Evidence and outcome vocabulary
+
+For each acceptance criterion, use one result:
+
+- `passed`: required evidence supports the criterion.
+- `failed`: evidence shows the criterion is not met.
+- `blocked`: required evidence or action needs approval, an external system, or another dependency.
+- `skipped`: a check was not run; always state why and its unresolved impact.
+- `unknown`: evidence is insufficient to judge the criterion.
+
+State one task outcome across material criteria:
+
+- `passed`: every material criterion has sufficient passing evidence.
+- `partial`: the main goal has progress, but a material criterion is unresolved, skipped with impact, or otherwise incomplete.
+- `blocked`: the next necessary action cannot proceed without approval, external readiness, or a dependency.
+- `failed`: the task goal or a material criterion is shown to fail.
+- `unknown`: evidence is insufficient to judge the task outcome.
+
+For status-tracked work, keep a compact acceptance/evidence matrix in `status.md`; it is the only task-local evidence ledger. A task may be closed or handed off with a non-passing outcome, but it must not be called complete unless its outcome is `passed`.
 
 ## Evidence record
 
@@ -39,8 +64,6 @@ Record concise, human-readable facts where the task path requires them:
 - the actual result, including relevant failure information;
 - every skipped check, its reason, and unresolved impact; and
 - remaining unknowns, or an explicit statement that none material remain.
-
-For Direct work, this belongs in the final response. For status-tracked work, `status.md` is the task-local evidence record as well as the current operational ledger. Do not backfill observations after completion.
 
 Test-first RED, GREEN, and optional refactor recheck are defined by `{{HARNESS_DIR}}/docs/process/test-driven-development.md`; record their actual results as ordinary observations without restating that protocol here.
 
@@ -68,7 +91,7 @@ For parallel or delegated work, final Observation verifies the integrated result
 - Manual checks performed, if any.
 - Skipped checks and why they were skipped.
 - Remaining unknowns, including material risks.
-- A truthful conclusion: complete only when material acceptance is verified; otherwise partial, blocked, failed, stopped, or unknown as applicable.
+- A truthful outcome using `passed`, `partial`, `blocked`, `failed`, or `unknown`.
 
 ## Links to other layers
 

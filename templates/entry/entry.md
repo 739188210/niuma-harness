@@ -15,7 +15,7 @@ This workspace runs a Niuma Harness. It defines collaboration constraints, task-
 **1. Start safely**
 - Inspect the smallest request-relevant current source, configuration, build, test, README, or command evidence. Current workspace evidence determines task-specific facts.{{ENTRY_CONTEXT_TOPOLOGY_GUIDANCE}} Never guess what files can show you. (depth: `{{HARNESS_DIR}}/docs/layers/01-context.md`)
 - Classify the next action — autonomous / ask-first / forbidden / stop-and-escalate. Proceed only when it is autonomous, reversible, and task-scoped. Ask before ask-first; stop at default-forbidden actions unless Policy defines an exact explicit-request exception and re-evaluation; always stop at stop-and-escalate or unclear risk. (depth: `{{HARNESS_DIR}}/docs/policy/action-boundary.md`)
-- When workflow routing, conditional Harness reading, or task-material selection is needed, use `{{HARNESS_DIR}}/docs/process/task-triage.md`. Select the smallest workflow and task material; use `agent-work/README.md` to decide whether work stays Direct, needs status tracking, or benefits from an optional pre-work plan. (depth: `{{HARNESS_DIR}}/docs/process/`)
+- When workflow routing, conditional Harness reading, or task-material selection is needed, use `{{HARNESS_DIR}}/docs/process/task-triage.md`. Select the smallest workflow, then use `agent-work/README.md` as the only decision card for Direct eligibility and plan or status-ledger triggers. (depth: `{{HARNESS_DIR}}/docs/process/`)
 
 **2. Change the smallest scope**
 Make the minimal task-aligned change. Do not add unrelated refactors, dependencies, or behavior without re-checking scope and Policy.

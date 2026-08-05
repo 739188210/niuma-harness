@@ -56,14 +56,14 @@ test('generated docs route only needed triage context and status material', () =
   const process = read(path.join(h, 'docs', 'layers', '03-process.md'));
 
   assert.match(entry, /task-material selection is needed, use `harness\/docs\/process\/task-triage\.md`/);
-  assert.match(entry, /whether work stays Direct, needs status tracking, or benefits from an optional pre-work plan/);
+  assert.match(entry, /only decision card for Direct eligibility and plan or status-ledger triggers/);
   assert.match(triage, /## Conditional reading/);
   assert.match(triage, /A comparable scenario, known trap, or explicit Experience reference may apply/);
   assert.match(triage, /Experience is guidance, never current fact or action authorization/);
   assert.match(triage, /Work is blocked, cross-session, delegated, parallel, changing scope/);
-  assert.match(triage, /decide whether work stays Direct or needs status tracking/);
+  assert.match(triage, /only task-material decision card/);
   assert.doesNotMatch(triage, /decisions\/|ADR|Minimum|Recoverable/);
-  assert.match(process, /whether work stays Direct or needs status tracking/);
+  assert.match(process, /only decision card for Direct eligibility and plan or status-ledger triggers/);
 });
 
 test('custom harness paths replace template variables in retained knowledge and task protocols', () => {
