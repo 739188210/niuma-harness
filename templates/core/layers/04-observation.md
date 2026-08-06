@@ -54,6 +54,8 @@ State one task outcome across material criteria:
 - `failed`: the task goal or a material criterion is shown to fail.
 - `unknown`: evidence is insufficient to judge the task outcome.
 
+When both `partial` and `blocked` could apply, use `blocked` when a current approval, external-readiness, or dependency constraint prevents the next necessary action toward the task goal. Use `partial` only for material incomplete or unresolved work that can still proceed.
+
 For Tracked work, keep a compact acceptance/evidence matrix in `status.md`; it is the only task-local evidence ledger even when the required `plan.md` exists. A task may be closed or handed off with a non-passing outcome, but it must not be called complete unless its outcome is `passed`.
 
 ## Evidence record

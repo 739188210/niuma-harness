@@ -20,11 +20,6 @@
       "template": "core/index.md"
     },
     {
-      "target": "docs/module-topology.md",
-      "template": "core/module-topology.md",
-      "dynamic": true
-    },
-    {
       "target": "docs/experience/README.md",
       "template": "core/experience/README.md",
       "initialCollision": "error"

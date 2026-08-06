@@ -174,6 +174,22 @@ test('generated docs keep detailed verification evidence in Observation', () => 
   assertNoPath(path.join(h, 'docs', 'process'));
 });
 
+test('generated docs distinguish blocked outcomes from partial work', () => {
+  const workspace = tempDir();
+  const result = run(['init', workspace, '--agent', 'claude']);
+  assert.strictEqual(result.status, 0, result.stderr);
+  const h = path.join(workspace, 'harness');
+
+  const observation = read(path.join(h, 'docs', 'layers', '04-observation.md'));
+  assert.match(observation, /`blocked`: the next necessary action cannot proceed without approval, external readiness, or a dependency/);
+  assert.match(observation, /use `blocked` when a current approval, external-readiness, or dependency constraint prevents the next necessary action toward the task goal/);
+  assert.match(observation, /Use `partial` only for material incomplete or unresolved work that can still proceed/);
+
+  const workReadme = read(path.join(workspace, 'agent-work', 'README.md'));
+  assert.match(workReadme, /use `blocked` when a current approval, external-readiness, or dependency constraint prevents the next necessary action toward the task goal/);
+  assert.match(workReadme, /Use `partial` only for material incomplete or unresolved work that can still proceed/);
+});
+
 test('generated docs require test-first behavior evidence when automation is suitable', () => {
   const workspace = tempDir();
   const result = run(['init', workspace, '--agent', 'claude']);

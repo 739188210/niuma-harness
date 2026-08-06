@@ -141,6 +141,7 @@ A narrowed scope can pass only as the revised task. It does not silently make th
 - Record only actual observations: command or manual check, actual result, skipped checks with reason and impact, and remaining unknowns. Unrun checks are unknown, not passed.
 - A broad failure is only suspected pre-existing until the same failure was observed before the task, its location and type are demonstrably outside changed scope, or trusted CI, a baseline, or verified historical evidence establishes it. Even then, record the broad check as not passing.
 - `passed` means every material criterion has sufficient passing evidence. Material failures, blockers, skipped checks with unresolved impact, or unknowns require `partial`, `blocked`, `failed`, or `unknown`, not complete.
+- When both `partial` and `blocked` could apply, use `blocked` when a current approval, external-readiness, or dependency constraint prevents the next necessary action toward the task goal. Use `partial` only for material incomplete or unresolved work that can still proceed.
 - Policy decides whether an action is allowed. For material authorization, scope, or deferment changes, record the actual user approval or Policy boundary reference in `status.md`; do not infer approval from a plan.
 
 Use `{{HARNESS_DIR}}/docs/layers/04-observation.md` for detailed evidence and outcome semantics, `{{HARNESS_DIR}}/docs/layers/05-recovery.md` for failure handling, `{{HARNESS_DIR}}/docs/policy/action-boundary.md` for authorization, and `{{HARNESS_DIR}}/docs/layers/07-resumption.md` for resume order.
