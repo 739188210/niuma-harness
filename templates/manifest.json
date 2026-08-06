@@ -65,14 +65,6 @@
     {
       "target": "docs/policy/action-boundary.md",
       "template": "core/policy/action-boundary.md"
-    },
-    {
-      "target": "docs/policy/secret-leak.md",
-      "template": "core/policy/secret-leak.md"
-    },
-    {
-      "target": "docs/policy/untrusted-content.md",
-      "template": "core/policy/untrusted-content.md"
     }
   ],
   "workTemplateFiles": [

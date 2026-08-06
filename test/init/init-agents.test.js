@@ -1,4 +1,5 @@
 const test = require('node:test');
+const { sliceContractBlock } = require('../../src/harness/contract');
 const {
   agentCases,
   assert,
@@ -33,11 +34,33 @@ test('entry file carries the operating contract zone', () => {
   assert.match(body, /<!-- niuma-harness:contract begin/, 'entry must open the contract zone');
   assert.match(body, /<!-- niuma-harness:contract end/, 'entry must close the contract zone');
   assert.match(body, /Operating Contract/, 'entry must contain the operating contract');
+  assert.match(body, /autonomous \/ ask-first \/ stop-and-report/, 'entry must use Policy action categories');
+  assert.match(body, /Ask before ask-first; always stop at stop-and-report or unclear risk/, 'entry must align action handling with Policy');
+  assert.doesNotMatch(body, /forbidden|stop-and-escalate|default-forbidden/, 'entry must not reference retired Policy categories');
   assert.match(body, /harness\/docs\/layers\/03-process\.md/, 'entry must point task-material profile selection to Process');
   assert.match(body, /only progressive task-material profile card for Direct, Planned, or Tracked work/, 'entry must point task-material selection to the work-area profile card');
   assert.match(body, /Inspect the smallest request-relevant current source, configuration, build, test, README, or command evidence/i, 'entry must prioritize task-specific current evidence');
   assert.match(body, /harness\/docs\/layers\/01-context\.md/, 'entry depth links must include the harness directory');
   assert.doesNotMatch(body, /\(depth: `docs\//, 'entry depth links must not use workspace-root docs paths');
+});
+
+test('root managed contract uses the current Policy action categories', () => {
+  const rootEntry = read(path.join(__dirname, '..', '..', 'CLAUDE.md'));
+  const templateEntry = read(path.join(__dirname, '..', '..', 'templates', 'entry', 'entry.md'));
+  const rootContract = sliceContractBlock(rootEntry);
+  const templateContract = sliceContractBlock(templateEntry);
+  const actionCategories = /autonomous \/ ask-first \/ stop-and-report/;
+  const actionHandling = /Ask before ask-first; always stop at stop-and-report or unclear risk/;
+  const retiredCategories = /forbidden|stop-and-escalate|default-forbidden/;
+
+  assert.ok(rootContract, 'root entry must contain a complete managed contract');
+  assert.ok(templateContract, 'entry template must contain a complete managed contract');
+  assert.match(rootContract, actionCategories, 'root contract must use current Policy action categories');
+  assert.match(rootContract, actionHandling, 'root contract must use current Policy action handling');
+  assert.doesNotMatch(rootContract, retiredCategories, 'root contract must not use retired Policy categories');
+  assert.match(templateContract, actionCategories, 'entry template must use current Policy action categories');
+  assert.match(templateContract, actionHandling, 'entry template must use current Policy action handling');
+  assert.doesNotMatch(templateContract, retiredCategories, 'entry template must not use retired Policy categories');
 });
 
 test('multi mode makes AGENTS.md the complete entry and CLAUDE.md its pointer', () => {

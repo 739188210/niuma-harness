@@ -15,7 +15,7 @@ The Resumption entry owns task-material reading order and current-workspace rech
 ## Agent protocol
 
 1. Classify the failure type: test, build, command, context, bad edit, unclear requirement, acceptance mismatch, scope drift, process stall, policy block, or unknown.
-   - When a secret is observed, first follow `{{HARNESS_DIR}}/docs/policy/secret-leak.md`. Continue this Recovery protocol only for an independently recoverable non-secret work stream.
+   - When a sensitive value is observed, first apply the containment rules in `{{HARNESS_DIR}}/docs/policy/action-boundary.md`. Continue this Recovery protocol only for an independently recoverable work stream that does not depend on the value or expand its exposure.
 2. Preserve the exact failure signal needed to debug.
 3. Identify the first root cause, not every downstream symptom.
 4. Make the smallest safe repair attempt.

@@ -24,7 +24,7 @@ Do not create a record merely to close a task. One-off failures, raw logs, tempo
 
 ## Priority and Policy
 
-Current user instructions, current workspace evidence, and applicable Policy take precedence over experience records. An experience record provides guidance only; it does not authorize an action, replace `{{HARNESS_DIR}}/docs/policy/action-boundary.md`, or bypass ask-first, forbidden, or stop-and-escalate boundaries.
+Current user instructions, current workspace evidence, and applicable Policy take precedence over experience records. An experience record provides guidance only; it does not authorize an action, replace `{{HARNESS_DIR}}/docs/policy/action-boundary.md`, or bypass autonomous, ask-first, or stop-and-report boundaries.
 
 Before using an experience record, re-check its Source of truth against current task evidence and classify the next action under Policy. If the record conflicts with higher-priority evidence, use the higher-priority source and update, retire, or mark the experience stale after verification.
 

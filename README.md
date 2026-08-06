@@ -1,10 +1,10 @@
 # Niuma Harness
 
-Initialize and check a 7-layer AI engineering harness for a project workspace.
+Initialize and check a project-level collaboration protocol for AI-assisted project workspaces.
 
-Niuma Harness generates a documentation scaffold plus an entry file (`CLAUDE.md` / `AGENTS.md`) that carries a distilled operating loop — agents follow it automatically every session. The scaffold helps AI coding tools understand project context, Policy, Direct / Planned / Tracked execution forms, observation checks, recovery paths, memory rules, loop behavior, and task notes, and writes a `manifest.json` for later health checks.
+Niuma Harness generates a documentation scaffold plus an entry file (`CLAUDE.md` / `AGENTS.md`) that carries a distilled collaboration contract. The scaffold guides AI coding tools through project context, Policy, Direct / Planned / Tracked execution forms, observation checks, recovery paths, memory rules, resumption, and task notes; it also writes a `manifest.json` for later installation-integrity checks.
 
-Re-running `init` is safe and idempotent: it refreshes the generated Harness core, preserves your own content, preserves independently installed assets, and merges the operating loop into an existing entry file.
+Re-running `init` is safe and idempotent: it refreshes the generated Harness core, preserves your own content, preserves independently installed assets, and merges the collaboration contract into an existing entry file.
 
 ## Quick start
 
@@ -23,7 +23,7 @@ npx niuma-harness init
 
 `init` copies generated harness artifacts into the target workspace; it does not copy the `niuma-harness` CLI implementation there. Later `doctor` or `repair` commands therefore require the CLI to remain available through an installed package or another configured command path.
 
-The generated Markdown is an agent-facing behavioral contract. `doctor` checks installed managed state; it does not enforce or prove runtime tool behavior. Preventing tool actions depends on controls supplied by the agent host, such as permissions, hooks, or a sandbox.
+The generated Markdown is an agent-facing collaboration contract. `doctor` validates installed Harness integrity: the expected generated structure, manifest fields, managed content, required layer memos, and entry contract. It does not independently prove a task implementation, executed command, test result, evidence record, runtime behavior, workflow compliance, or final outcome. Preventing tool actions depends on controls supplied by the agent host, such as permissions, hooks, or a sandbox.
 
 ## CLI
 
@@ -140,8 +140,6 @@ workspace/
         07-resumption.md
       policy/
         action-boundary.md
-        secret-leak.md
-        untrusted-content.md
   agent-work/
     README.md
     tasks/
@@ -157,9 +155,9 @@ A confirmed or explicitly selected multi-module initialization keeps one root Ha
 
 `modules.json` uses `schemaVersion: 1` and a `modules` array. Each module needs an explicit `id` containing only letters, digits, `.`, `_`, or `-`; `kind` is optional and follows the same token rule. `root` remains a workspace-relative module directory subject to path and symlink checks. After a project-maintained registry change, run normal `init` to adopt it. If Repair finds an invalid registry or one that differs from installed topology, it reports the issue and stops without rewriting the registry or other files.
 
-## 7-layer architecture
+## Seven-layer collaboration protocol
 
-The generated `docs/layers/` directory is the AI agent operating model:
+The generated `docs/layers/` directory defines the collaboration protocol agents use in the workspace:
 
 | Layer | Memo | Purpose |
 |---|---|---|
@@ -270,9 +268,9 @@ npx niuma-harness doctor .
 npx niuma-harness doctor . --harness-dir ai-harness
 ```
 
-The command looks for `manifest.json` in the target directory, then in `target/harness` or the directory named by `--harness-dir`. It exits with code `0` when checks pass and `1` when required files, 7-layer memos, or manifest fields are invalid. It also verifies the operating-loop contract zone in the entry file is intact and flags drift.
+The command looks for `manifest.json` in the target directory, then in `target/harness` or the directory named by `--harness-dir`. It exits with code `0` when checks pass and `1` when required files, seven layer memos, or manifest fields are invalid. It also verifies the entry contract is intact and flags drift. These checks validate installed Harness integrity; they do not independently establish that task work was performed correctly.
 
-Harnesses generated before the 7-layer structure may fail `doctor` until they are updated with the new scaffold files.
+Harnesses generated before the seven-layer structure may fail `doctor` until they are updated with the new scaffold files.
 
 ## Rules selection
 

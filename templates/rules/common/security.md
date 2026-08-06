@@ -2,7 +2,7 @@
 
 ## Purpose
 
-These rules define common security engineering preferences. They are a lightweight hygiene layer and do not replace Policy boundaries, approval gates, or the secret-leak emergency response.
+These rules define common security engineering preferences. They are a lightweight hygiene layer and do not replace Policy boundaries or approval gates.
 
 ## Secrets
 

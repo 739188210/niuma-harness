@@ -25,7 +25,7 @@ This workspace runs a Niuma Harness. The loop below is your operating contract f
 
 **1. Plan — before any change**
 - Context: read `harness/docs/project-context.md` for stable facts; inspect current files for anything task-relevant. Never guess what files can show you. (depth: `docs/layers/01-context.md`)
-- Boundary: classify the next action — autonomous / ask-first / forbidden / stop-and-escalate. Proceed only if autonomous, reversible, and task-scoped. Ask before ask-first; stop at forbidden or unclear risk. (depth: `docs/policy/action-boundary.md`)
+- Boundary: classify the next action — autonomous / ask-first / stop-and-report. Proceed only if autonomous, reversible, and task-scoped. Ask before ask-first; always stop at stop-and-report or unclear risk. (depth: `docs/policy/action-boundary.md`)
 - Execution form: use complexity, Policy boundaries, and recoverability to select Direct, Planned, or Tracked work. Use `agent-work/README.md` only when task material is needed. (depth: `docs/layers/03-process.md`)
 
 **2. Act — smallest change**

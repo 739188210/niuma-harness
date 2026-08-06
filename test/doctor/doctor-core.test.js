@@ -29,7 +29,7 @@ test('doctor passes on a valid harness', () => {
   assert.match(result.stdout, /OK manifest\.json/);
   assert.match(result.stdout, /OK docs\/layers\/01-context\.md/);
   assert.match(result.stdout, /OK docs\/policy\/action-boundary\.md/);
-  assert.match(result.stdout, /OK docs\/policy\/untrusted-content\.md/);
+  assert.doesNotMatch(result.stdout, /docs\/policy\/(?:secret-leak|untrusted-content)\.md/);
   assert.match(result.stdout, /OK docs\/layers\/03-process\.md/);
   assert.doesNotMatch(result.stdout, /docs\/process\//);
   assert.match(result.stdout, /OK agent-work\//);
@@ -153,26 +153,6 @@ test('doctor fails when action-boundary is missing', () => {
   const result = run(['doctor', workspace]);
   assert.notStrictEqual(result.status, 0, 'doctor should fail when action boundary policy is missing');
   assert.match(result.stdout, /missing docs\/policy\/action-boundary\.md/);
-});
-
-test('doctor fails when secret-leak is missing', () => {
-  const workspace = tempDir();
-  const init = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(init.status, 0, init.stderr);
-  fs.unlinkSync(path.join(workspace, 'harness', 'docs', 'policy', 'secret-leak.md'));
-  const result = run(['doctor', workspace]);
-  assert.notStrictEqual(result.status, 0, 'doctor should fail when secret leak policy is missing');
-  assert.match(result.stdout, /missing docs\/policy\/secret-leak\.md/);
-});
-
-test('doctor fails when untrusted-content is missing', () => {
-  const workspace = tempDir();
-  const init = run(['init', workspace, '--agent', 'claude']);
-  assert.strictEqual(init.status, 0, init.stderr);
-  fs.unlinkSync(path.join(workspace, 'harness', 'docs', 'policy', 'untrusted-content.md'));
-  const result = run(['doctor', workspace]);
-  assert.notStrictEqual(result.status, 0, 'doctor should fail when untrusted content policy is missing');
-  assert.match(result.stdout, /missing docs\/policy\/untrusted-content\.md/);
 });
 
 test('doctor fails when the Process layer is missing', () => {

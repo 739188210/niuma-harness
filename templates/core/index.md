@@ -24,8 +24,6 @@ This is the complete runtime navigation map for the Harness. The entry file (`CL
 ### Concrete policy
 
 - [Action boundary](policy/action-boundary.md)
-- [Secret-leak response](policy/secret-leak.md)
-- [Untrusted content](policy/untrusted-content.md)
 
 ### Runtime materials
 

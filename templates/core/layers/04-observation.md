@@ -15,7 +15,7 @@ Use this layer before declaring an outcome, after any code or documentation chan
 3. Run focused checks first, then broader checks when justified by changed risk.
 4. Record only checks actually run, actual results, skipped checks with reason and impact, and remaining unknowns.
 5. For Direct work, record evidence in the final response. For Tracked work, record it only in `agent-work/tasks/<task-name>/status.md`; its required `plan.md` is planned direction, not an evidence ledger.
-6. Treat unrun checks as unknown, not passing. If verification fails, treat the failing check as evidence; do not move the verification target unless the Policy test-change gate permits it and the reason is recorded.
+6. Treat unrun checks as unknown, not passing. If verification fails, treat the failing check as evidence; do not move the verification target to turn red into green.
 
 ## Evidence boundaries
 
@@ -93,7 +93,7 @@ For parallel or delegated work, final Observation verifies the integrated result
 - Do not mark skipped checks as passing.
 - Do not broaden verification commands endlessly when a focused failure already identifies the issue.
 - Do not move verification targets after a failure to turn red into green.
-- Do not rebaseline snapshots, loosen assertions, skip tests, lower coverage, or change check configuration unless permitted by the test-change gate in `{{HARNESS_DIR}}/docs/policy/action-boundary.md`; then record why the previous target was invalid and what replacement coverage preserves the behavior contract.
+- Do not rebaseline snapshots, loosen assertions, skip tests, lower coverage, or change check configuration merely to make it pass. Ask before an uncertain semantic rewrite and record the behavior contract and replacement coverage.
 
 ## Outputs
 

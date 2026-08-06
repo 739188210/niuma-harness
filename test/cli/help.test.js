@@ -14,6 +14,17 @@ test('README documents retained CLI commands, doctor health checks, and asset in
   assert.match(readme, /## Doctor/);
 });
 
+test('README keeps the collaboration protocol and Doctor integrity boundary explicit', () => {
+  const readme = fs.readFileSync(path.join(__dirname, '..', '..', 'README.md'), 'utf8');
+
+  assert.match(readme, /project-level collaboration protocol for AI-assisted project workspaces/);
+  assert.match(readme, /`doctor` validates installed Harness integrity/);
+  assert.match(readme, /It does not independently prove a task implementation, executed command, test result, evidence record, runtime behavior, workflow compliance, or final outcome/);
+  assert.match(readme, /merges the collaboration contract into an existing entry file/);
+  assert.match(readme, /## Seven-layer collaboration protocol/);
+  assert.doesNotMatch(readme, /7-layer AI engineering harness|AI agent operating model|merges the operating loop into an existing entry file/);
+});
+
 test('README documents interactive current-directory asset installers independent from the core lifecycle', () => {
   const readme = fs.readFileSync(path.join(__dirname, '..', '..', 'README.md'), 'utf8');
   for (const command of ['install-skill', 'install-rule', 'install-command']) {

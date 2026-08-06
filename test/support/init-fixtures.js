@@ -51,8 +51,8 @@ function assertCommonHarnessShape(workspace, options = {}) {
   assertFile(path.join(harnessRoot, 'docs', 'index.md'));
   assertFile(path.join(harnessRoot, 'docs', 'project-context.md'));
   assertFile(path.join(harnessRoot, 'docs', 'policy', 'action-boundary.md'));
-  assertFile(path.join(harnessRoot, 'docs', 'policy', 'secret-leak.md'));
-  assertFile(path.join(harnessRoot, 'docs', 'policy', 'untrusted-content.md'));
+  assertNoPath(path.join(harnessRoot, 'docs', 'policy', 'secret-leak.md'));
+  assertNoPath(path.join(harnessRoot, 'docs', 'policy', 'untrusted-content.md'));
   assertNoPath(path.join(harnessRoot, 'docs', 'experiments'));
   assertNoPath(path.join(harnessRoot, 'docs', 'decisions'));
   assertDir(path.join(harnessRoot, 'docs', 'experience'));
